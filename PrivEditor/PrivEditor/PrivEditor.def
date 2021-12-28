@@ -1,0 +1,12 @@
+LIBRARY "PrivEditor.dll"
+EXPORTS
+	WinDbgExtensionDllInit
+    ExtensionApiVersion
+	addpriv
+	rmpriv
+	enableall
+	enablepriv
+	disablepriv
+	disableall
+	getpriv
+	getps
