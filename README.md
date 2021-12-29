@@ -9,15 +9,15 @@ Codes in this repository are intended to help investigate how token privileges w
 
 - [PrivFu](#privfu)
   - [PrivEditor](#priveditor)
-    - [!getps Command](#!getps-command)
-    - [!getpriv Command](#!getpriv-command)
-    - [!addpriv Command](#!addpriv-command)
-    - [!rmpriv Command](#!rmpriv-command)
-    - [!enablepriv Command](#!enablepriv-command)
-    - [!disablepriv Command](#!disablepriv-command)
-    - [!enableall Command](#!enableall)
-    - [!disableall Command](#!disableall)
-  - [PrivilegedOperations](#privileged-operations)
+    - [getps Command](#getps-command)
+    - [getpriv Command](#getpriv-command)
+    - [addpriv Command](#addpriv-command)
+    - [rmpriv Command](#rmpriv-command)
+    - [enablepriv Command](#enablepriv-command)
+    - [disablepriv Command](#disablepriv-command)
+    - [enableall Command](#enableall-command)
+    - [disableall Command](#disableall-command)
+  - [PrivilegedOperations](#privilegedoperations)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
 
@@ -46,7 +46,7 @@ Commands :
 > __WARNING__ This extension supports both x64 and x86 OS as debug target, but not supports x86 WinDbg.
 
 
-### !getps Command
+### getps Command
 This command is to list processes in your target system.
 
 ```
@@ -93,7 +93,7 @@ The filter works with forward matching and case insensitive.
 ```
 
 
-### !getriv Command
+### getriv Command
 This command is to list token privileges of a specific process.
 
 ```
@@ -126,7 +126,7 @@ SeTimeZonePrivilege                        Disabled
 ```
 
 
-### !addpriv Command
+### addpriv Command
 This command is to add token privilege(s) to a specific process.
 
 ```
@@ -223,7 +223,7 @@ SeSecurityPrivilege                        Disabled
 ```
 
 
-### !rmpriv Command
+### rmpriv Command
 This command is to remove token privilege(s) from a specific process.
 
 ```
@@ -301,7 +301,7 @@ Privilege Name                             State
 ```
 
 
-### !enablepriv Command
+### enablepriv Command
 This command is to enable token privilege(s) of a specific process.
 
 ```
@@ -403,7 +403,7 @@ SeTimeZonePrivilege                        Enabled
 ```
 
 
-### !disablepriv Command
+### disablepriv Command
 This command is to disable token privilege(s) of a specific process.
 
 ```
@@ -461,7 +461,7 @@ SeIncreaseWorkingSetPrivilege              Disabled
 ```
 
 
-### !enableall Command
+### enableall Command
 This command is to enable all token privilege(s) available for a specific process.
 
 ```
@@ -512,7 +512,7 @@ SeIncreaseWorkingSetPrivilege              Enabled
 ```
 
 
-### !disableall Command
+### disableall Command
 This command is to disable all token privilege(s) for a specific process.
 
 ```
