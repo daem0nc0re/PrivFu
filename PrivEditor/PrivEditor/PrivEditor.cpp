@@ -553,6 +553,9 @@ DECLARE_API(getps)
             }
         }
         else {
+            if (filter.size() > processName.size())
+                continue;
+
             if (IsPtr64() &&
                 (_strnicmp(filter.c_str(), processName.c_str(), filter.size()) == 0)) {
                 dprintf("%6d 0x%08x`%08x      0x%08x`%08x %s\n",
