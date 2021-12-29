@@ -177,10 +177,30 @@ Usage : !addpriv <PID> <Privilege>
         + All                            : All privileges.
 ```
 
-If you want to set SeDebugPrivilege to a specific process, set a target process ID for the first argument and shorten privilege name for second argument as follows:
+For example, if you want to set SeDebugPrivilege to a specific process, set a target process ID for the first argument and shorten privilege name `debug` as listed in the help message for second argument as follows:
 
 ```
-0: kd> !getpriv 6488
+0: kd> !getpriv 5768
+
+Privilege Name                             State
+========================================== ========
+SeShutdownPrivilege                        Disabled
+SeChangeNotifyPrivilege                    Enabled
+SeUndockPrivilege                          Disabled
+SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Disabled
+
+[*] PID                      : 5768
+[*] Process Name             : cmd.exe
+[*] nt!_EPROCESS             : 0xffffb386`47e584c0
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffff9f04`76caa0a0
+
+0: kd> !addpriv 5768 debug
+
+[>] Trying to add the requested privilege(s).
+[*] Completed.
+
+0: kd> !getpriv 5768
 
 Privilege Name                             State
 ========================================== ========
@@ -191,10 +211,10 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 6488
+[*] PID                      : 5768
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`ab522080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72697b0
+[*] nt!_EPROCESS             : 0xffffb386`47e584c0
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffff9f04`76caa0a0
 ```
 
 The privilege name argument is case insensitive.
@@ -281,7 +301,7 @@ SeTimeZonePrivilege                        Disabled
 [*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d69c2930
 ```
 
-As `!addpriv` command, you can remove all token privileges at a time by setting all as the privilege name argument:
+As `!addpriv` command, you can remove all token privileges at a time by setting `all` as the privilege name argument:
 
 ```
 0: kd> !rmpriv 6792 all
