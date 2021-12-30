@@ -387,9 +387,8 @@ std::map<ULONG_PTR, ULONG_PTR> ListEprocess()
         if (!IsPtr64() && ((int)uniqueProcessId <= 0))
             uniqueProcessId = 0;
 
-        if (processList.find(uniqueProcessId) == processList.end()) {
+        if (processList.find(uniqueProcessId) == processList.end())
             processList[uniqueProcessId] = currentProcess;
-        }
         else
             break;
 
