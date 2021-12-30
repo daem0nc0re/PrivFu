@@ -380,8 +380,7 @@ std::map<ULONG_PTR, ULONG_PTR> ListEprocess()
     ULONG_PTR activeProcessLink;
     std::map<ULONG_PTR, ULONG_PTR> processList;
 
-    for (int count = 0; count < 1024; count++)
-    {
+    for (int count = 0; count < 1024; count++) {
         ReadPointer(currentProcess + g_Offsets.UniqueProcessId, &uniqueProcessId);
 
         if (!IsPtr64() && ((int)uniqueProcessId <= 0))
