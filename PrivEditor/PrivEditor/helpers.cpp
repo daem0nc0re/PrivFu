@@ -1,11 +1,7 @@
 #include "pch.h"
 #include "helpers.h"
 
-ULONG GetFieldOffset(
-    LPCSTR     Type,
-    LPCSTR     Field,
-    PULONG   pOffset
-)
+ULONG GetFieldOffset(LPCSTR Type, LPCSTR Field, PULONG pOffset)
 {
     FIELD_INFO flds = {
         (PUCHAR)Field,
@@ -47,9 +43,7 @@ BOOL IsKernelAddress(ULONG_PTR Address)
 }
 
 
-BOOL IsPtr64(
-    void
-)
+BOOL IsPtr64()
 {
     BOOL flag;
     ULONG dw;
@@ -64,10 +58,7 @@ BOOL IsPtr64(
 }
 
 
-ULONG ReadPointer(
-    ULONG_PTR Address,
-    PULONG_PTR Pointer
-)
+ULONG ReadPointer(ULONG_PTR Address, PULONG_PTR Pointer)
 {
     ULONG cb;
     if (IsPtr64()) {
@@ -90,10 +81,7 @@ ULONG ReadPointer(
 }
 
 
-ULONG ReadQword(
-    ULONG_PTR Address,
-    PULONG64 Pointer
-)
+ULONG ReadQword(ULONG_PTR Address, PULONG64 Pointer)
 {
     ULONG cb;
     return (ReadMemory(Address, (PVOID)Pointer, 8, &cb) && cb == 8);
@@ -136,10 +124,7 @@ std::wstring ReadUnicodeString(ULONG_PTR Address, int MaximumSize)
 }
 
 
-ULONG WritePointer(
-    ULONG_PTR Address,
-    ULONG_PTR Pointer
-)
+ULONG WritePointer(ULONG_PTR Address, ULONG_PTR Pointer)
 {
     ULONG cb;
     if (IsPtr64()) {
@@ -158,10 +143,7 @@ ULONG WritePointer(
 }
 
 
-ULONG WriteQword(
-    ULONG_PTR Address,
-    ULONG64 Pointer
-)
+ULONG WriteQword(ULONG_PTR Address, ULONG64 Pointer)
 {
     ULONG cb;
     return (WriteMemory(Address, &Pointer, 8, &cb) && cb == 8);

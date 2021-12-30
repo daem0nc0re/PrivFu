@@ -45,117 +45,80 @@ VOID FlipEnabledBit(ULONG_PTR pTokenPrivilege, ULONG64 mask)
 
 ULONG64 GetPrivilegeMask(std::string priv)
 {
-    if (_stricmp(priv.c_str(), "All") == 0) {
+    if (_stricmp(priv.c_str(), "All") == 0)
         return MASK_ALL;
-    }
-    else if (_stricmp(priv.c_str(), "CreateToken") == 0) {
+    else if (_stricmp(priv.c_str(), "CreateToken") == 0)
         return MASK_CREATE_TOKEN;
-    }
-    else if (_stricmp(priv.c_str(), "AssignPrimaryToken") == 0) {
+    else if (_stricmp(priv.c_str(), "AssignPrimaryToken") == 0)
         return MASK_ASSIGN_PRIMARY_TOKEN;
-    }
-    else if (_stricmp(priv.c_str(), "LockMemory") == 0) {
+    else if (_stricmp(priv.c_str(), "LockMemory") == 0)
         return MASK_LOCK_MEMORY;
-    }
-    else if (_stricmp(priv.c_str(), "IncreaseQuota") == 0) {
+    else if (_stricmp(priv.c_str(), "IncreaseQuota") == 0)
         return MASK_INCREASE_QUOTA;
-    }
-    else if (_stricmp(priv.c_str(), "MachineAccount") == 0) {
+    else if (_stricmp(priv.c_str(), "MachineAccount") == 0)
         return MASK_MACHINE_ACCOUNT;
-    }
-    else if (_stricmp(priv.c_str(), "Tcb") == 0) {
+    else if (_stricmp(priv.c_str(), "Tcb") == 0)
         return MASK_TCB;
-    }
-    else if (_stricmp(priv.c_str(), "Security") == 0) {
+    else if (_stricmp(priv.c_str(), "Security") == 0)
         return MASK_SECURITY;
-    }
-    else if (_stricmp(priv.c_str(), "TakeOwnership") == 0) {
+    else if (_stricmp(priv.c_str(), "TakeOwnership") == 0)
         return MASK_TAKE_OWNERSHIP;
-    }
-    else if (_stricmp(priv.c_str(), "LoadDriver") == 0) {
+    else if (_stricmp(priv.c_str(), "LoadDriver") == 0)
         return MASK_LOAD_DRIVER;
-    }
-    else if (_stricmp(priv.c_str(), "SystemProfile") == 0) {
+    else if (_stricmp(priv.c_str(), "SystemProfile") == 0)
         return MASK_SYSTEM_PROFILE;
-    }
-    else if (_stricmp(priv.c_str(), "Systemtime") == 0) {
+    else if (_stricmp(priv.c_str(), "Systemtime") == 0)
         return MASK_SYSTEMTIME;
-    }
-    else if (_stricmp(priv.c_str(), "ProfileSingleProcess") == 0) {
+    else if (_stricmp(priv.c_str(), "ProfileSingleProcess") == 0)
         return MASK_PROFILE_SINGLE_PROCESS;
-    }
-    else if (_stricmp(priv.c_str(), "IncreaseBasePriority") == 0) {
+    else if (_stricmp(priv.c_str(), "IncreaseBasePriority") == 0)
         return MASK_INCREASE_BASE_PRIORITY;
-    }
-    else if (_stricmp(priv.c_str(), "CreatePagefile") == 0) {
+    else if (_stricmp(priv.c_str(), "CreatePagefile") == 0)
         return MASK_CREATE_PAGEFILE;
-    }
-    else if (_stricmp(priv.c_str(), "CreatePermanent") == 0) {
+    else if (_stricmp(priv.c_str(), "CreatePermanent") == 0)
         return MASK_CREATE_PERMANENT;
-    }
-    else if (_stricmp(priv.c_str(), "Backup") == 0) {
+    else if (_stricmp(priv.c_str(), "Backup") == 0)
         return MASK_BACKUP;
-    }
-    else if (_stricmp(priv.c_str(), "Restore") == 0) {
+    else if (_stricmp(priv.c_str(), "Restore") == 0)
         return MASK_RESTORE;
-    }
-    else if (_stricmp(priv.c_str(), "Shutdown") == 0) {
+    else if (_stricmp(priv.c_str(), "Shutdown") == 0)
         return MASK_SHUTDOWN;
-    }
-    else if (_stricmp(priv.c_str(), "Debug") == 0) {
+    else if (_stricmp(priv.c_str(), "Debug") == 0)
         return MASK_DEBUG;
-    }
-    else if (_stricmp(priv.c_str(), "Audit") == 0) {
+    else if (_stricmp(priv.c_str(), "Audit") == 0)
         return MASK_AUDIT;
-    }
-    else if (_stricmp(priv.c_str(), "SystemEnvironment") == 0) {
+    else if (_stricmp(priv.c_str(), "SystemEnvironment") == 0)
         return MASK_SYSTEM_ENVIRONMENT;
-    }
-    else if (_stricmp(priv.c_str(), "ChangeNotify") == 0) {
+    else if (_stricmp(priv.c_str(), "ChangeNotify") == 0)
         return MASK_CHANGE_NOTIFY;
-    }
-    else if (_stricmp(priv.c_str(), "RemoteShutdown") == 0) {
+    else if (_stricmp(priv.c_str(), "RemoteShutdown") == 0)
         return MASK_REMOTE_SHUTDOWN;
-    }
-    else if (_stricmp(priv.c_str(), "Undock") == 0) {
+    else if (_stricmp(priv.c_str(), "Undock") == 0)
         return MASK_UNDOCK;
-    }
-    else if (_stricmp(priv.c_str(), "SyncAgent") == 0) {
+    else if (_stricmp(priv.c_str(), "SyncAgent") == 0)
         return MASK_SYNC_AGENT;
-    }
-    else if (_stricmp(priv.c_str(), "EnableDelegation") == 0) {
+    else if (_stricmp(priv.c_str(), "EnableDelegation") == 0)
         return MASK_ENABLE_DELEGATION;
-    }
-    else if (_stricmp(priv.c_str(), "ManageVolume") == 0) {
+    else if (_stricmp(priv.c_str(), "ManageVolume") == 0)
         return MASK_MANAGE_VOLUME;
-    }
-    else if (_stricmp(priv.c_str(), "Impersonate") == 0) {
+    else if (_stricmp(priv.c_str(), "Impersonate") == 0)
         return MASK_IMPERSONATE;
-    }
-    else if (_stricmp(priv.c_str(), "CreateGlobal") == 0) {
+    else if (_stricmp(priv.c_str(), "CreateGlobal") == 0)
         return MASK_CREATE_GLOBAL;
-    }
-    else if (_stricmp(priv.c_str(), "TrustedCredManAccess") == 0) {
+    else if (_stricmp(priv.c_str(), "TrustedCredManAccess") == 0)
         return MASK_TRUSTED_CRED_MAN_ACCESS;
-    }
-    else if (_stricmp(priv.c_str(), "Relabel") == 0) {
+    else if (_stricmp(priv.c_str(), "Relabel") == 0)
         return MASK_RELABEL;
-    }
-    else if (_stricmp(priv.c_str(), "IncreaseWorkingSet") == 0) {
+    else if (_stricmp(priv.c_str(), "IncreaseWorkingSet") == 0)
         return MASK_INCREASE_WORKING_SET;
-    }
-    else if (_stricmp(priv.c_str(), "TimeZone") == 0) {
+    else if (_stricmp(priv.c_str(), "TimeZone") == 0)
         return MASK_TIME_ZONE;
-    }
-    else if (_stricmp(priv.c_str(), "CreateSymbolicLink") == 0) {
+    else if (_stricmp(priv.c_str(), "CreateSymbolicLink") == 0)
         return MASK_CREATE_SYMBOLIC_LINK;
-    }
-    else if (_stricmp(priv.c_str(), "DelegateSessionUserImpersonate") == 0) {
+    else if (_stricmp(priv.c_str(), "DelegateSessionUserImpersonate") == 0)
         return MASK_DELEGATE_SESSION_USER_IMPERSONATE;
-    }
-    else {
+    else
         return 0xdeadbeefdeadbeefULL;
-    }
 }
 
 
@@ -290,9 +253,8 @@ std::string GetProcessName(ULONG_PTR pEprocess)
     if (fileName.empty())
         return imageFileName;
 
-    if (std::regex_match(fileName, matches, re_expected)) {
+    if (std::regex_match(fileName, matches, re_expected))
         return matches[1].str();
-    }
 
     return std::string("");
 }
@@ -368,13 +330,11 @@ BOOL Initialize()
     ULONG_PTR pApcState;
 
     // Resolve System EPROCESS
-    if (!ReadPointer(pKthread + g_Offsets.ApcState, &pApcState)) {
+    if (!ReadPointer(pKthread + g_Offsets.ApcState, &pApcState))
         return FALSE;
-    }
 
-    if (!ReadPointer(pApcState + g_Offsets.Process, &g_Eprocess)) {
+    if (!ReadPointer(pApcState + g_Offsets.Process, &g_Eprocess))
         return FALSE;
-    }
 
     return TRUE;
 }
@@ -385,23 +345,19 @@ BOOL IsEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
     ULONG64 current;
     ReadQword(pTokenPrivilege + g_Offsets.Enabled, &current);
 
-    if (mask == MASK_ALL) {
+    if (mask == MASK_ALL)
         return (current == MASK_ALL);
-    }
-    else {
+    else
         return ((current & mask) != 0);
-    }
 }
 
 
 BOOL IsInitialized()
 {
-    if (IsPtr64()) {
+    if (IsPtr64())
         return g_Eprocess > 0xffff080000000000;
-    }
-    else {
+    else
         return g_Eprocess > 0x80000000;
-    }
 }
 
 
@@ -410,12 +366,10 @@ BOOL IsPresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
     ULONG64 current;
     ReadQword(pTokenPrivilege + g_Offsets.Present, &current);
 
-    if (mask == MASK_ALL) {
+    if (mask == MASK_ALL)
         return (current == MASK_ALL);
-    }
-    else {
+    else
         return ((current & mask) != 0);
-    }
 }
 
 

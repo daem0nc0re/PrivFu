@@ -489,7 +489,7 @@ DECLARE_API(getps)
 {
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)\s*)");
-    std::regex re_expected(R"(^\s*(\S+)\s*$)");
+    std::regex re_expected(R"(^([\S ]+)$)");
     std::smatch matches;
     std::string processName;
     std::string filter;
@@ -610,8 +610,7 @@ DECLARE_API(rmpriv)
         pid = (ULONG_PTR)std::stoull(matches[1].str());
         priv = matches[2].str();
     }
-    else
-    {
+    else {
         dprintf("[!] Invalid arguments. See \"!rmpriv help\" or \"!rmpriv /?\".\n\n");
         return;
     }
