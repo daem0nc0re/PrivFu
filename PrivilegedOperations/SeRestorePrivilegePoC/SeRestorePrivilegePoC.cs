@@ -73,10 +73,8 @@ namespace SeRestorePrivilegePoC
             }
         }
 
-        static bool PrivilegedRegKeyOperation()
+        static IntPtr PrivilegedRegKeyOperation(string regKeyName)
         {
-            string regKeyName = "SYSTEM\\CurrentControlSet\\Services\\dmwappushservice\\Parameters";
-
             Console.WriteLine("[*] If you have SeRestorePrivilege, you can get handle to sensitive files and registries with REG_OPTION_BACKUP_RESTORE flag.");
             Console.WriteLine("[>] Trying to get handle to HKLM:\\{0}.", regKeyName);
 
@@ -95,20 +93,25 @@ namespace SeRestorePrivilegePoC
             {
                 Console.WriteLine("[-] Failed to get handle to HKLM:\\{0}.", regKeyName);
                 Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(ntstatus));
-                return false;
+                return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] Got handle to HKLM:\\{0} (hFile = 0x{1}).", regKeyName, phkResult.ToString("X"));
-            Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
-            Console.ReadLine();
-
-            CloseHandle(phkResult);
-            return true;
+            return phkResult;
         }
 
         static void Main()
         {
-            PrivilegedRegKeyOperation();
+            string regKeyName = "SYSTEM\\CurrentControlSet\\Services\\dmwappushservice\\Parameters";
+            IntPtr phkResult = PrivilegedRegKeyOperation(regKeyName);
+
+            if (phkResult != IntPtr.Zero)
+            {
+                Console.WriteLine("[+] Got handle to HKLM:\\{0} (hFile = 0x{1}).", regKeyName, phkResult.ToString("X"));
+                Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
+                Console.ReadLine();
+
+                CloseHandle(phkResult);
+            }
         }
     }
 }

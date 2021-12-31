@@ -65,7 +65,7 @@ namespace SeDebugPrivilegePoC
             }
         }
 
-        static bool OpenWinlogonHandle()
+        static IntPtr OpenWinlogonHandle()
         {
             int winlogon;
             int error;
@@ -81,7 +81,7 @@ namespace SeDebugPrivilegePoC
             catch
             {
                 Console.WriteLine("[-] Failed to get process ID of winlogon.");
-                return false;
+                return IntPtr.Zero;
             }
 
             Console.WriteLine("[+] PID of winlogon: {0}", winlogon);
@@ -94,21 +94,24 @@ namespace SeDebugPrivilegePoC
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get a winlogon handle.");
                 Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
-                return false;
+                return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] Got handle to winlogon with PROCESS_ALL_ACCESS (hProcess = 0x{0}).", hProcess.ToString("X"));
-            Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
-            Console.ReadLine();
-
-            CloseHandle(hProcess);
-
-            return true;
+            return hProcess;
         }
 
         static void Main()
         {
-            OpenWinlogonHandle();
+            IntPtr hProcess = OpenWinlogonHandle();
+
+            if (hProcess != IntPtr.Zero)
+            {
+                Console.WriteLine("[+] Got handle to winlogon with PROCESS_ALL_ACCESS (hProcess = 0x{0}).", hProcess.ToString("X"));
+                Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
+                Console.ReadLine();
+
+                CloseHandle(hProcess);
+            }
         }
     }
 }
