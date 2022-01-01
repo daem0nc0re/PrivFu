@@ -209,31 +209,17 @@ std::string GetFileName(ULONG_PTR pEprocess)
     char* buffer;
     ReadPointer(pEprocess + g_Offsets.ImageFilePointer, &pImageFilePointer);
     ReadPointer(pImageFilePointer + g_Offsets.FileName + g_Offsets.Buffer, &pUnicodeBuffer);
-    
-    if (IsPtr64()) {
-        if (pUnicodeBuffer > 0xffff080000000000) {
-            unicodeName = ReadUnicodeString(pUnicodeBuffer, 128);
-            size = unicodeName.length() * MB_CUR_MAX + 1;
-            buffer = new char[size];
-            wcstombs_s(&ret, buffer, size, unicodeName.c_str(), size);
 
-            return std::string(buffer);
-        }
-        else
-            return std::string("");
+    if (IsKernelAddress(pUnicodeBuffer)) {
+        unicodeName = ReadUnicodeString(pUnicodeBuffer, 128);
+        size = unicodeName.length() * MB_CUR_MAX + 1;
+        buffer = new char[size];
+        wcstombs_s(&ret, buffer, size, unicodeName.c_str(), size);
+
+        return std::string(buffer);
     }
-    else {
-        if (pUnicodeBuffer > 0x80000000) {
-            unicodeName = ReadUnicodeString(pUnicodeBuffer, 128);
-            size = unicodeName.length() * MB_CUR_MAX + 1;
-            buffer = new char[size];
-            wcstombs_s(&ret, buffer, size, unicodeName.c_str(), size);
-            
-            return std::string(buffer);
-        }
-        else
-            return std::string("");
-    }
+    else
+        return std::string("");
 }
 
 
@@ -263,17 +249,14 @@ std::string GetProcessName(ULONG_PTR pEprocess)
 ULONG_PTR GetTokenPointer(ULONG_PTR pEprocess)
 {
     ULONG_PTR pTokenPrivilege;
+    ReadPointer(pEprocess + g_Offsets.Token, &pTokenPrivilege);
 
-    if (IsPtr64()) {
-        ReadPointer(pEprocess + g_Offsets.Token, &pTokenPrivilege);
+    if (IsPtr64())
         pTokenPrivilege &= 0xfffffffffffffff0;
-        pTokenPrivilege += g_Offsets.Privileges;
-    }
-    else {
-        ReadPointer(pEprocess + g_Offsets.Token, &pTokenPrivilege);
+    else
         pTokenPrivilege &= 0xfffffff8;
-        pTokenPrivilege += g_Offsets.Privileges;
-    }
+
+    pTokenPrivilege += g_Offsets.Privileges;
 
     return pTokenPrivilege;
 }
@@ -354,10 +337,7 @@ BOOL IsEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
 
 BOOL IsInitialized()
 {
-    if (IsPtr64())
-        return g_Eprocess > 0xffff080000000000;
-    else
-        return g_Eprocess > 0x80000000;
+    return IsKernelAddress(g_Eprocess);
 }
 
 
