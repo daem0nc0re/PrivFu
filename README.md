@@ -18,6 +18,7 @@ Codes in this repository are intended to help investigate how token privileges w
     - [enableall Command](#enableall-command)
     - [disableall Command](#disableall-command)
   - [PrivilegedOperations](#privilegedoperations)
+  - [SwitchPriv](#switchpriv)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
 
@@ -594,10 +595,138 @@ Currently, released PoCs for a part of them.
 | [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC opens a handle to winlogon.exe by SeDebugPrivilege. |
 
 
+## SwitchPriv
+This tool is to enable or disable specific token privileges for a process:
+
+```
+C:\dev>SwitchPriv.exe
+
+SwitchPriv - Tool to control token privileges.
+
+Usage: SwitchPriv.exe [Options]
+
+        -h, --help    : Displays this help message.
+        -e, --enable  : Specifies privilege to enable. Case insensitive.
+        -d, --disable : Specifies privilege to disable. Case insensitive.
+        -p, --pid     : Specifies the target PID. Default specifies PPID
+        -l, --list    : List values for --enable or --disable option.
+```
+
+To list values for `--enable` or `--disable` option, execute this tool with `--list` option as follows:
+
+```
+C:\dev>SwitchPriv.exe -l
+
+Available values for --enable or --disable option:
+
+    + CreateToken                    : Specifies SeCreateTokenPrivilege.
+    + AssignPrimaryToken             : Specifies SeAssignPrimaryTokenPrivilege.
+    + LockMemory                     : Specifies SeLockMemoryPrivilege.
+    + IncreaseQuota                  : Specifies SeIncreaseQuotaPrivilege.
+    + MachineAccount                 : Specifies SeMachineAccountPrivilege.
+    + Tcb                            : Specifies SeTcbPrivilege.
+    + Security                       : Specifies SeSecurityPrivilege.
+    + TakeOwnership                  : Specifies SeTakeOwnershipPrivilege.
+
+--snip--
+```
+
+
+If you want to control privilege for a remote process, specify the target PID as follows.
+For example, to enable SeUndockPrivilege for PID 23728, execute as follows:
+
+```
+C:\dev>SwitchPriv.exe -e undock -p 23728
+[>] Trying to enable SeUndockPrivilege.
+    |-> Target PID : 23728
+[+] SeUndockPrivilege is enabled successfully.
+```
+
+to enable SeChangeNotifyPrivilege for PID 1523, execute as follows:
+
+```
+C:\dev>SwitchPriv.exe -d changenotify -p 1523
+[>] Trying to disable SeChangeNotifyPrivilege.
+    |-> Target PID : 1523
+[+] SeChangeNotifyPrivilege is disabled successfully.
+```
+
+If you don't specify `--pid` option, targets parent process of this tool:
+
+```
+C:\dev>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                          State
+============================= ==================================== ========
+SeShutdownPrivilege           Shut down the system                 Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
+SeUndockPrivilege             Remove computer from docking station Disabled
+SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
+SeTimeZonePrivilege           Change the time zone                 Disabled
+
+C:\dev>SwitchPriv.exe -e timezone
+[>] Trying to enable SeTimeZonePrivilege.
+    |-> Target PID : 14620
+[+] SeTimeZonePrivilege is enabled successfully.
+
+C:\dev>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                          State
+============================= ==================================== ========
+SeShutdownPrivilege           Shut down the system                 Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
+SeUndockPrivilege             Remove computer from docking station Disabled
+SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
+SeTimeZonePrivilege           Change the time zone                 Enabled
+```
+
+To enable or disable all available token privileges, specify `all` as the value for `--enable` or `--disable` option:
+
+```
+C:\dev>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                          State
+============================= ==================================== ========
+SeShutdownPrivilege           Shut down the system                 Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
+SeUndockPrivilege             Remove computer from docking station Disabled
+SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
+SeTimeZonePrivilege           Change the time zone                 Enabled
+
+C:\dev>C:\dev\Projects\SwitchPriv\SwitchPriv\bin\Release\SwitchPriv.exe -d all
+[>] Trying to disable all token privileges.
+    |-> Target PID : 14620
+[*] Done.
+
+C:\dev>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                          State
+============================= ==================================== ========
+SeShutdownPrivilege           Shut down the system                 Disabled
+SeChangeNotifyPrivilege       Bypass traverse checking             Disabled
+SeUndockPrivilege             Remove computer from docking station Disabled
+SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
+SeTimeZonePrivilege           Change the time zone                 Disabled
+```
+
+
 ## Reference
 - [Priv2Admin](https://github.com/gtworek/Priv2Admin) by [Grzegorz Tworek](https://twitter.com/0gtweet)
 - [Abusing Token Privileges For LPE](https://github.com/hatRiot/token-priv/blob/master/abusing_token_eop_1.0.txt) by [Bryan Alexander](https://twitter.com/dronesec) and [Steve Breen](https://twitter.com/breenmachine)
 - [whoami /priv](https://github.com/decoder-it/whoami-priv-Hackinparis2019) by [Andrea Pierini](https://twitter.com/decoder_it)
+
 
 ## Acknowledgments
 Thanks for your advices about WinDbg extension programming:
