@@ -702,7 +702,7 @@ SeUndockPrivilege             Remove computer from docking station Disabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 SeTimeZonePrivilege           Change the time zone                 Enabled
 
-C:\dev>C:\dev\Projects\SwitchPriv\SwitchPriv\bin\Release\SwitchPriv.exe -d all
+C:\dev>SwitchPriv.exe -d all
 [>] Trying to disable all token privileges.
     |-> Target PID : 14620
 [*] Done.
