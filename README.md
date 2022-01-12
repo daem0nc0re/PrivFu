@@ -606,9 +606,9 @@ SwitchPriv - Tool to control token privileges.
 Usage: SwitchPriv.exe [Options]
 
         -h, --help    : Displays this help message.
-        -e, --enable  : Specifies privilege to enable. Case insensitive.
-        -d, --disable : Specifies privilege to disable. Case insensitive.
-        -p, --pid     : Specifies the target PID. Default specifies PPID
+        -e, --enable  : Specifies token privilege to enable. Case insensitive.
+        -d, --disable : Specifies token privilege to disable. Case insensitive.
+        -p, --pid     : Specifies the target PID. Default specifies PPID.
         -l, --list    : List values for --enable or --disable option.
 ```
 
