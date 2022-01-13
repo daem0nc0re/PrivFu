@@ -37,6 +37,10 @@ namespace SwitchPriv.Handler
             {
                 Helpers.ListPrivilegeOptionValues();
             }
+            else if (options.GetFlag("get"))
+            {
+                Modules.GetPrivileges(pid);
+            }
             else if (options.GetValue("enable") != string.Empty)
             {
                 if (string.Compare(options.GetValue("enable"), "All", opt) == 0)

@@ -8,21 +8,12 @@ namespace SwitchPriv.Library
 {
     public class Helpers
     {
-        public static bool DisableSinglePrivilege(IntPtr hToken, string privilegeName)
+        public static bool DisableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
         {
             int error;
 
-            if (!GetPrivilegeLuid(privilegeName, out Win32Struct.LUID privilegeLuid))
-                return false;
-
-            if (!IsPrivilegeEnabled(hToken, privilegeLuid, out bool isEnabled))
-                return false;
-
-            if (!isEnabled)
-                return true;
-
             Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
-            tp.Privilege[0].Luid = privilegeLuid;
+            tp.Privilege[0].Luid = priv;
             tp.Privilege[0].Attributes = 0;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
@@ -37,7 +28,7 @@ namespace SwitchPriv.Library
                 IntPtr.Zero))
             {
                 error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to enable {0}.", privilegeName);
+                Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
 
                 return false;
@@ -46,22 +37,13 @@ namespace SwitchPriv.Library
             return true;
         }
 
-        public static bool EnableSinglePrivilege(IntPtr hToken, string privilegeName)
+        public static bool EnableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
         {
             int error;
 
-            if (!GetPrivilegeLuid(privilegeName, out Win32Struct.LUID privilegeLuid))
-                return false;
-
-            if (!IsPrivilegeEnabled(hToken, privilegeLuid, out bool isEnabled))
-                return false;
-
-            if (isEnabled)
-                return true;
-
             Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
-            tp.Privilege[0].Luid = privilegeLuid;
-            tp.Privilege[0].Attributes = Win32Const.SE_PRIVILEGE_ENABLED;
+            tp.Privilege[0].Luid = priv;
+            tp.Privilege[0].Attributes = (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
@@ -75,13 +57,62 @@ namespace SwitchPriv.Library
                 IntPtr.Zero))
             {
                 error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to enable {0}.", privilegeName);
+                Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
 
                 return false;
             }
 
             return true;
+        }
+
+        public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(IntPtr hToken)
+        {
+            int ERROR_INSUFFICIENT_BUFFER = 122;
+            int error = ERROR_INSUFFICIENT_BUFFER;
+            bool status = false;
+            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
+            Dictionary<Win32Struct.LUID, uint> availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
+            IntPtr pTokenPrivileges = IntPtr.Zero;
+
+            while (!status && (error == ERROR_INSUFFICIENT_BUFFER))
+            {
+                pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
+                ZeroMemory(pTokenPrivileges, bufferLength);
+
+                status = Win32Api.GetTokenInformation(
+                    hToken,
+                    Win32Const.TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    pTokenPrivileges,
+                    bufferLength,
+                    out bufferLength);
+
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Marshal.FreeHGlobal(pTokenPrivileges);
+                }
+            }
+
+            if (!status)
+                return availablePrivs;
+
+            int privCount = Marshal.ReadInt32(pTokenPrivileges);
+            IntPtr buffer = new IntPtr(pTokenPrivileges.ToInt64() + Marshal.SizeOf(privCount));
+
+            for (var count = 0; count < privCount; count++)
+            {
+                var luidAndAttr = (Win32Struct.LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                    buffer,
+                    typeof(Win32Struct.LUID_AND_ATTRIBUTES));
+
+                availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
+                buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
+            }
+
+            Marshal.FreeHGlobal(pTokenPrivileges);
+
+            return availablePrivs;
         }
 
         public static string GetFullPrivilegeName(string shortenName)
@@ -162,60 +193,6 @@ namespace SwitchPriv.Library
                 return string.Empty;
         }
 
-        public static Dictionary<string, bool> GetPrivilegeStatus(IntPtr hToken)
-        {
-            Dictionary<string, bool> privileges = new Dictionary<string, bool>();
-            List<string> privilegeNames = new List<string> {
-                "SeCreateTokenPrivilege",
-                "SeAssignPrimaryTokenPrivilege",
-                "SeLockMemoryPrivilege",
-                "SeIncreaseQuotaPrivilege",
-                "SeMachineAccountPrivilege",
-                "SeTcbPrivilege",
-                "SeSecurityPrivilege",
-                "SeTakeOwnershipPrivilege",
-                "SeLoadDriverPrivilege",
-                "SeSystemProfilePrivilege",
-                "SeSystemtimePrivilege",
-                "SeProfileSingleProcessPrivilege",
-                "SeIncreaseBasePriorityPrivilege",
-                "SeCreatePagefilePrivilege",
-                "SeCreatePermanentPrivilege",
-                "SeBackupPrivilege",
-                "SeRestorePrivilege",
-                "SeShutdownPrivilege",
-                "SeDebugPrivilege",
-                "SeAuditPrivilege",
-                "SeSystemEnvironmentPrivilege",
-                "SeChangeNotifyPrivilege",
-                "SeRemoteShutdownPrivilege",
-                "SeUndockPrivilege",
-                "SeSyncAgentPrivilege",
-                "SeEnableDelegationPrivilege",
-                "SeManageVolumePrivilege",
-                "SeImpersonatePrivilege",
-                "SeCreateGlobalPrivilege",
-                "SeTrustedCredManAccessPrivilege",
-                "SeRelabelPrivilege",
-                "SeIncreaseWorkingSetPrivilege",
-                "SeTimeZonePrivilege",
-                "SeCreateSymbolicLinkPrivilege",
-                "SeDelegateSessionUserImpersonatePrivilege"
-            };
-
-            foreach (var priv in privilegeNames)
-            {
-                if (!GetPrivilegeLuid(priv, out Win32Struct.LUID luid))
-                    continue;
-                if (!IsPrivilegeEnabled(hToken, luid, out bool isEnabled))
-                    continue;
-
-                privileges.Add(priv, isEnabled);
-            }
-
-            return privileges;
-        }
-
         public static int GetParentProcessId(IntPtr hProcess)
         {
             var sizeInformation = Marshal.SizeOf(typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
@@ -269,6 +246,27 @@ namespace SwitchPriv.Library
             return true;
         }
 
+        public static string GetPrivilegeName(Win32Struct.LUID priv)
+        {
+            int error;
+            int cchName = 255;
+            StringBuilder privilegeName = new StringBuilder(255);
+
+            if (!Win32Api.LookupPrivilegeName(
+                string.Empty,
+                ref priv,
+                privilegeName,
+                ref cchName))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to lookup privilege name.");
+                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
+                return string.Empty;
+            }
+
+            return privilegeName.ToString();
+        }
+
         public static string GetWin32ErrorMessage(int code)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
@@ -290,11 +288,11 @@ namespace SwitchPriv.Library
 
             if (status == 0)
             {
-                return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
+                return string.Format("[ERROR] Code 0x{0}\n", code.ToString("X8"));
             }
             else
             {
-                return string.Format("[ERROR] Code 0x{0} : {1}",
+                return string.Format("[ERROR] Code 0x{0} : {1}\n",
                     code.ToString("X8"),
                     message.ToString().Trim());
             }
@@ -302,7 +300,7 @@ namespace SwitchPriv.Library
 
         public static bool IsPrivilegeEnabled(
             IntPtr hToken, 
-            Win32Struct.LUID privilegeLuid, 
+            Win32Struct.LUID priv, 
             out bool isEnabled)
         {
             int error;
@@ -311,12 +309,12 @@ namespace SwitchPriv.Library
             if (hToken == IntPtr.Zero)
                 return false;
 
-            var privs = new Win32Struct.PRIVILEGE_SET(1, Win32Const.PRIVILEGE_SET_ALL_NECESSARY);
-            privs.Privilege[0].Luid = privilegeLuid;
-            privs.Privilege[0].Attributes = Win32Const.SE_PRIVILEGE_ENABLED;
+            var privSet = new Win32Struct.PRIVILEGE_SET(1, Win32Const.PRIVILEGE_SET_ALL_NECESSARY);
+            privSet.Privilege[0].Luid = priv;
+            privSet.Privilege[0].Attributes = (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
 
-            IntPtr pPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(privs));
-            Marshal.StructureToPtr(privs, pPrivileges, true);
+            IntPtr pPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(privSet));
+            Marshal.StructureToPtr(privSet, pPrivileges, true);
 
             if (!Win32Api.PrivilegeCheck(
                 hToken,
@@ -338,7 +336,7 @@ namespace SwitchPriv.Library
 
         public static void ListPrivilegeOptionValues()
         {
-            Console.WriteLine("");
+            Console.WriteLine();
             Console.WriteLine("Available values for --enable or --disable option:\n");
             Console.WriteLine("    + CreateToken                    : Specifies SeCreateTokenPrivilege.");
             Console.WriteLine("    + AssignPrimaryToken             : Specifies SeAssignPrimaryTokenPrivilege.");
@@ -376,7 +374,17 @@ namespace SwitchPriv.Library
             Console.WriteLine("    + CreateSymbolicLink             : Specifies SeCreateSymbolicLinkPrivilege.");
             Console.WriteLine("    + DelegateSessionUserImpersonate : Specifies SeDelegateSessionUserImpersonatePrivilege.");
             Console.WriteLine("    + All                            : Specifies all token privileges.");
-            Console.WriteLine("");
+            Console.WriteLine();
+        }
+
+        public static void ZeroMemory(IntPtr buffer, int size)
+        {
+            byte[] nullBytes = new byte[size];
+
+            for (var idx = 0; idx < size; idx++)
+                nullBytes[idx] = 0;
+
+            Marshal.Copy(nullBytes, 0, buffer, size);
         }
     }
 }

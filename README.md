@@ -609,10 +609,11 @@ Usage: SwitchPriv.exe [Options]
         -e, --enable  : Specifies token privilege to enable. Case insensitive.
         -d, --disable : Specifies token privilege to disable. Case insensitive.
         -p, --pid     : Specifies the target PID. Default specifies PPID.
-        -l, --list    : List values for --enable or --disable option.
+        -g, --get     : Flag to get available privileges for the target process.
+        -l, --list    : Flag to list values for --enable or --disable option.
 ```
 
-To list values for `--enable` or `--disable` option, execute this tool with `--list` option as follows:
+To list values for `--enable` or `--disable` option, execute this tool with `--list` flag as follows:
 
 ```
 C:\dev>SwitchPriv.exe -l
@@ -631,27 +632,65 @@ Available values for --enable or --disable option:
 --snip--
 ```
 
-
 If you want to control privilege for a remote process, specify the target PID as follows.
-For example, to enable SeUndockPrivilege for PID 23728, execute as follows:
+For example, to enable SeUndockPrivilege for PID 7584, execute with `--enable` option as follows:
 
 ```
-C:\dev>SwitchPriv.exe -e undock -p 23728
+C:\dev>SwitchPriv.exe -p 7584 -e undock
+
 [>] Trying to enable SeUndockPrivilege.
-    |-> Target PID : 23728
+    |-> Target PID   : 7584
+    |-> Process Name : notepad
+
 [+] SeUndockPrivilege is enabled successfully.
 ```
 
-to enable SeChangeNotifyPrivilege for PID 1523, execute as follows:
+To list current token privileges for the target process, execute with `--get` flag as follws:
 
 ```
-C:\dev>SwitchPriv.exe -d changenotify -p 1523
+C:\dev>SwitchPriv.exe -p 7584 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    |-> Target PID   : 7584
+    |-> Process Name : notepad
+
+Privilege Name                             State
+========================================== ========
+SeShutdownPrivilege                        Disabled
+SeChangeNotifyPrivilege                    Enabled
+SeUndockPrivilege                          Enabled
+SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Disabled
+```
+
+To enable SeChangeNotifyPrivilege, execute with `--disable` option as follows:
+
+```
+C:\dev>SwitchPriv.exe -p 7584 -d changenotify
+
 [>] Trying to disable SeChangeNotifyPrivilege.
-    |-> Target PID : 1523
+    |-> Target PID   : 7584
+    |-> Process Name : notepad
+
 [+] SeChangeNotifyPrivilege is disabled successfully.
+
+
+C:\dev>SwitchPriv.exe -p 7584 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    |-> Target PID   : 7584
+    |-> Process Name : notepad
+
+Privilege Name                             State
+========================================== ========
+SeShutdownPrivilege                        Disabled
+SeChangeNotifyPrivilege                    Disabled
+SeUndockPrivilege                          Enabled
+SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Disabled
 ```
 
-If you don't specify `--pid` option, targets parent process of this tool:
+If you don't specify `--pid` option, targets parent process of this tool as follows:
 
 ```
 C:\dev>whoami /priv
@@ -668,9 +707,13 @@ SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 SeTimeZonePrivilege           Change the time zone                 Disabled
 
 C:\dev>SwitchPriv.exe -e timezone
+
 [>] Trying to enable SeTimeZonePrivilege.
-    |-> Target PID : 14620
+    |-> Target PID   : 2752
+    |-> Process Name : cmd
+
 [+] SeTimeZonePrivilege is enabled successfully.
+
 
 C:\dev>whoami /priv
 
@@ -684,6 +727,20 @@ SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
 SeUndockPrivilege             Remove computer from docking station Disabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 SeTimeZonePrivilege           Change the time zone                 Enabled
+
+C:\dev>SwitchPriv.exe -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    |-> Target PID   : 2752
+    |-> Process Name : cmd
+
+Privilege Name                             State
+========================================== ========
+SeShutdownPrivilege                        Disabled
+SeChangeNotifyPrivilege                    Enabled
+SeUndockPrivilege                          Disabled
+SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Enabled
 ```
 
 To enable or disable all available token privileges, specify `all` as the value for `--enable` or `--disable` option:
@@ -702,10 +759,17 @@ SeUndockPrivilege             Remove computer from docking station Disabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 SeTimeZonePrivilege           Change the time zone                 Enabled
 
-C:\dev>SwitchPriv.exe -d all
-[>] Trying to disable all token privileges.
-    |-> Target PID : 14620
+C:\dev>SwitchPriv.exe -e all
+
+[>] Trying to enable all token privileges.
+    |-> Target PID   : 2752
+    |-> Process Name : cmd
+
+[*] (SUCCESS) Enabled SeShutdownPrivilege.
+[*] (SUCCESS) Enabled SeUndockPrivilege.
+[*] (SUCCESS) Enabled SeIncreaseWorkingSetPrivilege.
 [*] Done.
+
 
 C:\dev>whoami /priv
 
@@ -713,12 +777,12 @@ PRIVILEGES INFORMATION
 ----------------------
 
 Privilege Name                Description                          State
-============================= ==================================== ========
-SeShutdownPrivilege           Shut down the system                 Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking             Disabled
-SeUndockPrivilege             Remove computer from docking station Disabled
-SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
-SeTimeZonePrivilege           Change the time zone                 Disabled
+============================= ==================================== =======
+SeShutdownPrivilege           Shut down the system                 Enabled
+SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
+SeUndockPrivilege             Remove computer from docking station Enabled
+SeIncreaseWorkingSetPrivilege Increase a process working set       Enabled
+SeTimeZonePrivilege           Change the time zone                 Enabled
 ```
 
 

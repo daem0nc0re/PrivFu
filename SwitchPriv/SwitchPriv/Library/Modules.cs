@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using SwitchPriv.Interop;
 
@@ -18,8 +19,17 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("[>] Trying to disable all token privileges.");
-            Console.WriteLine("    |-> Target PID : {0}", pid);
+            Console.WriteLine("\n[>] Trying to disable all token privileges.");
+            Console.WriteLine("    |-> Target PID   : {0}", pid);
+            try
+            {
+                Console.WriteLine("    |-> Process Name : {0}\n", (Process.GetProcessById(pid)).ProcessName);
+            }
+            catch
+            {
+                Console.WriteLine("[-] There is no target process.\n");
+                return false;
+            }
 
             hProcess = Win32Api.OpenProcess(
                     (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
@@ -46,15 +56,22 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<string, bool> privStatus = Helpers.GetPrivilegeStatus(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            bool isEnabled;
 
-            foreach (var status in privStatus)
+            foreach (var priv in privs)
             {
-                if (status.Value)
-                    Helpers.DisableSinglePrivilege(hToken, status.Key);
+                isEnabled = ((priv.Value & (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+
+                if (isEnabled)
+                {
+                    Console.WriteLine("[*] ({0}) Disabled {1}.",
+                        Helpers.DisableSinglePrivilege(hToken, priv.Key) ? "SUCCESS" : "FAILED",
+                        Helpers.GetPrivilegeName(priv.Key));
+                }
             }
 
-            Console.WriteLine("[*] Done.");
+            Console.WriteLine("[*] Done.\n");
 
             Win32Api.CloseHandle(hToken);
             Win32Api.CloseHandle(hProcess);
@@ -67,14 +84,26 @@ namespace SwitchPriv.Library
             int error;
             IntPtr hProcess;
 
+            if (!Helpers.GetPrivilegeLuid(privilegeName, out Win32Struct.LUID priv))
+                return false;
+
             if (pid == 0)
                 pid = Helpers.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("[>] Trying to disable {0}.", privilegeName);
-            Console.WriteLine("    |-> Target PID : {0}", pid);
+            Console.WriteLine("\n[>] Trying to disable {0}.", privilegeName);
+            Console.WriteLine("    |-> Target PID   : {0}", pid);
+            try
+            {
+                Console.WriteLine("    |-> Process Name : {0}\n", (Process.GetProcessById(pid)).ProcessName);
+            }
+            catch
+            {
+                Console.WriteLine("\n[-] There is no target process.\n");
+                return false;
+            }
 
             hProcess = Win32Api.OpenProcess(
                     (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
@@ -101,19 +130,41 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            bool status = Helpers.DisableSinglePrivilege(hToken, privilegeName);
+            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            bool isAvailable = false;
+            bool isEnabled = false;
 
-            if (status && Marshal.GetLastWin32Error() == 0) // ERROR_SUCCESS = 0
+            foreach (var luidAndAttr in privs)
             {
-                Console.WriteLine("[+] {0} is disabled successfully.", privilegeName);
+                if (luidAndAttr.Key.LowPart == priv.LowPart && luidAndAttr.Key.HighPart == priv.HighPart)
+                {
+                    isAvailable = true;
+                    isEnabled = ((luidAndAttr.Value & (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                    break;
+                }
             }
-            else if (status && Marshal.GetLastWin32Error() == 1300) // ERROR_NOT_ALL_ASSIGNED = 1300
+
+            if (!isAvailable)
             {
-                Console.WriteLine("[-] {0} is not available for the target process.", privilegeName);
+                Console.WriteLine("[-] {0} is not available for the target process.\n", privilegeName);
+                Win32Api.CloseHandle(hToken);
+                Win32Api.CloseHandle(hProcess);
+                return false;
             }
-            else
+
+            if (!isEnabled)
             {
-                Console.WriteLine("[-] Failed to disable {0}.", privilegeName);
+                Console.WriteLine("[-] {0} is already disabled.\n", privilegeName);
+                Win32Api.CloseHandle(hToken);
+                Win32Api.CloseHandle(hProcess);
+                return false;
+            }
+
+            bool status = Helpers.DisableSinglePrivilege(hToken, priv);
+
+            if (status)
+            {
+                Console.WriteLine("[+] {0} is disabled successfully.\n", privilegeName);
             }
 
             Win32Api.CloseHandle(hToken);
@@ -133,8 +184,17 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("[>] Trying to enable all token privileges.");
-            Console.WriteLine("    |-> Target PID : {0}", pid);
+            Console.WriteLine("\n[>] Trying to enable all token privileges.");
+            Console.WriteLine("    |-> Target PID   : {0}", pid);
+            try
+            {
+                Console.WriteLine("    |-> Process Name : {0}\n", (Process.GetProcessById(pid)).ProcessName);
+            }
+            catch
+            {
+                Console.WriteLine("\n[-] There is no target process.\n");
+                return false;
+            }
 
             hProcess = Win32Api.OpenProcess(
                     (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
@@ -161,15 +221,22 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<string, bool> privStatus = Helpers.GetPrivilegeStatus(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            bool isEnabled;
 
-            foreach (var status in privStatus)
+            foreach (var priv in privs)
             {
-                if (!status.Value)
-                    Helpers.EnableSinglePrivilege(hToken, status.Key);
+                isEnabled = ((priv.Value & (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+
+                if (!isEnabled)
+                {
+                    Console.WriteLine("[*] ({0}) Enabled {1}.",
+                        Helpers.EnableSinglePrivilege(hToken, priv.Key) ? "SUCCESS" : "FAILED",
+                        Helpers.GetPrivilegeName(priv.Key));
+                }
             }
 
-            Console.WriteLine("[*] Done.");
+            Console.WriteLine("[*] Done.\n");
 
             Win32Api.CloseHandle(hToken);
             Win32Api.CloseHandle(hProcess);
@@ -182,14 +249,26 @@ namespace SwitchPriv.Library
             int error;
             IntPtr hProcess;
 
+            if (!Helpers.GetPrivilegeLuid(privilegeName, out Win32Struct.LUID priv))
+                return false;
+
             if (pid == 0)
                 pid = Helpers.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("[>] Trying to enable {0}.", privilegeName);
-            Console.WriteLine("    |-> Target PID : {0}", pid);
+            Console.WriteLine("\n[>] Trying to enable {0}.", privilegeName);
+            Console.WriteLine("    |-> Target PID   : {0}", pid);
+            try
+            {
+                Console.WriteLine("    |-> Process Name : {0}\n", (Process.GetProcessById(pid)).ProcessName);
+            }
+            catch
+            {
+                Console.WriteLine("\n[-] There is no target process.\n");
+                return false;
+            }
 
             hProcess = Win32Api.OpenProcess(
                     (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
@@ -216,20 +295,119 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            bool status = Helpers.EnableSinglePrivilege(hToken, privilegeName);
+            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            bool isAvailable = false;
+            bool isEnabled = false;
 
-            if (status && Marshal.GetLastWin32Error() == 0) // ERROR_SUCCESS = 0
+            foreach (var luidAndAttr in privs)
             {
-                Console.WriteLine("[+] {0} is enabled successfully.", privilegeName);
+                if (luidAndAttr.Key.LowPart == priv.LowPart && luidAndAttr.Key.HighPart == priv.HighPart)
+                {
+                    isAvailable = true;
+                    isEnabled = ((luidAndAttr.Value & (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                    break;
+                }
             }
-            else if (status && Marshal.GetLastWin32Error() == 1300) // ERROR_NOT_ALL_ASSIGNED = 1300
+
+            if (!isAvailable)
             {
-                Console.WriteLine("[-] {0} is not available for the target process.", privilegeName);
+                Console.WriteLine("[-] {0} is not available for the target process.\n", privilegeName);
+                Win32Api.CloseHandle(hToken);
+                Win32Api.CloseHandle(hProcess);
+                return false;
+            }
+
+            if (isEnabled)
+            {
+                Console.WriteLine("[-] {0} is already enabled.\n", privilegeName);
+                Win32Api.CloseHandle(hToken);
+                Win32Api.CloseHandle(hProcess);
+                return false;
+            }
+
+            bool status = Helpers.EnableSinglePrivilege(hToken, priv);
+
+            if (status)
+            {
+                Console.WriteLine("[+] {0} is enabled successfully.\n", privilegeName);
+            }
+
+            Win32Api.CloseHandle(hToken);
+            Win32Api.CloseHandle(hProcess);
+
+            return true;
+        }
+
+        public static bool GetPrivileges(int pid)
+        {
+            int error;
+            IntPtr hProcess;
+
+            if (pid == 0)
+                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+
+            if (pid == 0)
+                return false;
+
+            Console.WriteLine("\n[>] Trying to get available token privilege(s) for the target process.");
+            Console.WriteLine("    |-> Target PID   : {0}", pid);
+            try
+            {
+                Console.WriteLine("    |-> Process Name : {0}\n", (Process.GetProcessById(pid)).ProcessName);
+            }
+            catch
+            {
+                Console.WriteLine("\n[-] There is no target process.\n");
+                return false;
+            }
+
+            hProcess = Win32Api.OpenProcess(
+                    (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
+                    false,
+                    pid);
+
+            if (hProcess == IntPtr.Zero)
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
+                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                return false;
+            }
+
+            if (!Win32Api.OpenProcessToken(
+                hProcess,
+                (uint)(Win32Const.TokenAccessFlags.TOKEN_QUERY | Win32Const.TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES),
+                out IntPtr hToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
+                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Win32Api.CloseHandle(hProcess);
+                return false;
+            }
+
+            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            bool isEnabled;
+            string privilegeName;
+
+            if (privs.Count > 0)
+            {
+                Console.WriteLine("Privilege Name                             State");
+                Console.WriteLine("========================================== ========");
             }
             else
             {
-                Console.WriteLine("[-] Failed to enable {0}.", privilegeName);
+                Console.WriteLine("[*] No available token privilege.");
             }
+
+            foreach (var priv in privs)
+            {
+                isEnabled = ((priv.Value & (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                privilegeName = Helpers.GetPrivilegeName(priv.Key);
+                Console.WriteLine("{0,-42} {1}", privilegeName, isEnabled ? "Enabled" : "Disabled");
+            }
+
+            Console.WriteLine();
 
             Win32Api.CloseHandle(hToken);
             Win32Api.CloseHandle(hProcess);

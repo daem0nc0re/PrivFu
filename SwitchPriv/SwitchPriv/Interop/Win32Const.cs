@@ -5,6 +5,14 @@ namespace SwitchPriv.Interop
     public class Win32Const
     {
         [Flags]
+        public enum PrivilegeAttributeFlags : uint
+        {
+            SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001,
+            SE_PRIVILEGE_ENABLED = 0x00000002,
+            SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000
+        }
+
+        [Flags]
         public enum ProcessAccessFlags : uint
         {
             PROCESS_ALL_ACCESS = 0x001F0FFF,
@@ -20,6 +28,21 @@ namespace SwitchPriv.Interop
             PROCESS_QUERY_INFORMATION = 0x00000400,
             PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
             SYNCHRONIZE = 0x00100000
+        }
+
+        public enum PROCESSINFOCLASS
+        {
+            ProcessBasicInformation = 0x00,
+            ProcessDebugPort = 0x07,
+            ProcessExceptionPort = 0x08,
+            ProcessAccessToken = 0x09,
+            ProcessWow64Information = 0x1A,
+            ProcessImageFileName = 0x1B,
+            ProcessDebugObjectHandle = 0x1E,
+            ProcessDebugFlags = 0x1F,
+            ProcessExecuteFlags = 0x22,
+            ProcessInstrumentationCallback = 0x28,
+            MaxProcessInfoClass = 0x64
         }
 
         [Flags]
@@ -39,26 +62,40 @@ namespace SwitchPriv.Interop
             TOKEN_READ = 0xF00FF,
         }
 
-        public enum PROCESSINFOCLASS
+        public enum TOKEN_INFORMATION_CLASS
         {
-            ProcessBasicInformation = 0x00,
-            ProcessDebugPort = 0x07,
-            ProcessExceptionPort = 0x08,
-            ProcessAccessToken = 0x09,
-            ProcessWow64Information = 0x1A,
-            ProcessImageFileName = 0x1B,
-            ProcessDebugObjectHandle = 0x1E,
-            ProcessDebugFlags = 0x1F,
-            ProcessExecuteFlags = 0x22,
-            ProcessInstrumentationCallback = 0x28,
-            MaxProcessInfoClass = 0x64
+            TokenUser = 1,
+            TokenGroups,
+            TokenPrivileges,
+            TokenOwner,
+            TokenPrimaryGroup,
+            TokenDefaultDacl,
+            TokenSource,
+            TokenType,
+            TokenImpersonationLevel,
+            TokenStatistics,
+            TokenRestrictedSids,
+            TokenSessionId,
+            TokenGroupsAndPrivileges,
+            TokenSessionReference,
+            TokenSandBoxInert,
+            TokenAuditPolicy,
+            TokenOrigin,
+            TokenElevationType,
+            TokenLinkedToken,
+            TokenElevation,
+            TokenHasRestrictions,
+            TokenAccessInformation,
+            TokenVirtualizationAllowed,
+            TokenVirtualizationEnabled,
+            TokenIntegrityLevel,
+            TokenUIAccess,
+            TokenMandatoryPolicy,
+            TokenLogonSid,
+            MaxTokenInfoClass
         }
 
         public const int STATUS_SUCCESS = 0;
-
         public const int PRIVILEGE_SET_ALL_NECESSARY = 1;
-        public const uint SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001;
-        public const uint SE_PRIVILEGE_ENABLED = 0x00000002;
-        public const uint SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000;
     }
 }

@@ -12,7 +12,8 @@ namespace SwitchPriv
             options.Add(false, "e", "enable", string.Empty, "Specifies token privilege to enable. Case insensitive.");
             options.Add(false, "d", "disable", string.Empty, "Specifies token privilege to disable. Case insensitive.");
             options.Add(false, "p", "pid", string.Empty, "Specifies the target PID. Default specifies PPID.");
-            options.Add(false, "l", "list", false, "List values for --enable or --disable option.");
+            options.Add(false, "g", "get", false, "Flag to get available privileges for the target process.");
+            options.Add(false, "l", "list", false, "Flag to list values for --enable or --disable option.");
             options.Parse(args);
 
             Execute.Run(options);
