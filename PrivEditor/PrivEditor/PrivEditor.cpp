@@ -110,12 +110,18 @@ DECLARE_API(addpriv)
     }
 
     if (IsPresent(pTokenPrivilege, mask)) {
-        dprintf("[*] Requested privilege is already present.\n\n");
-        SetPresent(pTokenPrivilege, mask);
+        if (mask == MASK_ALL)
+            dprintf("[*] All privileges are already present.\n\n");
+        else
+            dprintf("[*] %s is already present.\n\n", GetPrivilegeName(mask).c_str());
         return;
     }
 
-    dprintf("[>] Trying to add the requested privilege(s).\n");
+    if (mask == MASK_ALL)
+        dprintf("[>] Trying to add all privileges.\n");
+    else
+        dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+
     SetPresent(pTokenPrivilege, mask);
     dprintf("[*] Completed.\n\n");
 }
@@ -230,7 +236,11 @@ DECLARE_API(disablepriv)
         return;
     }
 
-    dprintf("[>] Trying to disable the requested privilege(s).\n");
+    if (mask == MASK_ALL)
+        dprintf("[>] Trying to disable all privileges.\n");
+    else
+        dprintf("[>] Trying to disable %s.\n", GetPrivilegeName(mask).c_str());
+    
     RemoveEnabled(pTokenPrivilege, mask);
     dprintf("[*] Completed.\n\n");
 }
@@ -346,17 +356,31 @@ DECLARE_API(enablepriv)
     }
 
     if (!IsPresent(pTokenPrivilege, mask)) {
-        dprintf("[*] Requested privilege is not present.\n");
-        dprintf("[>] Adding the requested privilege(s).\n");
+        if (mask == MASK_ALL) {
+            dprintf("[*] Not all privileges are present.\n");
+            dprintf("[>] Trying to add all privileges.\n");
+        }
+        else {
+            dprintf("[*] %s is not present.\n", GetPrivilegeName(mask).c_str());
+            dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+        }
+
         SetPresent(pTokenPrivilege, mask);
     }
 
     if (IsEnabled(pTokenPrivilege, mask)) {
-        dprintf("[*] Requested privilege is already enabled.\n\n");
+        if (mask == MASK_ALL)
+            dprintf("[*] All privileges are already enabled.\n\n");
+        else
+            dprintf("[*] %s is already enabled.\n\n", GetPrivilegeName(mask).c_str());
         return;
     }
 
-    dprintf("[>] Trying to enable the requested privilege(s).\n");
+    if (mask == MASK_ALL)
+        dprintf("[>] Trying to enable all privileges.\n");
+    else
+        dprintf("[>] Trying to enable %s.\n", GetPrivilegeName(mask).c_str());
+
     SetEnabled(pTokenPrivilege, mask);
     dprintf("[*] Completed.\n\n");
 }
@@ -516,16 +540,16 @@ DECLARE_API(getps)
     std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
 
     if (IsPtr64()) {
-        dprintf("   PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
-        dprintf("====== =================== ======================== ============\n");
+        dprintf("     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
+        dprintf("======== =================== ======================== ============\n");
     }
     else {
-        dprintf("   PID nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
-        dprintf("====== ============ ======================== ============\n");
+        dprintf("     PID nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
+        dprintf("======== ============ ======================== ============\n");
     }
 
     for (auto proc : processList) {
-        if (proc.first <= 0) {
+        if (proc.first == 0) {
             processName = std::string("System Idle Process");
             pTokenPrivilege = 0;
         }
@@ -536,7 +560,7 @@ DECLARE_API(getps)
 
         if (filter.empty()) {
             if (IsPtr64()) {
-                dprintf("%6d 0x%08x`%08x      0x%08x`%08x %s\n",
+                dprintf("%8d 0x%08x`%08x      0x%08x`%08x %s\n",
                     proc.first <= 0 ? 0 : proc.first,
                     ((ULONG64)proc.second >> 32) & 0xffffffff,
                     proc.second & 0xffffffff,
@@ -545,7 +569,7 @@ DECLARE_API(getps)
                     processName.c_str());
             }
             else {
-                dprintf("%6d   0x%08x               0x%08x %s\n",
+                dprintf("%8d   0x%08x               0x%08x %s\n",
                     proc.first <= 0 ? 0 : proc.first,
                     proc.second,
                     pTokenPrivilege,
@@ -558,7 +582,7 @@ DECLARE_API(getps)
 
             if (IsPtr64() &&
                 (_strnicmp(filter.c_str(), processName.c_str(), filter.size()) == 0)) {
-                dprintf("%6d 0x%08x`%08x      0x%08x`%08x %s\n",
+                dprintf("%8d 0x%08x`%08x      0x%08x`%08x %s\n",
                     proc.first <= 0 ? 0 : proc.first,
                     ((ULONG64)proc.second >> 32) & 0xffffffff,
                     proc.second & 0xffffffff,
@@ -567,7 +591,7 @@ DECLARE_API(getps)
                     processName.c_str());
             }
             else if (_strnicmp(filter.c_str(), processName.c_str(), filter.size()) == 0) {
-                dprintf("%6d   0x%08x               0x%08x %s\n",
+                dprintf("%8d   0x%08x               0x%08x %s\n",
                     proc.first <= 0 ? 0 : proc.first,
                     proc.second,
                     pTokenPrivilege,
@@ -636,7 +660,11 @@ DECLARE_API(rmpriv)
         return;
     }
 
-    dprintf("[>] Trying to delete the requested privilege(s).\n");
+    if (mask == MASK_ALL)
+        dprintf("[>] Trying to remove all privileges.\n");
+    else
+        dprintf("[>] Trying to remove %s.\n", GetPrivilegeName(mask).c_str());
+
     RemovePresent(pTokenPrivilege, mask);
     dprintf("[*] Completed.\n\n");
 }

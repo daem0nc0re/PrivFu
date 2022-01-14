@@ -35,10 +35,10 @@ ULONG GetFieldOffset(LPCSTR Type, LPCSTR Field, PULONG pOffset)
 BOOL IsKernelAddress(ULONG_PTR Address)
 {
     if (IsPtr64()) {
-        return (Address >= 0xffff080000000000);
+        return (Address >= 0xffff080000000000ULL);
     }
     else {
-        return (Address >= 0x80000000);
+        return (Address >= 0x80000000UL);
     }
 }
 

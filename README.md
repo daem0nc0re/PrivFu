@@ -24,7 +24,7 @@ Codes in this repository are intended to help investigate how token privileges w
 
 ## PrivEditor
 PrivEditor is kernel mode WinDbg extension to manipulate token privilege of specific process.
-This extension makes it easy to configure the token privilege you want to investigate.
+This extension makes it easy to configure the token privilege you want to investigate:
 
 ```
 0: kd> .load C:\dev\PrivEditor\x64\Release\PrivEditor.dll
@@ -48,7 +48,7 @@ Commands :
 
 
 ### getps Command
-This command is to list processes in your target system.
+This command is to list processes in your target system:
 
 ```
 0: kd> !getps /?
@@ -65,37 +65,39 @@ If you execute this command without any arguments, this command list all process
 ```
 0: kd> !getps
 
-   PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name
-====== =================== ======================== ============
-     0 0xfffff801`3a633630      0x00000000`00000000 System Idle Process
-     4 0xffffe588`db068380      0xffffa68a`fd007a40 System
-     8 0xffffe588`e0833440      0xffffa68b`016db7b0 vmtoolsd.exe
-    88 0xffffe588`db0ea080      0xffffa68a`fd00d080 Registry
-   312 0xffffe588`de396400      0xffffa68a`fd0aa990 smss.exe
-   348 0xffffe588`db0b4080      0xffffa68b`01fc4770 svchost.exe
-   380 0xffffe588`df5c73c0      0xffffa68b`00a640a0 svchost.exe
-   396 0xffffe588`de4f3140      0xffffa68a`fda5a630 csrss.exe
-   464 0xffffe588`df5be340      0xffffa68b`00a14a40 svchost.exe
+     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name
+======== =================== ======================== ============
+       0 0xfffff805`81233630      0x00000000`00000000 System Idle Process
+       4 0xffffd60f`ec068380      0xffffaf00`cec07a40 System
+      68 0xffffd60f`f1780480      0xffffaf00`d3b290a0 svchost.exe
+      88 0xffffd60f`ec0db080      0xffffaf00`cec0d080 Registry
+     324 0xffffd60f`ef342040      0xffffaf00`d0416080 smss.exe
+     348 0xffffd60f`f052f100      0xffffaf00`d25d30a0 dwm.exe
+     408 0xffffd60f`eca8e140      0xffffaf00`d21bd930 csrss.exe
+     480 0xffffd60f`f05a8340      0xffffaf00`d2568670 svchost.exe
+     484 0xffffd60f`efcd60c0      0xffffaf00`d06430e0 wininit.exe
+     500 0xffffd60f`efd130c0      0xffffaf00`d23100a0 csrss.exe
+     580 0xffffd60f`efdc0080      0xffffaf00`d2266630 winlogon.exe
 
 --snip--
 ```
 
 If you want to know specific processes, set string filter as follows.
-The filter works with forward matching and case insensitive.
+The filter works with forward matching and case insensitive:
 
 ```
 0: kd> !getps micro
 
-   PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name
-====== =================== ======================== ============
-  4456 0xffffe588`e04cd080      0xffffa68b`020617b0 MicrosoftEdge.exe
-  4912 0xffffe588`e06832c0      0xffffa68b`02607930 MicrosoftEdgeCP.exe
-  4944 0xffffe588`e06ad080      0xffffa68b`0255b2c0 MicrosoftEdgeSH.exe
+     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name
+======== =================== ======================== ============
+    4568 0xffffd60f`f14ed080      0xffffaf00`d3db60a0 MicrosoftEdge.exe
+    4884 0xffffd60f`f1647080      0xffffaf00`d3fc17b0 MicrosoftEdgeCP.exe
+    4892 0xffffd60f`f1685080      0xffffaf00`d3fc07b0 MicrosoftEdgeSH.exe
 ```
 
 
 ### getriv Command
-This command is to list token privileges of a specific process.
+This command is to list token privileges of a specific process:
 
 ```
 0: kd> !getpriv /?
@@ -110,7 +112,7 @@ Usage : !getpriv <PID>
 To use this command, you need to set a target process ID in decimal format as follows:
 
 ```
-0: kd> !getpriv 5328
+0: kd> !getpriv 5704
 
 Privilege Name                             State
 ========================================== ========
@@ -120,15 +122,15 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 5328
+[*] PID                      : 5704
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffe588`e043b480
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffa68b`029ab7f0
+[*] nt!_EPROCESS             : 0xffffd60f`f141e4c0
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a0c0a0
 ```
 
 
 ### addpriv Command
-This command is to add token privilege(s) to a specific process.
+This command is to add token privilege(s) to a specific process:
 
 ```
 0: kd> !addpriv /?
@@ -181,7 +183,7 @@ Usage : !addpriv <PID> <Privilege>
 For example, if you want to set SeDebugPrivilege to a specific process, set a target process ID for the first argument and shorten privilege name `debug` as listed in the help message for second argument as follows:
 
 ```
-0: kd> !getpriv 5768
+0: kd> !getpriv 5704
 
 Privilege Name                             State
 ========================================== ========
@@ -191,17 +193,17 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 5768
+[*] PID                      : 5704
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffb386`47e584c0
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffff9f04`76caa0a0
+[*] nt!_EPROCESS             : 0xffffd60f`f141e4c0
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a0c0a0
 
-0: kd> !addpriv 5768 debug
+0: kd> !addpriv 5704 debug
 
-[>] Trying to add the requested privilege(s).
+[>] Trying to add SeDebugPrivilege.
 [*] Completed.
 
-0: kd> !getpriv 5768
+0: kd> !getpriv 5704
 
 Privilege Name                             State
 ========================================== ========
@@ -212,10 +214,10 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 5768
+[*] PID                      : 5704
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffb386`47e584c0
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffff9f04`76caa0a0
+[*] nt!_EPROCESS             : 0xffffd60f`f141e4c0
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a0c0a0
 ```
 
 The privilege name argument is case insensitive.
@@ -223,12 +225,12 @@ The privilege name argument is case insensitive.
 If you want to add all token privileges at a time, set `all` as the privilege name argument:
 
 ```
-0: kd> !addpriv 6488 all
+0: kd> !addpriv 5704 all
 
-[>] Trying to add the requested privilege(s).
+[>] Trying to add all privileges.
 [*] Completed.
 
-0: kd> !getpriv 6488
+0: kd> !getpriv 5704
 
 Privilege Name                             State
 ========================================== ========
@@ -245,7 +247,7 @@ SeSecurityPrivilege                        Disabled
 
 
 ### rmpriv Command
-This command is to remove token privilege(s) from a specific process.
+This command is to remove token privilege(s) from a specific process:
 
 ```
 0: kd> !rmpriv /?
@@ -267,7 +269,7 @@ Usage : !rmpriv <PID> <Privilege>
 If you want to remove SeChangeNotifyPrivilege, execute this command as follows:
 
 ```
-0: kd> !getpriv 6792
+0: kd> !getpriv 352
 
 Privilege Name                             State
 ========================================== ========
@@ -277,17 +279,17 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 6792
+[*] PID                      : 352
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`ab755080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d69c2930
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d3468770
 
-0: kd> !rmpriv 6792 changenotify
+0: kd> !rmpriv 352 changenotify
 
-[>] Trying to delete the requested privilege(s).
+[>] Trying to remove SeChangeNotifyPrivilege.
 [*] Completed.
 
-0: kd> !getpriv 6792
+0: kd> !getpriv 352
 
 Privilege Name                             State
 ========================================== ========
@@ -296,34 +298,34 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 6792
+[*] PID                      : 352
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`ab755080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d69c2930
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d3468770
 ```
 
 As `!addpriv` command, you can remove all token privileges at a time by setting `all` as the privilege name argument:
 
 ```
-0: kd> !rmpriv 6792 all
+0: kd> !rmpriv 352 all
 
-[>] Trying to delete the requested privilege(s).
+[>] Trying to remove all privileges.
 [*] Completed.
 
-0: kd> !getpriv 6792
+0: kd> !getpriv 352
 
 Privilege Name                             State
 ========================================== ========
 
-[*] PID                      : 6792
+[*] PID                      : 352
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`ab755080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d69c2930
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d3468770
 ```
 
 
 ### enablepriv Command
-This command is to enable token privilege(s) of a specific process.
+This command is to enable token privilege(s) of a specific process:
 
 ```
 0: kd> !enablepriv /?
@@ -342,10 +344,10 @@ Usage : !enablepriv <PID> <Privilege>
 --snip--
 ```
 
-The first argument is for process ID, and the second is for token privilege name.
+The first argument is for process ID, and the second is for token privilege name:
 
 ```
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
@@ -355,17 +357,17 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Disabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 
-0: kd> !enablepriv 3792 timezone
+0: kd> !enablepriv 1932 timezone
 
-[>] Trying to enable the requested privilege(s).
+[>] Trying to enable SeTimeZonePrivilege.
 [*] Completed.
 
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
@@ -375,16 +377,16 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Enabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 ```
 
-If you tried to enable privilege(s), not added yet, this command adds it automatically.
+If you tried to enable privilege(s), not added yet, this command adds it automatically:
 
 ```
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
@@ -394,19 +396,19 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Enabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 
-0: kd> !enablepriv 3792 debug
+0: kd> !enablepriv 1932 debug
 
-[*] Requested privilege is not present.
-[>] Adding the requested privilege(s).
-[>] Trying to enable the requested privilege(s).
+[*] SeDebugPrivilege is not present.
+[>] Trying to add SeDebugPrivilege.
+[>] Trying to enable SeDebugPrivilege.
 [*] Completed.
 
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
@@ -417,15 +419,15 @@ SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
 SeTimeZonePrivilege                        Enabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 ```
 
 
 ### disablepriv Command
-This command is to disable token privilege(s) of a specific process.
+This command is to disable token privilege(s) of a specific process:
 
 ```
 0: kd> !disablepriv /?
@@ -444,46 +446,50 @@ Usage : !disablepriv <PID> <Privilege>
 --snip--
 ```
 
-To use this command, set a target process ID for the first argument and token privilege name for the second argument.
+To use this command, set a target process ID for the first argument and token privilege name for the second argument:
 
 ```
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
 SeShutdownPrivilege                        Disabled
+SeDebugPrivilege                           Enabled
 SeChangeNotifyPrivilege                    Enabled
 SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Enabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 
-0: kd> !disablepriv 3792 changenotify
+0: kd> !disablepriv 1932 debug
 
-[>] Trying to disable the requested privilege(s).
+[>] Trying to disable SeDebugPrivilege.
 [*] Completed.
 
-0: kd> !getpriv 3792
+0: kd> !getpriv 1932
 
 Privilege Name                             State
 ========================================== ========
 SeShutdownPrivilege                        Disabled
-SeChangeNotifyPrivilege                    Disabled
+SeDebugPrivilege                           Disabled
+SeChangeNotifyPrivilege                    Enabled
 SeUndockPrivilege                          Disabled
 SeIncreaseWorkingSetPrivilege              Disabled
+SeTimeZonePrivilege                        Enabled
 
-[*] PID                      : 3792
+[*] PID                      : 1932
 [*] Process Name             : cmd.exe
-[*] nt!_EPROCESS             : 0xffffd507`aaed9080
-[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffb708`d72ab8a0
+[*] nt!_EPROCESS             : 0xffffd60f`f17c6080
+[*] nt!_SEP_TOKEN_PRIVILEGES : 0xffffaf00`d4a040a0
 ```
 
 
 ### enableall Command
-This command is to enable all token privilege(s) available for a specific process.
+This command is to enable all token privilege(s) available for a specific process:
 
 ```
 0: kd> !enableall /?
@@ -534,7 +540,7 @@ SeIncreaseWorkingSetPrivilege              Enabled
 
 
 ### disableall Command
-This command is to disable all token privilege(s) for a specific process.
+This command is to disable all token privilege(s) for a specific process:
 
 ```
 0: kd> !disableall /?

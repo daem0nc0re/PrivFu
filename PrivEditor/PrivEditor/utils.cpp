@@ -252,9 +252,9 @@ ULONG_PTR GetTokenPointer(ULONG_PTR pEprocess)
     ReadPointer(pEprocess + g_Offsets.Token, &pTokenPrivilege);
 
     if (IsPtr64())
-        pTokenPrivilege &= 0xfffffffffffffff0;
+        pTokenPrivilege &= 0xfffffffffffffff0ULL;
     else
-        pTokenPrivilege &= 0xfffffff8;
+        pTokenPrivilege &= 0xfffffff8UL;
 
     pTokenPrivilege += g_Offsets.Privileges;
 
@@ -356,14 +356,21 @@ BOOL IsPresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
 std::map<ULONG_PTR, ULONG_PTR> ListEprocess()
 {
     ULONG_PTR uniqueProcessId;
+    ULONG_PTR token;
     ULONG_PTR currentProcess = g_Eprocess;
     ULONG_PTR activeProcessLink;
     std::map<ULONG_PTR, ULONG_PTR> processList;
 
     for (int count = 0; count < 1024; count++) {
         ReadPointer(currentProcess + g_Offsets.UniqueProcessId, &uniqueProcessId);
+        ReadPointer(currentProcess + g_Offsets.Token, &token);
 
-        if (!IsPtr64() && ((int)uniqueProcessId <= 0))
+        if (IsPtr64())
+            token &= 0xfffffffffffffff0ULL;
+        else
+            token &= 0xfffffff8UL;
+
+        if (token == 0)
             uniqueProcessId = 0;
 
         if (processList.find(uniqueProcessId) == processList.end())
