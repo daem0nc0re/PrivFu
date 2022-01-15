@@ -34,6 +34,15 @@ namespace SwitchPriv.Library
                 return false;
             }
 
+            error = Marshal.GetLastWin32Error();
+
+            if (error != 0)
+            {
+                Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
+                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                return false;
+            }
+
             return true;
         }
 
@@ -60,6 +69,15 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
 
+                return false;
+            }
+
+            error = Marshal.GetLastWin32Error();
+
+            if (error != 0)
+            {
+                Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
+                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 

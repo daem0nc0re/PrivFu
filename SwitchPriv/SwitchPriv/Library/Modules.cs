@@ -58,6 +58,7 @@ namespace SwitchPriv.Library
 
             Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
             bool isEnabled;
+            bool status;
 
             foreach (var priv in privs)
             {
@@ -65,9 +66,11 @@ namespace SwitchPriv.Library
 
                 if (isEnabled)
                 {
-                    Console.WriteLine("[*] ({0}) Disabled {1}.",
-                        Helpers.DisableSinglePrivilege(hToken, priv.Key) ? "SUCCESS" : "FAILED",
-                        Helpers.GetPrivilegeName(priv.Key));
+                    status = Helpers.DisableSinglePrivilege(hToken, priv.Key);
+                    if (status)
+                    {
+                        Console.WriteLine("[+] {0} is disabled successfully.", Helpers.GetPrivilegeName(priv.Key));
+                    }
                 }
             }
 
@@ -223,6 +226,7 @@ namespace SwitchPriv.Library
 
             Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
             bool isEnabled;
+            bool status;
 
             foreach (var priv in privs)
             {
@@ -230,9 +234,11 @@ namespace SwitchPriv.Library
 
                 if (!isEnabled)
                 {
-                    Console.WriteLine("[*] ({0}) Enabled {1}.",
-                        Helpers.EnableSinglePrivilege(hToken, priv.Key) ? "SUCCESS" : "FAILED",
-                        Helpers.GetPrivilegeName(priv.Key));
+                    status = Helpers.EnableSinglePrivilege(hToken, priv.Key);
+                    if (status)
+                    {
+                        Console.WriteLine("[+] {0} is enabled successfully.", Helpers.GetPrivilegeName(priv.Key));
+                    }
                 }
             }
 
