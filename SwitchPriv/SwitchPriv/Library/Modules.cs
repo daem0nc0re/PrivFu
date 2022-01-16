@@ -382,7 +382,7 @@ namespace SwitchPriv.Library
 
             if (!Win32Api.OpenProcessToken(
                 hProcess,
-                (uint)(Win32Const.TokenAccessFlags.TOKEN_QUERY | Win32Const.TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES),
+                (uint)(Win32Const.TokenAccessFlags.TOKEN_QUERY),
                 out IntPtr hToken))
             {
                 error = Marshal.GetLastWin32Error();
