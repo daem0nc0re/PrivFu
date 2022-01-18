@@ -768,12 +768,12 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 C:\dev>SwitchPriv.exe -e all
 
 [>] Trying to enable all token privileges.
-    |-> Target PID   : 2752
+    |-> Target PID   : 15240
     |-> Process Name : cmd
 
-[*] (SUCCESS) Enabled SeShutdownPrivilege.
-[*] (SUCCESS) Enabled SeUndockPrivilege.
-[*] (SUCCESS) Enabled SeIncreaseWorkingSetPrivilege.
+[+] SeShutdownPrivilege is enabled successfully.
+[+] SeUndockPrivilege is enabled successfully.
+[+] SeIncreaseWorkingSetPrivilege is enabled successfully.
 [*] Done.
 
 

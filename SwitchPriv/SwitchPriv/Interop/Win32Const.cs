@@ -59,7 +59,8 @@ namespace SwitchPriv.Interop
             TOKEN_ADJUST_GROUPS = 0x0040,
             TOKEN_ADJUST_DEFAULT = 0x0080,
             TOKEN_ADJUST_SESSIONID = 0x0100,
-            TOKEN_READ = 0xF00FF,
+            TOKEN_READ = 0x00020008,
+            TOKEN_ALL_ACCESS = 0xF01FF
         }
 
         public enum TOKEN_INFORMATION_CLASS
