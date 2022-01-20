@@ -87,13 +87,13 @@ namespace SwitchPriv.Library
         public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(IntPtr hToken)
         {
             int ERROR_INSUFFICIENT_BUFFER = 122;
-            int error = ERROR_INSUFFICIENT_BUFFER;
-            bool status = false;
+            int error;
+            bool status;
             int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
             Dictionary<Win32Struct.LUID, uint> availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
-            IntPtr pTokenPrivileges = IntPtr.Zero;
+            IntPtr pTokenPrivileges;
 
-            while (!status && (error == ERROR_INSUFFICIENT_BUFFER))
+            do
             {
                 pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
                 ZeroMemory(pTokenPrivileges, bufferLength);
@@ -104,13 +104,11 @@ namespace SwitchPriv.Library
                     pTokenPrivileges,
                     bufferLength,
                     out bufferLength);
+                error = Marshal.GetLastWin32Error();
 
                 if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
                     Marshal.FreeHGlobal(pTokenPrivileges);
-                }
-            }
+            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER));
 
             if (!status)
                 return availablePrivs;

