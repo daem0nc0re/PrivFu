@@ -32,9 +32,9 @@ namespace SwitchPriv.Library
             }
 
             hProcess = Win32Api.OpenProcess(
-                    (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
-                    false,
-                    pid);
+                (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
+                false,
+                pid);
 
             if (hProcess == IntPtr.Zero)
             {
@@ -109,9 +109,9 @@ namespace SwitchPriv.Library
             }
 
             hProcess = Win32Api.OpenProcess(
-                    (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
-                    false,
-                    pid);
+                (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
+                false,
+                pid);
 
             if (hProcess == IntPtr.Zero)
             {
@@ -277,9 +277,9 @@ namespace SwitchPriv.Library
             }
 
             hProcess = Win32Api.OpenProcess(
-                    (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
-                    false,
-                    pid);
+                (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
+                false,
+                pid);
 
             if (hProcess == IntPtr.Zero)
             {
@@ -368,9 +368,9 @@ namespace SwitchPriv.Library
             }
 
             hProcess = Win32Api.OpenProcess(
-                    (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
-                    false,
-                    pid);
+                (uint)Win32Const.ProcessAccessFlags.PROCESS_QUERY_INFORMATION,
+                false,
+                pid);
 
             if (hProcess == IntPtr.Zero)
             {
@@ -382,7 +382,7 @@ namespace SwitchPriv.Library
 
             if (!Win32Api.OpenProcessToken(
                 hProcess,
-                (uint)(Win32Const.TokenAccessFlags.TOKEN_QUERY),
+                (uint)Win32Const.TokenAccessFlags.TOKEN_QUERY,
                 out IntPtr hToken))
             {
                 error = Marshal.GetLastWin32Error();
