@@ -491,7 +491,7 @@ namespace SeCreateTokenPrivilegePoC
             if (!AllocateLocallyUniqueId(out LUID luid))
             {
                 Console.WriteLine("[-] Failed to allocate LUID.");
-                Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
@@ -505,7 +505,7 @@ namespace SeCreateTokenPrivilegePoC
             if (!ConvertStringSidToSidA(DOMAIN_ALIAS_RID_ADMINS, out IntPtr pAdminGroup))
             {
                 Console.WriteLine("[-] Failed to get Administrator group SID.");
-                Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
@@ -514,7 +514,7 @@ namespace SeCreateTokenPrivilegePoC
                 out IntPtr pTrustedInstaller))
             {
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
-                Console.WriteLine("    -> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
