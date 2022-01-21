@@ -738,7 +738,7 @@ namespace SeCreateTokenPrivilegePoC
 
             if (hToken != IntPtr.Zero)
             {
-                Console.WriteLine("[+] Got handle to the elevated token (h = 0x{0}).", hToken.ToString("X"));
+                Console.WriteLine("[+] Got handle to the elevated token (hToken = 0x{0}).", hToken.ToString("X"));
                 Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
                 Console.ReadLine();
 
