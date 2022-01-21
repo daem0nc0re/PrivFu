@@ -93,7 +93,7 @@ namespace SeDebugPrivilegePoC
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get a winlogon handle.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
                 return IntPtr.Zero;
             }
 

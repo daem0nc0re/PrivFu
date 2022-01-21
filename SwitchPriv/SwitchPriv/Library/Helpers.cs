@@ -29,7 +29,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
 
                 return false;
             }
@@ -39,7 +39,7 @@ namespace SwitchPriv.Library
             if (error != 0)
             {
                 Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -67,7 +67,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
 
                 return false;
             }
@@ -77,7 +77,7 @@ namespace SwitchPriv.Library
             if (error != 0)
             {
                 Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -227,7 +227,7 @@ namespace SwitchPriv.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get process information.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(ntstatus));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
                 Marshal.FreeHGlobal(buffer);
                 return 0;
             }
@@ -243,7 +243,7 @@ namespace SwitchPriv.Library
         }
 
         public static bool GetPrivilegeLuid(
-            string privilegeName, 
+            string privilegeName,
             out Win32Struct.LUID luid)
         {
             int error;
@@ -255,7 +255,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -276,7 +276,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup privilege name.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
                 return string.Empty;
             }
 
@@ -304,19 +304,19 @@ namespace SwitchPriv.Library
 
             if (status == 0)
             {
-                return string.Format("[ERROR] Code 0x{0}\n", code.ToString("X8"));
+                return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             }
             else
             {
-                return string.Format("[ERROR] Code 0x{0} : {1}\n",
+                return string.Format("[ERROR] Code 0x{0} : {1}",
                     code.ToString("X8"),
                     message.ToString().Trim());
             }
         }
 
         public static bool IsPrivilegeEnabled(
-            IntPtr hToken, 
-            Win32Struct.LUID priv, 
+            IntPtr hToken,
+            Win32Struct.LUID priv,
             out bool isEnabled)
         {
             int error;
@@ -339,7 +339,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to check the target privilege is enabled.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
                 Marshal.FreeHGlobal(pPrivileges);
 
                 return false;

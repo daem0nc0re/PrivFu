@@ -92,7 +92,7 @@ namespace SeRestorePrivilegePoC
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get handle to HKLM:\\{0}.", regKeyName);
-                Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(ntstatus));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
                 return IntPtr.Zero;
             }
 

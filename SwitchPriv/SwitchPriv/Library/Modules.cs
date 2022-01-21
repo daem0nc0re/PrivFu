@@ -40,7 +40,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -51,7 +51,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
@@ -117,7 +117,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -128,7 +128,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
@@ -208,7 +208,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -219,7 +219,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
@@ -285,7 +285,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -296,7 +296,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
@@ -376,7 +376,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 return false;
             }
 
@@ -387,7 +387,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
