@@ -359,7 +359,7 @@ namespace SeCreateTokenPrivilegePoC
          * kenel32.dll
          */
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hModule);
+        static extern bool CloseHandle(IntPtr hModule);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         static extern uint FormatMessage(
