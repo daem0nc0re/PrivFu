@@ -14,7 +14,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
@@ -40,7 +40,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 return false;
             }
 
@@ -51,12 +51,12 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
 
-            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
             bool status;
 
@@ -66,7 +66,7 @@ namespace SwitchPriv.Library
 
                 if (isEnabled)
                 {
-                    status = Helpers.DisableSinglePrivilege(hToken, priv.Key);
+                    status = Utilities.DisableSinglePrivilege(hToken, priv.Key);
                     if (status)
                     {
                         Console.WriteLine("[+] {0} is disabled successfully.", Helpers.GetPrivilegeName(priv.Key));
@@ -82,6 +82,7 @@ namespace SwitchPriv.Library
             return true;
         }
 
+
         public static bool DisableTokenPrivilege(int pid, string privilegeName)
         {
             int error;
@@ -91,7 +92,7 @@ namespace SwitchPriv.Library
                 return false;
 
             if (pid == 0)
-                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
@@ -117,7 +118,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 return false;
             }
 
@@ -128,12 +129,12 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
 
-            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isAvailable = false;
             bool isEnabled = false;
 
@@ -163,7 +164,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            bool status = Helpers.DisableSinglePrivilege(hToken, priv);
+            bool status = Utilities.DisableSinglePrivilege(hToken, priv);
 
             if (status)
             {
@@ -176,13 +177,14 @@ namespace SwitchPriv.Library
             return true;
         }
 
+
         public static bool EnableAllPrivileges(int pid)
         {
             int error;
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
@@ -208,7 +210,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 return false;
             }
 
@@ -219,12 +221,12 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
 
-            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
             bool status;
 
@@ -234,7 +236,7 @@ namespace SwitchPriv.Library
 
                 if (!isEnabled)
                 {
-                    status = Helpers.EnableSinglePrivilege(hToken, priv.Key);
+                    status = Utilities.EnableSinglePrivilege(hToken, priv.Key);
                     if (status)
                     {
                         Console.WriteLine("[+] {0} is enabled successfully.", Helpers.GetPrivilegeName(priv.Key));
@@ -250,6 +252,7 @@ namespace SwitchPriv.Library
             return true;
         }
 
+
         public static bool EnableTokenPrivilege(int pid, string privilegeName)
         {
             int error;
@@ -259,7 +262,7 @@ namespace SwitchPriv.Library
                 return false;
 
             if (pid == 0)
-                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
@@ -285,7 +288,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 return false;
             }
 
@@ -296,12 +299,12 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
 
-            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isAvailable = false;
             bool isEnabled = false;
 
@@ -331,7 +334,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            bool status = Helpers.EnableSinglePrivilege(hToken, priv);
+            bool status = Utilities.EnableSinglePrivilege(hToken, priv);
 
             if (status)
             {
@@ -344,13 +347,14 @@ namespace SwitchPriv.Library
             return true;
         }
 
+
         public static bool GetPrivileges(int pid)
         {
             int error;
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Helpers.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId(new IntPtr(-1));
 
             if (pid == 0)
                 return false;
@@ -376,7 +380,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 return false;
             }
 
@@ -387,12 +391,12 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
                 return false;
             }
 
-            Dictionary<Win32Struct.LUID, uint> privs = Helpers.GetAvailablePrivileges(hToken);
+            Dictionary<Win32Struct.LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
             string privilegeName;
 

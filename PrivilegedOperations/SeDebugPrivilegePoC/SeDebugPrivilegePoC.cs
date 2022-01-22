@@ -34,16 +34,18 @@ namespace SeDebugPrivilegePoC
 
         const uint PROCESS_ALL_ACCESS = 0x001F0FFF;
 
-        static string GetWin32ErrorMessage(int code)
+        static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
             uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
             StringBuilder message = new StringBuilder(255);
+            IntPtr pNtdll = IntPtr.Zero;
 
-            IntPtr pNtdll = LoadLibrary("ntdll.dll");
+            if (isNtStatus)
+                pNtdll = LoadLibrary("ntdll.dll");
 
             uint status = FormatMessage(
-                FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM,
+                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
                 pNtdll,
                 code,
                 0,
@@ -51,7 +53,8 @@ namespace SeDebugPrivilegePoC
                 255,
                 IntPtr.Zero);
 
-            FreeLibrary(pNtdll);
+            if (isNtStatus)
+                FreeLibrary(pNtdll);
 
             if (status == 0)
             {
@@ -64,6 +67,7 @@ namespace SeDebugPrivilegePoC
                     message.ToString().Trim());
             }
         }
+
 
         static IntPtr OpenWinlogonHandle()
         {
@@ -93,12 +97,13 @@ namespace SeDebugPrivilegePoC
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get a winlogon handle.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return IntPtr.Zero;
             }
 
             return hProcess;
         }
+
 
         static void Main()
         {

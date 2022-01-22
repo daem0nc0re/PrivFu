@@ -51,6 +51,7 @@
     <Compile Include="Interop\Win32Struct.cs" />
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />
+    <Compile Include="Library\Utilities.cs" />
     <Compile Include="SwitchPriv.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

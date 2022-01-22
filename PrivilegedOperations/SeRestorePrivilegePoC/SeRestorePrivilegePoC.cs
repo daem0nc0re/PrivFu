@@ -42,16 +42,18 @@ namespace SeRestorePrivilegePoC
         const uint REG_OPTION_BACKUP_RESTORE = 0x00000004;
         const uint KEY_SET_VALUE = 0x0002;
 
-        static string GetWin32ErrorMessage(int code)
+        static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
             uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
             StringBuilder message = new StringBuilder(255);
+            IntPtr pNtdll = IntPtr.Zero;
 
-            IntPtr pNtdll = LoadLibrary("ntdll.dll");
+            if (isNtStatus)
+                pNtdll = LoadLibrary("ntdll.dll");
 
             uint status = FormatMessage(
-                FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM,
+                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
                 pNtdll,
                 code,
                 0,
@@ -59,7 +61,8 @@ namespace SeRestorePrivilegePoC
                 255,
                 IntPtr.Zero);
 
-            FreeLibrary(pNtdll);
+            if (isNtStatus)
+                FreeLibrary(pNtdll);
 
             if (status == 0)
             {
@@ -92,7 +95,7 @@ namespace SeRestorePrivilegePoC
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get handle to HKLM:\\{0}.", regKeyName);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
                 return IntPtr.Zero;
             }
 

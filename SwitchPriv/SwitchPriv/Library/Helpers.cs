@@ -8,129 +8,6 @@ namespace SwitchPriv.Library
 {
     public class Helpers
     {
-        public static bool DisableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
-        {
-            int error;
-
-            Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
-            tp.Privilege[0].Luid = priv;
-            tp.Privilege[0].Attributes = 0;
-
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
-            Marshal.StructureToPtr(tp, pTokenPrivilege, true);
-
-            if (!Win32Api.AdjustTokenPrivileges(
-                hToken,
-                false,
-                pTokenPrivilege,
-                0,
-                IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
-
-                return false;
-            }
-
-            error = Marshal.GetLastWin32Error();
-
-            if (error != 0)
-            {
-                Console.WriteLine("[-] Failed to disable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
-                return false;
-            }
-
-            return true;
-        }
-
-        public static bool EnableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
-        {
-            int error;
-
-            Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
-            tp.Privilege[0].Luid = priv;
-            tp.Privilege[0].Attributes = (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
-
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
-            Marshal.StructureToPtr(tp, pTokenPrivilege, true);
-
-            if (!Win32Api.AdjustTokenPrivileges(
-                hToken,
-                false,
-                pTokenPrivilege,
-                0,
-                IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
-
-                return false;
-            }
-
-            error = Marshal.GetLastWin32Error();
-
-            if (error != 0)
-            {
-                Console.WriteLine("[-] Failed to enable {0}.", GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error));
-                return false;
-            }
-
-            return true;
-        }
-
-        public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(IntPtr hToken)
-        {
-            int ERROR_INSUFFICIENT_BUFFER = 122;
-            int error;
-            bool status;
-            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
-            Dictionary<Win32Struct.LUID, uint> availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
-            IntPtr pTokenPrivileges;
-
-            do
-            {
-                pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
-                ZeroMemory(pTokenPrivileges, bufferLength);
-
-                status = Win32Api.GetTokenInformation(
-                    hToken,
-                    Win32Const.TOKEN_INFORMATION_CLASS.TokenPrivileges,
-                    pTokenPrivileges,
-                    bufferLength,
-                    out bufferLength);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                    Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER));
-
-            if (!status)
-                return availablePrivs;
-
-            int privCount = Marshal.ReadInt32(pTokenPrivileges);
-            IntPtr buffer = new IntPtr(pTokenPrivileges.ToInt64() + Marshal.SizeOf(privCount));
-
-            for (var count = 0; count < privCount; count++)
-            {
-                var luidAndAttr = (Win32Struct.LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                    buffer,
-                    typeof(Win32Struct.LUID_AND_ATTRIBUTES));
-
-                availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
-                buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
-            }
-
-            Marshal.FreeHGlobal(pTokenPrivileges);
-
-            return availablePrivs;
-        }
-
         public static string GetFullPrivilegeName(string shortenName)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
@@ -209,38 +86,6 @@ namespace SwitchPriv.Library
                 return string.Empty;
         }
 
-        public static int GetParentProcessId(IntPtr hProcess)
-        {
-            var sizeInformation = Marshal.SizeOf(typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
-            var buffer = Marshal.AllocHGlobal(sizeInformation);
-
-            if (hProcess == IntPtr.Zero)
-                return 0;
-
-            int ntstatus = Win32Api.NtQueryInformationProcess(
-                hProcess,
-                Win32Const.PROCESSINFOCLASS.ProcessBasicInformation,
-                buffer,
-                sizeInformation,
-                IntPtr.Zero);
-
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
-            {
-                Console.WriteLine("[-] Failed to get process information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus));
-                Marshal.FreeHGlobal(buffer);
-                return 0;
-            }
-
-            var basicInfo = (Win32Struct.PROCESS_BASIC_INFORMATION)Marshal.PtrToStructure(
-                buffer,
-                typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
-            int ppid = basicInfo.InheritedFromUniqueProcessId.ToInt32();
-
-            Marshal.FreeHGlobal(buffer);
-
-            return ppid;
-        }
 
         public static bool GetPrivilegeLuid(
             string privilegeName,
@@ -255,12 +100,13 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return false;
             }
 
             return true;
         }
+
 
         public static string GetPrivilegeName(Win32Struct.LUID priv)
         {
@@ -276,23 +122,26 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup privilege name.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 return string.Empty;
             }
 
             return privilegeName.ToString();
         }
 
-        public static string GetWin32ErrorMessage(int code)
+
+        public static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
             uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
             StringBuilder message = new StringBuilder(255);
+            IntPtr pNtdll = IntPtr.Zero;
 
-            IntPtr pNtdll = Win32Api.LoadLibrary("ntdll.dll");
+            if (isNtStatus)
+                pNtdll = Win32Api.LoadLibrary("ntdll.dll");
 
             uint status = Win32Api.FormatMessage(
-                FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM,
+                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
                 pNtdll,
                 code,
                 0,
@@ -300,7 +149,8 @@ namespace SwitchPriv.Library
                 255,
                 IntPtr.Zero);
 
-            Win32Api.FreeLibrary(pNtdll);
+            if (isNtStatus)
+                Win32Api.FreeLibrary(pNtdll);
 
             if (status == 0)
             {
@@ -313,6 +163,7 @@ namespace SwitchPriv.Library
                     message.ToString().Trim());
             }
         }
+
 
         public static bool IsPrivilegeEnabled(
             IntPtr hToken,
@@ -339,7 +190,7 @@ namespace SwitchPriv.Library
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to check the target privilege is enabled.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 Marshal.FreeHGlobal(pPrivileges);
 
                 return false;
@@ -349,6 +200,7 @@ namespace SwitchPriv.Library
 
             return true;
         }
+
 
         public static void ListPrivilegeOptionValues()
         {
@@ -392,6 +244,7 @@ namespace SwitchPriv.Library
             Console.WriteLine("    + All                            : Specifies all token privileges.");
             Console.WriteLine();
         }
+
 
         public static void ZeroMemory(IntPtr buffer, int size)
         {
