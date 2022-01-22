@@ -408,8 +408,10 @@ namespace SeCreateTokenPrivilegePoC
         const string SECURITY_WORLD_RID = "S-1-1-0";
         const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
         const string DOMAIN_ALIAS_RID_USERS = "S-1-5-32-545";
+        const string UNTRUSTED_INTEGRITY_LEVEL = "S-1-16-0";
         const string LOW_INTEGRITY_LEVEL = "S-1-16-4096";
         const string MEDIUM_INTEGRITY_LEVEL = "S-1-16-8192";
+        const string MEDIUM_MANDATORY_INTEGRITY_LEVEL = "S-1-16-8448";
         const string HIGH_INTEGRITY_LEVEL = "S-1-16-12288";
         const string SYSTEM_INTEGRITY_LEVEL = "S-1-16-16384";
         const string SE_DEBUG_NAME = "SeDebugPrivilege";
@@ -585,8 +587,10 @@ namespace SeCreateTokenPrivilegePoC
                         SE_GROUP_ENABLED_BY_DEFAULT |
                         SE_GROUP_OWNER;
                 }
-                else if (sid == LOW_INTEGRITY_LEVEL ||
+                else if (sid == UNTRUSTED_INTEGRITY_LEVEL ||
+                    sid == LOW_INTEGRITY_LEVEL ||
                     sid == MEDIUM_INTEGRITY_LEVEL ||
+                    sid == MEDIUM_MANDATORY_INTEGRITY_LEVEL ||
                     sid == HIGH_INTEGRITY_LEVEL)
                 {
                     sidAndAttributes.Sid = pSystemIntegrity;
