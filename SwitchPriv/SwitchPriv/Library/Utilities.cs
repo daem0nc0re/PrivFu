@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Text;
 using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
-    public class Utilities
+    class Utilities
     {
         public static bool DisableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
         {

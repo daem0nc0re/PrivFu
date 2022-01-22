@@ -6,7 +6,7 @@ using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
-    public class Modules
+    class Modules
     {
         public static bool DisableAllPrivileges(int pid)
         {

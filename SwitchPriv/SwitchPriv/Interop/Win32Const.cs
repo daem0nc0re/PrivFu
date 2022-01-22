@@ -2,7 +2,7 @@
 
 namespace SwitchPriv.Interop
 {
-    public class Win32Const
+    class Win32Const
     {
         [Flags]
         public enum PrivilegeAttributeFlags : uint

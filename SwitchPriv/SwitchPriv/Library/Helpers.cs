@@ -5,7 +5,7 @@ using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
-    public class Helpers
+    class Helpers
     {
         public static string GetFullPrivilegeName(string shortenName)
         {

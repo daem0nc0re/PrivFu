@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace SwitchPriv.Interop
 {
-    public class Win32Struct
+    class Win32Struct
     {
         [StructLayout(LayoutKind.Sequential)]
         public struct LUID

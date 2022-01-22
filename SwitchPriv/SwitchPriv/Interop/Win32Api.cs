@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SwitchPriv.Interop
 {
-    public class Win32Api
+    class Win32Api
     {
         /*
          * advapi32.dll
