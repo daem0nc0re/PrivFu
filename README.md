@@ -19,6 +19,9 @@ Codes in this repository are intended to help investigate how token privileges w
     - [disableall Command](#disableall-command)
   - [PrivilegedOperations](#privilegedoperations)
   - [SwitchPriv](#switchpriv)
+  - [TrustExec](#trustexec)
+    - [exec Module](#exec-module)
+    - [sid Module](#sid-module)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
 
@@ -792,8 +795,281 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 ```
 
 
+## TrustExec
+This tool is to execute process as TrustedInstaller group account.
+Original PoC is [Grzegorz Tworek](https://twitter.com/0gtweet)'s [TrustedInstallerCmd2.c](https://github.com/gtworek/PSBits/blob/master/VirtualAccounts/TrustedInstallerCmd2.c).
+I ported it to C# and rebuilt it as a tool.
+Most of operations require administrative privilege (`SeDebugPrivilege`, `SeImpersonatePrivilege` and High Mandatory Level):
+
+```
+C:\dev>TrustExec.exe
+
+TrustExec - Tool to investigate TrustedInstaller capability.
+
+Usage: TrustExec.exe [Options]
+
+        -h, --help   : Displays this help message.
+        -m, --module : Specifies module name.
+
+Available Modules:
+
+    + exec - Run process as "NT SERVICE\TrustedInstaller".
+    + sid  - Add or remove virtual account's SID.
+
+[*] To see help for each modules, specify "-m <Module> -h" as arguments.
+```
+
+### exec Module
+This module is to execute process as TrustedInstaller group account:
+
+```
+C:\dev>TrustExec.exe -m exec -h
+
+TrustExec - Help for "exec" command.
+
+Usage: TrustExec.exe -m exec [Options]
+
+        -h, --help     : Displays this help message.
+        -s, --shell    : Flag for interactive shell.
+        -c, --command  : Specifies command to execute.
+        -d, --domain   : Specifies domain name to add. Default value is "DefaultDomain".
+        -u, --username : Specifies username to add. Default value is "DefaultUser".
+        -i, --id       : Specifies RID for virtual group. Default value is "110".
+        -f, --full     : Flag to enable all available privileges.
+```
+
+This module create a virtual accound to impersonate as TrustedInstaller group account.
+Tto get interactive shell, set `-s` flag. If you don't specify domain name (`-d` option), username (`-u`) and RID (`-i` option), this module create a virtual account `DefaultDomain\DefaultUser`. Default SID for domain is `S-1-5-110` and for user is `S-1-5-110-110`:
+
+```
+C:\dev>TrustExec.exe -m exec -s
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to generate token group information.
+[>] Trying to add virtual domain and user.
+    |-> Domain   : DefaultDomain (S-1-5-110)
+    |-> Username : DefaultUser (S-1-5-110-110)
+[+] Added virtual domain and user.
+[>] Trying to logon as DefaultDomain\DefaultUser.
+[>] Trying to create process.
+
+Microsoft Windows [Version 10.0.18362.30]
+(c) 2019 Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name                 SID
+========================= =============
+defaultdomain\defaultuser S-1-5-110-110
+
+C:\dev>whoami /groups | findstr /i trusted
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
+
+C:\dev>exit
+
+[>] Exit.
+[!] Added virtual domain and account are not removed automatically.
+    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+```
+
+You can change domain name and username, use `-d` option and `-u` option.
+To change RID in SID, use `-i` option as follows:
+
+```
+C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to generate token group information.
+[>] Trying to add virtual group and account.
+    |-> Domain   : VirtualDomain (S-1-5-92)
+    |-> Username : VirtualAdmin (S-1-5-92-110)
+[+] Added virtual group and account.
+[>] Trying to logon as VirtualDomain\VirtualAdmin.
+[>] Trying to create process.
+
+Microsoft Windows [Version 10.0.18362.30]
+(c) 2019 Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name                  SID
+========================== ============
+virtualdomain\virtualadmin S-1-5-92-110
+```
+
+If you want to execute single command, use `-c` option without `-s` flag as follows:
+
+```
+C:\dev>TrustExec.exe -m exec -c "whoami /user"
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to generate token group information.
+[>] Trying to add virtual group and account.
+    |-> Domain   : DefaultDomain (S-1-5-110)
+    |-> Username : DefaultUser (S-1-5-110-110)
+[*] S-1-5-110 or DefaultDomain maybe already exists or invalid.
+[>] Trying to logon as DefaultDomain\DefaultUser.
+[>] Trying to create process.
+
+
+USER INFORMATION
+----------------
+
+User Name                 SID
+========================= =============
+defaultdomain\defaultuser S-1-5-110-110
+
+[>] Exit.
+[!] Added virtual domain and account are not removed automatically.
+    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+```
+
+Added domain and username are not removed automatically.
+If you want to remove them, run the `sid` module as shown in the last output.
+
+
+### sid Module
+This module is to manage virtual account created by this tool:
+
+```
+C:\dev>TrustExec.exe -m sid -h
+
+TrustExec - Help for "sid" command.
+
+Usage: TrustExec.exe -m sid [Options]
+
+        -h, --help     : Displays this help message.
+        -a, --add      : Flag to add virtual account's SID.
+        -r, --remove   : Flag to remove virtual account's SID.
+        -d, --domain   : Specifies domain name to add or remove. Default value is null.
+        -u, --username : Specifies username to add or remove. Default value is null.
+        -i, --id       : Specifies RID for virtual domain to add. Default value is "110".
+        -s, --sid      : Specifies SID to lookup.
+        -l, --lookup   : Flag to lookup SID or account name in local system.
+```
+
+To lookup SID, set `-l` flag. If you want to lookup domain or username from SID, specify SID with `-s` option as follows:
+
+```
+C:\dev>TrustExec.exe -m sid -l -s S-1-5-18
+
+[*] Result : NT AUTHORITY\SYSTEM (SID : S-1-5-18)
+```
+
+If you want to lookup SID from domain name, specify domain name with `-d` option as follows:
+
+```
+C:\dev>TrustExec.exe -m sid -l -d VirtualDomain
+
+[*] Result : virtualdomain (SID : S-1-5-92)
+```
+
+If you want to lookup SID from domain name and username, specify domain name with `-d` option and username with `-u` option as follows:
+
+```
+C:\dev>TrustExec.exe -m sid -l -d defaultdomain -u defaultuser
+
+[*] Result : defaultdomain\defaultuser (SID : S-1-5-110-110)
+```
+
+To remove virutal account, set `-r` flag.
+Domain name to remove is specified with `-d` option, username is specified with `-u` option:
+
+```
+C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to remove SID.
+    |-> Domain   : defaultdomain
+    |-> Username : defaultuser
+[+] Requested SID is removed successfully.
+
+
+C:\dev>TrustExec.exe -m sid -r -d defaultdomain
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to remove SID.
+    |-> Domain   : defaultdomain
+[+] Requested SID is removed successfully.
+```
+
+> __WARNING__ Deleted SIDs may appear to remain until rebooting the OS.
+
+
+If you want add domain or user SID, set `-a` flag as follows:
+
+```
+C:\dev>TrustExec.exe -m sid -a -d virtualworld -u virtualadmin -i 97
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to add virtual group and account.
+    |-> Domain   : virtualworld (S-1-5-97)
+    |-> Username : virtualadmin (S-1-5-97-110)
+[+] Added virtual group and account.
+
+C:\dev>TrustExec.exe -m sid -l -s S-1-5-97
+
+[*] Result : virtualworld (SID : S-1-5-97)
+
+
+C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
+
+[*] Result : virtualworld\virtualadmin (SID : S-1-5-97-110)
+```
+
+
 ## Reference
-- [Priv2Admin](https://github.com/gtworek/Priv2Admin) by [Grzegorz Tworek](https://twitter.com/0gtweet)
+- [Priv2Admin](https://github.com/gtworek/Priv2Admin) and [PSBits](https://github.com/gtworek/PSBits) by [Grzegorz Tworek](https://twitter.com/0gtweet)
 - [Abusing Token Privileges For LPE](https://github.com/hatRiot/token-priv/blob/master/abusing_token_eop_1.0.txt) by [Bryan Alexander](https://twitter.com/dronesec) and [Steve Breen](https://twitter.com/breenmachine)
 - [whoami /priv](https://github.com/decoder-it/whoami-priv-Hackinparis2019) by [Andrea Pierini](https://twitter.com/decoder_it)
 
