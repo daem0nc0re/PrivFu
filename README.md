@@ -26,6 +26,11 @@ Codes in this repository are intended to help investigate how token privileges w
   - [Acknowledgments](#acknowledgments)
 
 ## PrivEditor
+
+[Back to Top](#privfu)
+
+[Project](./PrivEditor)
+
 PrivEditor is kernel mode WinDbg extension to manipulate token privilege of specific process.
 This extension makes it easy to configure the token privilege you want to investigate:
 
@@ -594,6 +599,11 @@ SeIncreaseWorkingSetPrivilege              Disabled
 
 
 ## PrivilegedOperations
+
+[Back to Top](#privfu)
+
+[Project](./PrivilegedOperations)
+
 This project is PoCs for sensitive token privileges such SeDebugPrivilege.
 Currently, released PoCs for a part of them.
 
@@ -605,6 +615,11 @@ Currently, released PoCs for a part of them.
 
 
 ## SwitchPriv
+
+[Back to Top](#privfu)
+
+[Project](./SwitchPriv)
+
 This tool is to enable or disable specific token privileges for a process:
 
 ```
@@ -796,6 +811,11 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 
 
 ## TrustExec
+
+[Back to Top](#privfu)
+
+[Project](./TrustExec)
+
 This tool is to execute process as TrustedInstaller group account.
 Original PoC is [Grzegorz Tworek](https://twitter.com/0gtweet)'s [TrustedInstallerCmd2.c](https://github.com/gtworek/PSBits/blob/master/VirtualAccounts/TrustedInstallerCmd2.c).
 I ported it to C# and rebuilt it as a tool.
@@ -953,6 +973,106 @@ defaultdomain\defaultuser S-1-5-110-110
     |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
+If you want to enable all available privileges, set `-f` flag as follows:
+
+```
+C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[>] Trying to enable SeAssignPrimaryTokenPrivilege.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to generate token group information.
+[>] Trying to add virtual domain and user.
+    |-> Domain   : DefaultDomain (S-1-5-110)
+    |-> Username : DefaultUser (S-1-5-110-110)
+[+] Added virtual domain and user.
+[>] Trying to logon as DefaultDomain\DefaultUser.
+[>] Trying to enable SeIncreaseQuotaPrivilege.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to enable SeSecurityPrivilege.
+[+] SeSecurityPrivilege is enabled successfully.
+[>] Trying to enable SeTakeOwnershipPrivilege.
+[+] SeTakeOwnershipPrivilege is enabled successfully.
+[>] Trying to enable SeLoadDriverPrivilege.
+[+] SeLoadDriverPrivilege is enabled successfully.
+[>] Trying to enable SeSystemProfilePrivilege.
+[+] SeSystemProfilePrivilege is enabled successfully.
+[>] Trying to enable SeSystemtimePrivilege.
+[+] SeSystemtimePrivilege is enabled successfully.
+[>] Trying to enable SeProfileSingleProcessPrivilege.
+[+] SeProfileSingleProcessPrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseBasePriorityPrivilege.
+[+] SeIncreaseBasePriorityPrivilege is enabled successfully.
+[>] Trying to enable SeCreatePagefilePrivilege.
+[+] SeCreatePagefilePrivilege is enabled successfully.
+[>] Trying to enable SeBackupPrivilege.
+[+] SeBackupPrivilege is enabled successfully.
+[>] Trying to enable SeRestorePrivilege.
+[+] SeRestorePrivilege is enabled successfully.
+[>] Trying to enable SeShutdownPrivilege.
+[+] SeShutdownPrivilege is enabled successfully.
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to enable SeSystemEnvironmentPrivilege.
+[+] SeSystemEnvironmentPrivilege is enabled successfully.
+[>] Trying to enable SeRemoteShutdownPrivilege.
+[+] SeRemoteShutdownPrivilege is enabled successfully.
+[>] Trying to enable SeUndockPrivilege.
+[+] SeUndockPrivilege is enabled successfully.
+[>] Trying to enable SeManageVolumePrivilege.
+[+] SeManageVolumePrivilege is enabled successfully.
+[>] Trying to enable SeIncreaseWorkingSetPrivilege.
+[+] SeIncreaseWorkingSetPrivilege is enabled successfully.
+[>] Trying to enable SeTimeZonePrivilege.
+[+] SeTimeZonePrivilege is enabled successfully.
+[>] Trying to enable SeCreateSymbolicLinkPrivilege.
+[+] SeCreateSymbolicLinkPrivilege is enabled successfully.
+[>] Trying to enable SeDelegateSessionUserImpersonatePrivilege.
+[+] SeDelegateSessionUserImpersonatePrivilege is enabled successfully.
+[>] Trying to create process.
+
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            Description                                                        State
+========================================= ================================================================== =======
+SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
+SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
+SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
+SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
+SeSystemProfilePrivilege                  Profile system performance                                         Enabled
+SeSystemtimePrivilege                     Change the system time                                             Enabled
+SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
+SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
+SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
+SeBackupPrivilege                         Back up files and directories                                      Enabled
+SeRestorePrivilege                        Restore files and directories                                      Enabled
+SeShutdownPrivilege                       Shut down the system                                               Enabled
+SeDebugPrivilege                          Debug programs                                                     Enabled
+SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
+SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
+SeRemoteShutdownPrivilege                 Force shutdown from a remote system                                Enabled
+SeUndockPrivilege                         Remove computer from docking station                               Enabled
+SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
+SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
+SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
+SeTimeZonePrivilege                       Change the time zone                                               Enabled
+SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
+SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+
+[>] Exit.
+[!] Added virtual domain and account are not removed automatically.
+    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+```
+
 Added domain and username are not removed automatically.
 If you want to remove them, run the `sid` module as shown in the last output.
 
@@ -1069,12 +1189,18 @@ C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
 
 
 ## Reference
+
+[Back to Top](#privfu)
+
 - [Priv2Admin](https://github.com/gtworek/Priv2Admin) and [PSBits](https://github.com/gtworek/PSBits) by [Grzegorz Tworek](https://twitter.com/0gtweet)
 - [Abusing Token Privileges For LPE](https://github.com/hatRiot/token-priv/blob/master/abusing_token_eop_1.0.txt) by [Bryan Alexander](https://twitter.com/dronesec) and [Steve Breen](https://twitter.com/breenmachine)
 - [whoami /priv](https://github.com/decoder-it/whoami-priv-Hackinparis2019) by [Andrea Pierini](https://twitter.com/decoder_it)
 
 
 ## Acknowledgments
+
+[Back to Top](#privfu)
+
 Thanks for your advices about WinDbg extension programming:
 
 - Pavel Yosifovich ([@zodiacon](https://twitter.com/zodiacon)) 
