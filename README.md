@@ -854,7 +854,7 @@ Usage: TrustExec.exe -m exec [Options]
         -c, --command  : Specifies command to execute.
         -d, --domain   : Specifies domain name to add. Default value is "DefaultDomain".
         -u, --username : Specifies username to add. Default value is "DefaultUser".
-        -i, --id       : Specifies RID for virtual group. Default value is "110".
+        -i, --id       : Specifies RID for virtual domain. Default value is "110".
         -f, --full     : Flag to enable all available privileges.
 ```
 
@@ -898,13 +898,13 @@ NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-34185
 C:\dev>exit
 
 [>] Exit.
-[!] Added virtual domain and account are not removed automatically.
-    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+[!] Added virtual domain and user are not removed automatically.
+    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
 You can change domain name and username, use `-d` option and `-u` option.
-To change RID in SID, use `-i` option as follows:
+To change domain RID, use `-i` option as follows:
 
 ```
 C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
@@ -918,10 +918,10 @@ C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
-[>] Trying to add virtual group and account.
+[>] Trying to add virtual domain and user.
     |-> Domain   : VirtualDomain (S-1-5-92)
     |-> Username : VirtualAdmin (S-1-5-92-110)
-[+] Added virtual group and account.
+[+] Added virtual domain and user.
 [>] Trying to logon as VirtualDomain\VirtualAdmin.
 [>] Trying to create process.
 
@@ -952,7 +952,7 @@ C:\dev>TrustExec.exe -m exec -c "whoami /user"
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
-[>] Trying to add virtual group and account.
+[>] Trying to add virtual domain and user.
     |-> Domain   : DefaultDomain (S-1-5-110)
     |-> Username : DefaultUser (S-1-5-110-110)
 [*] S-1-5-110 or DefaultDomain maybe already exists or invalid.
@@ -968,9 +968,9 @@ User Name                 SID
 defaultdomain\defaultuser S-1-5-110-110
 
 [>] Exit.
-[!] Added virtual domain and account are not removed automatically.
-    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+[!] Added virtual domain and user are not removed automatically.
+    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
 If you want to enable all available privileges, set `-f` flag as follows:
@@ -1068,9 +1068,9 @@ SeCreateSymbolicLinkPrivilege             Create symbolic links                 
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 
 [>] Exit.
-[!] Added virtual domain and account are not removed automatically.
-    |-> To remove added virtual account SID : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID  : TrustExec.exe -m sid -r -d DefaultDomain
+[!] Added virtual domain and user are not removed automatically.
+    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
+    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
 Added domain and username are not removed automatically.

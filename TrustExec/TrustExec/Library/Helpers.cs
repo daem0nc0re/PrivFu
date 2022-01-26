@@ -112,6 +112,7 @@ namespace TrustExec.Library
             if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
             {
                 peUse = Win32Const.SID_NAME_USE.SidTypeUnknown;
+
                 return null;
             }
 
@@ -193,6 +194,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
                 return false;
             }
 
@@ -215,7 +217,8 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup privilege name.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                return string.Empty;
+                
+                return null;
             }
 
             return privilegeName.ToString();

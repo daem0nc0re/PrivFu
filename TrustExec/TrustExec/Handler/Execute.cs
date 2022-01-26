@@ -7,21 +7,23 @@ namespace TrustExec.Handler
     {
         public static void ExecCommand(CommandLineParser options)
         {
-            int groupId;
+            int domainRid;
 
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
+
                 return;
             }
 
             try
             {
-                groupId = Convert.ToInt32(options.GetValue("id"));
+                domainRid = Convert.ToInt32(options.GetValue("id"));
             }
             catch
             {
-                Console.WriteLine("\n[-] Failed to parse RID for virtual group.\n");
+                Console.WriteLine("\n[-] Failed to parse RID for virtual domain.\n");
+
                 return;
             }
             
@@ -30,7 +32,7 @@ namespace TrustExec.Handler
                 if (Modules.RunTrustedInstallerProcess(
                     options.GetValue("domain"),
                     options.GetValue("username"),
-                    groupId,
+                    domainRid,
                     null,
                     options.GetFlag("full")))
                 {
@@ -38,12 +40,12 @@ namespace TrustExec.Handler
                     Console.WriteLine("[>] Exit.");
                 }
 
-                Console.WriteLine("[!] Added virtual domain and account are not removed automatically.");
-                Console.WriteLine("    |-> To remove added virtual account SID : {0} -m sid -r -d {1} -u {2}",
+                Console.WriteLine("[!] Added virtual domain and user are not removed automatically.");
+                Console.WriteLine("    |-> To remove added virtual user SID   : {0} -m sid -r -d {1} -u {2}",
                     AppDomain.CurrentDomain.FriendlyName,
                     options.GetValue("domain"),
                     options.GetValue("username"));
-                Console.WriteLine("    |-> To remove added virtual domain SID  : {0} -m sid -r -d {1}",
+                Console.WriteLine("    |-> To remove added virtual domain SID : {0} -m sid -r -d {1}",
                     AppDomain.CurrentDomain.FriendlyName,
                     options.GetValue("domain"));
                 Console.WriteLine();
@@ -53,7 +55,7 @@ namespace TrustExec.Handler
                 if (Modules.RunTrustedInstallerProcess(
                     options.GetValue("domain"),
                     options.GetValue("username"),
-                    groupId,
+                    domainRid,
                     options.GetValue("command"),
                     options.GetFlag("full")))
                 {
@@ -61,12 +63,12 @@ namespace TrustExec.Handler
                     Console.WriteLine("[>] Exit.");
                 }
 
-                Console.WriteLine("[!] Added virtual domain and account are not removed automatically.");
-                Console.WriteLine("    |-> To remove added virtual account SID : {0} -m sid -r -d {1} -u {2}",
+                Console.WriteLine("[!] Added virtual domain and user are not removed automatically.");
+                Console.WriteLine("    |-> To remove added virtual user SID   : {0} -m sid -r -d {1} -u {2}",
                     AppDomain.CurrentDomain.FriendlyName,
                     options.GetValue("domain"),
                     options.GetValue("username"));
-                Console.WriteLine("    |-> To remove added virtual domain SID  : {0} -m sid -r -d {1}",
+                Console.WriteLine("    |-> To remove added virtual domain SID : {0} -m sid -r -d {1}",
                     AppDomain.CurrentDomain.FriendlyName,
                     options.GetValue("domain"));
                 Console.WriteLine();
@@ -79,21 +81,23 @@ namespace TrustExec.Handler
 
         public static void SidCommand(CommandLineParser options)
         {
-            int groupId;
+            int domainRid;
 
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
+
                 return;
             }
 
             try
             {
-                groupId = Convert.ToInt32(options.GetValue("id"));
+                domainRid = Convert.ToInt32(options.GetValue("id"));
             }
             catch
             {
-                Console.WriteLine("\n[-] Failed to parse RID for virtual group.\n");
+                Console.WriteLine("\n[-] Failed to parse RID for virtual domain.\n");
+
                 return;
             }
 
@@ -109,6 +113,7 @@ namespace TrustExec.Handler
                 if (options.GetValue("domain") == null)
                 {
                     Console.WriteLine("\n[-] Domain name is not specified.\n");
+
                     return;
                 }
 
@@ -119,10 +124,14 @@ namespace TrustExec.Handler
                 if (options.GetValue("domain") == null)
                 {
                     Console.WriteLine("\n[-] Domain name is not specified.\n");
+                    
                     return;
                 }
 
-                Modules.AddVirtualAccount(options.GetValue("domain"), options.GetValue("username"), groupId);
+                Modules.AddVirtualAccount(
+                    options.GetValue("domain"),
+                    options.GetValue("username"),
+                    domainRid);
             }
             else
             {

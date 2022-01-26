@@ -39,6 +39,7 @@ namespace SwitchPriv.Library
             {
                 Console.WriteLine("[-] Failed to disable {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -78,6 +79,7 @@ namespace SwitchPriv.Library
             {
                 Console.WriteLine("[-] Failed to enable {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -153,6 +155,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get process information.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
                 Marshal.FreeHGlobal(buffer);
+                
                 return 0;
             }
 

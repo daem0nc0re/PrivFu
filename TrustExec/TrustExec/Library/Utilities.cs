@@ -8,33 +8,38 @@ namespace TrustExec.Library
 {
     class Utilities
     {
-        public static bool AddVirtualAccount(string domain, string username, int groupId)
+        public static bool AddVirtualAccount(
+            string domain,
+            string username,
+            int domainRid)
         {
             int error;
             int ntstatus;
             int expectedNtStatus = Convert.ToInt32("0xC000000D", 16);
-            string groupSid = string.Format("S-1-5-{0}", groupId);
-            string userSid = string.Format("S-1-5-{0}-110", groupId);
+            string domainSid = string.Format("S-1-5-{0}", domainRid);
+            string userSid = string.Format("S-1-5-{0}-110", domainRid);
 
-            if ((groupId >= 0 && groupId < 21) || groupId == 32 ||
-                groupId == 64 || groupId == 80 || groupId == 83 ||
-                groupId == 113 || groupId == 114)
+            if ((domainRid >= 0 && domainRid < 21) || domainRid == 32 ||
+                domainRid == 64 || domainRid == 80 || domainRid == 83 ||
+                domainRid == 113 || domainRid == 114)
             {
-                Console.WriteLine("[!] {0} is reserved.", groupSid);
+                Console.WriteLine("[!] {0} is reserved.", domainSid);
+
                 return false;
             }
 
             Console.WriteLine("[>] Trying to add virtual domain and user.");
-            Console.WriteLine("    |-> Domain   : {0} ({1})", domain, groupSid);
+            Console.WriteLine("    |-> Domain   : {0} ({1})", domain, domainSid);
             Console.WriteLine("    |-> Username : {0} ({1})", username, userSid);
 
             if (!Win32Api.ConvertStringSidToSid(
-                groupSid,
+                domainSid,
                 out IntPtr pSidDomain))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to initialize virtual domain SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -45,6 +50,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to initialize virtual domain SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -56,12 +62,13 @@ namespace TrustExec.Library
             }
             else if (ntstatus == expectedNtStatus)
             {
-                Console.WriteLine("[*] {0} or {1} maybe already exists or invalid.", groupSid, domain);
+                Console.WriteLine("[*] {0} or {1} maybe already exists or invalid.", domainSid, domain);
             }
             else
             {
                 Console.WriteLine("[-] Unexpected error.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                
                 return false;
             }
 
@@ -98,6 +105,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to create new process.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -112,7 +120,7 @@ namespace TrustExec.Library
         public static IntPtr CreateTrustedInstallerTokenWithVirtualLogon(
             string domain,
             string username,
-            int groupId)
+            int domainRid)
         {
             int error;
 
@@ -123,8 +131,9 @@ namespace TrustExec.Library
                 out IntPtr pAdminGroup))
             {
                 error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get Administrator group SID.");
+                Console.WriteLine("[-] Failed to get Administrator domain SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return IntPtr.Zero;
             }
 
@@ -135,6 +144,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return IntPtr.Zero;
             }
 
@@ -145,6 +155,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get System Integrity Level SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return IntPtr.Zero;
             }
 
@@ -168,7 +179,7 @@ namespace TrustExec.Library
             var pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
             Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
 
-            if (!AddVirtualAccount(domain, username, groupId))
+            if (!AddVirtualAccount(domain, username, domainRid))
                 return IntPtr.Zero;
 
             Console.WriteLine("[>] Trying to logon as {0}\\{1}.", domain, username);
@@ -189,6 +200,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to logon as virtual account.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return IntPtr.Zero;
             }
 
@@ -223,6 +235,7 @@ namespace TrustExec.Library
                 Console.WriteLine("[-] Failed to get System Integrity Level SID.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Marshal.FreeHGlobal(pMandatoryLabel);
+                
                 return IntPtr.Zero;
             }
 
@@ -283,6 +296,7 @@ namespace TrustExec.Library
             {
                 Console.WriteLine("[-] Failed to enable {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -392,6 +406,7 @@ namespace TrustExec.Library
             catch
             {
                 Console.WriteLine("[-] Failed to get process id of smss.exe.\n");
+
                 return false;
             }
 
@@ -405,6 +420,7 @@ namespace TrustExec.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get handle to smss.exe process.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -417,6 +433,7 @@ namespace TrustExec.Library
                 Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -434,6 +451,7 @@ namespace TrustExec.Library
                 Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hToken);
+                
                 return false;
             }
 
@@ -452,6 +470,7 @@ namespace TrustExec.Library
                 {
                     Win32Api.CloseHandle(hDupToken);
                     Win32Api.CloseHandle(hToken);
+
                     return false;
                 }
             }
@@ -463,6 +482,7 @@ namespace TrustExec.Library
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hDupToken);
                 Win32Api.CloseHandle(hToken);
+
                 return false;
             }
 
@@ -493,6 +513,7 @@ namespace TrustExec.Library
             if (ntstatus == expectedNtStatus)
             {
                 Console.WriteLine("[-] Requested SID is not exist.\n");
+
                 return false;
             }
 
@@ -500,6 +521,7 @@ namespace TrustExec.Library
             {
                 Console.WriteLine("[!] Unexpected error.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                
                 return false;
             }
 

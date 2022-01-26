@@ -82,7 +82,7 @@ namespace SwitchPriv.Library
             else if (string.Compare(shortenName, "DelegateSessionUserImpersonate", opt) == 0)
                 return "SeDelegateSessionUserImpersonatePrivilege";
             else
-                return string.Empty;
+                return null;
         }
 
 
@@ -93,13 +93,14 @@ namespace SwitchPriv.Library
             int error;
 
             if (!Win32Api.LookupPrivilegeValue(
-                string.Empty,
+                null,
                 privilegeName,
                 out luid))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -114,7 +115,7 @@ namespace SwitchPriv.Library
             StringBuilder privilegeName = new StringBuilder(255);
 
             if (!Win32Api.LookupPrivilegeName(
-                string.Empty,
+                null,
                 ref priv,
                 privilegeName,
                 ref cchName))
@@ -122,7 +123,8 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to lookup privilege name.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                return string.Empty;
+                
+                return null;
             }
 
             return privilegeName.ToString();

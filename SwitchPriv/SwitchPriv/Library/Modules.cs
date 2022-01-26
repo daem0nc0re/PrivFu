@@ -28,6 +28,7 @@ namespace SwitchPriv.Library
             catch
             {
                 Console.WriteLine("[-] There is no target process.\n");
+
                 return false;
             }
 
@@ -41,6 +42,7 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -53,6 +55,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -106,6 +109,7 @@ namespace SwitchPriv.Library
             catch
             {
                 Console.WriteLine("\n[-] There is no target process.\n");
+
                 return false;
             }
 
@@ -119,6 +123,7 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -131,6 +136,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -153,6 +159,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] {0} is not available for the target process.\n", privilegeName);
                 Win32Api.CloseHandle(hToken);
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -161,6 +168,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] {0} is already disabled.\n", privilegeName);
                 Win32Api.CloseHandle(hToken);
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -198,6 +206,7 @@ namespace SwitchPriv.Library
             catch
             {
                 Console.WriteLine("\n[-] There is no target process.\n");
+
                 return false;
             }
 
@@ -211,6 +220,7 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -223,6 +233,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+                
                 return false;
             }
 
@@ -276,6 +287,7 @@ namespace SwitchPriv.Library
             catch
             {
                 Console.WriteLine("\n[-] There is no target process.\n");
+
                 return false;
             }
 
@@ -289,6 +301,7 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -301,6 +314,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -323,6 +337,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] {0} is not available for the target process.\n", privilegeName);
                 Win32Api.CloseHandle(hToken);
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -331,6 +346,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] {0} is already enabled.\n", privilegeName);
                 Win32Api.CloseHandle(hToken);
                 Win32Api.CloseHandle(hProcess);
+
                 return false;
             }
 
@@ -368,6 +384,7 @@ namespace SwitchPriv.Library
             catch
             {
                 Console.WriteLine("\n[-] There is no target process.\n");
+
                 return false;
             }
 
@@ -381,6 +398,7 @@ namespace SwitchPriv.Library
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                
                 return false;
             }
 
@@ -393,6 +411,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hProcess);
+                
                 return false;
             }
 

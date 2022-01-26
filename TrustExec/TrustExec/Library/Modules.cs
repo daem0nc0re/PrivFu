@@ -7,8 +7,18 @@ namespace TrustExec.Library
 {
     class Modules
     {
-        public static bool AddVirtualAccount(string domain, string username, int groupId)
+        public static bool AddVirtualAccount(
+            string domain,
+            string username,
+            int domainRid)
         {
+            if (domain == string.Empty || domain == null)
+            {
+                Console.WriteLine("[!] Domain name is not specified.\n");
+
+                return false;
+            }
+
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privilegeNames = new List<string> {
                 Win32Const.SE_DEBUG_NAME,
@@ -26,6 +36,7 @@ namespace TrustExec.Library
                 if (!result.Value)
                 {
                     Console.WriteLine("\n[-] {0} is not available.\n", result.Key);
+
                     return false;
                 }
             }
@@ -33,8 +44,7 @@ namespace TrustExec.Library
             if (!Utilities.ImpersonateAsSmss())
                 return false;
 
-            bool status = Utilities.AddVirtualAccount(domain, username, groupId);
-
+            bool status = Utilities.AddVirtualAccount(domain, username, domainRid);
             Win32Api.RevertToSelf();
 
             return status;
@@ -44,7 +54,7 @@ namespace TrustExec.Library
         public static bool RunTrustedInstallerProcess(
             string domain,
             string username,
-            int groupId,
+            int domainRid,
             string command,
             bool fullPrivilege)
         {
@@ -54,12 +64,16 @@ namespace TrustExec.Library
 
             if (domain == string.Empty || domain == null)
             {
-                Console.WriteLine("[!] Domain is not specified.\n");
+                Console.WriteLine("[!] Domain name is not specified.\n");
+
+                return false;
             }
 
             if (username == string.Empty || username == null)
             {
                 Console.WriteLine("[!] Username is not specified.\n");
+
+                return false;
             }
 
             if (command == string.Empty || command == null)
@@ -87,7 +101,10 @@ namespace TrustExec.Library
             {
                 if (!result.Value)
                 {
-                    Console.WriteLine("\n[-] {0} is not available.\n", result.Key);
+                    Console.WriteLine(
+                        "\n[-] {0} is not available.\n",
+                        result.Key);
+
                     return false;
                 }
             }
@@ -98,7 +115,7 @@ namespace TrustExec.Library
             IntPtr hToken = Utilities.CreateTrustedInstallerTokenWithVirtualLogon(
                 domain,
                 username,
-                groupId);
+                domainRid);
 
             if (hToken == IntPtr.Zero)
                 return false;
@@ -132,7 +149,10 @@ namespace TrustExec.Library
             {
                 if (!result.Value)
                 {
-                    Console.WriteLine("\n[-] {0} is not available.\n", result.Key);
+                    Console.WriteLine(
+                        "\n[-] {0} is not available.\n",
+                        result.Key);
+
                     return false;
                 }
             }
@@ -141,7 +161,6 @@ namespace TrustExec.Library
                 return false;
 
             bool status = Utilities.RemoveVirtualAccount(domain, username);
-
             Win32Api.RevertToSelf();
 
             return status;
@@ -159,7 +178,10 @@ namespace TrustExec.Library
                 
                 if (result != null)
                 {
-                    Console.WriteLine("\n[*] Result : {0} (SID : {1})\n", result, sid.ToUpper());
+                    Console.WriteLine(
+                        "\n[*] Result : {0} (SID : {1})\n",
+                        result,
+                        sid.ToUpper());
                     
                     return true;
                 }
@@ -170,18 +192,25 @@ namespace TrustExec.Library
                     return false;
                 }
             }
-            else if (domain != null)
+            else if (domain != null || username != null)
             {
-                if (username != null)
+                if (domain != null && username != null)
                     accountName = string.Format("{0}\\{1}", domain, username);
-                else
+                else if (domain != null)
                     accountName = domain;
+                else if (username != null)
+                    accountName = username;
+                else
+                    return false;
 
                 result = Helpers.ConvertAccountNameToSidString(ref accountName);
 
                 if (result != null)
                 {
-                    Console.WriteLine("\n[*] Result : {0} (SID : {1})\n", accountName.ToLower(), result);
+                    Console.WriteLine(
+                        "\n[*] Result : {0} (SID : {1})\n",
+                        accountName.ToLower(),
+                        result);
 
                     return true;
                 }
@@ -194,7 +223,7 @@ namespace TrustExec.Library
             }
             else
             {
-                Console.WriteLine("\n[!] SID or domain name to lookup is required.\n");
+                Console.WriteLine("\n[!] SID, domain name or username to lookup is required.\n");
 
                 return false;
             }

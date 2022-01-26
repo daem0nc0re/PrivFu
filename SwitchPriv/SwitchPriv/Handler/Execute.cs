@@ -11,7 +11,7 @@ namespace SwitchPriv.Handler
             string priv;
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
 
-            if (options.GetValue("pid") != string.Empty)
+            if (options.GetValue("pid") != null)
             {
                 try
                 {
@@ -41,7 +41,7 @@ namespace SwitchPriv.Handler
             {
                 Modules.GetPrivileges(pid);
             }
-            else if (options.GetValue("enable") != string.Empty)
+            else if (options.GetValue("enable") != null)
             {
                 if (string.Compare(options.GetValue("enable"), "All", opt) == 0)
                 {
@@ -51,7 +51,7 @@ namespace SwitchPriv.Handler
                 {
                     priv = Helpers.GetFullPrivilegeName(options.GetValue("enable"));
 
-                    if (priv == string.Empty)
+                    if (priv == null)
                     {
                         options.GetHelp();
                         Console.WriteLine("[-] Failed to specify requested token privilege.\n");
@@ -61,7 +61,7 @@ namespace SwitchPriv.Handler
                     Modules.EnableTokenPrivilege(pid, priv);
                 }
             }
-            else if (options.GetValue("disable") != string.Empty)
+            else if (options.GetValue("disable") != null)
             {
                 if (string.Compare(options.GetValue("disable"), "All", opt) == 0)
                 {
@@ -71,7 +71,7 @@ namespace SwitchPriv.Handler
                 {
                     priv = Helpers.GetFullPrivilegeName(options.GetValue("disable"));
 
-                    if (priv == string.Empty)
+                    if (priv == null)
                     {
                         options.GetHelp();
                         Console.WriteLine("[-] Failed to specify requested token privilege.\n");
