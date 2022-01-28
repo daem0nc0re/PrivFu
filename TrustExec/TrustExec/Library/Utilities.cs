@@ -19,6 +19,12 @@ namespace TrustExec.Library
             string domainSid = string.Format("S-1-5-{0}", domainRid);
             string userSid = string.Format("S-1-5-{0}-110", domainRid);
 
+            if (string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(username))
+            {
+                Console.WriteLine("[!] Domain name and username are required.");
+                return false;
+            }
+
             if ((domainRid >= 0 && domainRid < 21) || domainRid == 32 ||
                 domainRid == 64 || domainRid == 80 || domainRid == 83 ||
                 domainRid == 113 || domainRid == 114)
@@ -29,8 +35,8 @@ namespace TrustExec.Library
             }
 
             Console.WriteLine("[>] Trying to add virtual domain and user.");
-            Console.WriteLine("    |-> Domain   : {0} ({1})", domain, domainSid);
-            Console.WriteLine("    |-> Username : {0} ({1})", username, userSid);
+            Console.WriteLine("    |-> Domain   : {0} (SID : {1})", domain, domainSid);
+            Console.WriteLine("    |-> Username : {0} (SID : {1})", username, userSid);
 
             if (!Win32Api.ConvertStringSidToSid(
                 domainSid,
@@ -310,6 +316,7 @@ namespace TrustExec.Library
             IntPtr hToken,
             List<string> privilegeNames)
         {
+            StringComparison opt = StringComparison.OrdinalIgnoreCase;
             Dictionary<string, bool> results = new Dictionary<string, bool>();
             var availablePrivs = GetAvailablePrivileges(hToken);
             bool isEnabled;
@@ -323,7 +330,7 @@ namespace TrustExec.Library
             {
                 foreach (var name in privilegeNames)
                 {
-                    if (Helpers.GetPrivilegeName(priv.Key) == name)
+                    if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
                     {
                         isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
@@ -499,14 +506,36 @@ namespace TrustExec.Library
         {
             int expectedNtStatus = Convert.ToInt32("0xC0000225", 16);
 
+            if (string.IsNullOrEmpty(domain))
+            {
+                Console.WriteLine("[!] Domain name is required.");
+                return false;
+            }
+
             Console.WriteLine("[>] Trying to remove SID.");
-            Console.WriteLine("    |-> Domain   : {0}", domain);
+            Console.WriteLine("    |-> Domain   : {0}", domain.ToLower());
 
-            if (username == string.Empty)
-                username = null;
+            if (!string.IsNullOrEmpty(username))
+                Console.WriteLine("    |-> Username : {0}", username.ToLower());
 
-            if (username != null)
-                Console.WriteLine("    |-> Username : {0}", username);
+            string accountName;
+
+            if (string.IsNullOrEmpty(username))
+                accountName = domain;
+            else
+                accountName = string.Format("{0}\\{1}", domain.ToLower(), username.ToLower());
+
+            string sid = Helpers.ConvertAccountNameToSidString(ref accountName);
+
+            if (string.IsNullOrEmpty(sid))
+            {
+                Console.WriteLine("[-] Failed to lookup {0}.", accountName);
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("[*] SID : {0}.", sid);
+            }
 
             int ntstatus = Helpers.RemoveSidMapping(domain, username);
 

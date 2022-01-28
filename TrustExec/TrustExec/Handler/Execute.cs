@@ -103,14 +103,14 @@ namespace TrustExec.Handler
 
             if (options.GetFlag("lookup"))
             {
-                Modules.SidLookup(
+                Modules.LookupSid(
                     options.GetValue("domain"),
                     options.GetValue("username"),
                     options.GetValue("sid"));
             }
             else if (options.GetFlag("remove"))
             {
-                if (options.GetValue("domain") == null)
+                if (string.IsNullOrEmpty(options.GetValue("domain")))
                 {
                     Console.WriteLine("\n[-] Domain name is not specified.\n");
 
@@ -121,7 +121,7 @@ namespace TrustExec.Handler
             }
             else if (options.GetFlag("add"))
             {
-                if (options.GetValue("domain") == null)
+                if (string.IsNullOrEmpty(options.GetValue("domain")))
                 {
                     Console.WriteLine("\n[-] Domain name is not specified.\n");
                     

@@ -55,7 +55,7 @@ namespace TrustExec
             if (options.GetValue("module") != null)
             {
                 StringComparison opt = StringComparison.OrdinalIgnoreCase;
-                string[] argsToRemove = new string[] { "-m", "-module" };
+                string[] argsToRemove = new string[] { "-m", "--module" };
                 string[] commandLine = RemoveFromArguments(args, argsToRemove);
                 CommandLineParser strippedOptions = new CommandLineParser();
 

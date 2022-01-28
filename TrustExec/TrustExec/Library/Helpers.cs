@@ -14,7 +14,7 @@ namespace TrustExec.Library
         {
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT();
 
-            if (domain == null || pSid == IntPtr.Zero)
+            if (string.IsNullOrEmpty(domain) || pSid == IntPtr.Zero)
                 return -1;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);
@@ -49,8 +49,6 @@ namespace TrustExec.Library
             StringBuilder referencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 8;
 
-            Win32Const.SID_NAME_USE peUse;
-
             do
             {
                 referencedDomainName.Capacity = cchReferencedDomainName;
@@ -64,7 +62,7 @@ namespace TrustExec.Library
                     ref cbSid,
                     referencedDomainName,
                     ref cchReferencedDomainName,
-                    out peUse);
+                    out Win32Const.SID_NAME_USE peUse);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
@@ -84,8 +82,8 @@ namespace TrustExec.Library
                 (string.Compare(accountName, referencedDomainName.ToString(), opt) != 0))
             {
                 accountName = string.Format("{0}\\{1}",
-                    referencedDomainName.ToString(),
-                    accountName);
+                    referencedDomainName.ToString().ToLower(),
+                    accountName.ToLower());
             }
 
             if (Win32Api.ConvertSidToStringSid(pSid, out string strSid))
@@ -101,20 +99,16 @@ namespace TrustExec.Library
 
         public static string ConvertSidStringToAccountName(string sid)
         {
+            StringComparison opt = StringComparison.OrdinalIgnoreCase;
             bool status;
             int error;
             StringBuilder pName = new StringBuilder();
             int cchName = 4;
             StringBuilder pReferencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 4;
-            Win32Const.SID_NAME_USE peUse;
 
             if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
-            {
-                peUse = Win32Const.SID_NAME_USE.SidTypeUnknown;
-
                 return null;
-            }
 
             do
             {
@@ -128,7 +122,7 @@ namespace TrustExec.Library
                     ref cchName,
                     pReferencedDomainName,
                     ref cchReferencedDomainName,
-                    out peUse);
+                    out Win32Const.SID_NAME_USE peUse);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
@@ -141,13 +135,15 @@ namespace TrustExec.Library
             if (!status)
                 return null;
             
-            if (pName.ToString() == pReferencedDomainName.ToString())
+            if (string.Compare(pName.ToString(), pReferencedDomainName.ToString(), opt) == 0)
             {
                 return pReferencedDomainName.ToString();
             }
             else
             {
-                return string.Format("{0}\\{1}", pReferencedDomainName.ToString(), pName.ToString());
+                return string.Format("{0}\\{1}",
+                    pReferencedDomainName.ToString().ToLower(),
+                    pName.ToString().ToLower());
             }
         }
 
@@ -266,7 +262,7 @@ namespace TrustExec.Library
         {
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
 
-            if (domain == null)
+            if (string.IsNullOrEmpty(domain))
                 return -1;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);

@@ -12,7 +12,7 @@ namespace TrustExec.Library
             string username,
             int domainRid)
         {
-            if (domain == string.Empty || domain == null)
+            if (string.IsNullOrEmpty(domain))
             {
                 Console.WriteLine("[!] Domain name is not specified.\n");
 
@@ -62,21 +62,21 @@ namespace TrustExec.Library
 
             Console.WriteLine();
 
-            if (domain == string.Empty || domain == null)
+            if (string.IsNullOrEmpty(domain))
             {
                 Console.WriteLine("[!] Domain name is not specified.\n");
 
                 return false;
             }
 
-            if (username == string.Empty || username == null)
+            if (string.IsNullOrEmpty(username))
             {
                 Console.WriteLine("[!] Username is not specified.\n");
 
                 return false;
             }
 
-            if (command == string.Empty || command == null)
+            if (string.IsNullOrEmpty(command))
             {
                 execute = "C:\\Windows\\System32\\cmd.exe";
             }
@@ -133,6 +133,13 @@ namespace TrustExec.Library
 
         public static bool RemoveVirtualAccount(string domain, string username)
         {
+            if (string.IsNullOrEmpty(domain))
+            {
+                Console.WriteLine("[!] Domain name is not specified.\n");
+
+                return false;
+            }
+
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privilegeNames = new List<string> {
                 Win32Const.SE_DEBUG_NAME,
@@ -167,7 +174,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool SidLookup(string domain, string username, string sid)
+        public static bool LookupSid(string domain, string username, string sid)
         {
             string result;
             string accountName;
@@ -180,7 +187,7 @@ namespace TrustExec.Library
                 {
                     Console.WriteLine(
                         "\n[*] Result : {0} (SID : {1})\n",
-                        result,
+                        result.ToLower(),
                         sid.ToUpper());
                     
                     return true;
