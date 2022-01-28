@@ -874,8 +874,8 @@ C:\dev>TrustExec.exe -m exec -s
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (S-1-5-110)
-    |-> Username : DefaultUser (S-1-5-110-110)
+    |-> Domain   : DefaultDomain (SID : S-1-5-110)
+    |-> Username : DefaultUser (SID : S-1-5-110-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as DefaultDomain\DefaultUser.
 [>] Trying to create process.
@@ -919,8 +919,8 @@ C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
-    |-> Domain   : VirtualDomain (S-1-5-92)
-    |-> Username : VirtualAdmin (S-1-5-92-110)
+    |-> Domain   : VirtualDomain (SID : S-1-5-92)
+    |-> Username : VirtualAdmin (SID : S-1-5-92-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as VirtualDomain\VirtualAdmin.
 [>] Trying to create process.
@@ -953,8 +953,8 @@ C:\dev>TrustExec.exe -m exec -c "whoami /user"
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (S-1-5-110)
-    |-> Username : DefaultUser (S-1-5-110-110)
+    |-> Domain   : DefaultDomain (SID : S-1-5-110)
+    |-> Username : DefaultUser (SID : S-1-5-110-110)
 [*] S-1-5-110 or DefaultDomain maybe already exists or invalid.
 [>] Trying to logon as DefaultDomain\DefaultUser.
 [>] Trying to create process.
@@ -988,8 +988,8 @@ C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (S-1-5-110)
-    |-> Username : DefaultUser (S-1-5-110-110)
+    |-> Domain   : DefaultDomain (SID : S-1-5-110)
+    |-> Username : DefaultUser (SID : S-1-5-110-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as DefaultDomain\DefaultUser.
 [>] Trying to enable SeIncreaseQuotaPrivilege.
@@ -1138,6 +1138,7 @@ C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
 [>] Trying to remove SID.
     |-> Domain   : defaultdomain
     |-> Username : defaultuser
+[*] SID : S-1-5-110-110.
 [+] Requested SID is removed successfully.
 
 
@@ -1153,6 +1154,7 @@ C:\dev>TrustExec.exe -m sid -r -d defaultdomain
 [+] Impersonation is successful.
 [>] Trying to remove SID.
     |-> Domain   : defaultdomain
+[*] SID : S-1-5-110.
 [+] Requested SID is removed successfully.
 ```
 
@@ -1172,10 +1174,10 @@ C:\dev>TrustExec.exe -m sid -a -d virtualworld -u virtualadmin -i 97
 [>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
-[>] Trying to add virtual group and account.
-    |-> Domain   : virtualworld (S-1-5-97)
-    |-> Username : virtualadmin (S-1-5-97-110)
-[+] Added virtual group and account.
+[>] Trying to add virtual domain and user.
+    |-> Domain   : virtualworld (SID : S-1-5-97)
+    |-> Username : virtualadmin (SID : S-1-5-97-110)
+[+] Added virtual domain and user.
 
 C:\dev>TrustExec.exe -m sid -l -s S-1-5-97
 
