@@ -25,16 +25,29 @@ namespace SwitchPriv.Interop
             public uint Attributes;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SID_AND_ATTRIBUTES
+        {
+            public IntPtr Sid; // PSID
+            public uint Attributes;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TOKEN_MANDATORY_LABEL
+        {
+            public SID_AND_ATTRIBUTES Label;
+        }
+
         public struct TOKEN_PRIVILEGES
         {
             public int PrivilegeCount;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            public LUID_AND_ATTRIBUTES[] Privilege;
+            public LUID_AND_ATTRIBUTES[] Privileges;
 
             public TOKEN_PRIVILEGES(int _privilegeCount)
             {
                 PrivilegeCount = _privilegeCount;
-                Privilege = new LUID_AND_ATTRIBUTES[1];
+                Privileges = new LUID_AND_ATTRIBUTES[1];
             }
         }
 

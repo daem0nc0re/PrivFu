@@ -131,6 +131,54 @@ namespace SwitchPriv.Library
         }
 
 
+        public static string ConvertIndexToMandatoryLevelSid(int index)
+        {
+            if (index == (int)Globals.MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
+                return Win32Const.UNTRUSTED_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
+                return Win32Const.LOW_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
+                return Win32Const.MEDIUM_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
+                return Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
+                return Win32Const.HIGH_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
+                return Win32Const.SYSTEM_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
+                return Win32Const.PROTECTED_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
+                return Win32Const.SECURE_MANDATORY_LEVEL;
+            else
+                return null;
+        }
+
+
+        public static string ConvertStringSidToMandatoryLevelName(string stringSid)
+        {
+            StringComparison opt = StringComparison.OrdinalIgnoreCase;
+
+            if (string.Compare(stringSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
+                return "UNTRUSTED_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.LOW_MANDATORY_LEVEL, opt) == 0)
+                return "LOW_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.MEDIUM_MANDATORY_LEVEL, opt) == 0)
+                return "MEDIUM_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
+                return "MEDIUM_PLUS_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.HIGH_MANDATORY_LEVEL, opt) == 0)
+                return "HIGH_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.SYSTEM_MANDATORY_LEVEL, opt) == 0)
+                return "SYSTEM_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.PROTECTED_MANDATORY_LEVEL, opt) == 0)
+                return "PROTECTED_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.SECURE_MANDATORY_LEVEL, opt) == 0)
+                return "SECURE_MANDATORY_LEVEL";
+            else
+                return null;
+        }
+
+
         public static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
@@ -206,7 +254,7 @@ namespace SwitchPriv.Library
         public static void ListPrivilegeOptionValues()
         {
             Console.WriteLine();
-            Console.WriteLine("Available values for --enable or --disable option:\n");
+            Console.WriteLine("Available values for --enable, --disable, and --remove options:");
             Console.WriteLine("    + CreateToken                    : Specifies SeCreateTokenPrivilege.");
             Console.WriteLine("    + AssignPrimaryToken             : Specifies SeAssignPrimaryTokenPrivilege.");
             Console.WriteLine("    + LockMemory                     : Specifies SeLockMemoryPrivilege.");
@@ -243,6 +291,16 @@ namespace SwitchPriv.Library
             Console.WriteLine("    + CreateSymbolicLink             : Specifies SeCreateSymbolicLinkPrivilege.");
             Console.WriteLine("    + DelegateSessionUserImpersonate : Specifies SeDelegateSessionUserImpersonatePrivilege.");
             Console.WriteLine("    + All                            : Specifies all token privileges.");
+            Console.WriteLine();
+            Console.WriteLine("Available values for --integrity option:");
+            Console.WriteLine("    + 0 : UNTRUSTED_MANDATORY_LEVEL");
+            Console.WriteLine("    + 1 : LOW_MANDATORY_LEVEL");
+            Console.WriteLine("    + 2 : MEDIUM_MANDATORY_LEVEL");
+            Console.WriteLine("    + 3 : MEDIUM_PLUS_MANDATORY_LEVEL");
+            Console.WriteLine("    + 4 : HIGH_MANDATORY_LEVEL");
+            Console.WriteLine("    + 5 : SYSTEM_MANDATORY_LEVEL");
+            Console.WriteLine("    + 6 : PROTECTED_MANDATORY_LEVEL");
+            Console.WriteLine("    + 7 : SECURE_MANDATORY_LEVEL");
             Console.WriteLine();
         }
 

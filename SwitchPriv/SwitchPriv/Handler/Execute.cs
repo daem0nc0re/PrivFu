@@ -9,9 +9,23 @@ namespace SwitchPriv.Handler
         {
             int pid;
             string priv;
+            int integrityIndex;
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
 
-            if (options.GetValue("pid") != null)
+            if (options.GetFlag("help"))
+            {
+                options.GetHelp();
+
+                return;
+            }
+            else if (options.GetFlag("list"))
+            {
+                Helpers.ListPrivilegeOptionValues();
+
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(options.GetValue("pid")))
             {
                 try
                 {
@@ -20,7 +34,8 @@ namespace SwitchPriv.Handler
                 catch
                 {
                     options.GetHelp();
-                    Console.WriteLine("[-] Failed to parse specified --pid option value.\n");
+                    Console.WriteLine("[-] Failed to parse the specified --pid option value.\n");
+                    
                     return;
                 }
             }
@@ -28,24 +43,16 @@ namespace SwitchPriv.Handler
             {
                 pid = 0;
             }
-
-            if (options.GetFlag("help"))
+            
+            if (options.GetFlag("get"))
             {
-                options.GetHelp();
+                Modules.GetPrivileges(pid, options.GetFlag("system"));
             }
-            else if (options.GetFlag("list"))
-            {
-                Helpers.ListPrivilegeOptionValues();
-            }
-            else if (options.GetFlag("get"))
-            {
-                Modules.GetPrivileges(pid);
-            }
-            else if (options.GetValue("enable") != null)
+            else if (!string.IsNullOrEmpty(options.GetValue("enable")))
             {
                 if (string.Compare(options.GetValue("enable"), "All", opt) == 0)
                 {
-                    Modules.EnableAllPrivileges(pid);
+                    Modules.EnableAllPrivileges(pid, options.GetFlag("system"));
                 }
                 else
                 {
@@ -55,31 +62,70 @@ namespace SwitchPriv.Handler
                     {
                         options.GetHelp();
                         Console.WriteLine("[-] Failed to specify requested token privilege.\n");
+
                         return;
                     }
 
-                    Modules.EnableTokenPrivilege(pid, priv);
+                    Modules.EnableTokenPrivilege(pid, priv, options.GetFlag("system"));
                 }
             }
-            else if (options.GetValue("disable") != null)
+            else if (!string.IsNullOrEmpty(options.GetValue("disable")))
             {
                 if (string.Compare(options.GetValue("disable"), "All", opt) == 0)
                 {
-                    Modules.DisableAllPrivileges(pid);
+                    Modules.DisableAllPrivileges(pid, options.GetFlag("system"));
                 }
                 else
                 {
                     priv = Helpers.GetFullPrivilegeName(options.GetValue("disable"));
 
-                    if (priv == null)
+                    if (string.IsNullOrEmpty(priv))
                     {
                         options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify requested token privilege.\n");
+                        Console.WriteLine("[-] Failed to specify the requested token privilege.\n");
+
                         return;
                     }
 
-                    Modules.DisableTokenPrivilege(pid, priv);
+                    Modules.DisableTokenPrivilege(pid, priv, options.GetFlag("system"));
                 }
+            }
+            else if (!string.IsNullOrEmpty(options.GetValue("remove")))
+            {
+                if (string.Compare(options.GetValue("remove"), "All", opt) == 0)
+                {
+                    Modules.RemoveAllPrivileges(pid, options.GetFlag("system"));
+                }
+                else
+                {
+                    priv = Helpers.GetFullPrivilegeName(options.GetValue("remove"));
+
+                    if (string.IsNullOrEmpty(priv))
+                    {
+                        options.GetHelp();
+                        Console.WriteLine("[-] Failed to the specify requested token privilege.\n");
+
+                        return;
+                    }
+
+                    Modules.RemoveTokenPrivilege(pid, priv, options.GetFlag("system"));
+                }
+            }
+            else if (!string.IsNullOrEmpty(options.GetValue("integrity")))
+            {
+                try
+                {
+                    integrityIndex = Convert.ToInt32(options.GetValue("integrity"));
+                }
+                catch
+                {
+                    options.GetHelp();
+                    Console.WriteLine("[-] Failed to parse the specified --integrity option value.\n");
+
+                    return;
+                }
+
+                Modules.SetIntegrityLevel(pid, integrityIndex, options.GetFlag("system"));
             }
             else
             {

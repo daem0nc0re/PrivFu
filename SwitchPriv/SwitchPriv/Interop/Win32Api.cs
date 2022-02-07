@@ -18,6 +18,26 @@ namespace SwitchPriv.Interop
             IntPtr PreviousState, // out TOKEN_PRIVILEGES
             IntPtr ReturnLength); // out int
 
+        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool ConvertStringSidToSid(
+            string StringSid,
+            out IntPtr pSid);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public extern static bool DuplicateTokenEx(
+            IntPtr hExistingToken,
+            Win32Const.TokenAccessFlags dwDesiredAccess,
+            IntPtr lpTokenAttributes,
+            Win32Const.SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            Win32Const.TOKEN_TYPE TokenType,
+            out IntPtr phNewToken);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern int GetLengthSid(IntPtr pSid);
+
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool GetTokenInformation(
             IntPtr TokenHandle,
@@ -25,6 +45,9 @@ namespace SwitchPriv.Interop
             IntPtr TokenInformation,
             int TokenInformationLength,
             out int ReturnLength);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
@@ -42,7 +65,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
-            uint DesiredAccess,
+            Win32Const.TokenAccessFlags DesiredAccess,
             out IntPtr TokenHandle);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -50,6 +73,16 @@ namespace SwitchPriv.Interop
             IntPtr ClientToken,
             IntPtr RequiredPrivileges, // ref PRIVILEGE_SET
             out bool pfResult);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool RevertToSelf();
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool SetTokenInformation(
+            IntPtr TokenHandle,
+            Win32Const.TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            int TokenInformationLength);
 
         /*
          * kernel32.dll
@@ -75,7 +108,7 @@ namespace SwitchPriv.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(
-            uint processAccess,
+            Win32Const.ProcessAccessFlags processAccess,
             bool bInheritHandle,
             int processId);
 

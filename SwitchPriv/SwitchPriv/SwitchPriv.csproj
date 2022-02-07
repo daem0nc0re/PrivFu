@@ -49,6 +49,7 @@
     <Compile Include="Interop\Win32Api.cs" />
     <Compile Include="Interop\Win32Const.cs" />
     <Compile Include="Interop\Win32Struct.cs" />
+    <Compile Include="Library\Globals.cs" />
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />
     <Compile Include="Library\Utilities.cs" />
