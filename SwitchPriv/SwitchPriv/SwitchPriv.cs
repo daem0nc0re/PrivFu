@@ -27,18 +27,14 @@ namespace SwitchPriv
                 options.AddFlag(false, "s", "system", "Flag to run as \"NT AUTHORITY\\SYSTEM\".");
                 options.AddFlag(false, "l", "list", "Flag to list values for --enable, --disable, --remove and --integrity options.");
                 options.AddExclusive(exclusive);
+                options.Parse(args);
+                Execute.Run(options);
             }
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex.Message);
 
                 return;
-            }
-
-            try
-            {
-                options.Parse(args);
-                Execute.Run(options);
             }
             catch (ArgumentException ex)
             {

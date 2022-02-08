@@ -8,7 +8,7 @@ namespace TrustExec.Handler
     {
         private class CommandLineOption
         {
-            readonly bool IsFlag;
+            readonly OptionType Type;
             readonly bool IsRequired;
             bool IsParsed;
             readonly string BriefName;
@@ -19,33 +19,34 @@ namespace TrustExec.Handler
 
             public CommandLineOption(
                 bool _isRequired,
-                bool _isParsed,
                 string _briefName,
                 string _fullName,
-                bool _flag,
                 string _description)
             {
-                this.IsFlag = true;
+                this.Type = OptionType.Flag;
                 this.IsRequired = _isRequired;
-                this.IsParsed = _isParsed;
+                this.IsParsed = false;
                 this.BriefName = _briefName;
                 this.FullName = _fullName;
-                this.Flag = _flag;
-                this.Value = string.Empty;
+                this.Flag = false;
+                this.Value = null;
                 this.Description = _description;
             }
 
             public CommandLineOption(
                 bool _isRequired,
-                bool _isParsed,
                 string _briefName,
                 string _fullName,
                 string _value,
                 string _description)
             {
-                this.IsFlag = false;
+                if (_briefName != _fullName)
+                    this.Type = OptionType.Parameter;
+                else
+                    this.Type = OptionType.Argument;
+
                 this.IsRequired = _isRequired;
-                this.IsParsed = _isParsed;
+                this.IsParsed = false;
                 this.BriefName = _briefName;
                 this.FullName = _fullName;
                 this.Flag = false;
@@ -65,7 +66,7 @@ namespace TrustExec.Handler
 
             public bool GetFlag()
             {
-                if (!this.IsFlag)
+                if (this.Type != OptionType.Flag)
                     throw new InvalidOperationException(string.Format(
                         "{0} option is not flag option.",
                         this.FullName));
@@ -75,11 +76,6 @@ namespace TrustExec.Handler
             public string GetFullName()
             {
                 return this.FullName;
-            }
-
-            public bool GetIsFlag()
-            {
-                return this.IsFlag;
             }
 
             public bool GetIsParsed()
@@ -92,9 +88,14 @@ namespace TrustExec.Handler
                 return this.IsRequired;
             }
 
+            public OptionType GetOptionType()
+            {
+                return this.Type;
+            }
+
             public string GetValue()
             {
-                if (this.IsFlag)
+                if (this.Type == OptionType.Flag)
                     throw new InvalidOperationException(string.Format(
                         "{0} option is flag option.",
                         this.FullName));
@@ -117,12 +118,21 @@ namespace TrustExec.Handler
             }
         }
 
+        private enum OptionType
+        {
+            Flag,
+            Parameter,
+            Argument
+        }
+
         private string g_Title = null;
         private string g_OptionName = null;
         private readonly List<CommandLineOption> g_Options =
             new List<CommandLineOption>();
+        private readonly List<List<string>> g_Exclusive = new List<List<string>>();
 
-        public void Add(
+
+        public void AddArgument(
             bool isRequired,
             string name,
             string description)
@@ -131,26 +141,27 @@ namespace TrustExec.Handler
             {
                 if (opt.GetBriefName() == name || opt.GetFullName() == name)
                 {
-                    return;
+                    throw new InvalidOperationException(string.Format(
+                        "[!] {0} option is defined multiple times.\n",
+                        name));
                 }
             }
 
             CommandLineOption newOption = new CommandLineOption(
                 isRequired,
-                false,
                 name,
                 name,
-                string.Empty,
+                null,
                 description);
 
             g_Options.Add(newOption);
         }
 
-        public void Add(
+
+        public void AddFlag(
             bool isRequired,
             string briefName,
             string fullName,
-            bool flag,
             string description)
         {
             briefName = string.Format("-{0}", briefName);
@@ -163,22 +174,23 @@ namespace TrustExec.Handler
                     opt.GetBriefName() == fullName ||
                     opt.GetFullName() == fullName)
                 {
-                    return;
+                    throw new InvalidOperationException(string.Format(
+                        "[!] {0} option is defined multiple times.\n",
+                        fullName));
                 }
             }
 
             CommandLineOption newOption = new CommandLineOption(
                 isRequired,
-                false,
                 briefName,
                 fullName,
-                flag,
                 description);
 
             g_Options.Add(newOption);
         }
 
-        public void Add(
+
+        public void AddParameter(
             bool isRequired,
             string briefName,
             string fullName,
@@ -195,13 +207,14 @@ namespace TrustExec.Handler
                     opt.GetBriefName() == fullName ||
                     opt.GetFullName() == fullName)
                 {
-                    return;
+                    throw new InvalidOperationException(string.Format(
+                        "[!] {0} option is already defined.\n",
+                        fullName));
                 }
             }
 
             CommandLineOption newOption = new CommandLineOption(
                 isRequired,
-                false,
                 briefName,
                 fullName,
                 value,
@@ -209,6 +222,13 @@ namespace TrustExec.Handler
 
             g_Options.Add(newOption);
         }
+
+
+        public void AddExclusive(List<string> exclusive)
+        {
+            g_Exclusive.Add(exclusive);
+        }
+
 
         public bool GetFlag(string key)
         {
@@ -224,12 +244,12 @@ namespace TrustExec.Handler
             }
             catch (InvalidOperationException ex)
             {
-                Console.WriteLine("\n[!] {0}\n", ex.Message);
-                Environment.Exit(-1);
+                throw new InvalidOperationException(string.Format("[!] {0}\n", ex.Message));
             }
 
-            throw new ArgumentException("Option is not found.");
+            throw new InvalidOperationException("[!] Option is not found.\n");
         }
+
 
         public void GetHelp()
         {
@@ -252,11 +272,11 @@ namespace TrustExec.Handler
                     "\nUsage: {0} [Options]",
                     AppDomain.CurrentDomain.FriendlyName));
             }
-            
+
 
             foreach (var opt in g_Options)
             {
-                if (opt.GetBriefName() == opt.GetFullName())
+                if (opt.GetOptionType() == OptionType.Argument)
                 {
                     if (opt.GetIsRequired())
                     {
@@ -278,6 +298,7 @@ namespace TrustExec.Handler
             ListOptions();
         }
 
+
         public string GetValue(string key)
         {
             try
@@ -292,12 +313,12 @@ namespace TrustExec.Handler
             }
             catch (InvalidOperationException ex)
             {
-                Console.WriteLine("\n[!] {0}\n", ex.Message);
-                Environment.Exit(-1);
+                throw new InvalidOperationException(string.Format("[!] {0}\n", ex.Message));
             }
 
-            throw new ArgumentException("Option is not found.");
+            throw new InvalidOperationException("[!] Option is not found.\n");
         }
+
 
         public void ListOptions()
         {
@@ -311,7 +332,7 @@ namespace TrustExec.Handler
 
             foreach (var opt in g_Options)
             {
-                if (opt.GetBriefName() == opt.GetFullName())
+                if (opt.GetOptionType() == OptionType.Argument)
                 {
                     formatter = string.Format(
                         "{0}",
@@ -336,7 +357,7 @@ namespace TrustExec.Handler
 
             foreach (var opt in g_Options)
             {
-                if (opt.GetBriefName() == opt.GetFullName())
+                if (opt.GetOptionType() == OptionType.Argument)
                 {
                     Console.WriteLine(string.Format(
                         formatter,
@@ -355,42 +376,64 @@ namespace TrustExec.Handler
             Console.WriteLine();
         }
 
+
         public void Parse(string[] args)
         {
+            StringBuilder exceptionMessage = new StringBuilder();
+
             for (var idx = 0; idx < args.Length; idx++)
             {
                 foreach (var opt in g_Options)
                 {
-                    if (opt.GetIsParsed())
-                        continue;
-
                     if ((opt.GetBriefName() == args[idx] || opt.GetFullName() == args[idx]) &&
-                        opt.GetIsFlag())
+                        (opt.GetOptionType() == OptionType.Flag))
                     {
+                        if (opt.GetIsParsed())
+                        {
+                            exceptionMessage.Append(string.Format(
+                                "[!] {0} option is declared multiple times.\n",
+                                opt.GetFullName()));
+
+                            throw new ArgumentException(exceptionMessage.ToString());
+                        }
+
                         opt.SetIsParsed();
                         opt.SetFlag();
                         break;
                     }
                     else if ((opt.GetBriefName() == args[idx] || opt.GetFullName() == args[idx]) &&
-                        !opt.GetIsFlag() &&
-                        opt.GetBriefName() != opt.GetFullName())
+                        (opt.GetOptionType() == OptionType.Parameter))
                     {
+                        if (opt.GetIsParsed())
+                        {
+                            exceptionMessage.Append(string.Format(
+                                "[!] {0} option is declared multiple times.\n",
+                                opt.GetFullName()));
+
+                            throw new ArgumentException(exceptionMessage.ToString());
+                        }
+
                         if (idx + 1 >= args.Length)
                         {
-                            Console.WriteLine(
-                                "\n[!] Missing the value for {0} option.\n",
-                                opt.GetBriefName());
-                            Environment.Exit(-1);
+                            exceptionMessage.Append(string.Format(
+                                "[!] Missing the value for {0} option.\n",
+                                opt.GetBriefName()));
+
+                            throw new ArgumentException(exceptionMessage.ToString());
                         }
 
                         opt.SetIsParsed();
                         opt.SetValue(args[++idx]);
                         break;
                     }
-                    else if (!opt.GetIsFlag() && opt.GetBriefName() == opt.GetFullName())
+                    else if (opt.GetOptionType() == OptionType.Argument)
                     {
+                        if (opt.GetIsParsed())
+                            continue;
+
                         opt.SetIsParsed();
                         opt.SetValue(args[idx]);
+
                         break;
                     }
                 }
@@ -400,17 +443,54 @@ namespace TrustExec.Handler
             {
                 if (opt.GetIsRequired() && !opt.GetIsParsed())
                 {
-                    GetHelp();
-                    Console.WriteLine("\n[!] {0} option is required.\n", opt.GetBriefName());
-                    Environment.Exit(-1);
+                    exceptionMessage.Append(string.Format(
+                        "[!] {0} option is required.\n",
+                        opt.GetBriefName()));
+
+                    throw new ArgumentException(exceptionMessage.ToString());
+                }
+            }
+
+            int exclusiveCounter;
+            string fullName;
+
+            foreach (var exclusiveList in g_Exclusive)
+            {
+                exclusiveCounter = 0;
+
+                foreach (var exclusive in exclusiveList)
+                {
+                    fullName = string.Format("--{0}", exclusive.TrimStart('-'));
+
+                    foreach (var opt in g_Options)
+                    {
+                        if (opt.GetFullName() == fullName && opt.GetIsParsed())
+                            exclusiveCounter++;
+                    }
+                }
+
+                if (exclusiveCounter > 1)
+                {
+                    exceptionMessage.Append("[!] Following options should not be set at a time:\n");
+
+                    foreach (var exclusive in exclusiveList)
+                    {
+                        fullName = string.Format("--{0}", exclusive.TrimStart('-'));
+
+                        exceptionMessage.Append(string.Format("    + {0} option\n", fullName));
+                    }
+
+                    throw new ArgumentException(exceptionMessage.ToString());
                 }
             }
         }
+
 
         public void SetOptionName(string optionName)
         {
             g_OptionName = optionName;
         }
+
 
         public void SetTitle(string title)
         {

@@ -179,11 +179,11 @@ namespace TrustExec.Library
             string result;
             string accountName;
 
-            if (sid != null)
+            if (!string.IsNullOrEmpty(sid))
             {
                 result = Helpers.ConvertSidStringToAccountName(sid);
                 
-                if (result != null)
+                if (!string.IsNullOrEmpty(result))
                 {
                     Console.WriteLine(
                         "\n[*] Result : {0} (SID : {1})\n",
@@ -199,20 +199,20 @@ namespace TrustExec.Library
                     return false;
                 }
             }
-            else if (domain != null || username != null)
+            else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
             {
-                if (domain != null && username != null)
+                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
                     accountName = string.Format("{0}\\{1}", domain, username);
-                else if (domain != null)
+                else if (!string.IsNullOrEmpty(domain))
                     accountName = domain;
-                else if (username != null)
+                else if (!string.IsNullOrEmpty(username))
                     accountName = username;
                 else
                     return false;
 
                 result = Helpers.ConvertAccountNameToSidString(ref accountName);
 
-                if (result != null)
+                if (!string.IsNullOrEmpty(result))
                 {
                     Console.WriteLine(
                         "\n[*] Result : {0} (SID : {1})\n",

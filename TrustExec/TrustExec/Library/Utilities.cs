@@ -193,7 +193,7 @@ namespace TrustExec.Library
             if (!Win32Api.LogonUserExExW(
                 username,
                 domain,
-                string.Empty,
+                null,
                 Win32Const.LOGON32_LOGON_INTERACTIVE,
                 Win32Const.LOGON32_PROVIDER_VIRTUAL,
                 pTokenGroups,

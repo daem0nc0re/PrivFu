@@ -439,7 +439,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Console.WriteLine("[+] {0} is set successfully.",
+            Console.WriteLine("[+] {0} is set successfully.\n",
                 Helpers.ConvertStringSidToMandatoryLevelName(mandatoryLevelSid));
 
             return true;

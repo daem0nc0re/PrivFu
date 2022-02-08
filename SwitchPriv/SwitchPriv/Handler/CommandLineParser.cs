@@ -29,7 +29,7 @@ namespace SwitchPriv.Handler
                 this.BriefName = _briefName;
                 this.FullName = _fullName;
                 this.Flag = false;
-                this.Value = string.Empty;
+                this.Value = null;
                 this.Description = _description;
             }
 
@@ -125,7 +125,8 @@ namespace SwitchPriv.Handler
             Argument
         }
 
-        private string g_Title = string.Empty;
+        private string g_Title = null;
+        private string g_OptionName = null;
         private readonly List<CommandLineOption> g_Options =
             new List<CommandLineOption>();
         private readonly List<List<string>> g_Exclusive = new List<List<string>>();
@@ -253,18 +254,29 @@ namespace SwitchPriv.Handler
         public void GetHelp()
         {
             StringBuilder usage = new StringBuilder();
-            if (g_Title != string.Empty)
+            if (g_Title != null)
             {
                 Console.WriteLine("\n{0}", g_Title);
             }
 
-            usage.Append(string.Format(
-                "\nUsage: {0} [Options]",
-                AppDomain.CurrentDomain.FriendlyName));
+            if (g_OptionName != null)
+            {
+                usage.Append(string.Format(
+                    "\nUsage: {0} {1} [Options]",
+                    AppDomain.CurrentDomain.FriendlyName,
+                    g_OptionName));
+            }
+            else
+            {
+                usage.Append(string.Format(
+                    "\nUsage: {0} [Options]",
+                    AppDomain.CurrentDomain.FriendlyName));
+            }
+
 
             foreach (var opt in g_Options)
             {
-                if (opt.GetBriefName() == opt.GetFullName())
+                if (opt.GetOptionType() == OptionType.Argument)
                 {
                     if (opt.GetIsRequired())
                     {
@@ -471,6 +483,12 @@ namespace SwitchPriv.Handler
                     throw new ArgumentException(exceptionMessage.ToString());
                 }
             }
+        }
+
+
+        public void SetOptionName(string optionName)
+        {
+            g_OptionName = optionName;
         }
 
 
