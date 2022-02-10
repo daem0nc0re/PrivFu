@@ -445,7 +445,6 @@ namespace SwitchPriv.Handler
                     }
                 }
 
-
                 if (args[idx] != null)
                     reminder.Add(args[idx]);
             }
