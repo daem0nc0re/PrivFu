@@ -887,7 +887,6 @@ C:\dev>SwitchPriv.exe -e all
 [>] Trying to enable all token privileges.
     |-> Target PID   : 15240
     |-> Process Name : cmd
-
 [+] SeShutdownPrivilege is enabled successfully.
 [+] SeUndockPrivilege is enabled successfully.
 [+] SeIncreaseWorkingSetPrivilege is enabled successfully.
@@ -981,12 +980,9 @@ Tto get interactive shell, set `-s` flag. If you don't specify domain name (`-d`
 ```
 C:\dev>TrustExec.exe -m exec -s
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
@@ -1026,12 +1022,9 @@ To change domain RID, use `-i` option as follows:
 ```
 C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
@@ -1060,12 +1053,9 @@ If you want to execute single command, use `-c` option without `-s` flag as foll
 ```
 C:\dev>TrustExec.exe -m exec -c "whoami /user"
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
@@ -1095,12 +1085,9 @@ If you want to enable all available privileges, set `-f` flag as follows:
 ```
 C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
@@ -1109,47 +1096,26 @@ C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
     |-> Username : DefaultUser (SID : S-1-5-110-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as DefaultDomain\DefaultUser.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to enable SeSecurityPrivilege.
 [+] SeSecurityPrivilege is enabled successfully.
-[>] Trying to enable SeTakeOwnershipPrivilege.
 [+] SeTakeOwnershipPrivilege is enabled successfully.
-[>] Trying to enable SeLoadDriverPrivilege.
 [+] SeLoadDriverPrivilege is enabled successfully.
-[>] Trying to enable SeSystemProfilePrivilege.
 [+] SeSystemProfilePrivilege is enabled successfully.
-[>] Trying to enable SeSystemtimePrivilege.
 [+] SeSystemtimePrivilege is enabled successfully.
-[>] Trying to enable SeProfileSingleProcessPrivilege.
 [+] SeProfileSingleProcessPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseBasePriorityPrivilege.
 [+] SeIncreaseBasePriorityPrivilege is enabled successfully.
-[>] Trying to enable SeCreatePagefilePrivilege.
 [+] SeCreatePagefilePrivilege is enabled successfully.
-[>] Trying to enable SeBackupPrivilege.
 [+] SeBackupPrivilege is enabled successfully.
-[>] Trying to enable SeRestorePrivilege.
 [+] SeRestorePrivilege is enabled successfully.
-[>] Trying to enable SeShutdownPrivilege.
 [+] SeShutdownPrivilege is enabled successfully.
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
-[>] Trying to enable SeSystemEnvironmentPrivilege.
 [+] SeSystemEnvironmentPrivilege is enabled successfully.
-[>] Trying to enable SeRemoteShutdownPrivilege.
 [+] SeRemoteShutdownPrivilege is enabled successfully.
-[>] Trying to enable SeUndockPrivilege.
 [+] SeUndockPrivilege is enabled successfully.
-[>] Trying to enable SeManageVolumePrivilege.
 [+] SeManageVolumePrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseWorkingSetPrivilege.
 [+] SeIncreaseWorkingSetPrivilege is enabled successfully.
-[>] Trying to enable SeTimeZonePrivilege.
 [+] SeTimeZonePrivilege is enabled successfully.
-[>] Trying to enable SeCreateSymbolicLinkPrivilege.
 [+] SeCreateSymbolicLinkPrivilege is enabled successfully.
-[>] Trying to enable SeDelegateSessionUserImpersonatePrivilege.
 [+] SeDelegateSessionUserImpersonatePrivilege is enabled successfully.
 [>] Trying to create process.
 
@@ -1244,12 +1210,9 @@ Domain name to remove is specified with `-d` option, username is specified with 
 ```
 C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to remove SID.
@@ -1261,12 +1224,9 @@ C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
 
 C:\dev>TrustExec.exe -m sid -r -d defaultdomain
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to remove SID.
@@ -1283,12 +1243,9 @@ If you want add domain or user SID, set `-a` flag as follows:
 ```
 C:\dev>TrustExec.exe -m sid -a -d virtualworld -u virtualadmin -i 97
 
-[>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
-[>] Trying to enable SeAssignPrimaryTokenPrivilege.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to enable SeIncreaseQuotaPrivilege.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
 [>] Trying to add virtual domain and user.

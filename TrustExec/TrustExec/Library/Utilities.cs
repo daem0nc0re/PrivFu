@@ -279,8 +279,6 @@ namespace TrustExec.Library
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            Console.WriteLine("[>] Trying to enable {0}.", Helpers.GetPrivilegeName(priv));
-
             if (!Win32Api.AdjustTokenPrivileges(
                 hToken,
                 false,

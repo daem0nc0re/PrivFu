@@ -16,44 +16,17 @@ namespace TrustExec
         }
 
 
-        static string[] RemoveFromArguments(string[] inputArgs, string[] argsToRemove)
-        {
-            List<string> commandLine = new List<string>();
-            bool found;
-
-            for (var idx = 0; idx < inputArgs.Length; idx++)
-            {
-                found = false;
-
-                for (var innerIdx = 0; innerIdx < argsToRemove.Length; innerIdx++)
-                {
-                    if (inputArgs[idx] == argsToRemove[innerIdx])
-                    {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (found)
-                    idx++;
-                else
-                    commandLine.Add(inputArgs[idx]);
-            }
-
-            return commandLine.ToArray();
-        }
-
-
         static void Main(string[] args)
         {
             CommandLineParser options = new CommandLineParser();
+            string[] reminder;
 
             try
             {
                 options.SetTitle("TrustExec - Tool to investigate TrustedInstaller capability.");
                 options.AddFlag(false, "h", "help", "Displays this help message.");
-                options.AddParameter(true, "m", "module", null, "Specifies module name.");
-                options.Parse(args);
+                options.AddParameter(false, "m", "module", null, "Specifies module name.");
+                reminder = options.Parse(args);
             }
             catch (InvalidOperationException ex)
             {
@@ -72,13 +45,12 @@ namespace TrustExec
             if (options.GetValue("module") != null)
             {
                 StringComparison opt = StringComparison.OrdinalIgnoreCase;
-                string[] argsToRemove = new string[] { "-m", "--module" };
-                string[] commandLine = RemoveFromArguments(args, argsToRemove);
                 CommandLineParser strippedOptions = new CommandLineParser();
+                List<string> exclusive;
 
                 if (string.Compare(options.GetValue("module"), "exec", opt) == 0)
                 {
-                    var exclusive = new List<string> { "shell", "command" };
+                    exclusive = new List<string> { "shell", "command" };
 
                     try
                     {
@@ -92,7 +64,7 @@ namespace TrustExec
                         strippedOptions.AddParameter(false, "u", "username", "DefaultUser", "Specifies username to add. Default value is \"DefaultUser\".");
                         strippedOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain. Default value is \"110\".");
                         strippedOptions.AddExclusive(exclusive);
-                        strippedOptions.Parse(commandLine);
+                        strippedOptions.Parse(reminder);
                         Execute.ExecCommand(strippedOptions);
                     }
                     catch (InvalidOperationException ex)
@@ -111,7 +83,7 @@ namespace TrustExec
                 }
                 else if (string.Compare(options.GetValue("module"), "sid", opt) == 0)
                 {
-                    var exclusive = new List<string> { "add", "remove", "lookup" };
+                    exclusive = new List<string> { "add", "remove", "lookup" };
 
                     try
                     {
@@ -126,7 +98,7 @@ namespace TrustExec
                         strippedOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain to add. Default value is \"110\".");
                         strippedOptions.AddParameter(false, "s", "sid", null, "Specifies SID to lookup.");
                         strippedOptions.AddExclusive(exclusive);
-                        strippedOptions.Parse(commandLine);
+                        strippedOptions.Parse(reminder);
                         Execute.SidCommand(strippedOptions);
                     }
                     catch (InvalidOperationException ex)

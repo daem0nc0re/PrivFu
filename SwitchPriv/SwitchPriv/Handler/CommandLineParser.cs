@@ -377,9 +377,10 @@ namespace SwitchPriv.Handler
         }
 
 
-        public void Parse(string[] args)
+        public string[] Parse(string[] args)
         {
             StringBuilder exceptionMessage = new StringBuilder();
+            List<string> reminder = new List<string>();
 
             for (var idx = 0; idx < args.Length; idx++)
             {
@@ -399,6 +400,8 @@ namespace SwitchPriv.Handler
 
                         opt.SetIsParsed();
                         opt.SetFlag();
+                        args[idx] = null;
+
                         break;
                     }
                     else if ((opt.GetBriefName() == args[idx] || opt.GetFullName() == args[idx]) &&
@@ -423,7 +426,10 @@ namespace SwitchPriv.Handler
                         }
 
                         opt.SetIsParsed();
+                        args[idx] = null;
                         opt.SetValue(args[++idx]);
+                        args[idx] = null;
+
                         break;
                     }
                     else if (opt.GetOptionType() == OptionType.Argument)
@@ -433,10 +439,15 @@ namespace SwitchPriv.Handler
 
                         opt.SetIsParsed();
                         opt.SetValue(args[idx]);
+                        args[idx] = null;
 
                         break;
                     }
                 }
+
+
+                if (args[idx] != null)
+                    reminder.Add(args[idx]);
             }
 
             foreach (var opt in g_Options)
@@ -472,17 +483,19 @@ namespace SwitchPriv.Handler
                 if (exclusiveCounter > 1)
                 {
                     exceptionMessage.Append("[!] Following options should not be set at a time:\n");
-                    
+
                     foreach (var exclusive in exclusiveList)
                     {
                         fullName = string.Format("--{0}", exclusive.TrimStart('-'));
-                        
+
                         exceptionMessage.Append(string.Format("    + {0} option\n", fullName));
                     }
 
                     throw new ArgumentException(exceptionMessage.ToString());
                 }
             }
+
+            return reminder.ToArray();
         }
 
 
