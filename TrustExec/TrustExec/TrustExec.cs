@@ -9,8 +9,8 @@ namespace TrustExec
         static void PrintModules()
         {
             Console.WriteLine("Available Modules:\n");
-            Console.WriteLine("    + exec - Run process as \"NT SERVICE\\TrustedInstaller\".");
-            Console.WriteLine("    + sid  - Add or remove virtual account's SID.");
+            Console.WriteLine("\t+ exec - Run process as \"NT SERVICE\\TrustedInstaller\".");
+            Console.WriteLine("\t+ sid  - Add or remove virtual account's SID.");
             Console.WriteLine();
             Console.WriteLine("[*] To see help for each modules, specify \"-m <Module> -h\" as arguments.\n");
         }
@@ -45,7 +45,7 @@ namespace TrustExec
             if (options.GetValue("module") != null)
             {
                 StringComparison opt = StringComparison.OrdinalIgnoreCase;
-                CommandLineParser strippedOptions = new CommandLineParser();
+                CommandLineParser subOptions = new CommandLineParser();
                 List<string> exclusive;
 
                 if (string.Compare(options.GetValue("module"), "exec", opt) == 0)
@@ -54,18 +54,19 @@ namespace TrustExec
 
                     try
                     {
-                        strippedOptions.SetTitle("TrustExec - Help for \"exec\" command.");
-                        strippedOptions.SetOptionName("-m exec");
-                        strippedOptions.AddFlag(false, "h", "help", "Displays this help message.");
-                        strippedOptions.AddFlag(false, "s", "shell", "Flag for interactive shell.");
-                        strippedOptions.AddFlag(false, "f", "full", "Flag to enable all available privileges.");
-                        strippedOptions.AddParameter(false, "c", "command", null, "Specifies command to execute.");
-                        strippedOptions.AddParameter(false, "d", "domain", "DefaultDomain", "Specifies domain name to add. Default value is \"DefaultDomain\".");
-                        strippedOptions.AddParameter(false, "u", "username", "DefaultUser", "Specifies username to add. Default value is \"DefaultUser\".");
-                        strippedOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain. Default value is \"110\".");
-                        strippedOptions.AddExclusive(exclusive);
-                        strippedOptions.Parse(reminder);
-                        Execute.ExecCommand(strippedOptions);
+                        subOptions.SetTitle("TrustExec - Help for \"exec\" command.");
+                        subOptions.SetOptionName("-m exec");
+                        subOptions.AddFlag(false, "h", "help", "Displays this help message.");
+                        subOptions.AddFlag(false, "s", "shell", "Flag for interactive shell.");
+                        subOptions.AddFlag(false, "f", "full", "Flag to enable all available privileges.");
+                        subOptions.AddParameter(false, "t", "technique", "0", "Specifies technique ID. Default ID is 0.");
+                        subOptions.AddParameter(false, "c", "command", null, "Specifies command to execute.");
+                        subOptions.AddParameter(false, "d", "domain", "DefaultDomain", "Specifies domain name to add. Default value is \"DefaultDomain\".");
+                        subOptions.AddParameter(false, "u", "username", "DefaultUser", "Specifies username to add. Default value is \"DefaultUser\".");
+                        subOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain. Default value is \"110\".");
+                        subOptions.AddExclusive(exclusive);
+                        subOptions.Parse(reminder);
+                        Execute.ExecCommand(subOptions);
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -75,7 +76,12 @@ namespace TrustExec
                     }
                     catch (ArgumentException ex)
                     {
-                        strippedOptions.GetHelp();
+                        subOptions.GetHelp();
+                        Console.WriteLine("Available Technique IDs:\n");
+                        Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
+                        Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
+                        Console.WriteLine();
+
                         Console.WriteLine(ex.Message);
 
                         return;
@@ -87,19 +93,19 @@ namespace TrustExec
 
                     try
                     {
-                        strippedOptions.SetTitle("TrustExec - Help for \"sid\" command.");
-                        strippedOptions.SetOptionName("-m sid");
-                        strippedOptions.AddFlag(false, "h", "help", "Displays this help message.");
-                        strippedOptions.AddFlag(false, "a", "add", "Flag to add virtual account's SID.");
-                        strippedOptions.AddFlag(false, "r", "remove", "Flag to remove virtual account's SID.");
-                        strippedOptions.AddFlag(false, "l", "lookup", "Flag to lookup SID or account name in local system.");
-                        strippedOptions.AddParameter(false, "d", "domain", null, "Specifies domain name to add or remove. Default value is null.");
-                        strippedOptions.AddParameter(false, "u", "username", null, "Specifies username to add or remove. Default value is null.");
-                        strippedOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain to add. Default value is \"110\".");
-                        strippedOptions.AddParameter(false, "s", "sid", null, "Specifies SID to lookup.");
-                        strippedOptions.AddExclusive(exclusive);
-                        strippedOptions.Parse(reminder);
-                        Execute.SidCommand(strippedOptions);
+                        subOptions.SetTitle("TrustExec - Help for \"sid\" command.");
+                        subOptions.SetOptionName("-m sid");
+                        subOptions.AddFlag(false, "h", "help", "Displays this help message.");
+                        subOptions.AddFlag(false, "a", "add", "Flag to add virtual account's SID.");
+                        subOptions.AddFlag(false, "r", "remove", "Flag to remove virtual account's SID.");
+                        subOptions.AddFlag(false, "l", "lookup", "Flag to lookup SID or account name in local system.");
+                        subOptions.AddParameter(false, "d", "domain", null, "Specifies domain name to add or remove. Default value is null.");
+                        subOptions.AddParameter(false, "u", "username", null, "Specifies username to add or remove. Default value is null.");
+                        subOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain to add. Default value is \"110\".");
+                        subOptions.AddParameter(false, "s", "sid", null, "Specifies SID to lookup.");
+                        subOptions.AddExclusive(exclusive);
+                        subOptions.Parse(reminder);
+                        Execute.SidCommand(subOptions);
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -109,7 +115,7 @@ namespace TrustExec
                     }
                     catch (ArgumentException ex)
                     {
-                        strippedOptions.GetHelp();
+                        subOptions.GetHelp();
                         Console.WriteLine(ex.Message);
 
                         return;

@@ -50,23 +50,25 @@ namespace SwitchPriv.Library
         }
 
 
-        public static Dictionary<string, bool> EnableMultiplePrivileges(
+        public static bool EnableMultiplePrivileges(
             IntPtr hToken,
-            List<string> privilegeNames)
+            string[] privs)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
             Dictionary<string, bool> results = new Dictionary<string, bool>();
+            var privList = new List<string>(privs);
             var availablePrivs = GetAvailablePrivileges(hToken);
             bool isEnabled;
+            bool enabledAll = true;
 
-            foreach (var name in privilegeNames)
+            foreach (var name in privList)
             {
                 results.Add(name, false);
             }
 
             foreach (var priv in availablePrivs)
             {
-                foreach (var name in privilegeNames)
+                foreach (var name in privList)
                 {
                     if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
                     {
@@ -84,7 +86,19 @@ namespace SwitchPriv.Library
                 }
             }
 
-            return results;
+            foreach (var result in results)
+            {
+                if (!result.Value)
+                {
+                    Console.WriteLine(
+                        "[-] {0} is not available.",
+                        result.Key);
+
+                    enabledAll = false;
+                }
+            }
+
+            return enabledAll;
         }
 
 

@@ -481,13 +481,13 @@ namespace SwitchPriv.Handler
 
                 if (exclusiveCounter > 1)
                 {
-                    exceptionMessage.Append("[!] Following options should not be set at a time:\n");
+                    exceptionMessage.Append("[!] Following options should not be set at a time:\n\n");
 
                     foreach (var exclusive in exclusiveList)
                     {
                         fullName = string.Format("--{0}", exclusive.TrimStart('-'));
 
-                        exceptionMessage.Append(string.Format("    + {0} option\n", fullName));
+                        exceptionMessage.Append(string.Format("\t+ {0} option\n", fullName));
                     }
 
                     throw new ArgumentException(exceptionMessage.ToString());

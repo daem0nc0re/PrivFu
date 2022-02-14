@@ -965,20 +965,73 @@ TrustExec - Help for "exec" command.
 
 Usage: TrustExec.exe -m exec [Options]
 
-        -h, --help     : Displays this help message.
-        -s, --shell    : Flag for interactive shell.
-        -c, --command  : Specifies command to execute.
-        -d, --domain   : Specifies domain name to add. Default value is "DefaultDomain".
-        -u, --username : Specifies username to add. Default value is "DefaultUser".
-        -i, --id       : Specifies RID for virtual domain. Default value is "110".
-        -f, --full     : Flag to enable all available privileges.
+        -h, --help      : Displays this help message.
+        -s, --shell     : Flag for interactive shell.
+        -f, --full      : Flag to enable all available privileges.
+        -t, --technique : Specifies technique ID. Default ID is 0.
+        -c, --command   : Specifies command to execute.
+        -d, --domain    : Specifies domain name to add. Default value is "DefaultDomain".
+        -u, --username  : Specifies username to add. Default value is "DefaultUser".
+        -i, --id        : Specifies RID for virtual domain. Default value is "110".
+
+Available Technique IDs:
+
+        + 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.
+        + 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.
 ```
 
-This module create a virtual accound to impersonate as TrustedInstaller group account.
-Tto get interactive shell, set `-s` flag. If you don't specify domain name (`-d` option), username (`-u`) and RID (`-i` option), this module create a virtual account `DefaultDomain\DefaultUser`. Default SID for domain is `S-1-5-110` and for user is `S-1-5-110-110`:
+For this module, 2 techniques are implemeted.
+We can specfy technique with `-t` option.
+If you set `0` or don't set value for `-t` option, `TrustExec` will try to create `TrustedInstaller` process with create token technique.
+To get interactive shell, set `-s` flag. 
 
 ```
 C:\dev>TrustExec.exe -m exec -s
+
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[+] SeCreateTokenPrivilege is enabled successfully.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[+] Impersonation is successful.
+[>] Trying to create an elevated token.
+[+] An elevated token is created successfully.
+[>] Trying to create process.
+
+Microsoft Windows [Version 10.0.19043.1526]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+
+C:\dev>whoami /groups | findstr /i trusted
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
+
+C:\dev>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                               State
+============================= ========================================= =======
+SeAssignPrimaryTokenPrivilege Replace a process level token             Enabled
+SeTcbPrivilege                Act as part of the operating system       Enabled
+SeDebugPrivilege              Debug programs                            Enabled
+SeImpersonatePrivilege        Impersonate a client after authentication Enabled
+```
+
+If you set `1` for `-t` option, `TrustExec` will try to create `TrustedInstaller` process with virtual account technique.
+This technique creates a virtual accound to impersonate as TrustedInstaller group account as a side effect.
+If you don't specify domain name (`-d` option), username (`-u`) and RID (`-i` option), this module create a virtual account `DefaultDomain\DefaultUser`.
+Default SID for domain is `S-1-5-110` and for user is `S-1-5-110-110`:
+
+```
+C:\dev>TrustExec.exe -m exec -s -t 1
 
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
@@ -1020,7 +1073,7 @@ You can change domain name and username, use `-d` option and `-u` option.
 To change domain RID, use `-i` option as follows:
 
 ```
-C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92
+C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92 -t 1
 
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
@@ -1051,33 +1104,36 @@ virtualdomain\virtualadmin S-1-5-92-110
 If you want to execute single command, use `-c` option without `-s` flag as follows:
 
 ```
-C:\dev>TrustExec.exe -m exec -c "whoami /user"
+C:\dev>TrustExec.exe -m exec -c "whoami /user & whoami /priv"
 
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
+[+] SeCreateTokenPrivilege is enabled successfully.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
-[>] Trying to generate token group information.
-[>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (SID : S-1-5-110)
-    |-> Username : DefaultUser (SID : S-1-5-110-110)
-[*] S-1-5-110 or DefaultDomain maybe already exists or invalid.
-[>] Trying to logon as DefaultDomain\DefaultUser.
+[>] Trying to create an elevated token.
+[+] An elevated token is created successfully.
 [>] Trying to create process.
 
 
 USER INFORMATION
 ----------------
 
-User Name                 SID
-========================= =============
-defaultdomain\defaultuser S-1-5-110-110
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                Description                               State
+============================= ========================================= =======
+SeAssignPrimaryTokenPrivilege Replace a process level token             Enabled
+SeTcbPrivilege                Act as part of the operating system       Enabled
+SeDebugPrivilege              Debug programs                            Enabled
+SeImpersonatePrivilege        Impersonate a client after authentication Enabled
 
 [>] Exit.
-[!] Added virtual domain and user are not removed automatically.
-    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
 If you want to enable all available privileges, set `-f` flag as follows:
@@ -1087,36 +1143,11 @@ C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
 
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
+[+] SeCreateTokenPrivilege is enabled successfully.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
 [+] Impersonation is successful.
-[>] Trying to generate token group information.
-[>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (SID : S-1-5-110)
-    |-> Username : DefaultUser (SID : S-1-5-110-110)
-[+] Added virtual domain and user.
-[>] Trying to logon as DefaultDomain\DefaultUser.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[+] SeSecurityPrivilege is enabled successfully.
-[+] SeTakeOwnershipPrivilege is enabled successfully.
-[+] SeLoadDriverPrivilege is enabled successfully.
-[+] SeSystemProfilePrivilege is enabled successfully.
-[+] SeSystemtimePrivilege is enabled successfully.
-[+] SeProfileSingleProcessPrivilege is enabled successfully.
-[+] SeIncreaseBasePriorityPrivilege is enabled successfully.
-[+] SeCreatePagefilePrivilege is enabled successfully.
-[+] SeBackupPrivilege is enabled successfully.
-[+] SeRestorePrivilege is enabled successfully.
-[+] SeShutdownPrivilege is enabled successfully.
-[+] SeDebugPrivilege is enabled successfully.
-[+] SeSystemEnvironmentPrivilege is enabled successfully.
-[+] SeRemoteShutdownPrivilege is enabled successfully.
-[+] SeUndockPrivilege is enabled successfully.
-[+] SeManageVolumePrivilege is enabled successfully.
-[+] SeIncreaseWorkingSetPrivilege is enabled successfully.
-[+] SeTimeZonePrivilege is enabled successfully.
-[+] SeCreateSymbolicLinkPrivilege is enabled successfully.
-[+] SeDelegateSessionUserImpersonatePrivilege is enabled successfully.
+[>] Trying to create an elevated token.
+[+] An elevated token is created successfully.
 [>] Trying to create process.
 
 
@@ -1125,7 +1156,12 @@ PRIVILEGES INFORMATION
 
 Privilege Name                            Description                                                        State
 ========================================= ================================================================== =======
+SeCreateTokenPrivilege                    Create a token object                                              Enabled
+SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Enabled
+SeLockMemoryPrivilege                     Lock pages in memory                                               Enabled
 SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
+SeMachineAccountPrivilege                 Add workstations to domain                                         Enabled
+SeTcbPrivilege                            Act as part of the operating system                                Enabled
 SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
 SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
 SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
@@ -1134,29 +1170,32 @@ SeSystemtimePrivilege                     Change the system time                
 SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
 SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
 SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
+SeCreatePermanentPrivilege                Create permanent shared objects                                    Enabled
 SeBackupPrivilege                         Back up files and directories                                      Enabled
 SeRestorePrivilege                        Restore files and directories                                      Enabled
 SeShutdownPrivilege                       Shut down the system                                               Enabled
 SeDebugPrivilege                          Debug programs                                                     Enabled
+SeAuditPrivilege                          Generate security audits                                           Enabled
 SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
 SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
 SeRemoteShutdownPrivilege                 Force shutdown from a remote system                                Enabled
 SeUndockPrivilege                         Remove computer from docking station                               Enabled
+SeSyncAgentPrivilege                      Synchronize directory service data                                 Enabled
+SeEnableDelegationPrivilege               Enable computer and user accounts to be trusted for delegation     Enabled
 SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
 SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
 SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeTrustedCredManAccessPrivilege           Access Credential Manager as a trusted caller                      Enabled
+SeRelabelPrivilege                        Modify an object label                                             Enabled
 SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
 SeTimeZonePrivilege                       Change the time zone                                               Enabled
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 
 [>] Exit.
-[!] Added virtual domain and user are not removed automatically.
-    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
 ```
 
-Added domain and username are not removed automatically.
+Added domain and username by virtual account technique are not removed automatically.
 If you want to remove them, run the `sid` module as shown in the last output.
 
 

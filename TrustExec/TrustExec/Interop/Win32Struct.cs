@@ -32,7 +32,7 @@ namespace TrustExec.Interop
 
             public long ToInt64()
             {
-                return ((long)this.High << 32) | (uint)this.Low;
+                return ((long)High << 32) | (uint)Low;
             }
 
             public static LARGE_INTEGER FromInt64(long value)
@@ -225,8 +225,14 @@ namespace TrustExec.Interop
         public struct TOKEN_GROUPS
         {
             public int GroupCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
             public SID_AND_ATTRIBUTES[] Groups;
+
+            public TOKEN_GROUPS(int privilegeCount)
+            {
+                GroupCount = privilegeCount;
+                Groups = new SID_AND_ATTRIBUTES[32];
+            }
         };
 
         [StructLayout(LayoutKind.Sequential)]
@@ -262,13 +268,13 @@ namespace TrustExec.Interop
         public struct TOKEN_PRIVILEGES
         {
             public int PrivilegeCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
             public LUID_AND_ATTRIBUTES[] Privileges;
 
             public TOKEN_PRIVILEGES(int privilegeCount)
             {
                 PrivilegeCount = privilegeCount;
-                Privileges = new LUID_AND_ATTRIBUTES[16];
+                Privileges = new LUID_AND_ATTRIBUTES[36];
             }
         }
 

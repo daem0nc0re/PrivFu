@@ -529,25 +529,17 @@ namespace SwitchPriv.Library
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privNames = new List<string> {
+            var privs = new string[] {
                 Win32Const.SE_DEBUG_NAME,
                 Win32Const.SE_IMPERSONATE_NAME
             };
 
-            var privStatus = Utilities.EnableMultiplePrivileges(
-                hCurrentToken,
-                privNames);
-            Win32Api.CloseHandle(hCurrentToken);
-
-            foreach (var priv in privStatus)
+            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
             {
-                if (!priv.Value)
-                {
-                    Console.WriteLine("[-] {0} is not available.", priv.Key);
-                    Console.WriteLine("[-] Should be run as administrator.");
+                Console.WriteLine("[!] Should be run with administrative privilege.\n");
+                Win32Api.CloseHandle(hCurrentToken);
 
-                    return false;
-                }
+                return false;
             }
 
             return Utilities.ImpersonateAsSmss();

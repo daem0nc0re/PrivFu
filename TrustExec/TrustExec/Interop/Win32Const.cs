@@ -234,14 +234,9 @@ namespace TrustExec.Interop
         public static readonly Win32Struct.LUID ANONYMOUS_LOGON_LUID = new Win32Struct.LUID(0x3e6, 0);
         public static readonly Win32Struct.LUID SYSTEM_LUID = new Win32Struct.LUID(0x3e7, 0);
 
-        // Well known security RID
-        public const int SECURITY_ANONYMOUS_LOGON_RID = 0x00000007;
-        public const int SECURITY_AUTHENTICATED_USER_RID = 0x0000000B;
-        public const int SECURITY_LOCAL_SYSTEM_RID = 0x00000012;
-        public const int SECURITY_BUILTIN_DOMAIN_RID = 0x00000020;
-
         // Well known RID
         public const string SECURITY_WORLD_RID = "S-1-1-0";
+        public const string SECURITY_AUTHENTICATED_USER_RID = "S-1-5-11";
         public const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
         public const string DOMAIN_ALIAS_RID_USERS = "S-1-5-32-545";
         public const string LOCAL_SYSTEM_RID = "S-1-5-18";

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Principal;
 using TrustExec.Interop;
 
@@ -20,28 +19,22 @@ namespace TrustExec.Library
             }
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privilegeNames = new List<string> {
+            var privs = new string[] {
                 Win32Const.SE_DEBUG_NAME,
                 Win32Const.SE_IMPERSONATE_NAME
             };
 
             Console.WriteLine();
 
-            var results = Utilities.EnableMultiplePrivileges(
-                hCurrentToken,
-                privilegeNames);
+            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+                return false;
 
-            foreach (var result in results)
-            {
-                if (!result.Value)
-                {
-                    Console.WriteLine("\n[-] {0} is not available.\n", result.Key);
+            privs = new string[] {
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Const.SE_INCREASE_QUOTA_NAME
+            };
 
-                    return false;
-                }
-            }
-
-            if (!Utilities.ImpersonateAsSmss())
+            if (!Utilities.ImpersonateAsSmss(privs))
                 return false;
 
             bool status = Utilities.AddVirtualAccount(domain, username, domainRid);
@@ -51,7 +44,56 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcess(
+        public static bool RunTrustedInstallerProcess(string command, bool full)
+        {
+            string execute;
+
+            Console.WriteLine();
+
+            if (string.IsNullOrEmpty(command))
+            {
+                execute = "C:\\Windows\\System32\\cmd.exe";
+            }
+            else
+            {
+                execute = string.Format(
+                    "C:\\Windows\\System32\\cmd.exe /c \"{0}\"",
+                    command);
+            }
+
+            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
+            var privs = new string[] {
+                Win32Const.SE_DEBUG_NAME,
+                Win32Const.SE_IMPERSONATE_NAME
+            };
+
+            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+                return false;
+
+            privs = new string[] {
+                Win32Const.SE_CREATE_TOKEN_NAME,
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME
+            };
+
+            if (!Utilities.ImpersonateAsSmss(privs))
+                return false;
+
+            IntPtr hToken = Utilities.CreateTrustedInstallerToken(
+                Win32Const.TOKEN_TYPE.TokenPrimary,
+                full);
+
+            if (hToken == IntPtr.Zero)
+                return false;
+
+            bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
+            Win32Api.CloseHandle(hToken);
+            Win32Api.RevertToSelf();
+
+            return status;
+        }
+
+
+        public static bool RunTrustedInstallerProcessWithVirtualLogon(
             string domain,
             string username,
             int domainRid,
@@ -88,28 +130,20 @@ namespace TrustExec.Library
             }
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privilegeNames = new List<string> {
+            var privs = new string[] {
                 Win32Const.SE_DEBUG_NAME,
                 Win32Const.SE_IMPERSONATE_NAME
             };
 
-            var results = Utilities.EnableMultiplePrivileges(
-                hCurrentToken,
-                privilegeNames);
+            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+                return false;
 
-            foreach (var result in results)
-            {
-                if (!result.Value)
-                {
-                    Console.WriteLine(
-                        "\n[-] {0} is not available.\n",
-                        result.Key);
+            privs = new string[] {
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Const.SE_INCREASE_QUOTA_NAME
+            };
 
-                    return false;
-                }
-            }
-
-            if (!Utilities.ImpersonateAsSmss())
+            if (!Utilities.ImpersonateAsSmss(privs))
                 return false;
 
             IntPtr hToken = Utilities.CreateTrustedInstallerTokenWithVirtualLogon(
@@ -141,30 +175,22 @@ namespace TrustExec.Library
             }
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privilegeNames = new List<string> {
+            var privs = new string[] {
                 Win32Const.SE_DEBUG_NAME,
                 Win32Const.SE_IMPERSONATE_NAME
             };
 
             Console.WriteLine();
 
-            var results = Utilities.EnableMultiplePrivileges(
-                hCurrentToken,
-                privilegeNames);
+            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+                return false;
 
-            foreach (var result in results)
-            {
-                if (!result.Value)
-                {
-                    Console.WriteLine(
-                        "\n[-] {0} is not available.\n",
-                        result.Key);
+            privs = new string[] {
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Const.SE_INCREASE_QUOTA_NAME
+            };
 
-                    return false;
-                }
-            }
-
-            if (!Utilities.ImpersonateAsSmss())
+            if (!Utilities.ImpersonateAsSmss(privs))
                 return false;
 
             bool status = Utilities.RemoveVirtualAccount(domain, username);
