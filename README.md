@@ -8,6 +8,7 @@ Codes in this repository are intended to help investigate how token privileges w
 ## Table Of Contents
 
 - [PrivFu](#privfu)
+  - [KernelWritePoCs](#KernelWritePoCs)
   - [PrivEditor](#priveditor)
     - [getps Command](#getps-command)
     - [getpriv Command](#getpriv-command)
@@ -24,6 +25,24 @@ Codes in this repository are intended to help investigate how token privileges w
     - [sid Module](#sid-module)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
+
+## KernelWritePoCs
+
+[Back to Top](#privfu)
+
+[Project](./KernelWritePoCs)
+
+The purpose of this project is to investigate how attackers abuse arbitrary kernel write vulnerability.
+All PoCs are written for [HackSys Extreme Vulnerable Driver](https://github.com/hacksysteam/HackSysExtremeVulnerableDriver).
+These PoCs perform to get SYSTEM integrity level by abusing arbitrary kernel write vulnerability and token privileges.
+Tested on Windows 10 version 1903/1809, but they should work most versions of Windows 10 theoretically:
+
+| PoC Name | Description |
+| :--- | :--- |
+| [CreateAssignTokenVariant](./KernelWritePoCs/CreateAssignTokenVariant/CreateAssignTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeAssignPrimaryTokenPrivilege`. |
+| [CreateImpersonateTokenVariant](./KernelWritePoCs/CreateImpersonateTokenVariant/CreateImpersonateTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeImpersonatePrivilege`. |
+| [DebugInjectionVariant](./KernelWritePoCs/DebugInjectionVariant/DebugInjectionVariant.cs) | This PoC performs EoP with `SeDebugPrivilege`. |
+
 
 ## PrivEditor
 
@@ -1336,6 +1355,7 @@ C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
 - [Priv2Admin](https://github.com/gtworek/Priv2Admin) and [PSBits](https://github.com/gtworek/PSBits) by [Grzegorz Tworek](https://twitter.com/0gtweet)
 - [Abusing Token Privileges For LPE](https://github.com/hatRiot/token-priv/blob/master/abusing_token_eop_1.0.txt) by [Bryan Alexander](https://twitter.com/dronesec) and [Steve Breen](https://twitter.com/breenmachine)
 - [whoami /priv](https://github.com/decoder-it/whoami-priv-Hackinparis2019) by [Andrea Pierini](https://twitter.com/decoder_it)
+- [HackSys Extreme Vulnerable Driver](https://github.com/hacksysteam/HackSysExtremeVulnerableDriver) by [Ashfaq Ansari](https://twitter.com/hacksysteam)
 
 
 ## Acknowledgments
@@ -1352,3 +1372,7 @@ Thanks for your notable research:
 - Bryan Alexander ([@dronesec](https://twitter.com/dronesec))
 - Steve Breen ([@breenmachine](https://twitter.com/breenmachine))
 - Andrea Pierini ([@decoder_it](https://twitter.com/decoder_it))
+
+Thanks for your sample kernel driver release:
+
+- Ashfaq Ansari ([@HackSysTeam](https://twitter.com/hacksysteam))
