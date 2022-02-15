@@ -126,34 +126,34 @@ namespace TrustExec.Library
 
         public static bool CreateTokenPrivileges(
             string[] privs,
-            out TOKEN_PRIVILEGES tokenPrivileges)
+            out Win32Struct.TOKEN_PRIVILEGES tokenPrivileges)
         {
             int error;
-            int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            int sizeOfStruct = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
             IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
 
-            tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+            tokenPrivileges = (Win32Struct.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
                 pPrivileges,
-                typeof(TOKEN_PRIVILEGES));
+                typeof(Win32Struct.TOKEN_PRIVILEGES));
             tokenPrivileges.PrivilegeCount = privs.Length;
 
             for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
             {
-                if (!LookupPrivilegeValue(
+                if (!Win32Api.LookupPrivilegeValue(
                     null,
                     privs[idx],
-                    out LUID luid))
+                    out Win32Struct.LUID luid))
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to lookup LUID for {0}.", privs[idx]);
-                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
 
                     return false;
                 }
 
                 tokenPrivileges.Privileges[idx].Attributes = (uint)(
-                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
-                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
+                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
+                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
                 tokenPrivileges.Privileges[idx].Luid = luid;
             }
 
