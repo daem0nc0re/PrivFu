@@ -49,7 +49,7 @@ namespace TrustExec.Interop
             IntPtr lpProcessAttributes,
             IntPtr lpThreadAttributes,
             bool bInheritHandles,
-            Win32Const.CreateProcessFlags dwCreationFlags,
+            Win32Const.ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
             ref Win32Struct.STARTUPINFO lpStartupInfo,
@@ -61,7 +61,7 @@ namespace TrustExec.Interop
             Win32Const.LogonFlags dwLogonFlags,
             string lpApplicationName,
             string lpCommandLine,
-            Win32Const.CreateProcessFlags dwCreationFlags,
+            Win32Const.ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
             ref Win32Struct.STARTUPINFO lpStartupInfo,
@@ -190,6 +190,9 @@ namespace TrustExec.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool FreeLibrary(IntPtr hLibModule);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern int GetCurrentThreadId();
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadLibrary(string lpFileName);

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
@@ -284,7 +285,7 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool ImpersonateAsSmss()
+        public static bool ImpersonateAsSmss(string[] privs)
         {
             int error;
             int smss;
@@ -347,22 +348,67 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            if (!Win32Api.ImpersonateLoggedOnUser(hDupToken))
+            if (!EnableMultiplePrivileges(hDupToken, privs))
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to impersonate logon user.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hDupToken);
                 Win32Api.CloseHandle(hToken);
 
                 return false;
             }
 
-            Console.WriteLine("[+] Impersonation is successful.");
+            if (!ImpersonateThreadToken(hDupToken))
+            {
+                Win32Api.CloseHandle(hDupToken);
+                Win32Api.CloseHandle(hToken);
+
+                return false;
+            }
+
             Win32Api.CloseHandle(hDupToken);
             Win32Api.CloseHandle(hToken);
 
             return true;
+        }
+
+
+        public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
+        {
+            int error;
+
+            Console.WriteLine("[>] Trying to impersonate thread token.");
+            Console.WriteLine("    |-> Current Thread ID : {0}", Win32Api.GetCurrentThreadId());
+
+            if (!Win32Api.ImpersonateLoggedOnUser(hImpersonationToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonation.");
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
+            IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
+                hCurrentToken,
+                Win32Const.TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
+            var impersonationLevel = (Win32Const.SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
+                pImpersonationLevel);
+            Win32Api.LocalFree(pImpersonationLevel);
+
+            if (impersonationLevel ==
+                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
+                Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
+
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+
+                return true;
+            }
         }
 
 

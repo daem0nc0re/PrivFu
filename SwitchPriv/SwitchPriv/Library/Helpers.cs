@@ -86,6 +86,34 @@ namespace SwitchPriv.Library
         }
 
 
+        public static IntPtr GetInformationFromToken(
+            IntPtr hToken,
+            Win32Const.TOKEN_INFORMATION_CLASS tokenInfoClass)
+        {
+            bool status;
+            int error;
+            int length = 4;
+            IntPtr buffer;
+
+            do
+            {
+                buffer = Marshal.AllocHGlobal(length);
+                ZeroMemory(buffer, length);
+                status = Win32Api.GetTokenInformation(
+                    hToken, tokenInfoClass, buffer, length, out length);
+                error = Marshal.GetLastWin32Error();
+
+                if (!status)
+                    Marshal.FreeHGlobal(buffer);
+            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER || error == Win32Const.ERROR_BAD_LENGTH));
+
+            if (!status)
+                return IntPtr.Zero;
+
+            return buffer;
+        }
+
+
         public static bool GetPrivilegeLuid(
             string privilegeName,
             out Win32Struct.LUID luid)

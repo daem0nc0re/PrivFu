@@ -542,7 +542,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            return Utilities.ImpersonateAsSmss();
+            return Utilities.ImpersonateAsSmss(new string[] { });
         }
 
 

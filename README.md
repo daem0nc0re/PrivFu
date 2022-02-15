@@ -710,6 +710,8 @@ C:\dev>SwitchPriv.exe -p 1400 -g -s
     |-> Target PID   : 1400
     |-> Process Name : svchost
 [>] Trying to get SYSTEM.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 4572
 [>] Trying to impersonate as smss.exe.
 [+] Impersonation is successful.
 
@@ -988,14 +990,17 @@ To get interactive shell, set `-s` flag.
 ```
 C:\dev>TrustExec.exe -m exec -s
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeCreateTokenPrivilege is enabled successfully.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 3360
 [+] Impersonation is successful.
-[>] Trying to create an elevated token.
-[+] An elevated token is created successfully.
-[>] Trying to create process.
+[>] Trying to create an elevated primary token.
+[+] An elevated primary token is created successfully.
+[>] Trying to create a token assigned process.
 
 Microsoft Windows [Version 10.0.19043.1526]
 (c) Microsoft Corporation. All rights reserved.
@@ -1033,10 +1038,13 @@ Default SID for domain is `S-1-5-110` and for user is `S-1-5-110-110`:
 ```
 C:\dev>TrustExec.exe -m exec -s -t 1
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 2616
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
@@ -1044,7 +1052,7 @@ C:\dev>TrustExec.exe -m exec -s -t 1
     |-> Username : DefaultUser (SID : S-1-5-110-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as DefaultDomain\DefaultUser.
-[>] Trying to create process.
+[>] Trying to create a token assigned process.
 
 Microsoft Windows [Version 10.0.18362.30]
 (c) 2019 Microsoft Corporation. All rights reserved.
@@ -1075,10 +1083,13 @@ To change domain RID, use `-i` option as follows:
 ```
 C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92 -t 1
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 3612
 [+] Impersonation is successful.
 [>] Trying to generate token group information.
 [>] Trying to add virtual domain and user.
@@ -1086,7 +1097,7 @@ C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92 -t 1
     |-> Username : VirtualAdmin (SID : S-1-5-92-110)
 [+] Added virtual domain and user.
 [>] Trying to logon as VirtualDomain\VirtualAdmin.
-[>] Trying to create process.
+[>] Trying to create a token assigned process.
 
 Microsoft Windows [Version 10.0.18362.30]
 (c) 2019 Microsoft Corporation. All rights reserved.
@@ -1106,14 +1117,17 @@ If you want to execute single command, use `-c` option without `-s` flag as foll
 ```
 C:\dev>TrustExec.exe -m exec -c "whoami /user & whoami /priv"
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeCreateTokenPrivilege is enabled successfully.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 1464
 [+] Impersonation is successful.
-[>] Trying to create an elevated token.
-[+] An elevated token is created successfully.
-[>] Trying to create process.
+[>] Trying to create an elevated primary token.
+[+] An elevated primary token is created successfully.
+[>] Trying to create a token assigned process.
 
 
 USER INFORMATION
@@ -1141,14 +1155,17 @@ If you want to enable all available privileges, set `-f` flag as follows:
 ```
 C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeCreateTokenPrivilege is enabled successfully.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 2526
 [+] Impersonation is successful.
-[>] Trying to create an elevated token.
-[+] An elevated token is created successfully.
-[>] Trying to create process.
+[>] Trying to create an elevated primary token.
+[+] An elevated primary token is created successfully.
+[>] Trying to create a token assigned process.
 
 
 PRIVILEGES INFORMATION
@@ -1249,10 +1266,13 @@ Domain name to remove is specified with `-d` option, username is specified with 
 ```
 C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 2568
 [+] Impersonation is successful.
 [>] Trying to remove SID.
     |-> Domain   : defaultdomain
@@ -1263,10 +1283,13 @@ C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
 
 C:\dev>TrustExec.exe -m sid -r -d defaultdomain
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 4696
 [+] Impersonation is successful.
 [>] Trying to remove SID.
     |-> Domain   : defaultdomain
@@ -1282,10 +1305,13 @@ If you want add domain or user SID, set `-a` flag as follows:
 ```
 C:\dev>TrustExec.exe -m sid -a -d virtualworld -u virtualadmin -i 97
 
+[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to impersonate as smss.exe.
 [+] SeAssignPrimaryTokenPrivilege is enabled successfully.
 [+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 3628
 [+] Impersonation is successful.
 [>] Trying to add virtual domain and user.
     |-> Domain   : virtualworld (SID : S-1-5-97)
