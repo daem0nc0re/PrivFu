@@ -160,7 +160,7 @@ namespace TrustExec.Library
             do
             {
                 buffer = Marshal.AllocHGlobal(length);
-                Helpers.ZeroMemory(buffer, length);
+                ZeroMemory(buffer, length);
                 status = Win32Api.GetTokenInformation(
                     hToken, tokenInfoClass, buffer, length, out length);
                 error = Marshal.GetLastWin32Error();
