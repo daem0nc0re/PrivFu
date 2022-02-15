@@ -1197,7 +1197,6 @@ namespace CreateAssignTokenVariant
                 Console.WriteLine("[-] Failed to get system information.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
 
-                Marshal.FreeHGlobal(infoBuffer);
                 return IntPtr.Zero;
             }
 
