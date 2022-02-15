@@ -796,7 +796,7 @@ namespace SeCreateTokenPrivilegePoC
                     out LUID luid))
                 {
                     error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to lookup {0}.");
+                    Console.WriteLine("[-] Failed to lookup LUID for {0}.", privs[idx]);
                     Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
 
                     return false;

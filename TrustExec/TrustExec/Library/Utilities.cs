@@ -126,34 +126,34 @@ namespace TrustExec.Library
 
         public static bool CreateTokenPrivileges(
             string[] privs,
-            out Win32Struct.TOKEN_PRIVILEGES tokenPrivileges)
+            out TOKEN_PRIVILEGES tokenPrivileges)
         {
             int error;
-            int sizeOfStruct = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
+            int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
 
-            tokenPrivileges = (Win32Struct.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+            tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
                 pPrivileges,
-                typeof(Win32Struct.TOKEN_PRIVILEGES));
+                typeof(TOKEN_PRIVILEGES));
             tokenPrivileges.PrivilegeCount = privs.Length;
 
             for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
             {
-                if (!Win32Api.LookupPrivilegeValue(
+                if (!LookupPrivilegeValue(
                     null,
                     privs[idx],
-                    out Win32Struct.LUID luid))
+                    out LUID luid))
                 {
                     error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to lookup {0}.");
-                    Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to lookup LUID for {0}.", privs[idx]);
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
 
                     return false;
                 }
 
                 tokenPrivileges.Privileges[idx].Attributes = (uint)(
-                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
-                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
+                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
+                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
                 tokenPrivileges.Privileges[idx].Luid = luid;
             }
 
