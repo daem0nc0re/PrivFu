@@ -680,7 +680,7 @@ namespace CreateImpersonateTokenVariant
             out int ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
+        static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool LookupPrivilegeValue(
