@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Principal;
@@ -290,11 +291,11 @@ namespace DebugInjectionVariant
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern IntPtr CreateFile(
             string lpFileName,
-            uint dwDesiredAccess,
-            uint dwShareMode,
+            FileAccess dwDesiredAccess,
+            FileShare dwShareMode,
             IntPtr lpSecurityAttributes,
-            uint dwCreationDisposition,
-            uint dwFlagsAndAttributes,
+            FileMode dwCreationDisposition,
+            FileAttributes dwFlagsAndAttributes,
             IntPtr hTemplateFile);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -376,6 +377,7 @@ namespace DebugInjectionVariant
 
         // Windows Consts
         const int STATUS_SUCCESS = 0;
+        static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
 
         // User define Consts
@@ -424,8 +426,8 @@ namespace DebugInjectionVariant
         static IntPtr GetCurrentProcessTokenPointer()
         {
             int ntstatus;
-            IntPtr pObject = IntPtr.Zero;
-            IntPtr hToken = WindowsIdentity.GetCurrent().Token;
+            var pObject = IntPtr.Zero;
+            var hToken = WindowsIdentity.GetCurrent().Token;
 
             Console.WriteLine("[+] Got a handle of current process token.");
             Console.WriteLine("    |-> hToken: 0x{0}", hToken.ToString("X"));
@@ -454,26 +456,22 @@ namespace DebugInjectionVariant
                 Console.WriteLine("[-] Failed to get system information.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
 
-                Marshal.FreeHGlobal(infoBuffer);
                 return IntPtr.Zero;
             }
 
-            int entryCount = Marshal.ReadInt32(infoBuffer);
+            var entryCount = Marshal.ReadInt32(infoBuffer);
             Console.WriteLine("[+] Got {0} entries.", entryCount);
 
-            int pid = Process.GetCurrentProcess().Id;
-            SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX entry =
-                new SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX();
-            int entrySize = Marshal.SizeOf(entry);
-            IntPtr pEntryOffset = new IntPtr(
-                infoBuffer.ToInt64() +
-                IntPtr.Size * 2);
+            var pid = Process.GetCurrentProcess().Id;
+            var entry = new SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX();
+            var entrySize = Marshal.SizeOf(entry);
+            var pEntryOffset = new IntPtr(infoBuffer.ToInt64() + IntPtr.Size * 2);
             IntPtr uniqueProcessId;
             IntPtr handleValue;
 
             Console.WriteLine("[>] Searching our process entry (PID = {0}).", pid);
 
-            for (int idx = 0; idx < entryCount; idx++)
+            for (var idx = 0; idx < entryCount; idx++)
             {
                 entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX)Marshal.PtrToStructure(
                     pEntryOffset,
@@ -506,31 +504,29 @@ namespace DebugInjectionVariant
         static IntPtr GetDeviceHandle(string deviceName)
         {
             int error;
-            uint GENERIC_READ = 0x80000000;
-            uint GENERIC_WRITE = 0x40000000;
-            uint FILE_SHARE_READ = 0x00000001;
-            uint FILE_SHARE_WRITE = 0x00000002;
-            uint OPEN_EXISTING = 0x3;
-            uint FILE_ATTRIBUTE_NORMAL = 0x80;
-            uint FILE_FLAG_OVERWRAPPED = 0x40000000;
-            IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
-            Console.WriteLine("[>] Opening {0}", deviceName);
+            Console.WriteLine("[>] Trying to open device driver.");
+            Console.WriteLine("    |-> Device Path : {0}", deviceName);
+
             IntPtr hDevice = CreateFile(
-                deviceName, GENERIC_READ | GENERIC_WRITE,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero,
-                OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERWRAPPED, IntPtr.Zero);
+                deviceName,
+                FileAccess.ReadWrite,
+                FileShare.ReadWrite,
+                IntPtr.Zero,
+                FileMode.Open,
+                FileAttributes.Normal,
+                IntPtr.Zero);
 
             if (hDevice == INVALID_HANDLE_VALUE)
             {
                 error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open device handle to {0}", deviceName);
+                Console.WriteLine("[-] Failed to get device handle.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
 
                 return IntPtr.Zero;
             }
 
-            Console.WriteLine("[+] Got a handle to {0}", deviceName);
+            Console.WriteLine("[+] Got a device handle.");
             Console.WriteLine("    |-> hDevice: 0x{0}", hDevice.ToString("X"));
 
             return hDevice;
