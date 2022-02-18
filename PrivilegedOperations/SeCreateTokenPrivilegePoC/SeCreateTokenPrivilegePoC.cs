@@ -7,6 +7,19 @@ namespace SeCreateTokenPrivilegePoC
 {
     class SeCreateTokenPrivilegePoC
     {
+        // Windows definition
+        // Windows enum
+        [Flags]
+        enum FormatMessageFlags : uint
+        {
+            FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100,
+            FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
+            FORMAT_MESSAGE_FROM_STRING = 0x00000400,
+            FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
+            FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
+            FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
+        }
+
         enum SECURITY_IMPERSONATION_LEVEL
         {
             SecurityAnonymous,
@@ -108,6 +121,7 @@ namespace SeCreateTokenPrivilegePoC
             TokenImpersonation
         }
 
+        // Windows Struct
         [StructLayout(LayoutKind.Explicit, Size = 8)]
         struct LARGE_INTEGER
         {
@@ -382,6 +396,7 @@ namespace SeCreateTokenPrivilegePoC
             }
         }
 
+        // Windows API
         /*
          * advapi32.dll
          */
@@ -436,13 +451,13 @@ namespace SeCreateTokenPrivilegePoC
         static extern bool CloseHandle(IntPtr hModule);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern uint FormatMessage(
-            uint dwFlags,
+        static extern int FormatMessage(
+            FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
             int dwLanguageId,
             StringBuilder lpBuffer,
-            uint nSize,
+            int nSize,
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -831,33 +846,44 @@ namespace SeCreateTokenPrivilegePoC
 
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
-            uint FORMAT_MESSAGE_FROM_HMODULE = 0x00000800;
-            uint FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000;
-            StringBuilder message = new StringBuilder(255);
-            IntPtr pNtdll = IntPtr.Zero;
+            var message = new StringBuilder();
+            var messageSize = 255;
+            FormatMessageFlags messageFlag;
+            IntPtr pNtdll;
+            message.Capacity = messageSize;
 
             if (isNtStatus)
+            {
                 pNtdll = LoadLibrary("ntdll.dll");
+                messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
+                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+            }
+            else
+            {
+                pNtdll = IntPtr.Zero;
+                messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+            }
 
-            uint status = FormatMessage(
-                isNtStatus ? (FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM) : FORMAT_MESSAGE_FROM_SYSTEM,
+            int ret = FormatMessage(
+                messageFlag,
                 pNtdll,
                 code,
                 0,
                 message,
-                255,
+                messageSize,
                 IntPtr.Zero);
 
             if (isNtStatus)
                 FreeLibrary(pNtdll);
 
-            if (status == 0)
+            if (ret == 0)
             {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             }
             else
             {
-                return string.Format("[ERROR] Code 0x{0} : {1}",
+                return string.Format(
+                    "[ERROR] Code 0x{0} : {1}",
                     code.ToString("X8"),
                     message.ToString().Trim());
             }

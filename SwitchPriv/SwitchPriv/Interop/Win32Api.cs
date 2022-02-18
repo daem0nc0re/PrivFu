@@ -87,18 +87,18 @@ namespace SwitchPriv.Interop
         /*
          * kernel32.dll
          */
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool CloseHandle(IntPtr hObject);
+
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint FormatMessage(
-            uint dwFlags,
+        public static extern int FormatMessage(
+            Win32Const.FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
             int dwLanguageId,
             StringBuilder lpBuffer,
-            uint nSize,
+            int nSize,
             IntPtr Arguments);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool FreeLibrary(IntPtr hLibModule);
