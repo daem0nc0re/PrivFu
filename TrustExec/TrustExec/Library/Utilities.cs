@@ -163,6 +163,7 @@ namespace TrustExec.Library
 
         public static IntPtr CreateTrustedInstallerToken(
             Win32Const.TOKEN_TYPE tokenType,
+            Win32Const.SECURITY_IMPERSONATION_LEVEL impersonationLevel,
             bool full)
         {
             int error;
@@ -289,17 +290,6 @@ namespace TrustExec.Library
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
             tokenGroups.GroupCount++;
-
-            Win32Const.SECURITY_IMPERSONATION_LEVEL impersonationLevel;
-
-            if (tokenType == Win32Const.TOKEN_TYPE.TokenPrimary)
-            {
-                impersonationLevel = Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous;
-            }
-            else
-            {
-                impersonationLevel = Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityDelegation;
-            }
 
             var expirationTime = new Win32Struct.LARGE_INTEGER(-1L);
             var sqos = new Win32Struct.SECURITY_QUALITY_OF_SERVICE(

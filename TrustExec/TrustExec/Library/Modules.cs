@@ -181,6 +181,7 @@ namespace TrustExec.Library
 
             IntPtr hToken = Utilities.CreateTrustedInstallerToken(
                 Win32Const.TOKEN_TYPE.TokenPrimary,
+                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
                 full);
 
             if (hToken == IntPtr.Zero)

@@ -876,7 +876,9 @@ namespace CreateImpersonateTokenVariant
         }
 
         // User define functions
-        static IntPtr CreateElevatedToken(TOKEN_TYPE tokenType)
+        static IntPtr CreateElevatedToken(
+            TOKEN_TYPE tokenType,
+            SECURITY_IMPERSONATION_LEVEL impersonationLevel)
         {
             int error;
             LUID authId = SYSTEM_LUID;
@@ -1056,13 +1058,6 @@ namespace CreateImpersonateTokenVariant
             }
 
             var expirationTime = new LARGE_INTEGER(-1L);
-            SECURITY_IMPERSONATION_LEVEL impersonationLevel;
-
-            if (tokenType == TOKEN_TYPE.TokenPrimary)
-                impersonationLevel = SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous;
-            else
-                impersonationLevel = SECURITY_IMPERSONATION_LEVEL.SecurityDelegation;
-
             var sqos = new SECURITY_QUALITY_OF_SERVICE(
                 impersonationLevel,
                 SECURITY_STATIC_TRACKING,
@@ -1495,7 +1490,9 @@ namespace CreateImpersonateTokenVariant
             OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
             CloseHandle(hDevice);
 
-            IntPtr hElevatedImpersonation = CreateElevatedToken(TOKEN_TYPE.TokenImpersonation);
+            IntPtr hElevatedImpersonation = CreateElevatedToken(
+                TOKEN_TYPE.TokenImpersonation,
+                SECURITY_IMPERSONATION_LEVEL.SecurityDelegation);
 
             if (hElevatedImpersonation == IntPtr.Zero)
                 return;
@@ -1509,7 +1506,9 @@ namespace CreateImpersonateTokenVariant
 
             CloseHandle(hElevatedImpersonation);
 
-            IntPtr hElevatedPrimary = CreateElevatedToken(TOKEN_TYPE.TokenPrimary);
+            IntPtr hElevatedPrimary = CreateElevatedToken(
+                TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous);
 
             if (hElevatedPrimary == IntPtr.Zero)
                 return;
