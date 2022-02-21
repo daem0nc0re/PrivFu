@@ -38,7 +38,7 @@ namespace DebugInjectionVariant
         }
 
         [Flags]
-        public enum ProcessAccessFlags : uint
+        enum ProcessAccessFlags : uint
         {
             PROCESS_ALL_ACCESS = 0x001F0FFF,
             Terminate = 0x00000001,

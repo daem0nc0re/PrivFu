@@ -35,13 +35,15 @@ Codes in this repository are intended to help investigate how token privileges w
 The purpose of this project is to investigate how attackers abuse arbitrary kernel write vulnerability.
 All PoCs are written for [HackSys Extreme Vulnerable Driver](https://github.com/hacksysteam/HackSysExtremeVulnerableDriver).
 These PoCs perform to get SYSTEM integrity level by abusing arbitrary kernel write vulnerability and token privileges.
-Tested on Windows 10 version 1903/1809, but they should work most versions of Windows 10 theoretically:
+Tested on Windows 10 version 1809/1903, but they should work most of Windows 10 theoretically:
 
 | PoC Name | Description |
 | :--- | :--- |
 | [CreateAssignTokenVariant](./KernelWritePoCs/CreateAssignTokenVariant/CreateAssignTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeAssignPrimaryTokenPrivilege`. |
 | [CreateImpersonateTokenVariant](./KernelWritePoCs/CreateImpersonateTokenVariant/CreateImpersonateTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeImpersonatePrivilege`. |
-| [DebugInjectionVariant](./KernelWritePoCs/DebugInjectionVariant/DebugInjectionVariant.cs) | This PoC performs EoP with `SeDebugPrivilege`. |
+| [CreateTokenVariant](./KernelWritePoCs/CreateTokenVariant/CreateTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege`. |
+| [DebugInjectionVariant](./KernelWritePoCs/DebugInjectionVariant/DebugInjectionVariant.cs) | This PoC performs EoP with `SeDebugPrivilege`. Uses code injection to winlogon.exe at final stage. |
+| [SecondaryLogonVariant](./KernelWritePoCs/SecondaryLogonVariant/SecondaryLogonVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeImpersonatePrivilege`. Uses secondary logon service at final stage. |
 
 
 ## PrivEditor

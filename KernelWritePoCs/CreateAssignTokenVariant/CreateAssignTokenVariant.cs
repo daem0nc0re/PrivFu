@@ -23,7 +23,7 @@ namespace CreateAssignTokenVariant
         }
 
         [Flags]
-        public enum ProcessCreationFlags : uint
+        enum ProcessCreationFlags : uint
         {
             DEBUG_PROCESS = 0x00000001,
             DEBUG_ONLY_THIS_PROCESS = 0x00000002,
@@ -1105,7 +1105,7 @@ namespace CreateAssignTokenVariant
 
             Console.WriteLine("[>] Trying to create a token assigned process.\n");
 
-            bool status = CreateProcessAsUser(
+            if (!CreateProcessAsUser(
                 hToken,
                 null,
                 command,
@@ -1116,9 +1116,7 @@ namespace CreateAssignTokenVariant
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
                 ref startupInfo,
-                out PROCESS_INFORMATION processInformation);
-
-            if (!status)
+                out PROCESS_INFORMATION processInformation))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to create new process.");
