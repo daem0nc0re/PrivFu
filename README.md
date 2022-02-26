@@ -43,6 +43,7 @@ Tested on Windows 10 version 1809/1903, but they should work most of Windows 10 
 | [CreateImpersonateTokenVariant](./KernelWritePoCs/CreateImpersonateTokenVariant/CreateImpersonateTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeImpersonatePrivilege`. |
 | [CreateTokenVariant](./KernelWritePoCs/CreateTokenVariant/CreateTokenVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege`. |
 | [DebugInjectionVariant](./KernelWritePoCs/DebugInjectionVariant/DebugInjectionVariant.cs) | This PoC performs EoP with `SeDebugPrivilege`. Uses code injection to winlogon.exe at final stage. |
+| [DebugInjectionVariant](./KernelWritePoCs/DebugUpdateProcVariant/DebugUpdateProcVariant.cs) | This PoC performs EoP with `SeDebugPrivilege`. Creates SYSTEM process from winlogon.exe with `UpdateProcThreadAttribute` API at final stage. |
 | [SecondaryLogonVariant](./KernelWritePoCs/SecondaryLogonVariant/SecondaryLogonVariant.cs) | This PoC performs EoP with `SeCreateTokenPrivilege` and `SeImpersonatePrivilege`. Uses secondary logon service at final stage. |
 
 
