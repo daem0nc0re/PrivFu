@@ -172,7 +172,7 @@ namespace TrustExec.Interop
             IntPtr lpProcessAttributes,
             IntPtr lpThreadAttributes,
             bool bInheritHandles,
-            uint dwCreationFlags,
+            Win32Const.ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
             ref Win32Struct.STARTUPINFO lpStartupInfo,
