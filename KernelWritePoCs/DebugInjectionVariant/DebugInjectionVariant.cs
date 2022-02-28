@@ -774,11 +774,7 @@ namespace DebugInjectionVariant
 
         static void ZeroMemory(IntPtr buffer, int size)
         {
-            byte[] nullBytes = new byte[size];
-
-            for (var idx = 0; idx < size; idx++)
-                nullBytes[idx] = 0;
-
+            var nullBytes = new byte[size];
             Marshal.Copy(nullBytes, 0, buffer, size);
         }
 
