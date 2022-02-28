@@ -39,7 +39,9 @@ namespace TrustExec.Library
         }
 
 
-        public static string ConvertAccountNameToSidString(ref string accountName)
+        public static string ConvertAccountNameToSidString(
+            ref string accountName,
+            out Win32Const.SID_NAME_USE peUse)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
             bool status;
@@ -48,6 +50,7 @@ namespace TrustExec.Library
             IntPtr pSid;
             StringBuilder referencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 8;
+            peUse = 0;
 
             do
             {
@@ -62,7 +65,7 @@ namespace TrustExec.Library
                     ref cbSid,
                     referencedDomainName,
                     ref cchReferencedDomainName,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out peUse);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
@@ -97,7 +100,9 @@ namespace TrustExec.Library
         }
 
 
-        public static string ConvertSidStringToAccountName(string sid)
+        public static string ConvertSidStringToAccountName(
+            string sid,
+            out Win32Const.SID_NAME_USE peUse)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
             bool status;
@@ -106,6 +111,7 @@ namespace TrustExec.Library
             int cchName = 4;
             StringBuilder pReferencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 4;
+            peUse = 0;
 
             if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
                 return null;
@@ -122,7 +128,7 @@ namespace TrustExec.Library
                     ref cchName,
                     pReferencedDomainName,
                     ref cchReferencedDomainName,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out peUse);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)

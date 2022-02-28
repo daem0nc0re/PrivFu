@@ -7,6 +7,54 @@ namespace SwitchPriv.Library
 {
     class Helpers
     {
+        public static string ConvertIndexToMandatoryLevelSid(int index)
+        {
+            if (index == (int)Globals.MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
+                return Win32Const.UNTRUSTED_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
+                return Win32Const.LOW_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
+                return Win32Const.MEDIUM_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
+                return Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
+                return Win32Const.HIGH_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
+                return Win32Const.SYSTEM_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
+                return Win32Const.PROTECTED_MANDATORY_LEVEL;
+            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
+                return Win32Const.SECURE_MANDATORY_LEVEL;
+            else
+                return null;
+        }
+
+
+        public static string ConvertStringSidToMandatoryLevelName(string stringSid)
+        {
+            StringComparison opt = StringComparison.OrdinalIgnoreCase;
+
+            if (string.Compare(stringSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
+                return "UNTRUSTED_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.LOW_MANDATORY_LEVEL, opt) == 0)
+                return "LOW_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.MEDIUM_MANDATORY_LEVEL, opt) == 0)
+                return "MEDIUM_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
+                return "MEDIUM_PLUS_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.HIGH_MANDATORY_LEVEL, opt) == 0)
+                return "HIGH_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.SYSTEM_MANDATORY_LEVEL, opt) == 0)
+                return "SYSTEM_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.PROTECTED_MANDATORY_LEVEL, opt) == 0)
+                return "PROTECTED_MANDATORY_LEVEL";
+            else if (string.Compare(stringSid, Win32Const.SECURE_MANDATORY_LEVEL, opt) == 0)
+                return "SECURE_MANDATORY_LEVEL";
+            else
+                return null;
+        }
+
+
         public static string GetFullPrivilegeName(string shortenName)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
@@ -156,54 +204,6 @@ namespace SwitchPriv.Library
             }
 
             return privilegeName.ToString();
-        }
-
-
-        public static string ConvertIndexToMandatoryLevelSid(int index)
-        {
-            if (index == (int)Globals.MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
-                return Win32Const.UNTRUSTED_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
-                return Win32Const.LOW_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
-                return Win32Const.MEDIUM_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
-                return Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
-                return Win32Const.HIGH_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
-                return Win32Const.SYSTEM_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
-                return Win32Const.PROTECTED_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
-                return Win32Const.SECURE_MANDATORY_LEVEL;
-            else
-                return null;
-        }
-
-
-        public static string ConvertStringSidToMandatoryLevelName(string stringSid)
-        {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-
-            if (string.Compare(stringSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
-                return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.LOW_MANDATORY_LEVEL, opt) == 0)
-                return "LOW_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.MEDIUM_MANDATORY_LEVEL, opt) == 0)
-                return "MEDIUM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
-                return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.HIGH_MANDATORY_LEVEL, opt) == 0)
-                return "HIGH_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.SYSTEM_MANDATORY_LEVEL, opt) == 0)
-                return "SYSTEM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.PROTECTED_MANDATORY_LEVEL, opt) == 0)
-                return "PROTECTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.SECURE_MANDATORY_LEVEL, opt) == 0)
-                return "SECURE_MANDATORY_LEVEL";
-            else
-                return null;
         }
 
 

@@ -771,7 +771,9 @@ namespace TrustExec.Library
             else
                 accountName = string.Format("{0}\\{1}", domain.ToLower(), username.ToLower());
 
-            string sid = Helpers.ConvertAccountNameToSidString(ref accountName);
+            string sid = Helpers.ConvertAccountNameToSidString(
+                ref accountName,
+                out Win32Const.SID_NAME_USE peUse);
 
             if (string.IsNullOrEmpty(sid))
             {

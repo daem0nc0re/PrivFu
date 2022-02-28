@@ -52,7 +52,9 @@ namespace TrustExec.Library
 
             if (!string.IsNullOrEmpty(sid))
             {
-                result = Helpers.ConvertSidStringToAccountName(sid);
+                result = Helpers.ConvertSidStringToAccountName(
+                    sid,
+                    out Win32Const.SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -81,7 +83,9 @@ namespace TrustExec.Library
                 else
                     return false;
 
-                result = Helpers.ConvertAccountNameToSidString(ref accountName);
+                result = Helpers.ConvertAccountNameToSidString(
+                    ref accountName,
+                    out Win32Const.SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
