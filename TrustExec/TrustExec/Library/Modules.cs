@@ -50,30 +50,18 @@ namespace TrustExec.Library
             string result;
             string accountName;
 
-            if (!string.IsNullOrEmpty(sid))
+            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
+                !string.IsNullOrEmpty(sid))
             {
-                result = Helpers.ConvertSidStringToAccountName(
-                    sid,
-                    out Win32Const.SID_NAME_USE peUse);
+                Console.WriteLine("\n[!] Username or domain name should not be specified with SID at a time.\n");
 
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Console.WriteLine(
-                        "\n[*] Result : {0} (SID : {1})\n",
-                        result.ToLower(),
-                        sid.ToUpper());
-
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("\n[*] No result.\n");
-
-                    return false;
-                }
+                return false;
             }
             else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
             {
+                if (!string.IsNullOrEmpty(domain) && domain.Trim() == ".")
+                    domain = Environment.MachineName;
+
                 if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
                     accountName = string.Format("{0}\\{1}", domain, username);
                 else if (!string.IsNullOrEmpty(domain))
@@ -89,10 +77,36 @@ namespace TrustExec.Library
 
                 if (!string.IsNullOrEmpty(result))
                 {
-                    Console.WriteLine(
-                        "\n[*] Result : {0} (SID : {1})\n",
-                        accountName.ToLower(),
-                        result);
+                    Console.WriteLine();
+                    Console.WriteLine("[*] Result:");
+                    Console.WriteLine("    |-> Account Name : {0}", accountName.ToLower());
+                    Console.WriteLine("    |-> SID          : {0}", result.ToUpper());
+                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
+                    Console.WriteLine();
+
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("\n[*] No result.\n");
+
+                    return false;
+                }
+            }
+            else if (!string.IsNullOrEmpty(sid))
+            {
+                result = Helpers.ConvertSidStringToAccountName(
+                    sid,
+                    out Win32Const.SID_NAME_USE peUse);
+
+                if (!string.IsNullOrEmpty(result))
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("[*] Result:");
+                    Console.WriteLine("    |-> Account Name : {0}", result.ToLower());
+                    Console.WriteLine("    |-> SID          : {0}", sid.ToUpper());
+                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
+                    Console.WriteLine();
 
                     return true;
                 }

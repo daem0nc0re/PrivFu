@@ -1263,23 +1263,32 @@ To lookup SID, set `-l` flag. If you want to lookup domain or username from SID,
 ```
 C:\dev>TrustExec.exe -m sid -l -s S-1-5-18
 
-[*] Result : NT AUTHORITY\SYSTEM (SID : S-1-5-18)
+[*] Result:
+    |-> Account Name : nt authority\system
+    |-> SID          : S-1-5-18
+    |-> Account Type : SidTypeWellKnownGroup
 ```
 
 If you want to lookup SID from domain name, specify domain name with `-d` option as follows:
 
 ```
-C:\dev>TrustExec.exe -m sid -l -d VirtualDomain
+C:\dev>TrustExec.exe -m sid -l -d contoso
 
-[*] Result : virtualdomain (SID : S-1-5-92)
+[*] Result:
+    |-> Account Name : contoso
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818
+    |-> Account Type : SidTypeDomain
 ```
 
 If you want to lookup SID from domain name and username, specify domain name with `-d` option and username with `-u` option as follows:
 
 ```
-C:\dev>TrustExec.exe -m sid -l -d defaultdomain -u defaultuser
+C:\dev>TrustExec.exe -m sid -l -d contoso -u david
 
-[*] Result : defaultdomain\defaultuser (SID : S-1-5-110-110)
+[*] Result:
+    |-> Account Name : contoso\david
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-1104
+    |-> Account Type : SidTypeUser
 ```
 
 To remove virutal account, set `-r` flag.
