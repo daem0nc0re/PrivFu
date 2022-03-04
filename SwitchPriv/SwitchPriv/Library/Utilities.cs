@@ -252,13 +252,14 @@ namespace SwitchPriv.Library
 
         public static int GetParentProcessId(IntPtr hProcess)
         {
+            uint ntstatus;
             var sizeInformation = Marshal.SizeOf(typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
             var buffer = Marshal.AllocHGlobal(sizeInformation);
 
             if (hProcess == IntPtr.Zero)
                 return 0;
 
-            int ntstatus = Win32Api.NtQueryInformationProcess(
+            ntstatus = Win32Api.NtQueryInformationProcess(
                 hProcess,
                 Win32Const.PROCESSINFOCLASS.ProcessBasicInformation,
                 buffer,
@@ -268,7 +269,7 @@ namespace SwitchPriv.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get process information.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
                 Marshal.FreeHGlobal(buffer);
                 
                 return 0;

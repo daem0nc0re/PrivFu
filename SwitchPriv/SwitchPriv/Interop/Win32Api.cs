@@ -18,10 +18,10 @@ namespace SwitchPriv.Interop
             IntPtr PreviousState, // out TOKEN_PRIVILEGES
             IntPtr ReturnLength); // out int
 
-        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertStringSidToSid(
             string StringSid,
             out IntPtr pSid);
@@ -91,7 +91,7 @@ namespace SwitchPriv.Interop
         public static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern int FormatMessage(
+        public static extern uint FormatMessage(
             Win32Const.FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -122,7 +122,7 @@ namespace SwitchPriv.Interop
          * ntdll.dll
          */
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern int NtQueryInformationProcess(
+        public static extern uint NtQueryInformationProcess(
             IntPtr ProcessHandle, 
             Win32Const.PROCESSINFOCLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 

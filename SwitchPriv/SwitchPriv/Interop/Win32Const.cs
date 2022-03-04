@@ -145,8 +145,10 @@ namespace SwitchPriv.Interop
             TokenImpersonation
         }
 
-        public const int STATUS_SUCCESS = 0;
         public const int PRIVILEGE_SET_ALL_NECESSARY = 1;
+
+        // NtStatus
+        public const uint STATUS_SUCCESS = 0;
 
         // Win32Error
         public const int ERROR_BAD_LENGTH = 0x00000018;

@@ -227,7 +227,7 @@ namespace SwitchPriv.Library
                 messageFlag = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            int ret = Win32Api.FormatMessage(
+            uint ret = Win32Api.FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,
