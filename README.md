@@ -23,6 +23,11 @@ Codes in this repository are intended to help investigate how token privileges w
   - [TrustExec](#trustexec)
     - [exec Module](#exec-module)
     - [sid Module](#sid-module)
+  - [UserRightsUtil](#userrightsutil)
+    - [enum Module](#enum-module)
+    - [find Module](#find-module)
+    - [lookup Module](#lookup-module)
+    - [manage Module](#manage-module)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
 
@@ -1357,6 +1362,241 @@ C:\dev>TrustExec.exe -m sid -l -s S-1-5-97
 C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
 
 [*] Result : virtualworld\virtualadmin (SID : S-1-5-97-110)
+```
+
+
+## UserRightsUtil
+
+[Back to Top](#privfu)
+
+[Project](./UserRightsUtil)
+
+This tool is to manage user right without `secpol.msc`:
+
+```
+C:\dev>UserRightsUtil.exe
+
+UserRightsUtil - User rights management utility.
+
+Usage: UserRightsUtil.exe [Options]
+
+        -h, --help   : Displays this help message.
+        -m, --module : Specifies module name.
+
+Available Modules:
+
+        + enum   - Enumerate user rights for specific account.
+        + find   - Find accounts have a specific user right.
+        + lookup - Lookup account's SID.
+        + manage - Grant or revoke user rights.
+
+[*] To see help for each modules, specify "-m <Module> -h" as arguments.
+
+[!] -m option is required.
+```
+
+### enum Module
+
+To enumerate user rights for a specific account, use `enum` command with `-u` and ~d~ opitons or `-s` option as follows:
+
+```
+C:\dev>UserRightsUtil.exe -m enum -d contoso -u jeff
+
+[>] Trying to enumerate user rights.
+    |-> Username : CONTOSO\jeff
+    |-> SID      : S-1-5-21-3654360273-254804765-2004310818-1105
+[+] Got 7 user right(s).
+    |-> SeChangeNotifyPrivilege
+    |-> SeIncreaseWorkingSetPrivilege
+    |-> SeShutdownPrivilege
+    |-> SeUndockPrivilege
+    |-> SeTimeZonePrivilege
+    |-> SeInteractiveLogonRight
+    |-> SeNetworkLogonRight
+[*] Done.
+
+
+C:\dev>UserRightsUtil.exe -m enum -s S-1-5-21-3654360273-254804765-2004310818-1105
+
+[>] Trying to enumerate user rights.
+    |-> Username : CONTOSO\jeff
+    |-> SID      : S-1-5-21-3654360273-254804765-2004310818-1105
+[+] Got 7 user right(s).
+    |-> SeChangeNotifyPrivilege
+    |-> SeIncreaseWorkingSetPrivilege
+    |-> SeShutdownPrivilege
+    |-> SeUndockPrivilege
+    |-> SeTimeZonePrivilege
+    |-> SeInteractiveLogonRight
+    |-> SeNetworkLogonRight
+[*] Done.
+```
+
+If you don't specify domain name with `-d` option, use local computer name as domain name:
+
+```
+C:\dev>hostname
+CL01
+
+C:\dev>UserRightsUtil.exe -m enum -u guest
+
+[>] Trying to enumerate user rights.
+    |-> Username : CL01\Guest
+    |-> SID      : S-1-5-21-2659926013-4203293582-4033841475-501
+[+] Got 3 user right(s).
+    |-> SeInteractiveLogonRight
+    |-> SeDenyInteractiveLogonRight
+    |-> SeDenyNetworkLogonRight
+[*] Done.
+```
+
+### find Module
+
+This command is to find users who have a specific right.
+For example, if you want to find users have `SeDebugPrivilege`, execute as follows:
+
+```
+C:\dev>UserRightsUtil.exe -m find -r debug
+
+[>] Trying to find users with SeDebugPrivilege.
+[+] Found 1 user(s).
+    |-> BUILTIN\Administrators (SID : S-1-5-32-544, Type : SidTypeAlias)
+[*] Done.
+```
+
+To list available value for `-r` option, use `-l` option:
+
+```
+C:\dev>UserRightsUtil.exe -m find -l
+
+Available values for --right option:
+        + TrustedCredManAccess           : Specfies SeTrustedCredManAccessPrivilege.
+        + NetworkLogon                   : Specfies SeNetworkLogonRight.
+        + Tcb                            : Specfies SeTcbPrivilege.
+        + MachineAccount                 : Specfies SeMachineAccountPrivilege.
+        + IncreaseQuota                  : Specfies SeIncreaseQuotaPrivilege.
+        + InteractiveLogon               : Specfies SeInteractiveLogonRight.
+        + RemoteInteractiveLogon         : Specfies SeRemoteInteractiveLogonRight.
+        + Backup                         : Specfies SeBackupPrivilege.
+
+--snip--
+```
+
+
+### lookup Module
+
+This command is to lookup account SID as follows:
+
+```
+C:\dev>UserRightsUtil.exe -m lookup -d contoso -u david
+
+[*] Result:
+    |-> Account Name : CONTOSO\david
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-1104
+    |-> Account Type : SidTypeUser
+
+
+C:\dev>UserRightsUtil.exe -m lookup -s S-1-5-21-3654360273-254804765-2004310818-500
+
+[*] Result:
+    |-> Account Name : CONTOSO\Administrator
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-500
+    |-> Account Type : SidTypeUser
+
+
+C:\dev>UserRightsUtil.exe -m lookup -d contoso -u "domain admins"
+
+[*] Result:
+    |-> Account Name : CONTOSO\Domain Admins
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-512
+    |-> Account Type : SidTypeGroup
+```
+
+If you don't specify domain name with `-d` option, use local computer name as domain name:
+
+```
+C:\dev>hostname
+CL01
+
+C:\dev>UserRightsUtil.exe -m lookup -u admin
+
+[*] Result:
+    |-> Account Name : CL01\admin
+    |-> SID          : S-1-5-21-2659926013-4203293582-4033841475-500
+    |-> Account Type : SidTypeUser
+```
+
+### manage Module
+
+This command is to grant or revoke user rights for a specific user account.
+To grant user right, specify a user right as the value for `-g` option:
+
+```
+C:\dev>UserRightsUtil.exe -m find -r tcb
+
+[>] Trying to find users with SeTcbPrivilege.
+[-] No users.
+[*] Done.
+
+
+C:\dev>UserRightsUtil.exe -m manage -g tcb -d contoso -u administrator
+
+[>] Trying to grant SeTcbPrivilege.
+    |-> Username : CONTOSO\Administrator
+    |-> SID      : S-1-5-21-3654360273-254804765-2004310818-500
+[>] Trying to grant SeTcbPrivilege.
+[+] SeTcbPrivilege is granted successfully.
+
+C:\dev>UserRightsUtil.exe -m find -r tcb
+
+[>] Trying to find users with SeTcbPrivilege.
+[+] Found 1 user(s).
+    |-> CONTOSO\Administrator (SID : S-1-5-21-3654360273-254804765-2004310818-500, Type : SidTypeUser)
+[*] Done.
+```
+
+To revoke user right, specify a user right as the value for `-r` option:
+
+```
+C:\dev>UserRightsUtil.exe -m find -r tcb
+
+[>] Trying to find users with SeTcbPrivilege.
+[+] Found 1 user(s).
+    |-> CONTOSO\Administrator (SID : S-1-5-21-3654360273-254804765-2004310818-500, Type : SidTypeUser)
+[*] Done.
+
+
+C:\dev>UserRightsUtil.exe -m manage -r tcb -d contoso -u administrator
+
+[>] Trying to revoke SeTcbPrivilege.
+    |-> Username : CONTOSO\Administrator
+    |-> SID      : S-1-5-21-3654360273-254804765-2004310818-500
+[>] Trying to revoke SeTcbPrivilege
+[+] SeTcbPrivilege is revoked successfully.
+
+C:\de>UserRightsUtil.exe -m find -r tcb
+
+[>] Trying to find users with SeTcbPrivilege.
+[-] No users.
+[*] Done.
+```
+
+To list available value for `-g` or `-r` option, use `-l` option:
+
+```
+C:\dev>UserRightsUtil.exe -m manage -l
+
+Available values for --grant and --revoke options:
+        + TrustedCredManAccess           : Specfies SeTrustedCredManAccessPrivilege.
+        + NetworkLogon                   : Specfies SeNetworkLogonRight.
+        + Tcb                            : Specfies SeTcbPrivilege.
+        + MachineAccount                 : Specfies SeMachineAccountPrivilege.
+        + IncreaseQuota                  : Specfies SeIncreaseQuotaPrivilege.
+        + InteractiveLogon               : Specfies SeInteractiveLogonRight.
+        + RemoteInteractiveLogon         : Specfies SeRemoteInteractiveLogonRight.
+        + Backup                         : Specfies SeBackupPrivilege.
+
+--snip--
 ```
 
 
