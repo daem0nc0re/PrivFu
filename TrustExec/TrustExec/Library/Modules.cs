@@ -45,7 +45,10 @@ namespace TrustExec.Library
         }
 
 
-        public static bool LookupSid(string domain, string username, string sid)
+        public static bool LookupSid(
+            string domain,
+            string username,
+            string sid)
         {
             string result;
             string accountName;
@@ -79,8 +82,8 @@ namespace TrustExec.Library
                 {
                     Console.WriteLine();
                     Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", accountName.ToLower());
-                    Console.WriteLine("    |-> SID          : {0}", result.ToUpper());
+                    Console.WriteLine("    |-> Account Name : {0}", accountName);
+                    Console.WriteLine("    |-> SID          : {0}", result);
                     Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
                     Console.WriteLine();
 
@@ -95,16 +98,17 @@ namespace TrustExec.Library
             }
             else if (!string.IsNullOrEmpty(sid))
             {
+                sid = sid.ToUpper();
                 result = Helpers.ConvertSidStringToAccountName(
-                    sid,
+                    ref sid,
                     out Win32Const.SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
                     Console.WriteLine();
                     Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", result.ToLower());
-                    Console.WriteLine("    |-> SID          : {0}", sid.ToUpper());
+                    Console.WriteLine("    |-> Account Name : {0}", result);
+                    Console.WriteLine("    |-> SID          : {0}", sid);
                     Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
                     Console.WriteLine();
 

@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using TrustExec.Interop;
 
 namespace TrustExec.Library
 {
     class Helpers
     {
-        public static int AddSidMapping(
+        public static uint AddSidMapping(
             string domain,
             string username,
             IntPtr pSid)
         {
+            uint ntstatus;
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT();
 
             if (string.IsNullOrEmpty(domain) || pSid == IntPtr.Zero)
-                return -1;
+                return UInt32.MaxValue;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);
 
@@ -24,7 +26,7 @@ namespace TrustExec.Library
 
             input.Sid = pSid;
 
-            int ntstatus = Win32Api.LsaManageSidNameMapping(
+            ntstatus = Win32Api.LsaManageSidNameMapping(
                 Win32Const.LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Add,
                 input,
                 out IntPtr output);
@@ -43,14 +45,46 @@ namespace TrustExec.Library
             ref string accountName,
             out Win32Const.SID_NAME_USE peUse)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-            bool status;
             int error;
-            int cbSid = 8;
+            bool status;
+            string username;
+            string domain;
+            Regex rx1 = new Regex(
+                @"^[^\\]+\\[^\\]+$",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            Regex rx2 = new Regex(
+                @"^[^\\]+$",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
             IntPtr pSid;
+            int cbSid = 8;
             StringBuilder referencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 8;
             peUse = 0;
+
+            if (rx1.IsMatch(accountName))
+            {
+                try
+                {
+                    domain = accountName.Split('\\')[0];
+                    username = accountName.Split('\\')[1];
+
+                    if (domain == ".")
+                    {
+                        accountName = string.Format(
+                            "{0}\\{1}",
+                            Environment.MachineName,
+                            username);
+                    }
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            else if (!rx2.IsMatch(accountName))
+            {
+                return null;
+            }
 
             do
             {
@@ -81,13 +115,7 @@ namespace TrustExec.Library
             if (!Win32Api.IsValidSid(pSid))
                 return null;
 
-            if (!accountName.Contains("\\") &&
-                (string.Compare(accountName, referencedDomainName.ToString(), opt) != 0))
-            {
-                accountName = string.Format("{0}\\{1}",
-                    referencedDomainName.ToString().ToLower(),
-                    accountName.ToLower());
-            }
+            accountName = ConvertSidToAccountName(pSid, out peUse);
 
             if (Win32Api.ConvertSidToStringSid(pSid, out string strSid))
             {
@@ -101,7 +129,21 @@ namespace TrustExec.Library
 
 
         public static string ConvertSidStringToAccountName(
-            string sid,
+            ref string sid,
+            out Win32Const.SID_NAME_USE peUse)
+        {
+            if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
+            {
+                peUse = 0;
+                return null;
+            }
+
+            return ConvertSidToAccountName(pSid, out peUse);
+        }
+
+
+        public static string ConvertSidToAccountName(
+            IntPtr pSid,
             out Win32Const.SID_NAME_USE peUse)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
@@ -111,10 +153,6 @@ namespace TrustExec.Library
             int cchName = 4;
             StringBuilder pReferencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 4;
-            peUse = 0;
-
-            if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
-                return null;
 
             do
             {
@@ -140,7 +178,7 @@ namespace TrustExec.Library
 
             if (!status)
                 return null;
-            
+
             if (string.Compare(pName.ToString(), pReferencedDomainName.ToString(), opt) == 0)
             {
                 return pReferencedDomainName.ToString();
@@ -148,8 +186,8 @@ namespace TrustExec.Library
             else
             {
                 return string.Format("{0}\\{1}",
-                    pReferencedDomainName.ToString().ToLower(),
-                    pName.ToString().ToLower());
+                    pReferencedDomainName.ToString(),
+                    pName.ToString());
             }
         }
 
@@ -247,7 +285,7 @@ namespace TrustExec.Library
                 messageFlag = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            int ret = Win32Api.FormatMessage(
+            uint ret = Win32Api.FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,
@@ -273,21 +311,22 @@ namespace TrustExec.Library
         }
 
 
-        public static int RemoveSidMapping(
+        public static uint RemoveSidMapping(
             string domain,
             string username)
         {
+            uint ntstatus;
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
 
             if (string.IsNullOrEmpty(domain))
-                return -1;
+                return UInt32.MaxValue;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);
 
             if (username != null)
                 input.AccountName = new Win32Struct.UNICODE_STRING(username);
 
-            int ntstatus = Win32Api.LsaManageSidNameMapping(
+            ntstatus = Win32Api.LsaManageSidNameMapping(
                 Win32Const.LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Remove,
                 input,
                 out IntPtr output);

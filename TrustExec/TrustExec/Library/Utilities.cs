@@ -15,8 +15,7 @@ namespace TrustExec.Library
             int domainRid)
         {
             int error;
-            int ntstatus;
-            int expectedNtStatus = Convert.ToInt32("0xC000000D", 16);
+            uint ntstatus;
             string domainSid = string.Format("S-1-5-{0}", domainRid);
             string userSid = string.Format("S-1-5-{0}-110", domainRid);
 
@@ -62,19 +61,20 @@ namespace TrustExec.Library
             }
 
             ntstatus = Helpers.AddSidMapping(domain, null, pSidDomain);
+
             if (ntstatus == Win32Const.STATUS_SUCCESS)
             {
                 Helpers.AddSidMapping(domain, username, pSidUser);
                 Console.WriteLine("[+] Added virtual domain and user.");
             }
-            else if (ntstatus == expectedNtStatus)
+            else if (ntstatus == Win32Const.STATUS_INVALID_PARAMETER)
             {
                 Console.WriteLine("[*] {0} or {1} maybe already exists or invalid.", domainSid, domain);
             }
             else
             {
                 Console.WriteLine("[-] Unexpected error.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
                 
                 return false;
             }
@@ -167,6 +167,7 @@ namespace TrustExec.Library
             bool full)
         {
             int error;
+            uint ntstatus;
             Win32Struct.LUID authId = Win32Const.SYSTEM_LUID;
             var tokenSource = new Win32Struct.TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
@@ -301,7 +302,7 @@ namespace TrustExec.Library
             Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
-            int ntstatus = Win32Api.ZwCreateToken(
+            ntstatus = Win32Api.ZwCreateToken(
                 out IntPtr hToken,
                 Win32Const.TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
@@ -325,7 +326,7 @@ namespace TrustExec.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -481,7 +482,6 @@ namespace TrustExec.Library
         public static bool EnableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
         {
             int error;
-
             var tp = new Win32Struct.TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
             tp.Privileges[0].Attributes = (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED;
@@ -575,7 +575,6 @@ namespace TrustExec.Library
         public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(
             IntPtr hToken)
         {
-            int ERROR_INSUFFICIENT_BUFFER = 122;
             int error;
             bool status;
             int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
@@ -597,7 +596,7 @@ namespace TrustExec.Library
 
                 if (!status)
                     Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER));
+            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER));
 
             if (!status)
                 return availablePrivs;
@@ -750,7 +749,7 @@ namespace TrustExec.Library
 
         public static bool RemoveVirtualAccount(string domain, string username)
         {
-            int expectedNtStatus = Convert.ToInt32("0xC0000225", 16);
+            uint ntstatus;
 
             if (string.IsNullOrEmpty(domain))
             {
@@ -785,9 +784,9 @@ namespace TrustExec.Library
                 Console.WriteLine("[*] SID : {0}.", sid);
             }
 
-            int ntstatus = Helpers.RemoveSidMapping(domain, username);
+            ntstatus = Helpers.RemoveSidMapping(domain, username);
 
-            if (ntstatus == expectedNtStatus)
+            if (ntstatus == Win32Const.STATUS_NOT_FOUND)
             {
                 Console.WriteLine("[-] Requested SID is not exist.\n");
 
@@ -797,7 +796,7 @@ namespace TrustExec.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[!] Unexpected error.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
                 
                 return false;
             }
