@@ -32,10 +32,10 @@ namespace TrustExec.Interop
             int dwSubAuthority7,
             out IntPtr pSid);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool AllocateLocallyUniqueId(out Win32Struct.LUID Luid);
 
-        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -100,7 +100,7 @@ namespace TrustExec.Interop
             ref int cchReferencedDomainName,
             out Win32Const.SID_NAME_USE peUse);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupAccountSid(
             string strSystemName,
             IntPtr pSid,
