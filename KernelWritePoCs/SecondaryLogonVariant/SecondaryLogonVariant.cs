@@ -732,7 +732,7 @@ namespace SecondaryLogonVariant
             IntPtr lpOverlapped);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern int FormatMessage(
+        static extern uint FormatMessage(
             FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -762,7 +762,7 @@ namespace SecondaryLogonVariant
          * ntdll.dll
          */
         [DllImport("ntdll.dll", SetLastError = true)]
-        static extern int NtQuerySystemInformation(
+        static extern uint NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
             int SystemInformationLength,
@@ -775,7 +775,7 @@ namespace SecondaryLogonVariant
             ref int BuildNumber);
 
         [DllImport("ntdll.dll")]
-        static extern int ZwCreateToken(
+        static extern uint ZwCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
@@ -791,10 +791,10 @@ namespace SecondaryLogonVariant
             ref TOKEN_SOURCE TokenSource);
 
         // Windows Consts
-        const int STATUS_SUCCESS = 0;
+        const uint STATUS_SUCCESS = 0;
+        const uint STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
         const int ERROR_BAD_LENGTH = 0x00000018;
         const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
-        static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
         const string TRUSTED_INSTALLER_RID = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
@@ -1097,7 +1097,7 @@ namespace SecondaryLogonVariant
             Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
-            int ntstatus = ZwCreateToken(
+            uint ntstatus = ZwCreateToken(
                 out IntPtr hToken,
                 TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
@@ -1118,7 +1118,7 @@ namespace SecondaryLogonVariant
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create elevated token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage((int)ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -1206,7 +1206,7 @@ namespace SecondaryLogonVariant
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
-            int ntstatus;
+            uint ntstatus;
             var pObject = IntPtr.Zero;
             var hToken = WindowsIdentity.GetCurrent().Token;
 
@@ -1235,7 +1235,7 @@ namespace SecondaryLogonVariant
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get system information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage((int)ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -1364,7 +1364,7 @@ namespace SecondaryLogonVariant
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            int ret = FormatMessage(
+            uint ret = FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,

@@ -331,7 +331,7 @@ namespace DebugInjectionVariant
             IntPtr lpOverlapped);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern int FormatMessage(
+        static extern uint FormatMessage(
             FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -380,16 +380,16 @@ namespace DebugInjectionVariant
          * ntdll.dll
          */
         [DllImport("ntdll.dll", SetLastError = true)]
-        static extern int NtQuerySystemInformation(
+        static extern uint NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
             int SystemInformationLength,
             ref int ReturnLength);
 
         // Windows Consts
-        const int STATUS_SUCCESS = 0;
+        const uint STATUS_SUCCESS = 0;
+        const uint STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
-        static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
 
         // User define Consts
         [Flags]
@@ -436,7 +436,7 @@ namespace DebugInjectionVariant
         // User define functions
         static IntPtr GetCurrentProcessTokenPointer()
         {
-            int ntstatus;
+            uint ntstatus;
             var pObject = IntPtr.Zero;
             var hToken = WindowsIdentity.GetCurrent().Token;
 
@@ -465,7 +465,7 @@ namespace DebugInjectionVariant
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get system information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage((int)ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -566,7 +566,7 @@ namespace DebugInjectionVariant
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            int ret = FormatMessage(
+            uint ret = FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,
