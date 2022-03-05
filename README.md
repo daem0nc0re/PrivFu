@@ -1371,7 +1371,8 @@ C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
 
 [Project](./UserRightsUtil)
 
-This tool is to manage user right without `secpol.msc`:
+This tool is to manage user right without `secpol.msc`.
+Commands other than `lookup` require administrator privileges:
 
 ```
 C:\dev>UserRightsUtil.exe
@@ -1541,7 +1542,7 @@ C:\dev>UserRightsUtil.exe -m find -r tcb
 
 C:\dev>UserRightsUtil.exe -m manage -g tcb -d contoso -u administrator
 
-[>] Trying to grant SeTcbPrivilege.
+[>] Target account information:
     |-> Username : CONTOSO\Administrator
     |-> SID      : S-1-5-21-3654360273-254804765-2004310818-500
 [>] Trying to grant SeTcbPrivilege.
@@ -1568,7 +1569,7 @@ C:\dev>UserRightsUtil.exe -m find -r tcb
 
 C:\dev>UserRightsUtil.exe -m manage -r tcb -d contoso -u administrator
 
-[>] Trying to revoke SeTcbPrivilege.
+[>] Target account information:
     |-> Username : CONTOSO\Administrator
     |-> SID      : S-1-5-21-3654360273-254804765-2004310818-500
 [>] Trying to revoke SeTcbPrivilege

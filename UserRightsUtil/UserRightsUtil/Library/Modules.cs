@@ -206,7 +206,7 @@ namespace UserRightsUtil.Library
             }
 
             Console.WriteLine();
-            Console.WriteLine("[>] Trying to grant {0}.", userRight.ToString());
+            Console.WriteLine("[>] Target account information:");
             Console.WriteLine("    |-> Username : {0}", accountName);
             Console.WriteLine("    |-> SID      : {0}", strSid);
 
@@ -381,7 +381,7 @@ namespace UserRightsUtil.Library
             }
 
             Console.WriteLine();
-            Console.WriteLine("[>] Trying to revoke {0}.", userRight.ToString());
+            Console.WriteLine("[>] Target account information:");
             Console.WriteLine("    |-> Username : {0}", accountName);
             Console.WriteLine("    |-> SID      : {0}", strSid);
 
