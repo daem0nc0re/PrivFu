@@ -20,14 +20,9 @@ Codes in this repository are intended to help investigate how token privileges w
     - [disableall Command](#disableall-command)
   - [PrivilegedOperations](#privilegedoperations)
   - [SwitchPriv](#switchpriv)
+  - [S4uDelegator](#s4udelegator)
   - [TrustExec](#trustexec)
-    - [exec Module](#exec-module)
-    - [sid Module](#sid-module)
   - [UserRightsUtil](#userrightsutil)
-    - [enum Module](#enum-module)
-    - [find Module](#find-module)
-    - [lookup Module](#lookup-module)
-    - [manage Module](#manage-module)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
 
@@ -952,6 +947,150 @@ C:\dev>SwitchPriv.exe -i 1
 
 C:\dev>whoami /groups | findstr /i level
 Mandatory Label\Low Mandatory Level                           Label            S-1-16-4096
+```
+
+## S4uDelegator
+
+[Back to Top](#privfu)
+
+[Project](./S4uDelegator)
+
+This tool is to perform S4U logon with SeTcbPrivilege.
+To perform S4U logon with this tool, administrative privileges are required.
+Currently, a few operations are implemented (more operations will be implemented in future):
+
+```
+C:\dev>S4uDelegator.exe -h
+
+S4uDelegator - Tool for S4U Logon.
+
+Usage: S4uDelegator.exe [Options]
+
+        -h, --help   : Displays this help message.
+        -m, --module : Specifies module name.
+
+Available Modules:
+
+        + lookup - Lookup account's SID.
+        + read   - Read file with S4U logon.
+        + shell  - Perform S4U logon and get shell. Target account should be local account.
+
+[*] To see help for each modules, specify "-m <Module> -h" as arguments.
+
+[!] -m option is required.
+```
+
+
+### lookup Module
+
+This command is to lookup account SID as follows:
+
+```
+C:\dev>S4uDelegator.exe -m lookup -d contoso -u david
+
+[*] Result:
+    |-> Account Name : CONTOSO\david
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-1104
+    |-> Account Type : SidTypeUser
+
+
+C:\dev>S4uDelegator.exe -m lookup -s S-1-5-21-3654360273-254804765-2004310818-500
+
+[*] Result:
+    |-> Account Name : CONTOSO\Administrator
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-500
+    |-> Account Type : SidTypeUser
+
+
+C:\dev>S4uDelegator.exe -m lookup -d contoso -u "domain admins"
+
+[*] Result:
+    |-> Account Name : CONTOSO\Domain Admins
+    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-512
+    |-> Account Type : SidTypeGroup
+```
+
+If you don't specify domain name with `-d` option, use local computer name as domain name:
+
+```
+C:\dev>hostname
+CL01
+
+C:\dev>S4uDelegator.exe -m lookup -u admin
+
+[*] Result:
+    |-> Account Name : CL01\admin
+    |-> SID          : S-1-5-21-2659926013-4203293582-4033841475-500
+    |-> Account Type : SidTypeUser
+```
+
+
+### read Module
+
+This command is to read file with S4U logon.
+For target account to S4U logon, domain user account and local user account can be used:
+
+```
+C:\dev>S4uDelegator.exe -m read -h
+
+S4Util - Help for "read" command.
+
+Usage: S4uDelegator.exe -m read [Options]
+
+        -h, --help     : Displays this help message.
+        -d, --domain   : Specifies domain name for target account to S4U logon.
+        -u, --username : Specifies username to S4U logon.
+        -s, --sid      : Specifies SID for target account S4U logon.
+        -p, --path     : Specifies target file path to read.
+
+[-] Missing account information.
+```
+
+
+### shell Module
+
+This command is to get interactive shell with S4U logon.
+For target account to S4U logon, local user account can be used:
+
+```
+C:\dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name     SID
+============= =============================================
+contoso\david S-1-5-21-3654360273-254804765-2004310818-1104
+
+C:\dev>S4uDelegator.exe -m shell -u admin
+
+[>] Target account to S4U:
+    |-> Account Name        : CL01\admin
+    |-> Account Sid         : S-1-5-21-2659926013-4203293582-4033841475-500
+    |-> Account Type        : SidTypeUser
+    |-> User Principal Name : (NULL)
+[>] Trying to get SYSTEM.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 7140
+[+] Impersonation is successful.
+[>] Trying to MSV S4U logon.
+[+] S4U logon is successful.
+[>] Trying to create a token assigned process.
+
+Microsoft Windows [Version 10.0.18362.175]
+(c) 2019 Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name  SID
+========== =============================================
+cl01\admin S-1-5-21-2659926013-4203293582-4033841475-500
 ```
 
 
