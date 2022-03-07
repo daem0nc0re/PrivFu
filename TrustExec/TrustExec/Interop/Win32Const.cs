@@ -235,9 +235,9 @@ namespace TrustExec.Interop
         }
 
         // NTSTATUS
-        public const uint STATUS_SUCCESS = 0;
-        public const uint STATUS_INVALID_PARAMETER = 0xC000000D;
-        public const uint STATUS_NOT_FOUND = 0xC0000225;
+        public const int STATUS_SUCCESS = 0;
+        public static readonly int STATUS_INVALID_PARAMETER = Convert.ToInt32("0xC000000D", 16);
+        public static readonly int STATUS_NOT_FOUND = Convert.ToInt32("0xC0000225", 16);
 
         // Win32Error
         public const int ERROR_BAD_LENGTH = 0x00000018;

@@ -91,7 +91,7 @@ namespace SwitchPriv.Interop
         public static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint FormatMessage(
+        public static extern int FormatMessage(
             Win32Const.FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -122,7 +122,7 @@ namespace SwitchPriv.Interop
          * ntdll.dll
          */
         [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern uint NtQueryInformationProcess(
+        public static extern int NtQueryInformationProcess(
             IntPtr ProcessHandle, 
             Win32Const.PROCESSINFOCLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 

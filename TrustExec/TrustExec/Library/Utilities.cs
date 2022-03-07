@@ -15,7 +15,7 @@ namespace TrustExec.Library
             int domainRid)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
             string domainSid = string.Format("S-1-5-{0}", domainRid);
             string userSid = string.Format("S-1-5-{0}-110", domainRid);
 
@@ -74,7 +74,7 @@ namespace TrustExec.Library
             else
             {
                 Console.WriteLine("[-] Unexpected error.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
                 
                 return false;
             }
@@ -167,7 +167,7 @@ namespace TrustExec.Library
             bool full)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
             Win32Struct.LUID authId = Win32Const.SYSTEM_LUID;
             var tokenSource = new Win32Struct.TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
@@ -326,7 +326,7 @@ namespace TrustExec.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -749,7 +749,7 @@ namespace TrustExec.Library
 
         public static bool RemoveVirtualAccount(string domain, string username)
         {
-            uint ntstatus;
+            int ntstatus;
 
             if (string.IsNullOrEmpty(domain))
             {
@@ -796,7 +796,7 @@ namespace TrustExec.Library
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
                 Console.WriteLine("[!] Unexpected error.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage((int)ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
                 
                 return false;
             }

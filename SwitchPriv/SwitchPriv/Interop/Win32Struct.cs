@@ -38,6 +38,7 @@ namespace SwitchPriv.Interop
             public SID_AND_ATTRIBUTES Label;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_PRIVILEGES
         {
             public int PrivilegeCount;

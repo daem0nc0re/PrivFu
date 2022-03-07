@@ -145,16 +145,16 @@ namespace TrustExec.Interop
             int TokenInformationLength);
 
         [DllImport("advapi32.dll")]
-        public static extern uint LsaFreeMemory(IntPtr Buffer);
+        public static extern int LsaFreeMemory(IntPtr Buffer);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint LsaManageSidNameMapping(
+        public static extern int LsaManageSidNameMapping(
             Win32Const.LSA_SID_NAME_MAPPING_OPERATION_TYPE OperationType,
             Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT OperationInput,
             out IntPtr OperationOutput);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint LsaManageSidNameMapping(
+        public static extern int LsaManageSidNameMapping(
             Win32Const.LSA_SID_NAME_MAPPING_OPERATION_TYPE OperationType,
             Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT OperationInput,
             out IntPtr OperationOutput);
@@ -179,7 +179,7 @@ namespace TrustExec.Interop
             out Win32Struct.PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint FormatMessage(
+        public static extern int FormatMessage(
             Win32Const.FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -221,7 +221,7 @@ namespace TrustExec.Interop
             ref int BuildNumber);
 
         [DllImport("ntdll.dll")]
-        public static extern uint ZwCreateToken(
+        public static extern int ZwCreateToken(
             out IntPtr TokenHandle,
             Win32Const.TokenAccessFlags DesiredAccess,
             ref Win32Struct.OBJECT_ATTRIBUTES ObjectAttributes,
@@ -237,7 +237,7 @@ namespace TrustExec.Interop
             ref Win32Struct.TOKEN_SOURCE TokenSource);
 
         [DllImport("ntdll.dll")]
-        public static extern uint ZwSetInformationProcess(
+        public static extern int ZwSetInformationProcess(
             IntPtr ProcessHandle,
             Win32Const.PROCESS_INFORMATION_CLASS ProcessInformationClass,
             IntPtr ProcessInformation,

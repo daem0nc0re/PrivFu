@@ -9,8 +9,7 @@ namespace UserRightsUtil.Library
     {
         public static List<Win32Const.Rights> GetUserRights(IntPtr pSid)
         {
-            uint netstatus;
-            uint ntstatus;
+            int ntstatus;
             IntPtr hLsa;
             var userRight = new Win32Struct.LSA_UNICODE_STRING();
             IntPtr pUserRight;
@@ -62,7 +61,7 @@ namespace UserRightsUtil.Library
             }
             else
             {
-                netstatus = Win32Api.NetUserGetLocalGroups(
+                ntstatus = Win32Api.NetUserGetLocalGroups(
                     Environment.MachineName,
                     accountName,
                     0,
@@ -72,10 +71,10 @@ namespace UserRightsUtil.Library
                     out int entriesread_LG,
                     out int totalentries_LG);
 
-                if (netstatus != Win32Const.NERR_Success)
+                if (ntstatus != Win32Const.NERR_Success)
                     return results;
 
-                netstatus = Win32Api.NetLocalGroupEnum(
+                ntstatus = Win32Api.NetLocalGroupEnum(
                     Environment.MachineName,
                     0,
                     out IntPtr pLocalGroups,
@@ -84,7 +83,7 @@ namespace UserRightsUtil.Library
                     out int totalentries,
                     ref resume_handle);
 
-                if (netstatus != Win32Const.NERR_Success)
+                if (ntstatus != Win32Const.NERR_Success)
                     return results;
 
                 try
@@ -151,7 +150,7 @@ namespace UserRightsUtil.Library
             Win32Const.Rights right)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
             IntPtr hLsa;
             IntPtr pEntry;
             IntPtr pSid;
@@ -216,7 +215,7 @@ namespace UserRightsUtil.Library
             Win32Const.PolicyAccessRights policyAccess)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
             var lsaObjAttrs = new Win32Struct.LSA_OBJECT_ATTRIBUTES();
             lsaObjAttrs.Length = Marshal.SizeOf(lsaObjAttrs);
 
@@ -244,7 +243,7 @@ namespace UserRightsUtil.Library
             Win32Const.Rights right)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
 
             if (!Win32Api.ConvertStringSidToSid(strSid, out IntPtr pSid))
             {
@@ -283,7 +282,7 @@ namespace UserRightsUtil.Library
             Win32Const.Rights right)
         {
             int error;
-            uint ntstatus;
+            int ntstatus;
 
             if (!Win32Api.ConvertStringSidToSid(strSid, out IntPtr pSid))
             {

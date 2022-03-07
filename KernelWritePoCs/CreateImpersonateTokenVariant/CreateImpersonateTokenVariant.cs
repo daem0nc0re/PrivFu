@@ -728,7 +728,7 @@ namespace CreateImpersonateTokenVariant
             IntPtr lpOverlapped);
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern uint FormatMessage(
+        static extern int FormatMessage(
             FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -758,14 +758,14 @@ namespace CreateImpersonateTokenVariant
          * ntdll.dll
          */
         [DllImport("ntdll.dll", SetLastError = true)]
-        static extern uint NtQuerySystemInformation(
+        static extern int NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
             int SystemInformationLength,
             ref int ReturnLength);
 
         [DllImport("ntdll.dll")]
-        static extern uint ZwCreateToken(
+        static extern int ZwCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
@@ -781,8 +781,8 @@ namespace CreateImpersonateTokenVariant
             ref TOKEN_SOURCE TokenSource);
 
         // Windows Consts
-        const uint STATUS_SUCCESS = 0;
-        const uint STATUS_INFO_LENGTH_MISMATCH = 0xC0000004;
+        const int STATUS_SUCCESS = 0;
+        static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         const int ERROR_BAD_LENGTH = 0x00000018;
         const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
@@ -1067,7 +1067,7 @@ namespace CreateImpersonateTokenVariant
             Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
-            uint ntstatus = ZwCreateToken(
+            int ntstatus = ZwCreateToken(
                 out IntPtr hToken,
                 TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
@@ -1088,7 +1088,7 @@ namespace CreateImpersonateTokenVariant
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create elevated token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage((int)ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -1178,7 +1178,7 @@ namespace CreateImpersonateTokenVariant
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
-            uint ntstatus;
+            int ntstatus;
             var pObject = IntPtr.Zero;
             var hToken = WindowsIdentity.GetCurrent().Token;
 
@@ -1207,7 +1207,7 @@ namespace CreateImpersonateTokenVariant
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get system information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage((int)ntstatus, true));
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
 
                 return IntPtr.Zero;
             }
@@ -1336,7 +1336,7 @@ namespace CreateImpersonateTokenVariant
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            uint ret = FormatMessage(
+            int ret = FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,

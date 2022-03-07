@@ -16,7 +16,7 @@ namespace UserRightsUtil.Interop
         public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
         [DllImport("advapi32.dll")]
-        public static extern uint GetLengthSid(IntPtr pSid);
+        public static extern int GetLengthSid(IntPtr pSid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool IsValidSid(IntPtr pSid);
@@ -42,44 +42,44 @@ namespace UserRightsUtil.Interop
             out Win32Const.SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint LsaAddAccountRights(
+        public static extern int LsaAddAccountRights(
             IntPtr PolicyHandle,
             IntPtr pSID,
             Win32Struct.LSA_UNICODE_STRING[] UserRights,
             int CountOfRights);
 
         [DllImport("advapi32.dll")]
-        public static extern uint LsaClose(IntPtr PolicyHandle);
+        public static extern int LsaClose(IntPtr PolicyHandle);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint LsaEnumerateAccountRights(
+        public static extern int LsaEnumerateAccountRights(
             IntPtr PolicyHandle,
             IntPtr pSID,
             out IntPtr UserRights, // LSA_UNICODE_STRING[]
             out ulong CountOfRights);
 
         [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint LsaEnumerateAccountsWithUserRight(
+        public static extern int LsaEnumerateAccountsWithUserRight(
             IntPtr PolicyHandle,
             Win32Struct.LSA_UNICODE_STRING[] UserRights,
             out IntPtr EnumerationBuffer,
             out int CountReturned);
 
         [DllImport("advapi32.dll")]
-        public static extern uint LsaFreeMemory(IntPtr Buffer);
+        public static extern int LsaFreeMemory(IntPtr Buffer);
 
         [DllImport("advapi32.dll")]
-        public static extern int LsaNtStatusToWinError(uint NtStatus);
+        public static extern int LsaNtStatusToWinError(int NtStatus);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint LsaOpenPolicy(
+        public static extern int LsaOpenPolicy(
             IntPtr SystemName, // Win32Struct.LSA_UNICODE_STRING[]
             ref Win32Struct.LSA_OBJECT_ATTRIBUTES ObjectAttributes,
             Win32Const.PolicyAccessRights AccessMask,
             out IntPtr PolicyHandle);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint LsaRemoveAccountRights(
+        public static extern int LsaRemoveAccountRights(
             IntPtr PolicyHandle,
             IntPtr pSID,
             bool AllRights,
@@ -90,7 +90,7 @@ namespace UserRightsUtil.Interop
          * kenel32.dll
          */
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern uint FormatMessage(
+        public static extern int FormatMessage(
             Win32Const.FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
@@ -112,10 +112,10 @@ namespace UserRightsUtil.Interop
          * netapi32.dll
          */
         [DllImport("netapi32.dll")]
-        public static extern uint NetApiBufferFree(IntPtr Buffer);
+        public static extern int NetApiBufferFree(IntPtr Buffer);
 
         [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint NetLocalGroupEnum(
+        public static extern int NetLocalGroupEnum(
             string servername,
             int level,
             out IntPtr bufptr,
@@ -125,7 +125,7 @@ namespace UserRightsUtil.Interop
             ref int resume_handle);
 
         [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern uint NetUserGetLocalGroups(
+        public static extern int NetUserGetLocalGroups(
             string servername,
             string username,
             int level,

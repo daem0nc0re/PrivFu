@@ -8,16 +8,16 @@ namespace TrustExec.Library
 {
     class Helpers
     {
-        public static uint AddSidMapping(
+        public static int AddSidMapping(
             string domain,
             string username,
             IntPtr pSid)
         {
-            uint ntstatus;
+            int ntstatus;
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT();
 
             if (string.IsNullOrEmpty(domain) || pSid == IntPtr.Zero)
-                return UInt32.MaxValue;
+                return -1;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);
 
@@ -285,7 +285,7 @@ namespace TrustExec.Library
                 messageFlag = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            uint ret = Win32Api.FormatMessage(
+            int ret = Win32Api.FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,
@@ -311,15 +311,15 @@ namespace TrustExec.Library
         }
 
 
-        public static uint RemoveSidMapping(
+        public static int RemoveSidMapping(
             string domain,
             string username)
         {
-            uint ntstatus;
+            int ntstatus;
             var input = new Win32Struct.LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
 
             if (string.IsNullOrEmpty(domain))
-                return UInt32.MaxValue;
+                return -1;
 
             input.DomainName = new Win32Struct.UNICODE_STRING(domain);
 

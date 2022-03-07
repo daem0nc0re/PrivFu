@@ -188,7 +188,7 @@ namespace UserRightsUtil.Library
                 messageFlag = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            uint ret = Win32Api.FormatMessage(
+            int ret = Win32Api.FormatMessage(
                 messageFlag,
                 pNtdll,
                 code,
