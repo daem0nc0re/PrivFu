@@ -393,7 +393,7 @@ namespace UserRightsUtil.Library
             bool status = Utilities.RevokeSingleUserRight(
                 hLsa,
                 strSid,
-                Win32Const.Rights.SeTcbPrivilege);
+                userRight);
             Win32Api.LsaClose(hLsa);
 
             return status;
