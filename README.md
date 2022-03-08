@@ -34,7 +34,7 @@ Codes in this repository are intended to help investigate how token privileges w
 
 The purpose of this project is to investigate how attackers abuse arbitrary kernel write vulnerability.
 All PoCs are written for [HackSys Extreme Vulnerable Driver](https://github.com/hacksysteam/HackSysExtremeVulnerableDriver).
-These PoCs perform to get SYSTEM integrity level by abusing arbitrary kernel write vulnerability and token privileges.
+Most of these PoCs perform to get SYSTEM integrity level by abusing arbitrary kernel write vulnerability and token privileges.
 Tested on Windows 10 version 1809/1903, but they should work most of Windows 10 theoretically:
 
 | PoC Name | Description |
