@@ -146,7 +146,6 @@ namespace TrustExec.Library
             IntPtr pSid,
             out Win32Const.SID_NAME_USE peUse)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
             bool status;
             int error;
             StringBuilder pName = new StringBuilder();
@@ -179,7 +178,7 @@ namespace TrustExec.Library
             if (!status)
                 return null;
 
-            if (string.Compare(pName.ToString(), pReferencedDomainName.ToString(), opt) == 0)
+            if (peUse == Win32Const.SID_NAME_USE.SidTypeDomain)
             {
                 return pReferencedDomainName.ToString();
             }
