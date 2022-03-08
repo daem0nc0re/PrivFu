@@ -829,8 +829,6 @@ namespace TcbS4uImpersonationVariant
 
             Console.WriteLine("[>] Trying to MSV S4U logon.");
 
-            AllocateLocallyUniqueId(out tokenSource.SourceIdentifier);
-
             ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
 
             if (ntstatus != STATUS_SUCCESS)

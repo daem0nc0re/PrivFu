@@ -220,8 +220,6 @@ namespace S4uDelegator.Library
 
             Console.WriteLine("[>] Trying to Kerberos S4U logon.");
 
-            Win32Api.AllocateLocallyUniqueId(out tokenSource.SourceIdentifier);
-
             ntstatus = Win32Api.LsaConnectUntrusted(out IntPtr hLsa);
 
             if (ntstatus != Win32Const.STATUS_SUCCESS)
@@ -301,8 +299,6 @@ namespace S4uDelegator.Library
             var tokenSource = new Win32Struct.TOKEN_SOURCE("User32");
 
             Console.WriteLine("[>] Trying to MSV S4U logon.");
-
-            Win32Api.AllocateLocallyUniqueId(out tokenSource.SourceIdentifier);
 
             ntstatus = Win32Api.LsaConnectUntrusted(out IntPtr hLsa);
 
