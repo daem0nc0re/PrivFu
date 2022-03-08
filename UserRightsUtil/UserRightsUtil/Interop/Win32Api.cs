@@ -58,7 +58,7 @@ namespace UserRightsUtil.Interop
             out IntPtr UserRights, // LSA_UNICODE_STRING[]
             out ulong CountOfRights);
 
-        [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int LsaEnumerateAccountsWithUserRight(
             IntPtr PolicyHandle,
             Win32Struct.LSA_UNICODE_STRING[] UserRights,

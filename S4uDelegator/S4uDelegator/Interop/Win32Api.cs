@@ -18,13 +18,13 @@ namespace S4uDelegator.Interop
             IntPtr /*out TOKEN_PRIVILEGES*/ PreviousState,
             IntPtr /*out int*/ ReturnLength);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool AllocateLocallyUniqueId(out Win32Struct.LUID Luid);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -100,16 +100,7 @@ namespace S4uDelegator.Interop
         [DllImport("advapi32.dll")]
         public static extern int LsaClose(IntPtr PolicyHandle);
 
-        [DllImport("secur32.dll", SetLastError = false)]
-        public static extern int LsaConnectUntrusted(out IntPtr LsaHandle);
-
-        [DllImport("Secur32.dll", SetLastError = true)]
-        public static extern int LsaLookupAuthenticationPackage(
-            IntPtr LsaHandle,
-            ref Win32Struct.LSA_STRING PackageName,
-            out uint AuthenticationPackage);
-
-        [DllImport("advapi32")]
+        [DllImport("advapi32.dll")]
         public static extern int LsaNtStatusToWinError(int NTSTATUS);
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -167,6 +158,9 @@ namespace S4uDelegator.Interop
          * secur32.dll
          */
         [DllImport("secur32.dll", SetLastError = false)]
+        public static extern int LsaConnectUntrusted(out IntPtr LsaHandle);
+        
+        [DllImport("secur32.dll", SetLastError = false)]
         public static extern int LsaFreeReturnBuffer(IntPtr buffer);
 
         [DllImport("Secur32.dll", SetLastError = true)]
@@ -185,5 +179,11 @@ namespace S4uDelegator.Interop
             IntPtr /*out IntPtr Token*/ pToken,
             out Win32Struct.QUOTA_LIMITS Quotas,
             out int SubStatus);
+
+        [DllImport("Secur32.dll", SetLastError = true)]
+        public static extern int LsaLookupAuthenticationPackage(
+            IntPtr LsaHandle,
+            ref Win32Struct.LSA_STRING PackageName,
+            out uint AuthenticationPackage);
     }
 }
