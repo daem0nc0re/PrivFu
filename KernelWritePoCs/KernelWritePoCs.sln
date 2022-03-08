@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecondaryLogonVariant", "Se
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugUpdateProcVariant", "DebugUpdateProcVariant\DebugUpdateProcVariant.csproj", "{33DCA8A5-3A2C-4731-B52F-BF52C7ACE317}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcbS4uImpersonationVariant", "TcbS4uImpersonationVariant\TcbS4uImpersonationVariant.csproj", "{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{33DCA8A5-3A2C-4731-B52F-BF52C7ACE317}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33DCA8A5-3A2C-4731-B52F-BF52C7ACE317}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33DCA8A5-3A2C-4731-B52F-BF52C7ACE317}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
