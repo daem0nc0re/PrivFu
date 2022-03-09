@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugUpdateProcVariant", "D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcbS4uImpersonationVariant", "TcbS4uImpersonationVariant\TcbS4uImpersonationVariant.csproj", "{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TcbS4uAssignTokenVariant", "TcbS4uAssignTokenVariant\TcbS4uAssignTokenVariant.csproj", "{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD0F0FC7-5BDB-4AB1-BD41-904499284BEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
