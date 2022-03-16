@@ -104,6 +104,7 @@ namespace UserRightsUtil.Library
             out Win32Const.SID_NAME_USE peUse)
         {
             string accountName;
+            sid = sid.ToUpper();
 
             if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
             {
@@ -157,6 +158,14 @@ namespace UserRightsUtil.Library
             if (peUse == Win32Const.SID_NAME_USE.SidTypeDomain)
             {
                 return pReferencedDomainName.ToString();
+            }
+            else if (cchName == 0)
+            {
+                return pReferencedDomainName.ToString();
+            }
+            else if (cchReferencedDomainName == 0)
+            {
+                return pName.ToString();
             }
             else
             {

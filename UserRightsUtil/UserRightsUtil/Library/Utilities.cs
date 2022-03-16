@@ -13,6 +13,7 @@ namespace UserRightsUtil.Library
             IntPtr hLsa;
             var userRight = new Win32Struct.LSA_UNICODE_STRING();
             IntPtr pUserRight;
+            Win32Const.Rights right;
             var results = new List<Win32Const.Rights>();
             var opt = StringComparison.OrdinalIgnoreCase;
             IntPtr pInfo;
@@ -49,17 +50,16 @@ namespace UserRightsUtil.Library
                         pUserRight,
                         typeof(Win32Struct.LSA_UNICODE_STRING));
 
-                    results.Add((Win32Const.Rights)Enum.Parse(
+                    right = (Win32Const.Rights)Enum.Parse(
                         typeof(Win32Const.Rights),
-                        userRight.Buffer));
+                        userRight.Buffer);
+
+                    if (!results.Contains(right))
+                        results.Add(right);
                 }
-
-                Win32Api.LsaFreeMemory(pUserRightsBuffer);
-                Win32Api.LsaClose(hLsa);
-
-                return results;
             }
-            else
+
+            if (peUse != Win32Const.SID_NAME_USE.SidTypeAlias)
             {
                 ntstatus = Win32Api.NetUserGetLocalGroups(
                     Environment.MachineName,
@@ -72,7 +72,11 @@ namespace UserRightsUtil.Library
                     out int totalentries_LG);
 
                 if (ntstatus != Win32Const.NERR_Success)
+                {
+                    Win32Api.LsaClose(hLsa);
+
                     return results;
+                }
 
                 ntstatus = Win32Api.NetLocalGroupEnum(
                     Environment.MachineName,
@@ -84,7 +88,11 @@ namespace UserRightsUtil.Library
                     ref resume_handle);
 
                 if (ntstatus != Win32Const.NERR_Success)
+                {
+                    Win32Api.LsaClose(hLsa);
+
                     return results;
+                }
 
                 try
                 {
@@ -124,13 +132,16 @@ namespace UserRightsUtil.Library
                                 pUserRightsBuffer.ToInt64() +
                                 (long)idx * Marshal.SizeOf(userRight));
 
-                            userRight = (Win32Struct.LSA_UNICODE_STRING) Marshal.PtrToStructure(
+                            userRight = (Win32Struct.LSA_UNICODE_STRING)Marshal.PtrToStructure(
                                 pUserRight,
                                 typeof(Win32Struct.LSA_UNICODE_STRING));
 
-                            results.Add((Win32Const.Rights)Enum.Parse(
+                            right = (Win32Const.Rights)Enum.Parse(
                                 typeof(Win32Const.Rights),
-                                userRight.Buffer));
+                                userRight.Buffer);
+
+                            if (!results.Contains(right))
+                                results.Add(right);
                         }
 
                         Win32Api.LocalFree(pSid);
@@ -139,10 +150,11 @@ namespace UserRightsUtil.Library
 
                 Win32Api.NetApiBufferFree(pLocalGroups);
                 Win32Api.NetApiBufferFree(pLocalGroupUserInfo);
-                Win32Api.LsaClose(hLsa);
-
-                return results;
             }
+
+            Win32Api.LsaClose(hLsa);
+
+            return results;
         }
 
 
