@@ -100,7 +100,9 @@ namespace UserRightsUtil.Interop
             SidTypeDeletedAccount,
             SidTypeInvalid,
             SidTypeUnknown,
-            SidTypeComputer
+            SidTypeComputer,
+            SidTypeLabel,
+            SidTypeLogonSession
         }
 
         // NTSTATUS

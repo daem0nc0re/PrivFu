@@ -125,7 +125,9 @@ namespace S4uDelegator.Interop
             SidTypeDeletedAccount,
             SidTypeInvalid,
             SidTypeUnknown,
-            SidTypeComputer
+            SidTypeComputer,
+            SidTypeLabel,
+            SidTypeLogonSession
         }
 
         [Flags]

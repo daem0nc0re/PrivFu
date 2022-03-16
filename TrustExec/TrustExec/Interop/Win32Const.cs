@@ -148,7 +148,9 @@ namespace TrustExec.Interop
             SidTypeDeletedAccount,
             SidTypeInvalid,
             SidTypeUnknown,
-            SidTypeComputer
+            SidTypeComputer,
+            SidTypeLabel,
+            SidTypeLogonSession
         }
 
         public enum SW : short
