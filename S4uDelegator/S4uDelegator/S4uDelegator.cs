@@ -9,8 +9,7 @@ namespace S4uDelegator
         {
             Console.WriteLine("Available Modules:\n");
             Console.WriteLine("\t+ lookup - Lookup account's SID.");
-            Console.WriteLine("\t+ read   - Read file with S4U logon.");
-            Console.WriteLine("\t+ shell  - Perform S4U logon and get shell. Target account should be local account.");
+            Console.WriteLine("\t+ shell  - Perform S4U logon and get shell.");
             Console.WriteLine();
             Console.WriteLine("[*] To see help for each modules, specify \"-m <Module> -h\" as arguments.\n");
         }
@@ -41,25 +40,15 @@ namespace S4uDelegator
                     subOptions.Parse(reminder);
                     Execute.LookupCommand(subOptions);
                 }
-                else if (string.Compare(options.GetValue("module"), "read", opt) == 0)
-                {
-                    subOptions.SetTitle("S4Util - Help for \"read\" command.");
-                    subOptions.SetOptionName("-m read");
-                    subOptions.AddFlag(false, "h", "help", "Displays this help message.");
-                    subOptions.AddParameter(false, "d", "domain", null, "Specifies domain name for target account to S4U logon.");
-                    subOptions.AddParameter(false, "u", "username", null, "Specifies username to S4U logon.");
-                    subOptions.AddParameter(false, "s", "sid", null, "Specifies SID for target account S4U logon.");
-                    subOptions.AddParameter(false, "p", "path", null, "Specifies target file path to read.");
-                    subOptions.Parse(reminder);
-                    Execute.ReadCommand(subOptions);
-                }
                 else if (string.Compare(options.GetValue("module"), "shell", opt) == 0)
                 {
                     subOptions.SetTitle("S4Util - Help for \"shell\" command.");
                     subOptions.SetOptionName("-m shell");
                     subOptions.AddFlag(false, "h", "help", "Displays this help message.");
-                    subOptions.AddParameter(false, "u", "username", null, "Specifies local username for S4U.");
+                    subOptions.AddParameter(false, "d", "domain", null, "Specifies domain name for S4U logon.");
+                    subOptions.AddParameter(false, "u", "username", null, "Specifies local username for S4U logon.");
                     subOptions.AddParameter(false, "s", "sid", null, "Specifies local account's SID.");
+                    subOptions.AddParameter(false, "e", "extra", null, "Specifies group SIDs you want to add with comma separation.");
                     subOptions.Parse(reminder);
                     Execute.ShellCommand(subOptions);
                 }

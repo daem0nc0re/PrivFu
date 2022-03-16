@@ -447,6 +447,13 @@ namespace S4uDelegator.Interop
             public long TimeLimit;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SID_AND_ATTRIBUTES
+        {
+            public IntPtr Sid; // PSID
+            public uint Attributes;
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct STARTUPINFO
         {
@@ -469,6 +476,20 @@ namespace S4uDelegator.Interop
             public IntPtr hStdOutput;
             public IntPtr hStdError;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TOKEN_GROUPS
+        {
+            public int GroupCount;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public SID_AND_ATTRIBUTES[] Groups;
+
+            public TOKEN_GROUPS(int privilegeCount)
+            {
+                GroupCount = privilegeCount;
+                Groups = new SID_AND_ATTRIBUTES[32];
+            }
+        };
 
         [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_PRIVILEGES
