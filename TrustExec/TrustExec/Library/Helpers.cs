@@ -119,10 +119,14 @@ namespace TrustExec.Library
 
             if (Win32Api.ConvertSidToStringSid(pSid, out string strSid))
             {
+                Win32Api.LocalFree(pSid);
+
                 return strSid;
             }
             else
             {
+                Win32Api.LocalFree(pSid);
+
                 return null;
             }
         }
@@ -132,13 +136,19 @@ namespace TrustExec.Library
             ref string sid,
             out Win32Const.SID_NAME_USE peUse)
         {
+            string accountName;
+            sid = sid.ToUpper();
+
             if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
             {
                 peUse = 0;
                 return null;
             }
 
-            return ConvertSidToAccountName(pSid, out peUse);
+            accountName = ConvertSidToAccountName(pSid, out peUse);
+            Win32Api.LocalFree(pSid);
+
+            return accountName;
         }
 
 
@@ -181,6 +191,14 @@ namespace TrustExec.Library
             if (peUse == Win32Const.SID_NAME_USE.SidTypeDomain)
             {
                 return pReferencedDomainName.ToString();
+            }
+            else if (cchName == 0)
+            {
+                return pReferencedDomainName.ToString();
+            }
+            else if (cchReferencedDomainName == 0)
+            {
+                return pName.ToString();
             }
             else
             {
