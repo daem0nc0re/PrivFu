@@ -47,8 +47,7 @@ namespace S4uDelegator.Library
 
             privs = new string[] {
                 Win32Const.SE_TCB_NAME,
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Const.SE_INCREASE_QUOTA_NAME
+                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
