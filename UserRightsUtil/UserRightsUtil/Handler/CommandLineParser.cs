@@ -432,16 +432,21 @@ namespace UserRightsUtil.Handler
 
                         break;
                     }
-                    else if (opt.GetOptionType() == OptionType.Argument)
+                }
+
+                if (args[idx] != null)
+                {
+                    foreach (var opt in g_Options)
                     {
-                        if (opt.GetIsParsed())
-                            continue;
+                        if (opt.GetOptionType() == OptionType.Argument &&
+                            !opt.GetIsParsed())
+                        {
+                            opt.SetIsParsed();
+                            opt.SetValue(args[idx]);
+                            args[idx] = null;
 
-                        opt.SetIsParsed();
-                        opt.SetValue(args[idx]);
-                        args[idx] = null;
-
-                        break;
+                            break;
+                        }
                     }
                 }
 
