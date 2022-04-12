@@ -557,7 +557,7 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to enable all token privileges.");
+            Console.WriteLine("\n[>] Trying to remove all token privileges.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -646,7 +646,7 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to enable {0}.", privilegeName);
+            Console.WriteLine("\n[>] Trying to remove {0}.", privilegeName);
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
