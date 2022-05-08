@@ -398,7 +398,7 @@ namespace S4uDelegator.Interop
             {
                 if (str.Length > (ushort.MaxValue - 1))
                 {
-                    throw new ArgumentException("String too long for UnicodeString");
+                    throw new ArgumentException("String too long for AnsiString");
                 }
 
                 Length = (ushort)(str.Length);
@@ -417,6 +417,12 @@ namespace S4uDelegator.Interop
             {
                 LowPart = _lowPart;
                 HighPart = _highPart;
+            }
+
+            public LUID(ulong value)
+            {
+                LowPart = (uint)(value & 0xFFFFFFFFUL);
+                HighPart = (uint)(value >> 32);
             }
         }
 
@@ -489,7 +495,7 @@ namespace S4uDelegator.Interop
                 GroupCount = privilegeCount;
                 Groups = new SID_AND_ATTRIBUTES[32];
             }
-        };
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_PRIVILEGES

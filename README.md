@@ -637,6 +637,7 @@ Currently, released PoCs for a part of them.
 | [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC creates a elevated token by SeCreateTokenPrivilege. |
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC opens a handle to privileged registry key (`HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters`) with `REG_OPTION_BACKUP_RESTORE` flag by SeRestorePrivilege. |
 | [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC opens a handle to winlogon.exe by SeDebugPrivilege. |
+| [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC performs S4U Logon to be "Builtin\Backup Operators" by SeTcbPrivilege. |
 
 
 ## S4uDelegator
