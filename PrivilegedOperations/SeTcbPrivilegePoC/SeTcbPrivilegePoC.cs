@@ -790,7 +790,7 @@ namespace SeTcbPrivilegePoC
                 return;
 
             status = ImpersonateThreadToken(hS4uToken);
-            LsaClose(hS4uToken);
+            CloseHandle(hS4uToken);
 
             if (status)
             {
