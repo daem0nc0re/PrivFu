@@ -700,6 +700,12 @@ namespace CreateTokenVariant
             string lpName,
             out LUID lpLuid);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool OpenProcessToken(
+            IntPtr hProcess,
+            TokenAccessFlags DesiredAccess,
+            out IntPtr hToken);
+
         /*
          * kernel32.dll
          */
@@ -1204,9 +1210,21 @@ namespace CreateTokenVariant
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
+            int error;
             int ntstatus;
             var pObject = IntPtr.Zero;
-            var hToken = WindowsIdentity.GetCurrent().Token;
+
+            if (!OpenProcessToken(
+                Process.GetCurrentProcess().Handle,
+                TokenAccessFlags.MAXIMUM_ALLOWED,
+                out IntPtr hToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to open current process token.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return IntPtr.Zero;
+            }
 
             Console.WriteLine("[+] Got a handle of current process token.");
             Console.WriteLine("    |-> hToken: 0x{0}", hToken.ToString("X"));
@@ -1229,6 +1247,8 @@ namespace CreateTokenVariant
                 if (ntstatus != STATUS_SUCCESS)
                     Marshal.FreeHGlobal(infoBuffer);
             } while (ntstatus == STATUS_INFO_LENGTH_MISMATCH);
+
+            CloseHandle(hToken);
 
             if (ntstatus != STATUS_SUCCESS)
             {

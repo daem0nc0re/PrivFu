@@ -316,6 +316,25 @@ namespace TcbS4uAssignTokenVariant
             MaxSystemInfoClass = 0xD2
         }
 
+        [Flags]
+        enum TokenAccessFlags : uint
+        {
+            TOKEN_ADJUST_DEFAULT = 0x0080,
+            TOKEN_ADJUST_GROUPS = 0x0040,
+            TOKEN_ADJUST_PRIVILEGES = 0x0020,
+            TOKEN_ADJUST_SESSIONID = 0x0100,
+            TOKEN_ASSIGN_PRIMARY = 0x0001,
+            TOKEN_DUPLICATE = 0x0002,
+            TOKEN_EXECUTE = 0x00020000,
+            TOKEN_IMPERSONATE = 0x0004,
+            TOKEN_QUERY = 0x0008,
+            TOKEN_QUERY_SOURCE = 0x0010,
+            TOKEN_READ = 0x00020008,
+            TOKEN_WRITE = 0x000200E0,
+            TOKEN_ALL_ACCESS = 0x000F01FF,
+            MAXIMUM_ALLOWED = 0x02000000
+        }
+
         enum TOKEN_INFORMATION_CLASS
         {
             TokenUser = 1,
@@ -727,6 +746,12 @@ namespace TcbS4uAssignTokenVariant
         public static extern int LsaNtStatusToWinError(int NTSTATUS);
 
         [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool OpenProcessToken(
+            IntPtr hProcess,
+            TokenAccessFlags DesiredAccess,
+            out IntPtr hToken);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool SetTokenInformation(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
@@ -1118,9 +1143,21 @@ namespace TcbS4uAssignTokenVariant
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
+            int error;
             int ntstatus;
             var pObject = IntPtr.Zero;
-            var hToken = WindowsIdentity.GetCurrent().Token;
+
+            if (!OpenProcessToken(
+                Process.GetCurrentProcess().Handle,
+                TokenAccessFlags.MAXIMUM_ALLOWED,
+                out IntPtr hToken))
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to open current process token.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return IntPtr.Zero;
+            }
 
             Console.WriteLine("[+] Got a handle of current process token.");
             Console.WriteLine("    |-> hToken: 0x{0}", hToken.ToString("X"));
@@ -1143,6 +1180,8 @@ namespace TcbS4uAssignTokenVariant
                 if (ntstatus != STATUS_SUCCESS)
                     Marshal.FreeHGlobal(infoBuffer);
             } while (ntstatus == STATUS_INFO_LENGTH_MISMATCH);
+
+            CloseHandle(hToken);
 
             if (ntstatus != STATUS_SUCCESS)
             {
