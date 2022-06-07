@@ -1167,7 +1167,7 @@ Available Modules:
 This module is to execute process as TrustedInstaller group account:
 
 ```
-C:\dev>TrustExec.exe -m exec =h
+C:\dev>TrustExec.exe -m exec -h
 
 TrustExec - Help for "exec" command.
 
