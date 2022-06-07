@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -129,6 +130,51 @@ namespace TrustExec.Library
 
                 return null;
             }
+        }
+
+
+        public static string[] ParseGroupSids(string extraSidsString)
+        {
+            var result = new List<string>();
+            var sidArray = extraSidsString.Split(',');
+            var regexSid = new Regex(
+                @"^S-1(-\d+)+$",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            string accountName;
+            string sid;
+            Win32Const.SID_NAME_USE peUse;
+
+            Console.WriteLine("[>] Parsing group SID(s).");
+
+            for (var idx = 0; idx < sidArray.Length; idx++)
+            {
+                sid = sidArray[idx].Trim();
+
+                if (!regexSid.IsMatch(sid))
+                {
+                    Console.WriteLine("[!] {0} is invalid format. Ignored.", sid);
+                    continue;
+                }
+
+                accountName = ConvertSidStringToAccountName(ref sid, out peUse);
+
+                if (peUse == Win32Const.SID_NAME_USE.SidTypeAlias ||
+                    peUse == Win32Const.SID_NAME_USE.SidTypeWellKnownGroup)
+                {
+                    result.Add(sid);
+                    Console.WriteLine("[+] \"{0}\" is added as an extra group.", accountName);
+                    Console.WriteLine("    |-> SID  : {0}", sid);
+                    Console.WriteLine("    |-> Type : {0}", peUse);
+                }
+                else
+                {
+                    Console.WriteLine("[-] \"{0}\" is not group account. Ignored.", accountName);
+                    Console.WriteLine("    |-> SID  : {0}", sid);
+                    Console.WriteLine("    |-> Type : {0}", peUse);
+                }
+            }
+
+            return result.ToArray();
         }
 
 

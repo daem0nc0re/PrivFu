@@ -164,6 +164,7 @@ namespace TrustExec.Library
         public static IntPtr CreateTrustedInstallerToken(
             Win32Const.TOKEN_TYPE tokenType,
             Win32Const.SECURITY_IMPERSONATION_LEVEL impersonationLevel,
+            string[] extraSidsArray,
             bool full)
         {
             int error;
@@ -173,6 +174,7 @@ namespace TrustExec.Library
             tokenSource.SourceIdentifier.HighPart = 0;
             tokenSource.SourceIdentifier.LowPart = 0;
             string[] privs;
+            IntPtr pExtraSid;
 
             if (full)
             {
@@ -292,6 +294,30 @@ namespace TrustExec.Library
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
             tokenGroups.GroupCount++;
 
+            for (var idx = 0; idx < extraSidsArray.Length; idx++)
+            {
+                if (tokenGroups.GroupCount >= 32)
+                {
+                    Console.WriteLine("[!] Token groups count reached maximum. {0} is ignored.", extraSidsArray[idx]);
+                    continue;
+                }
+
+                if (Win32Api.ConvertStringSidToSid(
+                    extraSidsArray[idx],
+                    out pExtraSid))
+                {
+                    tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
+                    tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                    tokenGroups.GroupCount++;
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to add {0}.", extraSidsArray[idx]);
+                }
+            }
+
             var expirationTime = new Win32Struct.LARGE_INTEGER(-1L);
             var sqos = new Win32Struct.SECURITY_QUALITY_OF_SERVICE(
                 impersonationLevel,
@@ -341,9 +367,11 @@ namespace TrustExec.Library
         public static IntPtr CreateTrustedInstallerTokenWithVirtualLogon(
             string domain,
             string username,
-            int domainRid)
+            int domainRid,
+            string[] extraSidsArray)
         {
             int error;
+            IntPtr pExtraSid;
 
             Console.WriteLine("[>] Trying to generate token group information.");
 
@@ -392,6 +420,30 @@ namespace TrustExec.Library
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
                 Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER);
+
+            for (var idx = 0; idx < extraSidsArray.Length; idx++)
+            {
+                if (tokenGroups.GroupCount >= 32)
+                {
+                    Console.WriteLine("[!] Token groups count reached maximum. {0} is ignored.", extraSidsArray[idx]);
+                    continue;
+                }
+
+                if (Win32Api.ConvertStringSidToSid(
+                    extraSidsArray[idx],
+                    out pExtraSid))
+                {
+                    tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
+                    tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
+                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                    tokenGroups.GroupCount++;
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to add {0}.", extraSidsArray[idx]);
+                }
+            }
 
             var pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
             Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);

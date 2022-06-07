@@ -1167,7 +1167,7 @@ Available Modules:
 This module is to execute process as TrustedInstaller group account:
 
 ```
-C:\dev>TrustExec.exe -m exec -h
+C:\dev>TrustExec.exe -m exec =h
 
 TrustExec - Help for "exec" command.
 
@@ -1181,6 +1181,7 @@ Usage: TrustExec.exe -m exec [Options]
         -d, --domain    : Specifies domain name to add. Default value is "DefaultDomain".
         -u, --username  : Specifies username to add. Default value is "DefaultUser".
         -i, --id        : Specifies RID for virtual domain. Default value is "110".
+        -e, --extra     : Specifies extra group SID(s) to add.
 
 Available Technique IDs:
 
@@ -1234,6 +1235,88 @@ SeAssignPrimaryTokenPrivilege Replace a process level token             Enabled
 SeTcbPrivilege                Act as part of the operating system       Enabled
 SeDebugPrivilege              Debug programs                            Enabled
 SeImpersonatePrivilege        Impersonate a client after authentication Enabled
+```
+
+If you want to add extra group account to token for new process, use `-e` option as follows:
+
+```
+C:\dev>TrustExec.exe -m exec -s -e S-1-5-20
+
+[>] Parsing group SID(s).
+[+] "NT AUTHORITY\NETWORK SERVICE" is added as an extra group.
+    |-> SID  : S-1-5-20
+    |-> Type : SidTypeWellKnownGroup
+[>] Trying to get SYSTEM.
+[>] Trying to impersonate as smss.exe.
+[+] SeCreateTokenPrivilege is enabled successfully.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 4392
+[+] Impersonation is successful.
+[>] Trying to create an elevated primary token.
+[+] An elevated primary token is created successfully.
+[>] Trying to create a token assigned process.
+
+Microsoft Windows [Version 10.0.22000.318]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                             Type             SID                                                            Attributes
+====================================== ================ ============================================================== ==================================================
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Enabled by default, Enabled group, Group owner
+Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
+Mandatory Label\System Mandatory Level Label            S-1-16-16384
+
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
+NT AUTHORITY\NETWORK SERVICE           Well-known group S-1-5-20                                                       Mandatory group, Enabled by default, Enabled group
+```
+
+To add multiple groups, specifies SIDs as comma separated value:
+
+```
+C:\dev>TrustExec.exe -m exec -s -e S-1-5-20,S-1-5-32-551
+
+[>] Parsing group SID(s).
+[+] "NT AUTHORITY\NETWORK SERVICE" is added as an extra group.
+    |-> SID  : S-1-5-20
+    |-> Type : SidTypeWellKnownGroup
+[+] "BUILTIN\Backup Operators" is added as an extra group.
+    |-> SID  : S-1-5-32-551
+    |-> Type : SidTypeAlias
+[>] Trying to get SYSTEM.
+[>] Trying to impersonate as smss.exe.
+[+] SeCreateTokenPrivilege is enabled successfully.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
+[>] Trying to impersonate thread token.
+    |-> Current Thread ID : 3104
+[+] Impersonation is successful.
+[>] Trying to create an elevated primary token.
+[+] An elevated primary token is created successfully.
+[>] Trying to create a token assigned process.
+
+Microsoft Windows [Version 10.0.22000.318]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\dev>whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                             Type             SID                                                            Attributes
+====================================== ================ ============================================================== ==================================================
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Enabled by default, Enabled group, Group owner
+Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
+Mandatory Label\System Mandatory Level Label            S-1-16-16384
+
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
+NT AUTHORITY\NETWORK SERVICE           Well-known group S-1-5-20                                                       Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators               Alias            S-1-5-32-551                                                   Mandatory group, Enabled by default, Enabled group
 ```
 
 If you set `1` for `-t` option, `TrustExec` will try to create `TrustedInstaller` process with virtual account technique.

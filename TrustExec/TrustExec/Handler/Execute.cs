@@ -49,6 +49,7 @@ namespace TrustExec.Handler
                 {
                     if (Modules.RunTrustedInstallerProcess(
                         null,
+                        options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
                         Console.WriteLine();
@@ -63,6 +64,7 @@ namespace TrustExec.Handler
                         options.GetValue("username"),
                         domainRid,
                         null,
+                        options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
                         Console.WriteLine();
@@ -95,6 +97,7 @@ namespace TrustExec.Handler
                 {
                     if (Modules.RunTrustedInstallerProcess(
                         options.GetValue("command"),
+                        options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
                         Console.WriteLine();
@@ -109,6 +112,7 @@ namespace TrustExec.Handler
                         options.GetValue("username"),
                         domainRid,
                         options.GetValue("command"),
+                        options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
                         Console.WriteLine();

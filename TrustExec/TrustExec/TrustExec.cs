@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using TrustExec.Handler;
 
+using TrustExec.Library;
+
 namespace TrustExec
 {
     class TrustExec
@@ -64,6 +66,7 @@ namespace TrustExec
                         subOptions.AddParameter(false, "d", "domain", "DefaultDomain", "Specifies domain name to add. Default value is \"DefaultDomain\".");
                         subOptions.AddParameter(false, "u", "username", "DefaultUser", "Specifies username to add. Default value is \"DefaultUser\".");
                         subOptions.AddParameter(false, "i", "id", "110", "Specifies RID for virtual domain. Default value is \"110\".");
+                        subOptions.AddParameter(false, "e", "extra", null, "Specifies extra group SID(s) to add.");
                         subOptions.AddExclusive(exclusive);
                         subOptions.Parse(reminder);
                         Execute.ExecCommand(subOptions);

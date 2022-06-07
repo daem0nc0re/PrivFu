@@ -166,9 +166,10 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcess(string command, bool full)
+        public static bool RunTrustedInstallerProcess(string command, string extraSidsString, bool full)
         {
             string execute;
+            string[] extraSidsArray;
 
             if (string.IsNullOrEmpty(command))
             {
@@ -182,6 +183,16 @@ namespace TrustExec.Library
             }
 
             Console.WriteLine();
+
+            if (string.IsNullOrEmpty(extraSidsString))
+            {
+                extraSidsArray = new string[] { };
+            }
+            else
+            {
+                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
+            }
+
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
@@ -204,6 +215,7 @@ namespace TrustExec.Library
             IntPtr hToken = Utilities.CreateTrustedInstallerToken(
                 Win32Const.TOKEN_TYPE.TokenPrimary,
                 Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                extraSidsArray,
                 full);
 
             if (hToken == IntPtr.Zero)
@@ -222,9 +234,11 @@ namespace TrustExec.Library
             string username,
             int domainRid,
             string command,
+            string extraSidsString,
             bool fullPrivilege)
         {
             string execute;
+            string[] extraSidsArray;
 
             if (string.IsNullOrEmpty(domain))
             {
@@ -252,6 +266,16 @@ namespace TrustExec.Library
             }
 
             Console.WriteLine();
+
+            if (string.IsNullOrEmpty(extraSidsString))
+            {
+                extraSidsArray = new string[] { };
+            }
+            else
+            {
+                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
+            }
+
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
@@ -274,7 +298,8 @@ namespace TrustExec.Library
             IntPtr hToken = Utilities.CreateTrustedInstallerTokenWithVirtualLogon(
                 domain,
                 username,
-                domainRid);
+                domainRid,
+                extraSidsArray);
 
             if (hToken == IntPtr.Zero)
                 return false;
