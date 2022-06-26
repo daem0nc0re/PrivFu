@@ -216,7 +216,7 @@ namespace SeShutdownPrivilegePoC
                 return;
             }
 
-            Console.WriteLine("[>] Trying to raise hardware error.");
+            Console.WriteLine("[>] Trying to raise hard error.");
 
             RaiseBSOD();
         }
