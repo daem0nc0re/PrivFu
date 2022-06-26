@@ -777,7 +777,7 @@ namespace SeTcbPrivilegePoC
             var groupSids = new string[]{ BACKUP_OPERATORS_SID };
 
             Console.WriteLine("[*] If you have SeTcbPrivilege, you can perform S4U Logon.");
-            Console.WriteLine("[*] This PoC try to perform S4U Logon and add \"Builtin\\Backup Operators\" to current token group.");
+            Console.WriteLine("[*] This PoC tries to perform S4U Logon and add \"Builtin\\Backup Operators\" to current token group.");
 
             hS4uToken = GetMsvS4uLogonToken(
                 Environment.UserName,

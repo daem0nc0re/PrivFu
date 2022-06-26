@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeCreateTokenPrivilegePoC",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeTcbPrivilegePoC", "SeTcbPrivilegePoC\SeTcbPrivilegePoC.csproj", "{2297A528-E866-4056-814A-D01C1C305A38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeShutdownPrivilegePoC", "SeShutdownPrivilegePoC\SeShutdownPrivilegePoC.csproj", "{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{2297A528-E866-4056-814A-D01C1C305A38}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2297A528-E866-4056-814A-D01C1C305A38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2297A528-E866-4056-814A-D01C1C305A38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
