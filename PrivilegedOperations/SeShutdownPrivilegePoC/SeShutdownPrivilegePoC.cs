@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -59,6 +57,7 @@ namespace SeShutdownPrivilegePoC
             IDCONTINUE = 11
         }
 
+        [Flags]
         enum MESSAGEBOX_TYPE : uint
         {
             MB_APPLMODAL = 0x00000000u,
@@ -208,7 +207,7 @@ namespace SeShutdownPrivilegePoC
                 IntPtr.Zero,
                 "This PoC will cause BSOD.\nAre you ready?",
                 "Alert",
-                MESSAGEBOX_TYPE.MB_OKCANCEL);
+                MESSAGEBOX_TYPE.MB_OKCANCEL | MESSAGEBOX_TYPE.MB_ICONEXCLAMATION);
             
             if ((MESSAGEBOX_RETURN)ret != MESSAGEBOX_RETURN.IDOK)
             {
