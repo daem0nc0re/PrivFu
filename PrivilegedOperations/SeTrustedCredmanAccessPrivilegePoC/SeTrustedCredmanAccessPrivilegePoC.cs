@@ -4,9 +4,9 @@ using System.Security.Principal;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace SeTrustedCredmanAccessPrivilegePoC
+namespace SeTrustedCredManAccessPrivilegePoC
 {
-    class SeTrustedCredmanAccessPrivilegePoC
+    class SeTrustedCredManAccessPrivilegePoC
     {
         /*
          * P/Invoke : Enums

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SeTrustedCredmanAccessPrivilegePoC")]
+[assembly: AssemblyTitle("SeTrustedCredManAccessPrivilegePoC")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("SeTrustedCredmanAccessPrivilegePoC")]
+[assembly: AssemblyProduct("SeTrustedCredManAccessPrivilegePoC")]
 [assembly: AssemblyCopyright("Copyright ©  2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("9bcb5eac-2f1a-4aff-93b6-12b3c1ab15cd")]
+[assembly: Guid("8ded0ec8-3611-4481-88fc-14b82531fd2b")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -2,7 +2,7 @@
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace SeTrustedCredmanAccessPrivilegePoC
+namespace SeTrustedCredManAccessPrivilegePoC
 {
     class HexDump
     {
