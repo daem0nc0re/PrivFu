@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeTcbPrivilegePoC", "SeTcbP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeShutdownPrivilegePoC", "SeShutdownPrivilegePoC\SeShutdownPrivilegePoC.csproj", "{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeTrustedCredmanAccessPrivilegePoC", "SeTrustedCredmanAccessPrivilegePoC\SeTrustedCredmanAccessPrivilegePoC.csproj", "{9BCB5EAC-2F1A-4AFF-93B6-12B3C1AB15CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9E36AE6E-B9FD-4B9B-99BA-42D3EACD7506}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BCB5EAC-2F1A-4AFF-93B6-12B3C1AB15CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BCB5EAC-2F1A-4AFF-93B6-12B3C1AB15CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BCB5EAC-2F1A-4AFF-93B6-12B3C1AB15CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BCB5EAC-2F1A-4AFF-93B6-12B3C1AB15CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -639,7 +639,7 @@ Currently, released PoCs for a part of them.
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC opens a handle to privileged registry key (`HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters`) with `REG_OPTION_BACKUP_RESTORE` flag by SeRestorePrivilege. |
 | [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by SeShutdownPrivilege. |
 | [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC performs S4U Logon to be "Builtin\Backup Operators" by SeTcbPrivilege. |
-
+| [SeTrustedCredmanAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredmanAccessPrivilegePoC) | This PoC tries to access DPAPI blob by SeTrustedCredmanAccessPrivilegePoC. |
 
 ## S4uDelegator
 
