@@ -225,7 +225,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
             return true;
         }
 
-        static void Main(string[] args)
+        static void Main()
         {
             IntPtr hToken = WindowsIdentity.GetCurrent().Token;
 

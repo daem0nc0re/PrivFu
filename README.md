@@ -638,8 +638,9 @@ Currently, released PoCs for a part of them.
 | [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC opens a handle to winlogon.exe by SeDebugPrivilege. |
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC opens a handle to privileged registry key (`HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters`) with `REG_OPTION_BACKUP_RESTORE` flag by SeRestorePrivilege. |
 | [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by SeShutdownPrivilege. |
+| [SeSystemEnvironmentPrivilegePoC](./PrivilegedOperations/SeSystemEnvironmentPrivilegePoC) | This PoC tries to enumerate system environment by SeSystemEnvironmentPrivilege. This PoC works for UEFI based system only. |
 | [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC performs S4U Logon to be "Builtin\Backup Operators" by SeTcbPrivilege. |
-| [SeTrustedCredManAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredManAccessPrivilegePoC) | This PoC tries to access DPAPI blob by SeTrustedCredManAccessPrivilegePoC. |
+| [SeTrustedCredManAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredManAccessPrivilegePoC) | This PoC tries to access DPAPI blob by SeTrustedCredManAccessPrivilege. |
 
 ## S4uDelegator
 
