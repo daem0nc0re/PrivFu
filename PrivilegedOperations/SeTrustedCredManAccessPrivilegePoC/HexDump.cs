@@ -6,34 +6,68 @@ namespace SeTrustedCredManAccessPrivilegePoC
 {
     class HexDump
     {
-        public static void Dump(IntPtr lpBuffer, int bufferSize, int numIndent)
+        public static void Dump(byte[] data, int numIndent)
         {
-            if (bufferSize <= 0)
+            Dump(data, 0, data.Length, numIndent);
+        }
+
+
+        public static void Dump(byte[] data, int length, int numIndent)
+        {
+            if (length <= 0)
+                return;
+
+            Dump(data, 0, length, numIndent);
+        }
+
+
+        public static void Dump(IntPtr buffer, int length, int numIndent)
+        {
+            if (length <= 0)
+                return;
+
+            byte[] data = new byte[length];
+            Marshal.Copy(buffer, data, 0, length);
+            Dump(data, 0, length, numIndent);
+        }
+
+
+        public static void Dump(IntPtr buffer, int offset, int length, int numIndent)
+        {
+            if (length <= 0)
+                return;
+
+            byte[] data = new byte[length];
+            Marshal.Copy(new IntPtr(buffer.ToInt64() + offset), data, 0, length);
+            Dump(data, 0, length, numIndent);
+        }
+
+
+        public static void Dump(byte[] data, int offset, int length, int numIndent)
+        {
+            if (length <= 0)
                 return;
 
             StringBuilder hexBuffer = new StringBuilder();
             StringBuilder charBuffer = new StringBuilder();
             string indent = new string('\t', numIndent);
-            byte[] byteArray = new byte[bufferSize];
             int address = 0;
 
-            Marshal.Copy(lpBuffer, byteArray, 0, bufferSize);
-
-            for (var idx = 0; idx < bufferSize; idx++)
+            for (var idx = offset; idx < length; idx++)
             {
                 if (idx % 16 == 0)
                 {
-                    address = (idx / 16) * 16;
+                    address = idx & (~0xF);
                     hexBuffer.Clear();
                     charBuffer.Clear();
                 }
 
                 hexBuffer.Append(string.Format(
-                    "{0}", byteArray[idx].ToString("X2")));
+                    "{0}", data[idx].ToString("X2")));
 
-                if (IsPrintable((char)byteArray[idx]))
+                if (IsPrintable((char)data[idx]))
                 {
-                    charBuffer.Append((char)byteArray[idx]);
+                    charBuffer.Append((char)data[idx]);
                 }
                 else
                 {
@@ -42,12 +76,12 @@ namespace SeTrustedCredManAccessPrivilegePoC
 
                 if ((idx + 1) % 8 == 0 &&
                     (idx + 1) % 16 != 0 &&
-                    (idx + 1) != bufferSize)
+                    (idx + 1) != length)
                 {
                     hexBuffer.Append("-");
                     charBuffer.Append(" ");
                 }
-                else if (((idx + 1) % 16 != 0) && ((idx + 1) != bufferSize))
+                else if (((idx + 1) % 16 != 0) && ((idx + 1) != length))
                 {
                     hexBuffer.Append(" ");
                 }
@@ -57,7 +91,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
                     Console.WriteLine("{0}{1} | {2} | {3}",
                         indent, address.ToString("X8"), hexBuffer, charBuffer);
                 }
-                else if ((idx + 1) == bufferSize)
+                else if ((idx + 1) == length)
                 {
                     Console.WriteLine("{0}{1} | {2,-47} | {3}",
                         indent, address.ToString("X8"), hexBuffer, charBuffer);
