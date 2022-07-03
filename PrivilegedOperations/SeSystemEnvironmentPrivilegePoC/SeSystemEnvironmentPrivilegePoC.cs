@@ -163,6 +163,7 @@ namespace SeSystemEnvironmentPrivilegePoC
             {
                 Console.WriteLine("[-] Failed to enumerate firmware environment values.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                Marshal.FreeHGlobal(buffer);
 
                 return false;
             }
