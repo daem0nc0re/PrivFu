@@ -320,7 +320,7 @@ namespace SeAuditPrivilegePoC
         {
             int numEvents = 10;
             Console.WriteLine("[*] If you have SeAuditPrivilege, you can create new events.");
-            Console.WriteLine("[*] This PoC tries to add {0} security event.");
+            Console.WriteLine("[*] This PoC tries to add {0} security event.", numEvents);
 
             if (AddTestSecurityEvent(4624, numEvents))
             {
