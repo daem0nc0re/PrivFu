@@ -163,7 +163,7 @@ namespace SeAuditPrivilegePoC
         const int ERROR_OBJECT_ALREADY_EXISTS = 5010;
 
         /*
-         * P/Invoke : User defined functions
+         * User defined functions
          */
         static bool AddTestSecurityEvent(int eventId, int numEvents)
         {
@@ -172,7 +172,6 @@ namespace SeAuditPrivilegePoC
             int count = 0;
             string sourceName = "PrivFu";
             string fileName = "FakeEvent";
-            bool success = false;
             var Registration = new AUTHZ_SOURCE_SCHEMA_REGISTRATION
             {
                 dwFlags = (uint)AUTHZ_REGISTRATION_FLAGS.AUTHZ_ALLOW_MULTIPLE_SOURCE_INSTANCES,
@@ -259,14 +258,13 @@ namespace SeAuditPrivilegePoC
                 }
                 else
                 {
-                    success = true;
                     count++;
                 }
             }
 
             Console.WriteLine("[*] Done. {0} event(s) are created.", count);
 
-            return success;
+            return (count > 0);
         }
 
 
