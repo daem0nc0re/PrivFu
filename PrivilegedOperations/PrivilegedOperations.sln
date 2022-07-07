@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeAuditPrivilegePoC", "SeAu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeSecurityPrivilegePoC", "SeSecurityPrivilegePoC\SeSecurityPrivilegePoC.csproj", "{487E2246-72F1-4BD3-AA8A-A9B8C79C9F28}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeBackupPrivilegePoC", "SeBackupPrivilegePoC\SeBackupPrivilegePoC.csproj", "{B8FF9629-B4CE-4871-A2CD-8E6D73F6DF9E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{487E2246-72F1-4BD3-AA8A-A9B8C79C9F28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{487E2246-72F1-4BD3-AA8A-A9B8C79C9F28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{487E2246-72F1-4BD3-AA8A-A9B8C79C9F28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8FF9629-B4CE-4871-A2CD-8E6D73F6DF9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8FF9629-B4CE-4871-A2CD-8E6D73F6DF9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8FF9629-B4CE-4871-A2CD-8E6D73F6DF9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8FF9629-B4CE-4871-A2CD-8E6D73F6DF9E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
