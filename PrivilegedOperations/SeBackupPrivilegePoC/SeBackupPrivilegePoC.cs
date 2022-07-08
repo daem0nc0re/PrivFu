@@ -369,7 +369,7 @@ namespace SeBackupPrivilegePoC
             IntPtr hFile = CreateFile(
                 filePath,
                 EFileAccess.GenericRead | EFileAccess.GenericWrite,
-                EFileShare.Read,
+                EFileShare.None,
                 IntPtr.Zero,
                 ECreationDisposition.CreateAlways,
                 EFileAttributes.Normal | EFileAttributes.DeleteOnClose,
