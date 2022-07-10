@@ -689,6 +689,7 @@ namespace SeTcbPrivilegePoC
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         pNtdll = mod.BaseAddress;
+                        break;
                     }
                 }
 

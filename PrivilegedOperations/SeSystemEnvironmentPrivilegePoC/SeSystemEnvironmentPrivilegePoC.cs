@@ -100,6 +100,7 @@ namespace SeSystemEnvironmentPrivilegePoC
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         pNtdll = mod.BaseAddress;
+                        break;
                     }
                 }
 

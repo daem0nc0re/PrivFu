@@ -104,6 +104,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         pNtdll = mod.BaseAddress;
+                        break;
                     }
                 }
 

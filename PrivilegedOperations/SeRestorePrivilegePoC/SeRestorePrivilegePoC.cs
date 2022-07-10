@@ -83,6 +83,7 @@ namespace SeRestorePrivilegePoC
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         pNtdll = mod.BaseAddress;
+                        break;
                     }
                 }
 

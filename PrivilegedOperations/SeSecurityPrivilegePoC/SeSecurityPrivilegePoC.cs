@@ -297,6 +297,7 @@ namespace SeSecurityPrivilegePoC
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         pNtdll = mod.BaseAddress;
+                        break;
                     }
                 }
 
