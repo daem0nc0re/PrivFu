@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Security.Principal;
 using System.Text;
 using System.Runtime.InteropServices;
@@ -408,9 +410,6 @@ namespace SeTcbPrivilegePoC
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         static extern int GetCurrentThreadId();
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -426,9 +425,6 @@ namespace SeTcbPrivilegePoC
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
@@ -476,23 +472,16 @@ namespace SeTcbPrivilegePoC
             int TokenInformationLength);
 
         /*
-         * Consts
+         * Win32 Consts
          */
-        // NTSTATUS
         const int STATUS_SUCCESS = 0;
-
-        // Win32 Error
         const int ERROR_BAD_LENGTH = 0x00000018;
         const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
-
-        // LSA PackageName
         const string MSV1_0_PACKAGE_NAME = "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0";
-
-        // Well Known SID
         const string BACKUP_OPERATORS_SID = "S-1-5-32-551";
 
         /*
-         * User define functions
+         * User defined functions
          */
         static IntPtr GetInformationFromToken(
             IntPtr hToken,
@@ -682,13 +671,27 @@ namespace SeTcbPrivilegePoC
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -706,9 +709,6 @@ namespace SeTcbPrivilegePoC
                 message,
                 messageSize,
                 IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
 
             if (ret == 0)
             {

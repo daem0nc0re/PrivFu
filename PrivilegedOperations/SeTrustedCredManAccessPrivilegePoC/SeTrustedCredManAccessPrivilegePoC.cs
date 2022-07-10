@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
@@ -76,12 +77,6 @@ namespace SeTrustedCredManAccessPrivilegePoC
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
 
         /*
@@ -91,13 +86,27 @@ namespace SeTrustedCredManAccessPrivilegePoC
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -115,9 +124,6 @@ namespace SeTrustedCredManAccessPrivilegePoC
                 message,
                 messageSize,
                 IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
 
             if (ret == 0)
             {
@@ -224,6 +230,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
 
             return true;
         }
+
 
         static void Main()
         {

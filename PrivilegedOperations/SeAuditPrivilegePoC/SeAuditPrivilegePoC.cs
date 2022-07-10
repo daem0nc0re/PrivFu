@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -144,12 +146,6 @@ namespace SeAuditPrivilegePoC
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
         [DllImport("ntdll.dll")]
         static extern int NtEnumerateSystemEnvironmentValuesEx(
             uint InformationClass,
@@ -272,13 +268,27 @@ namespace SeAuditPrivilegePoC
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -296,9 +306,6 @@ namespace SeAuditPrivilegePoC
                 message,
                 messageSize,
                 IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
 
             if (ret == 0)
             {

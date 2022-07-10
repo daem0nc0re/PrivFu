@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -7,8 +8,9 @@ namespace SeDebugPrivilegePoC
 {
     class SeDebugPrivilegePoC
     {
-        // Windows definition
-        // Windows Enum
+        /*
+         * P/Invoke : Enums
+         */
         [Flags]
         enum FormatMessageFlags : uint
         {
@@ -39,9 +41,8 @@ namespace SeDebugPrivilegePoC
             MAXIMUM_ALLOWED = 0x02000000
         }
 
-        // Windows API
         /*
-         * kernel32.dll
+         * P/Invoke : Win32 APIs
          */
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool CloseHandle(IntPtr hObject);
@@ -56,30 +57,40 @@ namespace SeDebugPrivilegePoC
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr OpenProcess(
             ProcessAccessFlags processAccess,
             bool bInheritHandle,
             int processId);
 
-        // User define function
+        /*
+         * User defined functions
+         */
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -97,9 +108,6 @@ namespace SeDebugPrivilegePoC
                 message,
                 messageSize,
                 IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
 
             if (ret == 0)
             {

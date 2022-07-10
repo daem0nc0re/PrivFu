@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
@@ -7,8 +9,9 @@ namespace SeCreateTokenPrivilegePoC
 {
     class SeCreateTokenPrivilegePoC
     {
-        // Windows definition
-        // Windows enum
+        /*
+         * P/Invoke : Enums
+         */
         [Flags]
         enum FormatMessageFlags : uint
         {
@@ -121,7 +124,9 @@ namespace SeCreateTokenPrivilegePoC
             TokenImpersonation
         }
 
-        // Windows Struct
+        /*
+         * P/Invoke : Structs
+         */
         [StructLayout(LayoutKind.Explicit, Size = 8)]
         struct LARGE_INTEGER
         {
@@ -396,9 +401,8 @@ namespace SeCreateTokenPrivilegePoC
             }
         }
 
-        // Windows API
         /*
-         * advapi32.dll
+         * P/Invoke : Win32 APIs
          */
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool AllocateLocallyUniqueId(out LUID Luid);
@@ -444,9 +448,6 @@ namespace SeCreateTokenPrivilegePoC
             IntPtr pHandle,
             IntPtr hToken);
 
-        /*
-         * kenel32.dll
-         */
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool CloseHandle(IntPtr hModule);
 
@@ -461,20 +462,11 @@ namespace SeCreateTokenPrivilegePoC
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         static extern int GetCurrentThreadId();
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
 
-        /*
-         * ntdll.dll
-         */
         [DllImport("ntdll.dll")]
         static extern void RtlGetNtVersionNumbers(
             ref int MajorVersion,
@@ -497,6 +489,9 @@ namespace SeCreateTokenPrivilegePoC
             ref TOKEN_DEFAULT_DACL TokenDefaultDacl,
             ref TOKEN_SOURCE TokenSource);
 
+        /*
+         * Windows Consts
+         */
         const int STATUS_SUCCESS = 0;
         const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
         const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
@@ -546,7 +541,9 @@ namespace SeCreateTokenPrivilegePoC
         const byte SECURITY_STATIC_TRACKING = 0;
         static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
 
-
+        /*
+         * User defined functions
+         */
         static IntPtr CreateElevatedToken(TOKEN_TYPE tokenType)
         {
             int error;
@@ -848,13 +845,27 @@ namespace SeCreateTokenPrivilegePoC
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -872,9 +883,6 @@ namespace SeCreateTokenPrivilegePoC
                 message,
                 messageSize,
                 IntPtr.Zero);
-
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
 
             if (ret == 0)
             {

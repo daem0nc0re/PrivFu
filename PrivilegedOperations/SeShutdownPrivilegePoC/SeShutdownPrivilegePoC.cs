@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -104,12 +106,6 @@ namespace SeShutdownPrivilegePoC
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         static extern int MessageBox(
             IntPtr hWnd,
@@ -126,18 +122,34 @@ namespace SeShutdownPrivilegePoC
             HARDERROR_RESPONSE_OPTION ResponseOption,
             out HARDERROR_RESPONSE Response );
 
-
+        /*
+         * User defined functions
+         */
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -156,9 +168,6 @@ namespace SeShutdownPrivilegePoC
                 messageSize,
                 IntPtr.Zero);
 
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
-
             if (ret == 0)
             {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
@@ -171,6 +180,7 @@ namespace SeShutdownPrivilegePoC
                     message.ToString().Trim());
             }
         }
+
 
         static bool RaiseBSOD()
         {

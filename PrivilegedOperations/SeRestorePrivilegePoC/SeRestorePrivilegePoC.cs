@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -6,8 +8,9 @@ namespace SeRestorePrivilegePoC
 {
     class SeRestorePrivilegePoC
     {
-        // Windows definition
-        // Windows Enum
+        /*
+         * P/Invoke : Enums
+         */
         [Flags]
         enum FormatMessageFlags : uint
         {
@@ -19,9 +22,8 @@ namespace SeRestorePrivilegePoC
             FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
         }
 
-        // Windows API
         /*
-         * advapi32.dll
+         * P/Invoke : Windows APIs
          */
         [DllImport("advapi32.dll", SetLastError = false)]
         static extern int RegCreateKeyEx(
@@ -35,9 +37,6 @@ namespace SeRestorePrivilegePoC
             out IntPtr phkResult,
             IntPtr lpdwDisposition);
 
-        /*
-         * kernel32.dll
-         */
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool CloseHandle(IntPtr hObject);
 
@@ -51,30 +50,42 @@ namespace SeRestorePrivilegePoC
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
-        // Windows Const
+        /*
+         * Windows Consts
+         */
         const int STATUS_SUCCESS = 0;
         static readonly UIntPtr HKEY_LOCAL_MACHINE = new UIntPtr(0x80000002u);
         const uint REG_OPTION_BACKUP_RESTORE = 0x00000004;
         const uint KEY_SET_VALUE = 0x0002;
 
-        // User define function
+        /*
+         * User defined function
+         */
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -93,9 +104,6 @@ namespace SeRestorePrivilegePoC
                 messageSize,
                 IntPtr.Zero);
 
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
-
             if (ret == 0)
             {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
@@ -108,6 +116,7 @@ namespace SeRestorePrivilegePoC
                     message.ToString().Trim());
             }
         }
+
 
         static IntPtr PrivilegedRegKeyOperation(string regKeyName)
         {

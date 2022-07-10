@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Runtime.InteropServices;
 
@@ -59,12 +61,6 @@ namespace SeSystemEnvironmentPrivilegePoC
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool FreeLibrary(IntPtr hLibModule);
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern IntPtr LoadLibrary(string lpFileName);
-
         [DllImport("ntdll.dll")]
         static extern int NtEnumerateSystemEnvironmentValuesEx(
             uint InformationClass,
@@ -86,13 +82,27 @@ namespace SeSystemEnvironmentPrivilegePoC
         {
             var message = new StringBuilder();
             var messageSize = 255;
+            ProcessModuleCollection modules;
             FormatMessageFlags messageFlag;
             IntPtr pNtdll;
             message.Capacity = messageSize;
 
             if (isNtStatus)
             {
-                pNtdll = LoadLibrary("ntdll.dll");
+                pNtdll = IntPtr.Zero;
+                modules = Process.GetCurrentProcess().Modules;
+
+                foreach (ProcessModule mod in modules)
+                {
+                    if (string.Compare(
+                        Path.GetFileName(mod.FileName),
+                        "ntdll.dll",
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        pNtdll = mod.BaseAddress;
+                    }
+                }
+
                 messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
@@ -111,9 +121,6 @@ namespace SeSystemEnvironmentPrivilegePoC
                 messageSize,
                 IntPtr.Zero);
 
-            if (isNtStatus)
-                FreeLibrary(pNtdll);
-
             if (ret == 0)
             {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
@@ -126,6 +133,7 @@ namespace SeSystemEnvironmentPrivilegePoC
                     message.ToString().Trim());
             }
         }
+
 
         static bool GetSystemEnvironmentVariables()
         {
@@ -197,6 +205,7 @@ namespace SeSystemEnvironmentPrivilegePoC
 
             return true;
         }
+
 
         static void Main()
         {
