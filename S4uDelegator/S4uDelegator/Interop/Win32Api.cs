@@ -125,9 +125,6 @@ namespace S4uDelegator.Interop
             int nSize,
             IntPtr Arguments);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool FreeLibrary(IntPtr hLibModule);
-
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool GetComputerNameEx(
             Win32Const.COMPUTER_NAME_FORMAT NameType,
@@ -136,9 +133,6 @@ namespace S4uDelegator.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern int GetCurrentThreadId();
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        public static extern IntPtr LoadLibrary(string lpFileName);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LocalFree(IntPtr hMem);
