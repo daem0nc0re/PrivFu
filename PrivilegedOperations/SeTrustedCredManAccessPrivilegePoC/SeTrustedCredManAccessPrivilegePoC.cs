@@ -84,16 +84,15 @@ namespace SeTrustedCredManAccessPrivilegePoC
          */
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
-            var message = new StringBuilder();
-            var messageSize = 255;
+            int nReturnedLength;
             ProcessModuleCollection modules;
-            FormatMessageFlags messageFlag;
-            IntPtr pNtdll;
-            message.Capacity = messageSize;
+            FormatMessageFlags dwFlags;
+            int nSizeMesssage = 256;
+            var message = new StringBuilder(nSizeMesssage);
+            IntPtr pNtdll = IntPtr.Zero;
 
             if (isNtStatus)
             {
-                pNtdll = IntPtr.Zero;
                 modules = Process.GetCurrentProcess().Modules;
 
                 foreach (ProcessModule mod in modules)
@@ -108,25 +107,24 @@ namespace SeTrustedCredManAccessPrivilegePoC
                     }
                 }
 
-                messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
                     FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
-                pNtdll = IntPtr.Zero;
-                messageFlag = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            int ret = FormatMessage(
-                messageFlag,
+            nReturnedLength = FormatMessage(
+                dwFlags,
                 pNtdll,
                 code,
                 0,
                 message,
-                messageSize,
+                nSizeMesssage,
                 IntPtr.Zero);
 
-            if (ret == 0)
+            if (nReturnedLength == 0)
             {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             }
