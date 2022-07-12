@@ -170,10 +170,7 @@ namespace SeRestorePrivilegePoC
         /*
          * Windows Consts
          */
-        const int STATUS_SUCCESS = 0;
-        static readonly UIntPtr HKEY_LOCAL_MACHINE = new UIntPtr(0x80000002u);
-        const uint REG_OPTION_BACKUP_RESTORE = 0x00000004;
-        const uint KEY_SET_VALUE = 0x0002;
+        static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
         /*
          * User defined function
@@ -251,7 +248,7 @@ namespace SeRestorePrivilegePoC
                EFileAttributes.BackupSemantics,
                IntPtr.Zero);
 
-            if (hFile == IntPtr.Zero)
+            if (hFile == INVALID_HANDLE_VALUE)
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to create {0}.", filePath);
