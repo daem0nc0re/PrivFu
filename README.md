@@ -629,21 +629,21 @@ SeIncreaseWorkingSetPrivilege              Disabled
 
 [Project](./PrivilegedOperations)
 
-This project is PoCs for sensitive token privileges such SeDebugPrivilege.
+This project is PoCs for sensitive token privileges such `SeDebugPrivilege`.
 Currently, released PoCs for a part of them.
 
 | Program Name | Description |
 | :--- | :--- |
-| [SeAuditPrivilegePoC](./PrivilegedOperations/SeAuditPrivilegePoC) | This PoC tries to create new security event(s) by SeAuditPrivilegePoC. SeAuditPrivilegePoC does not require high integrity level, but this PoC requires administrative privileges at the first execution to install new event source. Additionally, to confirm the result, this PoC may require modification of local security policy setting. |
-| [SeBackupPrivilegePoC](./PrivilegedOperations/SeBackupPrivilegePoC) | This PoC tries to dump HKLM\SAM by SeBackupPrivilege. |
-| [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC creates a elevated token by SeCreateTokenPrivilege. |
-| [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC opens a handle to winlogon.exe by SeDebugPrivilege. |
-| [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC opens a handle to privileged registry key (`HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice\Parameters`) with `REG_OPTION_BACKUP_RESTORE` flag by SeRestorePrivilege. |
-| [SeSecurityPrivilegePoC](./PrivilegedOperations/SeSecurityPrivilegePoC) | This PoC tries to read the latest security event by SeSecurityPrivilege. |
-| [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by SeShutdownPrivilege. |
-| [SeSystemEnvironmentPrivilegePoC](./PrivilegedOperations/SeSystemEnvironmentPrivilegePoC) | This PoC tries to enumerate system environment by SeSystemEnvironmentPrivilege. This PoC works for UEFI based system only. |
-| [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC performs S4U Logon to be "Builtin\Backup Operators" by SeTcbPrivilege. |
-| [SeTrustedCredManAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredManAccessPrivilegePoC) | This PoC tries to access DPAPI blob by SeTrustedCredManAccessPrivilege. |
+| [SeAuditPrivilegePoC](./PrivilegedOperations/SeAuditPrivilegePoC) | This PoC tries to create new security event(s) by `SeAuditPrivilegePoC`. `SeAuditPrivilege` does not require high integrity level, but this PoC requires administrative privileges at the first execution to install new event source. Additionally, to confirm the result, this PoC may require modification of local security policy setting. |
+| [SeBackupPrivilegePoC](./PrivilegedOperations/SeBackupPrivilegePoC) | This PoC tries to dump `HKLM\SAM` by `SeBackupPrivilege`. |
+| [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC creates a elevated token by `SeCreateTokenPrivilege`. |
+| [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC tries to open a handle to winlogon.exe by `SeDebugPrivilege`. |
+| [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC tries to write test file in `C:\Windows\System32\` by `SeRestorePrivilege`. |
+| [SeSecurityPrivilegePoC](./PrivilegedOperations/SeSecurityPrivilegePoC) | This PoC tries to read the latest security event by `SeSecurityPrivilege`. |
+| [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by `SeShutdownPrivilege`. |
+| [SeSystemEnvironmentPrivilegePoC](./PrivilegedOperations/SeSystemEnvironmentPrivilegePoC) | This PoC tries to enumerate system environment by `SeSystemEnvironmentPrivilege`. Works for UEFI based system only. |
+| [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC tries to perform S4U Logon to be `Builtin\Backup Operators` by `SeTcbPrivilege`. |
+| [SeTrustedCredManAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredManAccessPrivilegePoC) | This PoC tries to access DPAPI blob by `SeTrustedCredManAccessPrivilege`. |
 
 ## S4uDelegator
 
@@ -1145,7 +1145,7 @@ Mandatory Label\Low Mandatory Level                           Label            S
 
 [Project](./TrustExec)
 
-This tool is to execute process as TrustedInstaller group account.
+This tool is to execute process as `NT SERVICE\TrustedInstaller` group account.
 Original PoC is [Grzegorz Tworek](https://twitter.com/0gtweet)'s [TrustedInstallerCmd2.c](https://github.com/gtworek/PSBits/blob/master/VirtualAccounts/TrustedInstallerCmd2.c).
 I ported it to C# and rebuilt it as a tool.
 Most of operations require administrative privilege (`SeDebugPrivilege`, `SeImpersonatePrivilege` and High Mandatory Level):
