@@ -636,7 +636,8 @@ Currently, released PoCs for a part of them.
 | :--- | :--- |
 | [SeAuditPrivilegePoC](./PrivilegedOperations/SeAuditPrivilegePoC) | This PoC tries to create new security event(s) by `SeAuditPrivilegePoC`. `SeAuditPrivilege` does not require high integrity level, but this PoC requires administrative privileges at the first execution to install new event source. Additionally, to confirm the result, this PoC may require modification of local security policy setting. |
 | [SeBackupPrivilegePoC](./PrivilegedOperations/SeBackupPrivilegePoC) | This PoC tries to dump `HKLM\SAM` by `SeBackupPrivilege`. |
-| [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC creates a elevated token by `SeCreateTokenPrivilege`. |
+| [SeCreatePagefilePrivilegePoC](./PrivilegedOperations/SeCreatePagefilePrivilegePoC) | This PoC tries to set pagefile option to specific values by `SeCreatePagefilePrivilege`. |
+| [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC tries to create a elevated token by `SeCreateTokenPrivilege`. |
 | [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC tries to open a handle to winlogon.exe by `SeDebugPrivilege`. |
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC tries to write test file in `C:\Windows\System32\` by `SeRestorePrivilege`. |
 | [SeSecurityPrivilegePoC](./PrivilegedOperations/SeSecurityPrivilegePoC) | This PoC tries to read the latest security event by `SeSecurityPrivilege`. |
