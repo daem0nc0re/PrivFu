@@ -12,7 +12,7 @@ namespace SwitchPriv
         static void Main(string[] args)
         {
             CommandLineParser options = new CommandLineParser();
-            var exclusive = new List<string> { "enable", "disable", "remove", "get", "integrity" };
+            var exclusive = new List<string> { "enable", "disable", "remove", "get", "integrity", "find" };
 
             try
             {
@@ -21,6 +21,7 @@ namespace SwitchPriv
                 options.AddParameter(false, "e", "enable", null, "Specifies token privilege to enable. Case insensitive.");
                 options.AddParameter(false, "d", "disable", null, "Specifies token privilege to disable. Case insensitive.");
                 options.AddParameter(false, "r", "remove", null, "Specifies token privilege to remove. Case insensitive.");
+                options.AddParameter(false, "f", "find", null, "Specifies token privilege to find.");
                 options.AddParameter(false, "p", "pid", null, "Specifies the target PID. Default specifies PPID.");
                 options.AddParameter(false, "i", "integrity", null, "Specifies integrity level to set.");
                 options.AddFlag(false, "g", "get", "Flag to get available privileges for the target process.");

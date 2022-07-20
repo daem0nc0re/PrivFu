@@ -1120,6 +1120,68 @@ SeUndockPrivilege             Remove computer from docking station Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Enabled
 ```
 
+To find process have a specific privilege, use `--find` option as follows:
+
+```
+C:\dev>SwitchPriv.exe -f createtoken
+
+[>] Searching process have SeCreateTokenPrivilege.
+[+] Following Processes have SeCreateTokenPrivilege.
+    |-> smss (PID : 340)
+    |-> csrss (PID : 532)
+    |-> lsass (PID : 700)
+    |-> csrss (PID : 464)
+    |-> Memory Compression (PID : 1828)
+[+] 5 process have SeCreateTokenPrivilege.
+[*] Access is denied by following 2 process.
+    |-> System (PID : 4)
+    |-> Idle (PID : 0)
+
+
+C:\dev>SwitchPriv.exe -g -p 464
+
+[>] Trying to get available token privilege(s) for the target process.
+    |-> Target PID   : 464
+    |-> Process Name : csrss
+
+Privilege Name                             State
+========================================== ========
+SeCreateTokenPrivilege                     Disabled
+SeAssignPrimaryTokenPrivilege              Disabled
+SeLockMemoryPrivilege                      Enabled
+SeIncreaseQuotaPrivilege                   Disabled
+SeTcbPrivilege                             Enabled
+SeSecurityPrivilege                        Disabled
+SeTakeOwnershipPrivilege                   Disabled
+SeLoadDriverPrivilege                      Disabled
+SeSystemProfilePrivilege                   Enabled
+SeSystemtimePrivilege                      Disabled
+SeProfileSingleProcessPrivilege            Enabled
+SeIncreaseBasePriorityPrivilege            Enabled
+SeCreatePagefilePrivilege                  Enabled
+SeCreatePermanentPrivilege                 Enabled
+SeBackupPrivilege                          Disabled
+SeRestorePrivilege                         Disabled
+SeShutdownPrivilege                        Disabled
+SeDebugPrivilege                           Enabled
+SeAuditPrivilege                           Enabled
+SeSystemEnvironmentPrivilege               Disabled
+SeChangeNotifyPrivilege                    Enabled
+SeUndockPrivilege                          Disabled
+SeManageVolumePrivilege                    Disabled
+SeImpersonatePrivilege                     Enabled
+SeCreateGlobalPrivilege                    Enabled
+SeRelabelPrivilege                         Disabled
+SeIncreaseWorkingSetPrivilege              Enabled
+SeTimeZonePrivilege                        Enabled
+SeCreateSymbolicLinkPrivilege              Enabled
+SeDelegateSessionUserImpersonatePrivilege  Enabled
+
+[*] Integrity Level : SYSTEM_MANDATORY_LEVEL
+```
+
+
+
 If you want to set integrity level, use `--integrity` option as follows:
 
 ```

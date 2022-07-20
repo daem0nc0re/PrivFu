@@ -423,6 +423,96 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool FindPrivilegedProcess(
+            string targetPrivilege,
+            bool asSystem)
+        {
+            IntPtr hProcess;
+            string privilege;
+            Dictionary<Win32Struct.LUID, uint> privs;
+            int nCountFound = 0;
+            var processList = Process.GetProcesses();
+            var deniedProcess = new Dictionary<int, string>();
+
+            Console.WriteLine();
+            Console.WriteLine("[>] Searching process have {0}.", targetPrivilege);
+
+            if (asSystem)
+            {
+                if (!GetSystem())
+                    return false;
+
+                Console.WriteLine();
+            }
+
+            foreach (var proc in processList)
+            {
+                hProcess = Win32Api.OpenProcess(
+                Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                false,
+                proc.Id);
+
+                if (hProcess == IntPtr.Zero)
+                {
+                    deniedProcess.Add(proc.Id, proc.ProcessName);
+                    continue;
+                }
+
+                if (!Win32Api.OpenProcessToken(
+                    hProcess,
+                    Win32Const.TokenAccessFlags.TOKEN_QUERY,
+                    out IntPtr hToken))
+                {
+                    deniedProcess.Add(proc.Id, proc.ProcessName);
+                    continue;
+                }
+
+                privs = Utilities.GetAvailablePrivileges(hToken);
+                Win32Api.CloseHandle(hToken);
+                Win32Api.CloseHandle(hProcess);
+
+                foreach (var luid in privs.Keys)
+                {
+                    privilege = Helpers.GetPrivilegeName(luid);
+
+                    if (string.Compare(
+                        privilege,
+                        targetPrivilege,
+                        StringComparison.OrdinalIgnoreCase) == 0)
+                    {
+                        if (nCountFound == 0)
+                            Console.WriteLine("[+] Following Processes have {0}.", targetPrivilege);
+
+                        Console.WriteLine("    |-> {0} (PID : {1})", proc.ProcessName, proc.Id);
+                        nCountFound++;
+                    }
+                }
+            }
+
+            if (asSystem)
+                Win32Api.RevertToSelf();
+
+            if (nCountFound == 0)
+                Console.WriteLine("[-] No process has {0}.", targetPrivilege);
+            else
+                Console.WriteLine("[+] {0} process have {1}.", nCountFound, targetPrivilege);
+
+            if (deniedProcess.Count > 0)
+            {
+                Console.WriteLine("[*] Access is denied by following {0} process.", deniedProcess.Count);
+
+                foreach (var denied in deniedProcess)
+                {
+                    Console.WriteLine("    |-> {0} (PID : {1})", denied.Value, denied.Key);
+                }
+            }
+
+            Console.WriteLine();
+
+            return true;
+        }
+
+
         public static bool GetPrivileges(int pid, bool asSystem)
         {
             int error;
