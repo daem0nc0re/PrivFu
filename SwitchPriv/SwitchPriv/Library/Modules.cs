@@ -464,6 +464,7 @@ namespace SwitchPriv.Library
                     out IntPtr hToken))
                 {
                     deniedProcess.Add(proc.Id, proc.ProcessName);
+                    Win32Api.CloseHandle(hProcess);
                     continue;
                 }
 
@@ -485,6 +486,7 @@ namespace SwitchPriv.Library
 
                         Console.WriteLine("    |-> {0} (PID : {1})", proc.ProcessName, proc.Id);
                         nCountFound++;
+                        break;
                     }
                 }
             }
@@ -507,7 +509,7 @@ namespace SwitchPriv.Library
                 }
             }
 
-            Console.WriteLine();
+            Console.WriteLine("[*] Done.\n");
 
             return true;
         }
