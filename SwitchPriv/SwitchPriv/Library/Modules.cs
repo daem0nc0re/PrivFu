@@ -20,7 +20,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to disable all token privileges.");
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to disable all token privileges.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -112,7 +113,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to disable {0}.", privilegeName);
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to disable {0}.", privilegeName);
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -227,7 +229,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to enable all token privileges.");
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to enable all token privileges.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -320,7 +323,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to enable {0}.", privilegeName);
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to enable {0}.", privilegeName);
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -438,19 +442,15 @@ namespace SwitchPriv.Library
             Console.WriteLine("[>] Searching process have {0}.", targetPrivilege);
 
             if (asSystem)
-            {
                 if (!GetSystem())
                     return false;
-
-                Console.WriteLine();
-            }
 
             foreach (var proc in processList)
             {
                 hProcess = Win32Api.OpenProcess(
-                Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                proc.Id);
+                    Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                    false,
+                    proc.Id);
 
                 if (hProcess == IntPtr.Zero)
                 {
@@ -526,7 +526,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to get available token privilege(s) for the target process.");
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to get available token privilege(s) for the target process.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -541,12 +542,8 @@ namespace SwitchPriv.Library
             }
 
             if (asSystem)
-            {
                 if (!GetSystem())
                     return false;
-
-                Console.WriteLine();
-            }
 
             hProcess = Win32Api.OpenProcess(
                 Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
@@ -628,7 +625,7 @@ namespace SwitchPriv.Library
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
             {
-                Console.WriteLine("[!] Should be run with administrative privilege.\n");
+                Console.WriteLine("[!] Should be run with administrative privilege.");
                 Win32Api.CloseHandle(hCurrentToken);
 
                 return false;
@@ -649,7 +646,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to remove all token privileges.");
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to remove all token privileges.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -738,7 +736,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to remove {0}.", privilegeName);
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to remove {0}.", privilegeName);
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
@@ -843,7 +842,8 @@ namespace SwitchPriv.Library
             if (pid == 0)
                 return false;
 
-            Console.WriteLine("\n[>] Trying to set integrity level.");
+            Console.WriteLine();
+            Console.WriteLine("[>] Trying to set integrity level.");
             Console.WriteLine("    |-> Target PID   : {0}", pid);
 
             try
