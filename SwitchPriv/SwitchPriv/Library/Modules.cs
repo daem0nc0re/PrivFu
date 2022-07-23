@@ -434,9 +434,9 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
             string privilege;
             Dictionary<Win32Struct.LUID, uint> privs;
-            int nCountFound = 0;
             var processList = Process.GetProcesses();
-            var deniedProcess = new Dictionary<int, string>();
+            var privilegedProcesses = new Dictionary<int, string>();
+            var deniedProcesses = new Dictionary<int, string>();
 
             Console.WriteLine();
             Console.WriteLine("[>] Searching process have {0}.", targetPrivilege);
@@ -454,7 +454,7 @@ namespace SwitchPriv.Library
 
                 if (hProcess == IntPtr.Zero)
                 {
-                    deniedProcess.Add(proc.Id, proc.ProcessName);
+                    deniedProcesses.Add(proc.Id, proc.ProcessName);
                     continue;
                 }
 
@@ -463,7 +463,7 @@ namespace SwitchPriv.Library
                     Win32Const.TokenAccessFlags.TOKEN_QUERY,
                     out IntPtr hToken))
                 {
-                    deniedProcess.Add(proc.Id, proc.ProcessName);
+                    deniedProcesses.Add(proc.Id, proc.ProcessName);
                     Win32Api.CloseHandle(hProcess);
                     continue;
                 }
@@ -481,11 +481,7 @@ namespace SwitchPriv.Library
                         targetPrivilege,
                         StringComparison.OrdinalIgnoreCase) == 0)
                     {
-                        if (nCountFound == 0)
-                            Console.WriteLine("[+] Following Processes have {0}.", targetPrivilege);
-
-                        Console.WriteLine("    |-> {0} (PID : {1})", proc.ProcessName, proc.Id);
-                        nCountFound++;
+                        privilegedProcesses.Add(proc.Id, proc.ProcessName);
                         break;
                     }
                 }
@@ -494,18 +490,36 @@ namespace SwitchPriv.Library
             if (asSystem)
                 Win32Api.RevertToSelf();
 
-            if (nCountFound == 0)
-                Console.WriteLine("[-] No process has {0}.", targetPrivilege);
-            else
-                Console.WriteLine("[+] {0} process have {1}.", nCountFound, targetPrivilege);
-
-            if (deniedProcess.Count > 0)
+            if (privilegedProcesses.Count == 0)
             {
-                Console.WriteLine("[*] Access is denied by following {0} process.", deniedProcess.Count);
+                Console.WriteLine("[-] No process has {0}.", targetPrivilege);
+            }
+            else
+            {
+                if (privilegedProcesses.Count == 1)
+                    Console.WriteLine("[+] Following process has {0}.", targetPrivilege);
+                else
+                    Console.WriteLine("[+] Following processes have {0}.", targetPrivilege);
 
-                foreach (var denied in deniedProcess)
+                foreach (var proc in privilegedProcesses)
+                    Console.WriteLine("    [*] {0} (PID : {1})", proc.Value, proc.Key);
+
+                if (privilegedProcesses.Count == 1)
+                    Console.WriteLine("[+] 1 process has {0}.", targetPrivilege);
+                else
+                    Console.WriteLine("[+] {0} processes have {1}.", privilegedProcesses.Count, targetPrivilege);
+            }
+
+            if (deniedProcesses.Count > 0)
+            {
+                if (deniedProcesses.Count == 1)
+                    Console.WriteLine("[*] Access is denied by following 1 process.");
+                else
+                    Console.WriteLine("[*] Access is denied by following {0} processes.", deniedProcesses.Count);
+
+                foreach (var denied in deniedProcesses)
                 {
-                    Console.WriteLine("    |-> {0} (PID : {1})", denied.Value, denied.Key);
+                    Console.WriteLine("    [*] {0} (PID : {1})", denied.Value, denied.Key);
                 }
             }
 
