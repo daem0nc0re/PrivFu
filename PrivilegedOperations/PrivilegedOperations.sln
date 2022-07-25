@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeBackupPrivilegePoC", "SeB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeCreatePagefilePrivilegePoC", "SeCreatePagefilePrivilegePoC\SeCreatePagefilePrivilegePoC.csproj", "{D52AB3F8-15D3-49C5-9EAC-468CDF65FB22}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeTakeOwnershipPrivilegePoC", "SeTakeOwnershipPrivilegePoC\SeTakeOwnershipPrivilegePoC.csproj", "{0A78E156-D03F-4667-B70E-4E9B4AA1D491}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{D52AB3F8-15D3-49C5-9EAC-468CDF65FB22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D52AB3F8-15D3-49C5-9EAC-468CDF65FB22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D52AB3F8-15D3-49C5-9EAC-468CDF65FB22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
