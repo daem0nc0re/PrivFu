@@ -217,7 +217,6 @@ namespace SeTakeOwnershipPrivilegePoC
             {
                 error = Marshal.GetLastWin32Error();
                 accountName = null;
-                peUse = 0;
                 Console.WriteLine("[-] Failed to resolve SID to account name.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
 
@@ -228,10 +227,14 @@ namespace SeTakeOwnershipPrivilegePoC
             if (string.IsNullOrEmpty(name.ToString()) &&
                 string.IsNullOrEmpty(domain.ToString()))
             {
+                Console.WriteLine("[-] Failed to resolve SID to account name.");
                 accountName = null;
-                peUse = 0;
+
+                return false;
             }
-            else if (string.IsNullOrEmpty(name.ToString()))
+            
+            
+            if (string.IsNullOrEmpty(name.ToString()))
             {
                 accountName = domain.ToString();
             }
@@ -288,10 +291,8 @@ namespace SeTakeOwnershipPrivilegePoC
 
                 return IntPtr.Zero;
             }
-            else
-            {
-                return pSidOwner;
-            }
+            
+            return pSidOwner;
         }
 
 
