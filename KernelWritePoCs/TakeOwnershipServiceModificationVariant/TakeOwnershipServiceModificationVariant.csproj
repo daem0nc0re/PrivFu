@@ -4,14 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4E41D3FF-1354-4FD4-A1FE-D33B798DBC22}</ProjectGuid>
+    <ProjectGuid>{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>TcbS4uAssignTokenVariant</RootNamespace>
-    <AssemblyName>TcbS4uAssignTokenVariant</AssemblyName>
+    <RootNamespace>TakeOwnershipServiceModificationVariant</RootNamespace>
+    <AssemblyName>TakeOwnershipServiceModificationVariant</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -45,7 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="TcbS4uAssignTokenVariant.cs" />
+    <Compile Include="TakeOwnershipServiceModificationVariant.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

