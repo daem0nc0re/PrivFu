@@ -7,7 +7,7 @@ using TrustExec.Interop;
 
 namespace TrustExec.Library
 {
-    class Utilities
+    internal class Utilities
     {
         public static bool AddVirtualAccount(
             string domain,
@@ -38,7 +38,7 @@ namespace TrustExec.Library
             Console.WriteLine("    |-> Domain   : {0} (SID : {1})", domain, domainSid);
             Console.WriteLine("    |-> Username : {0} (SID : {1})", username, userSid);
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 domainSid,
                 out IntPtr pSidDomain))
             {
@@ -49,7 +49,7 @@ namespace TrustExec.Library
                 return false;
             }
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 userSid,
                 out IntPtr pSidUser))
             {
@@ -88,13 +88,13 @@ namespace TrustExec.Library
             string command)
         {
             int error;
-            var startupInfo = new Win32Struct.STARTUPINFO();
+            var startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(startupInfo);
-            startupInfo.lpDesktop = "Winsta0\\Default";
+            startupInfo.lpDesktop = @"Winsta0\Default";
 
             Console.WriteLine("[>] Trying to create a token assigned process.\n");
 
-            bool status = Win32Api.CreateProcessAsUser(
+            bool status = NativeMethods.CreateProcessAsUser(
                 hToken,
                 null,
                 command,
@@ -105,7 +105,7 @@ namespace TrustExec.Library
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
                 ref startupInfo,
-                out Win32Struct.PROCESS_INFORMATION processInformation);
+                out PROCESS_INFORMATION processInformation);
 
             if (!status)
             {
@@ -116,9 +116,9 @@ namespace TrustExec.Library
                 return false;
             }
 
-            Win32Api.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-            Win32Api.CloseHandle(processInformation.hThread);
-            Win32Api.CloseHandle(processInformation.hProcess);
+            NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
+            NativeMethods.CloseHandle(processInformation.hThread);
+            NativeMethods.CloseHandle(processInformation.hProcess);
 
             return true;
         }
@@ -126,23 +126,23 @@ namespace TrustExec.Library
 
         public static bool CreateTokenPrivileges(
             string[] privs,
-            out Win32Struct.TOKEN_PRIVILEGES tokenPrivileges)
+            out TOKEN_PRIVILEGES tokenPrivileges)
         {
             int error;
-            int sizeOfStruct = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
+            int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
 
-            tokenPrivileges = (Win32Struct.TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+            tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
                 pPrivileges,
-                typeof(Win32Struct.TOKEN_PRIVILEGES));
+                typeof(TOKEN_PRIVILEGES));
             tokenPrivileges.PrivilegeCount = privs.Length;
 
             for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
             {
-                if (!Win32Api.LookupPrivilegeValue(
+                if (!NativeMethods.LookupPrivilegeValue(
                     null,
                     privs[idx],
-                    out Win32Struct.LUID luid))
+                    out LUID luid))
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to lookup LUID for {0}.", privs[idx]);
@@ -152,8 +152,8 @@ namespace TrustExec.Library
                 }
 
                 tokenPrivileges.Privileges[idx].Attributes = (uint)(
-                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
-                    Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
+                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED |
+                    SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED_BY_DEFAULT);
                 tokenPrivileges.Privileges[idx].Luid = luid;
             }
 
@@ -162,19 +162,18 @@ namespace TrustExec.Library
 
 
         public static IntPtr CreateTrustedInstallerToken(
-            Win32Const.TOKEN_TYPE tokenType,
-            Win32Const.SECURITY_IMPERSONATION_LEVEL impersonationLevel,
+            TOKEN_TYPE tokenType,
+            SECURITY_IMPERSONATION_LEVEL impersonationLevel,
             string[] extraSidsArray,
             bool full)
         {
             int error;
             int ntstatus;
-            Win32Struct.LUID authId = Win32Const.SYSTEM_LUID;
-            var tokenSource = new Win32Struct.TOKEN_SOURCE("*SYSTEM*");
+            LUID authId = Win32Const.SYSTEM_LUID;
+            var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
             tokenSource.SourceIdentifier.LowPart = 0;
             string[] privs;
-            IntPtr pExtraSid;
 
             if (full)
             {
@@ -227,9 +226,9 @@ namespace TrustExec.Library
             }
 
             Console.WriteLine("[>] Trying to create an elevated {0} token.",
-                tokenType == Win32Const.TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
+                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 Win32Const.TRUSTED_INSTALLER_RID,
                 out IntPtr pTrustedInstaller))
             {
@@ -242,7 +241,7 @@ namespace TrustExec.Library
 
             if (!CreateTokenPrivileges(
                 privs,
-                out Win32Struct.TOKEN_PRIVILEGES tokenPrivileges))
+                out TOKEN_PRIVILEGES tokenPrivileges))
             {
                 return IntPtr.Zero;
             }
@@ -250,19 +249,19 @@ namespace TrustExec.Library
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pTokenUser = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenUser);
+                TOKEN_INFORMATION_CLASS.TokenUser);
             IntPtr pTokenGroups = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenGroups);
+                TOKEN_INFORMATION_CLASS.TokenGroups);
             IntPtr pTokenOwner = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenOwner);
+                TOKEN_INFORMATION_CLASS.TokenOwner);
             IntPtr pTokenPrimaryGroup = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenPrimaryGroup);
+                TOKEN_INFORMATION_CLASS.TokenPrimaryGroup);
             IntPtr pTokenDefaultDacl = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenDefaultDacl);
+                TOKEN_INFORMATION_CLASS.TokenDefaultDacl);
 
             if (pTokenDefaultDacl == IntPtr.Zero)
             {
@@ -271,27 +270,27 @@ namespace TrustExec.Library
                 return IntPtr.Zero;
             }
 
-            var tokenUser = (Win32Struct.TOKEN_USER)Marshal.PtrToStructure(
+            var tokenUser = (TOKEN_USER)Marshal.PtrToStructure(
                 pTokenUser,
-                typeof(Win32Struct.TOKEN_USER));
-            var tokenGroups = (Win32Struct.TOKEN_GROUPS)Marshal.PtrToStructure(
+                typeof(TOKEN_USER));
+            var tokenGroups = (TOKEN_GROUPS)Marshal.PtrToStructure(
                 pTokenGroups,
-                typeof(Win32Struct.TOKEN_GROUPS));
-            var tokenOwner = (Win32Struct.TOKEN_OWNER)Marshal.PtrToStructure(
+                typeof(TOKEN_GROUPS));
+            var tokenOwner = (TOKEN_OWNER)Marshal.PtrToStructure(
                 pTokenOwner,
-                typeof(Win32Struct.TOKEN_OWNER));
-            var tokenPrimaryGroup = (Win32Struct.TOKEN_PRIMARY_GROUP)Marshal.PtrToStructure(
+                typeof(TOKEN_OWNER));
+            var tokenPrimaryGroup = (TOKEN_PRIMARY_GROUP)Marshal.PtrToStructure(
                 pTokenPrimaryGroup,
-                typeof(Win32Struct.TOKEN_PRIMARY_GROUP));
-            var tokenDefaultDacl = (Win32Struct.TOKEN_DEFAULT_DACL)Marshal.PtrToStructure(
+                typeof(TOKEN_PRIMARY_GROUP));
+            var tokenDefaultDacl = (TOKEN_DEFAULT_DACL)Marshal.PtrToStructure(
                 pTokenDefaultDacl,
-                typeof(Win32Struct.TOKEN_DEFAULT_DACL));
+                typeof(TOKEN_DEFAULT_DACL));
 
             tokenGroups.Groups[tokenGroups.GroupCount].Sid = pTrustedInstaller;
             tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
             tokenGroups.GroupCount++;
 
             for (var idx = 0; idx < extraSidsArray.Length; idx++)
@@ -302,14 +301,14 @@ namespace TrustExec.Library
                     continue;
                 }
 
-                if (Win32Api.ConvertStringSidToSid(
+                if (NativeMethods.ConvertStringSidToSid(
                     extraSidsArray[idx],
-                    out pExtraSid))
+                    out IntPtr pExtraSid))
                 {
                     tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
                     tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
                     tokenGroups.GroupCount++;
                 }
                 else
@@ -318,19 +317,19 @@ namespace TrustExec.Library
                 }
             }
 
-            var expirationTime = new Win32Struct.LARGE_INTEGER(-1L);
-            var sqos = new Win32Struct.SECURITY_QUALITY_OF_SERVICE(
+            var expirationTime = new LARGE_INTEGER(-1L);
+            var sqos = new SECURITY_QUALITY_OF_SERVICE(
                 impersonationLevel,
                 Win32Const.SECURITY_STATIC_TRACKING,
                 0);
-            var oa = new Win32Struct.OBJECT_ATTRIBUTES(string.Empty, 0);
+            var oa = new OBJECT_ATTRIBUTES(string.Empty, 0);
             IntPtr pSqos = Marshal.AllocHGlobal(Marshal.SizeOf(sqos));
             Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
-            ntstatus = Win32Api.ZwCreateToken(
+            ntstatus = NativeMethods.ZwCreateToken(
                 out IntPtr hToken,
-                Win32Const.TokenAccessFlags.TOKEN_ALL_ACCESS,
+                TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
                 tokenType,
                 ref authId,
@@ -343,11 +342,11 @@ namespace TrustExec.Library
                 ref tokenDefaultDacl,
                 ref tokenSource);
 
-            Win32Api.LocalFree(pTokenUser);
-            Win32Api.LocalFree(pTokenGroups);
-            Win32Api.LocalFree(pTokenOwner);
-            Win32Api.LocalFree(pTokenPrimaryGroup);
-            Win32Api.LocalFree(pTokenDefaultDacl);
+            NativeMethods.LocalFree(pTokenUser);
+            NativeMethods.LocalFree(pTokenGroups);
+            NativeMethods.LocalFree(pTokenOwner);
+            NativeMethods.LocalFree(pTokenPrimaryGroup);
+            NativeMethods.LocalFree(pTokenDefaultDacl);
 
             if (ntstatus != Win32Const.STATUS_SUCCESS)
             {
@@ -358,7 +357,7 @@ namespace TrustExec.Library
             }
 
             Console.WriteLine("[+] An elevated {0} token is created successfully.",
-                tokenType == Win32Const.TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
+                tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             return hToken;
         }
@@ -371,11 +370,10 @@ namespace TrustExec.Library
             string[] extraSidsArray)
         {
             int error;
-            IntPtr pExtraSid;
 
             Console.WriteLine("[>] Trying to generate token group information.");
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 Win32Const.DOMAIN_ALIAS_RID_ADMINS,
                 out IntPtr pAdminGroup))
             {
@@ -386,7 +384,7 @@ namespace TrustExec.Library
                 return IntPtr.Zero;
             }
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 Win32Const.TRUSTED_INSTALLER_RID,
                 out IntPtr pTrustedInstaller))
             {
@@ -397,7 +395,7 @@ namespace TrustExec.Library
                 return IntPtr.Zero;
             }
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 Win32Const.SYSTEM_MANDATORY_LEVEL,
                 out IntPtr pSystemIntegrity))
             {
@@ -408,18 +406,18 @@ namespace TrustExec.Library
                 return IntPtr.Zero;
             }
 
-            var tokenGroups = new Win32Struct.TOKEN_GROUPS(2);
+            var tokenGroups = new TOKEN_GROUPS(2);
 
             tokenGroups.Groups[0].Sid = pAdminGroup;
             tokenGroups.Groups[0].Attributes = (uint)(
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
             tokenGroups.Groups[1].Sid = pTrustedInstaller;
             tokenGroups.Groups[1].Attributes = (uint)(
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER);
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER);
 
             for (var idx = 0; idx < extraSidsArray.Length; idx++)
             {
@@ -429,14 +427,14 @@ namespace TrustExec.Library
                     continue;
                 }
 
-                if (Win32Api.ConvertStringSidToSid(
+                if (NativeMethods.ConvertStringSidToSid(
                     extraSidsArray[idx],
-                    out pExtraSid))
+                    out IntPtr pExtraSid))
                 {
                     tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
                     tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
                     tokenGroups.GroupCount++;
                 }
                 else
@@ -451,9 +449,9 @@ namespace TrustExec.Library
             if (!AddVirtualAccount(domain, username, domainRid))
                 return IntPtr.Zero;
 
-            Console.WriteLine("[>] Trying to logon as {0}\\{1}.", domain, username);
+            Console.WriteLine(@"[>] Trying to logon as {0}\{1}.", domain, username);
 
-            if (!Win32Api.LogonUserExExW(
+            if (!NativeMethods.LogonUserExExW(
                 username,
                 domain,
                 null,
@@ -474,29 +472,29 @@ namespace TrustExec.Library
             }
 
             IntPtr pLinkedToken = Helpers.GetInformationFromToken(hToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenLinkedToken);
+                TOKEN_INFORMATION_CLASS.TokenLinkedToken);
 
             if (pLinkedToken == IntPtr.Zero)
                 return IntPtr.Zero;
 
-            var linkedToken = (Win32Struct.TOKEN_LINKED_TOKEN)Marshal.PtrToStructure(
+            var linkedToken = (TOKEN_LINKED_TOKEN)Marshal.PtrToStructure(
                 pLinkedToken,
-                typeof(Win32Struct.TOKEN_LINKED_TOKEN));
+                typeof(TOKEN_LINKED_TOKEN));
 
             hToken = linkedToken.LinkedToken;
 
-            var mandatoryLabel = new Win32Struct.TOKEN_MANDATORY_LABEL();
+            var mandatoryLabel = new TOKEN_MANDATORY_LABEL();
             mandatoryLabel.Label.Sid = pSystemIntegrity;
             mandatoryLabel.Label.Attributes = (uint)(
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY |
-                Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY_ENABLED);
+                SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY |
+                SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY_ENABLED);
 
             IntPtr pMandatoryLabel = Marshal.AllocHGlobal(Marshal.SizeOf(mandatoryLabel));
             Marshal.StructureToPtr(mandatoryLabel, pMandatoryLabel, true);
 
-            if (!Win32Api.SetTokenInformation(
+            if (!NativeMethods.SetTokenInformation(
                 hToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
                 pMandatoryLabel,
                 Marshal.SizeOf(mandatoryLabel)))
             {
@@ -516,12 +514,12 @@ namespace TrustExec.Library
 
         public static void EnableAllPrivileges(IntPtr hToken)
         {
-            Dictionary<Win32Struct.LUID, uint> privs = GetAvailablePrivileges(hToken);
+            Dictionary<LUID, uint> privs = GetAvailablePrivileges(hToken);
             bool isEnabled;
 
             foreach (var priv in privs)
             {
-                isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                 if (!isEnabled)
                 {
@@ -531,17 +529,17 @@ namespace TrustExec.Library
         }
 
 
-        public static bool EnableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
+        public static bool EnableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
-            var tp = new Win32Struct.TOKEN_PRIVILEGES(1);
+            var tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED;
+            tp.Privileges[0].Attributes = (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!Win32Api.AdjustTokenPrivileges(
+            if (!NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
@@ -566,7 +564,7 @@ namespace TrustExec.Library
                 return false;
             }
 
-            Console.WriteLine("[+] {0} is enabled successfully.", Helpers.GetPrivilegeName(priv));
+            // Console.WriteLine("[+] {0} is enabled successfully.", Helpers.GetPrivilegeName(priv));
 
             return true;
         }
@@ -594,7 +592,7 @@ namespace TrustExec.Library
                 {
                     if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
                     {
-                        isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                        isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                         if (isEnabled)
                         {
@@ -624,13 +622,13 @@ namespace TrustExec.Library
         }
 
 
-        public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(
+        public static Dictionary<LUID, uint> GetAvailablePrivileges(
             IntPtr hToken)
         {
             int error;
             bool status;
-            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
-            var availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
+            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            var availablePrivs = new Dictionary<LUID, uint>();
             IntPtr pTokenPrivileges;
 
             do
@@ -638,9 +636,9 @@ namespace TrustExec.Library
                 pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
                 Helpers.ZeroMemory(pTokenPrivileges, bufferLength);
 
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken,
-                    Win32Const.TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
                     pTokenPrivileges,
                     bufferLength,
                     out bufferLength);
@@ -658,9 +656,9 @@ namespace TrustExec.Library
 
             for (var count = 0; count < privCount; count++)
             {
-                var luidAndAttr = (Win32Struct.LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                var luidAndAttr = (LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
                     buffer,
-                    typeof(Win32Struct.LUID_AND_ATTRIBUTES));
+                    typeof(LUID_AND_ATTRIBUTES));
 
                 availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
                 buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
@@ -690,8 +688,8 @@ namespace TrustExec.Library
                 return false;
             }
 
-            IntPtr hProcess = Win32Api.OpenProcess(
-                Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+            IntPtr hProcess = NativeMethods.OpenProcess(
+                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
                 true,
                 smss);
 
@@ -704,55 +702,55 @@ namespace TrustExec.Library
                 return false;
             }
 
-            if (!Win32Api.OpenProcessToken(
+            if (!NativeMethods.OpenProcessToken(
                 hProcess,
-                Win32Const.TokenAccessFlags.TOKEN_DUPLICATE,
+                TokenAccessFlags.TOKEN_DUPLICATE,
                 out IntPtr hToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hProcess);
+                NativeMethods.CloseHandle(hProcess);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hProcess);
+            NativeMethods.CloseHandle(hProcess);
 
-            if (!Win32Api.DuplicateTokenEx(
+            if (!NativeMethods.DuplicateTokenEx(
                 hToken,
-                Win32Const.TokenAccessFlags.MAXIMUM_ALLOWED,
+                TokenAccessFlags.MAXIMUM_ALLOWED,
                 IntPtr.Zero,
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                Win32Const.TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                TOKEN_TYPE.TokenPrimary,
                 out IntPtr hDupToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hToken);
                 
                 return false;
             }
 
             if (!EnableMultiplePrivileges(hDupToken, privs))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
             if (!ImpersonateThreadToken(hDupToken))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hDupToken);
-            Win32Api.CloseHandle(hToken);
+            NativeMethods.CloseHandle(hDupToken);
+            NativeMethods.CloseHandle(hToken);
 
             return true;
         }
@@ -763,9 +761,9 @@ namespace TrustExec.Library
             int error;
 
             Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", Win32Api.GetCurrentThreadId());
+            Console.WriteLine("    |-> Current Thread ID : {0}", NativeMethods.GetCurrentThreadId());
 
-            if (!Win32Api.ImpersonateLoggedOnUser(hImpersonationToken))
+            if (!NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to impersonation.");
@@ -777,13 +775,13 @@ namespace TrustExec.Library
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (Win32Const.SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
+                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
+            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
                 pImpersonationLevel);
-            Win32Api.LocalFree(pImpersonationLevel);
+            NativeMethods.LocalFree(pImpersonationLevel);
 
             if (impersonationLevel ==
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
+                SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
             {
                 Console.WriteLine("[-] Failed to impersonation.");
                 Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
@@ -820,11 +818,11 @@ namespace TrustExec.Library
             if (string.IsNullOrEmpty(username))
                 accountName = domain;
             else
-                accountName = string.Format("{0}\\{1}", domain.ToLower(), username.ToLower());
+                accountName = string.Format(@"{0}\{1}", domain.ToLower(), username.ToLower());
 
             string sid = Helpers.ConvertAccountNameToSidString(
                 ref accountName,
-                out Win32Const.SID_NAME_USE peUse);
+                out SID_NAME_USE peUse);
 
             if (string.IsNullOrEmpty(sid))
             {

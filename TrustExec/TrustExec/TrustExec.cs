@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using TrustExec.Handler;
 
-using TrustExec.Library;
-
 namespace TrustExec
 {
-    class TrustExec
+    internal class TrustExec
     {
         static void PrintModules()
         {

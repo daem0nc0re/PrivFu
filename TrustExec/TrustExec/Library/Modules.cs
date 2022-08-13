@@ -4,7 +4,7 @@ using TrustExec.Interop;
 
 namespace TrustExec.Library
 {
-    class Modules
+    internal class Modules
     {
         public static bool AddVirtualAccount(
             string domain,
@@ -39,7 +39,7 @@ namespace TrustExec.Library
                 return false;
 
             bool status = Utilities.AddVirtualAccount(domain, username, domainRid);
-            Win32Api.RevertToSelf();
+            NativeMethods.RevertToSelf();
 
             return status;
         }
@@ -66,7 +66,7 @@ namespace TrustExec.Library
                     domain = Environment.MachineName;
 
                 if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format("{0}\\{1}", domain, username);
+                    accountName = string.Format(@"{0}\{1}", domain, username);
                 else if (!string.IsNullOrEmpty(domain))
                     accountName = domain;
                 else if (!string.IsNullOrEmpty(username))
@@ -76,7 +76,7 @@ namespace TrustExec.Library
 
                 result = Helpers.ConvertAccountNameToSidString(
                     ref accountName,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -101,7 +101,7 @@ namespace TrustExec.Library
                 sid = sid.ToUpper();
                 result = Helpers.ConvertSidStringToAccountName(
                     ref sid,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -160,7 +160,7 @@ namespace TrustExec.Library
                 return false;
 
             bool status = Utilities.RemoveVirtualAccount(domain, username);
-            Win32Api.RevertToSelf();
+            NativeMethods.RevertToSelf();
 
             return status;
         }
@@ -173,13 +173,11 @@ namespace TrustExec.Library
 
             if (string.IsNullOrEmpty(command))
             {
-                execute = "C:\\Windows\\System32\\cmd.exe";
+                execute = @"C:\Windows\System32\cmd.exe";
             }
             else
             {
-                execute = string.Format(
-                    "C:\\Windows\\System32\\cmd.exe /c \"{0}\"",
-                    command);
+                execute = command;
             }
 
             Console.WriteLine();
@@ -213,8 +211,8 @@ namespace TrustExec.Library
                 return false;
 
             IntPtr hToken = Utilities.CreateTrustedInstallerToken(
-                Win32Const.TOKEN_TYPE.TokenPrimary,
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
                 extraSidsArray,
                 full);
 
@@ -222,8 +220,8 @@ namespace TrustExec.Library
                 return false;
 
             bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
-            Win32Api.CloseHandle(hToken);
-            Win32Api.RevertToSelf();
+            NativeMethods.CloseHandle(hToken);
+            NativeMethods.RevertToSelf();
 
             return status;
         }
@@ -256,13 +254,11 @@ namespace TrustExec.Library
 
             if (string.IsNullOrEmpty(command))
             {
-                execute = "C:\\Windows\\System32\\cmd.exe";
+                execute = @"C:\Windows\System32\cmd.exe";
             }
             else
             {
-                execute = string.Format(
-                    "C:\\Windows\\System32\\cmd.exe /c \"{0}\"",
-                    command);
+                execute = command;
             }
 
             Console.WriteLine();
@@ -308,8 +304,8 @@ namespace TrustExec.Library
                 Utilities.EnableAllPrivileges(hToken);
 
             bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
-            Win32Api.CloseHandle(hToken);
-            Win32Api.RevertToSelf();
+            NativeMethods.CloseHandle(hToken);
+            NativeMethods.RevertToSelf();
 
             return status;
         }

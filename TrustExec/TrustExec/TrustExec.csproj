@@ -8,9 +8,10 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>TrustExec</RootNamespace>
     <AssemblyName>TrustExec</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -46,8 +47,9 @@
   <ItemGroup>
     <Compile Include="Handler\CommandLineParser.cs" />
     <Compile Include="Handler\Execute.cs" />
-    <Compile Include="Interop\Win32Api.cs" />
+    <Compile Include="Interop\NativeMethods.cs" />
     <Compile Include="Interop\Win32Const.cs" />
+    <Compile Include="Interop\Win32Enum.cs" />
     <Compile Include="Interop\Win32Struct.cs" />
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />

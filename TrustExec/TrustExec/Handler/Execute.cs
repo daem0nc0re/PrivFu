@@ -3,7 +3,7 @@ using TrustExec.Library;
 
 namespace TrustExec.Handler
 {
-    class Execute
+    internal class Execute
     {
         public static void ExecCommand(CommandLineParser options)
         {
