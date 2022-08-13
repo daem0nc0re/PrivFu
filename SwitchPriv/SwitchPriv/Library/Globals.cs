@@ -1,8 +1,8 @@
 ﻿namespace SwitchPriv.Library
 {
-    class Globals
+    internal class Globals
     {
-        public enum MANDATORY_LEVEL_INDEX
+        internal enum MANDATORY_LEVEL_INDEX
         {
             UNTRUSTED_MANDATORY_LEVEL,
             LOW_MANDATORY_LEVEL,

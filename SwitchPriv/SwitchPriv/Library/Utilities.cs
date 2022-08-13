@@ -7,22 +7,22 @@ using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
-    class Utilities
+    internal class Utilities
     {
         public static bool DisableSinglePrivilege(
             IntPtr hToken,
-            Win32Struct.LUID priv)
+            LUID priv)
         {
             int error;
 
-            Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
+            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
             tp.Privileges[0].Attributes = 0;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!Win32Api.AdjustTokenPrivileges(
+            if (!NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
@@ -73,7 +73,7 @@ namespace SwitchPriv.Library
                 {
                     if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
                     {
-                        isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                        isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                         if (isEnabled)
                         {
@@ -105,18 +105,18 @@ namespace SwitchPriv.Library
 
         public static bool EnableSinglePrivilege(
             IntPtr hToken,
-            Win32Struct.LUID priv)
+            LUID priv)
         {
             int error;
 
-            Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
+            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
+            tp.Privileges[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!Win32Api.AdjustTokenPrivileges(
+            if (!NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
@@ -145,13 +145,13 @@ namespace SwitchPriv.Library
         }
 
 
-        public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(IntPtr hToken)
+        public static Dictionary<LUID, uint> GetAvailablePrivileges(IntPtr hToken)
         {
             int ERROR_INSUFFICIENT_BUFFER = 122;
             int error;
             bool status;
-            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
-            Dictionary<Win32Struct.LUID, uint> availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
+            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            Dictionary<LUID, uint> availablePrivs = new Dictionary<LUID, uint>();
             IntPtr pTokenPrivileges;
 
             do
@@ -159,9 +159,9 @@ namespace SwitchPriv.Library
                 pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
                 Helpers.ZeroMemory(pTokenPrivileges, bufferLength);
 
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken,
-                    Win32Const.TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
                     pTokenPrivileges,
                     bufferLength,
                     out bufferLength);
@@ -179,9 +179,9 @@ namespace SwitchPriv.Library
 
             for (var count = 0; count < privCount; count++)
             {
-                var luidAndAttr = (Win32Struct.LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                var luidAndAttr = (LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
                     buffer,
-                    typeof(Win32Struct.LUID_AND_ATTRIBUTES));
+                    typeof(LUID_AND_ATTRIBUTES));
 
                 availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
                 buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
@@ -199,7 +199,7 @@ namespace SwitchPriv.Library
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
             int error;
             bool status;
-            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
+            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             IntPtr pTokenIntegrity;
 
             do
@@ -207,9 +207,9 @@ namespace SwitchPriv.Library
                 pTokenIntegrity = Marshal.AllocHGlobal(bufferLength);
                 Helpers.ZeroMemory(pTokenIntegrity, bufferLength);
 
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken,
-                    Win32Const.TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
                     pTokenIntegrity,
                     bufferLength,
                     out bufferLength);
@@ -222,11 +222,11 @@ namespace SwitchPriv.Library
             if (!status)
                 return "N/A";
 
-            var sidAndAttrs = (Win32Struct.SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+            var sidAndAttrs = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
                 pTokenIntegrity,
-                typeof(Win32Struct.SID_AND_ATTRIBUTES));
+                typeof(SID_AND_ATTRIBUTES));
 
-            if (!Win32Api.ConvertSidToStringSid(sidAndAttrs.Sid, out string strSid))
+            if (!NativeMethods.ConvertSidToStringSid(sidAndAttrs.Sid, out string strSid))
                 return "N/A";
 
             if (string.Compare(strSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
@@ -253,15 +253,15 @@ namespace SwitchPriv.Library
         public static int GetParentProcessId(IntPtr hProcess)
         {
             int ntstatus;
-            var sizeInformation = Marshal.SizeOf(typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
+            var sizeInformation = Marshal.SizeOf(typeof(PROCESS_BASIC_INFORMATION));
             var buffer = Marshal.AllocHGlobal(sizeInformation);
 
             if (hProcess == IntPtr.Zero)
                 return 0;
 
-            ntstatus = Win32Api.NtQueryInformationProcess(
+            ntstatus = NativeMethods.NtQueryInformationProcess(
                 hProcess,
-                Win32Const.PROCESSINFOCLASS.ProcessBasicInformation,
+                PROCESSINFOCLASS.ProcessBasicInformation,
                 buffer,
                 sizeInformation,
                 IntPtr.Zero);
@@ -275,9 +275,9 @@ namespace SwitchPriv.Library
                 return 0;
             }
 
-            var basicInfo = (Win32Struct.PROCESS_BASIC_INFORMATION)Marshal.PtrToStructure(
+            var basicInfo = (PROCESS_BASIC_INFORMATION)Marshal.PtrToStructure(
                 buffer,
-                typeof(Win32Struct.PROCESS_BASIC_INFORMATION));
+                typeof(PROCESS_BASIC_INFORMATION));
             int ppid = basicInfo.InheritedFromUniqueProcessId.ToInt32();
 
             Marshal.FreeHGlobal(buffer);
@@ -304,8 +304,8 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            IntPtr hProcess = Win32Api.OpenProcess(
-                Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+            IntPtr hProcess = NativeMethods.OpenProcess(
+                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
                 true,
                 smss);
 
@@ -318,55 +318,55 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            if (!Win32Api.OpenProcessToken(
+            if (!NativeMethods.OpenProcessToken(
                 hProcess,
-                Win32Const.TokenAccessFlags.TOKEN_DUPLICATE,
+                TokenAccessFlags.TOKEN_DUPLICATE,
                 out IntPtr hToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hProcess);
+                NativeMethods.CloseHandle(hProcess);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hProcess);
+            NativeMethods.CloseHandle(hProcess);
 
-            if (!Win32Api.DuplicateTokenEx(
+            if (!NativeMethods.DuplicateTokenEx(
                 hToken,
-                Win32Const.TokenAccessFlags.MAXIMUM_ALLOWED,
+                TokenAccessFlags.MAXIMUM_ALLOWED,
                 IntPtr.Zero,
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                Win32Const.TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                TOKEN_TYPE.TokenPrimary,
                 out IntPtr hDupToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
             if (!EnableMultiplePrivileges(hDupToken, privs))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
             if (!ImpersonateThreadToken(hDupToken))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hDupToken);
-            Win32Api.CloseHandle(hToken);
+            NativeMethods.CloseHandle(hDupToken);
+            NativeMethods.CloseHandle(hToken);
 
             return true;
         }
@@ -377,9 +377,9 @@ namespace SwitchPriv.Library
             int error;
 
             Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", Win32Api.GetCurrentThreadId());
+            Console.WriteLine("    |-> Current Thread ID : {0}", NativeMethods.GetCurrentThreadId());
 
-            if (!Win32Api.ImpersonateLoggedOnUser(hImpersonationToken))
+            if (!NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to impersonation.");
@@ -391,13 +391,13 @@ namespace SwitchPriv.Library
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (Win32Const.SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
+                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
+            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
                 pImpersonationLevel);
-            Win32Api.LocalFree(pImpersonationLevel);
+            NativeMethods.LocalFree(pImpersonationLevel);
 
             if (impersonationLevel ==
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
+                SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
             {
                 Console.WriteLine("[-] Failed to impersonation.");
                 Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
@@ -413,18 +413,18 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool RemoveSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
+        public static bool RemoveSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
 
-            Win32Struct.TOKEN_PRIVILEGES tp = new Win32Struct.TOKEN_PRIVILEGES(1);
+            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_REMOVED;
+            tp.Privileges[0].Attributes = (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_REMOVED;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!Win32Api.AdjustTokenPrivileges(
+            if (!NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
@@ -458,7 +458,7 @@ namespace SwitchPriv.Library
         {
             int error;
 
-            if (!Win32Api.ConvertStringSidToSid(
+            if (!NativeMethods.ConvertStringSidToSid(
                 mandatoryLevelSid,
                 out IntPtr pSid))
             {
@@ -469,12 +469,12 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            var tokenIntegrityLevel = new Win32Struct.TOKEN_MANDATORY_LABEL
+            var tokenIntegrityLevel = new TOKEN_MANDATORY_LABEL
             {
-                Label = new Win32Struct.SID_AND_ATTRIBUTES
+                Label = new SID_AND_ATTRIBUTES
                 {
                     Sid = pSid,
-                    Attributes = (uint)(Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY),
+                    Attributes = (uint)(SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY),
                 }
             };
 
@@ -482,14 +482,14 @@ namespace SwitchPriv.Library
             var pTokenIntegrityLevel = Marshal.AllocHGlobal(size);
             Helpers.ZeroMemory(pTokenIntegrityLevel, size);
             Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);
-            size += Win32Api.GetLengthSid(pSid);
+            size += NativeMethods.GetLengthSid(pSid);
 
             Console.WriteLine("[>] Trying to set {0}.",
                 Helpers.ConvertStringSidToMandatoryLevelName(mandatoryLevelSid));
 
-            if (!Win32Api.SetTokenInformation(
+            if (!NativeMethods.SetTokenInformation(
                 hToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
                 pTokenIntegrityLevel,
                 size))
             {

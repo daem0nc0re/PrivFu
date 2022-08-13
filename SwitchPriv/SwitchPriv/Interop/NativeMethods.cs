@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SwitchPriv.Interop
 {
-    class Win32Api
+    internal class NativeMethods
     {
         /*
          * advapi32.dll
@@ -29,10 +29,10 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public extern static bool DuplicateTokenEx(
             IntPtr hExistingToken,
-            Win32Const.TokenAccessFlags dwDesiredAccess,
+            TokenAccessFlags dwDesiredAccess,
             IntPtr lpTokenAttributes,
-            Win32Const.SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            Win32Const.TOKEN_TYPE TokenType,
+            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            TOKEN_TYPE TokenType,
             out IntPtr phNewToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -41,7 +41,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool GetTokenInformation(
             IntPtr TokenHandle,
-            Win32Const.TOKEN_INFORMATION_CLASS TokenInformationClass,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             int TokenInformationLength,
             out int ReturnLength);
@@ -52,7 +52,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
-            ref Win32Struct.LUID lpLuid,
+            ref LUID lpLuid,
             StringBuilder lpName,
             ref int cchName);
 
@@ -60,12 +60,12 @@ namespace SwitchPriv.Interop
         public static extern bool LookupPrivilegeValue(
             string lpSystemName,
             string lpName,
-            out Win32Struct.LUID lpLuid);
+            out LUID lpLuid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
-            Win32Const.TokenAccessFlags DesiredAccess,
+            TokenAccessFlags DesiredAccess,
             out IntPtr TokenHandle);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -80,7 +80,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool SetTokenInformation(
             IntPtr TokenHandle,
-            Win32Const.TOKEN_INFORMATION_CLASS TokenInformationClass,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             int TokenInformationLength);
 
@@ -92,7 +92,7 @@ namespace SwitchPriv.Interop
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
-            Win32Const.FormatMessageFlags dwFlags,
+            FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
             int dwLanguageId,
@@ -108,7 +108,7 @@ namespace SwitchPriv.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(
-            Win32Const.ProcessAccessFlags processAccess,
+            ProcessAccessFlags processAccess,
             bool bInheritHandle,
             int processId);
 
@@ -118,7 +118,7 @@ namespace SwitchPriv.Interop
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtQueryInformationProcess(
             IntPtr ProcessHandle, 
-            Win32Const.PROCESSINFOCLASS ProcessInformationClass, 
+            PROCESSINFOCLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 
             int ProcessInformationLength, 
             IntPtr ReturnLength);

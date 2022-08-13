@@ -2,12 +2,9 @@
 using System.Collections.Generic;
 using SwitchPriv.Handler;
 
-using System.Security.Principal;
-using SwitchPriv.Library;
-
 namespace SwitchPriv
 {
-    class SwitchPriv
+    internal class SwitchPriv
     {
         static void Main(string[] args)
         {

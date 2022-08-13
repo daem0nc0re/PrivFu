@@ -7,7 +7,7 @@ using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
-    class Helpers
+    internal class Helpers
     {
         public static string ConvertIndexToMandatoryLevelSid(int index)
         {
@@ -138,7 +138,7 @@ namespace SwitchPriv.Library
 
         public static IntPtr GetInformationFromToken(
             IntPtr hToken,
-            Win32Const.TOKEN_INFORMATION_CLASS tokenInfoClass)
+            TOKEN_INFORMATION_CLASS tokenInfoClass)
         {
             bool status;
             int error;
@@ -149,7 +149,7 @@ namespace SwitchPriv.Library
             {
                 buffer = Marshal.AllocHGlobal(length);
                 ZeroMemory(buffer, length);
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken, tokenInfoClass, buffer, length, out length);
                 error = Marshal.GetLastWin32Error();
 
@@ -166,11 +166,11 @@ namespace SwitchPriv.Library
 
         public static bool GetPrivilegeLuid(
             string privilegeName,
-            out Win32Struct.LUID luid)
+            out LUID luid)
         {
             int error;
 
-            if (!Win32Api.LookupPrivilegeValue(
+            if (!NativeMethods.LookupPrivilegeValue(
                 null,
                 privilegeName,
                 out luid))
@@ -186,13 +186,13 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetPrivilegeName(Win32Struct.LUID priv)
+        public static string GetPrivilegeName(LUID priv)
         {
             int error;
             int cchName = 255;
             StringBuilder privilegeName = new StringBuilder(255);
 
-            if (!Win32Api.LookupPrivilegeName(
+            if (!NativeMethods.LookupPrivilegeName(
                 null,
                 ref priv,
                 privilegeName,
@@ -213,7 +213,7 @@ namespace SwitchPriv.Library
         {
             int nReturnedLength;
             ProcessModuleCollection modules;
-            Win32Const.FormatMessageFlags dwFlags;
+            FormatMessageFlags dwFlags;
             int nSizeMesssage = 256;
             var message = new StringBuilder(nSizeMesssage);
             IntPtr pNtdll = IntPtr.Zero;
@@ -234,15 +234,15 @@ namespace SwitchPriv.Library
                     }
                 }
 
-                dwFlags = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
+                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
-                dwFlags = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            nReturnedLength = Win32Api.FormatMessage(
+            nReturnedLength = NativeMethods.FormatMessage(
                 dwFlags,
                 pNtdll,
                 code,
@@ -267,7 +267,7 @@ namespace SwitchPriv.Library
 
         public static bool IsPrivilegeEnabled(
             IntPtr hToken,
-            Win32Struct.LUID priv,
+            LUID priv,
             out bool isEnabled)
         {
             int error;
@@ -276,14 +276,14 @@ namespace SwitchPriv.Library
             if (hToken == IntPtr.Zero)
                 return false;
 
-            var privSet = new Win32Struct.PRIVILEGE_SET(1, Win32Const.PRIVILEGE_SET_ALL_NECESSARY);
+            var privSet = new PRIVILEGE_SET(1, Win32Const.PRIVILEGE_SET_ALL_NECESSARY);
             privSet.Privilege[0].Luid = priv;
-            privSet.Privilege[0].Attributes = (uint)Win32Const.PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
+            privSet.Privilege[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
 
             IntPtr pPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(privSet));
             Marshal.StructureToPtr(privSet, pPrivileges, true);
 
-            if (!Win32Api.PrivilegeCheck(
+            if (!NativeMethods.PrivilegeCheck(
                 hToken,
                 pPrivileges,
                 out isEnabled))
