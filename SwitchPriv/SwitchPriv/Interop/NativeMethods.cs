@@ -117,8 +117,8 @@ namespace SwitchPriv.Interop
          */
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtQueryInformationProcess(
-            IntPtr ProcessHandle, 
-            PROCESSINFOCLASS ProcessInformationClass, 
+            IntPtr ProcessHandle,
+            PROCESS_INFORMATION_CLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 
             int ProcessInformationLength, 
             IntPtr ReturnLength);

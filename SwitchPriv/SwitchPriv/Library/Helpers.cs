@@ -12,21 +12,21 @@ namespace SwitchPriv.Library
         public static string ConvertIndexToMandatoryLevelSid(int index)
         {
             if (index == (int)Globals.MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
-                return Win32Const.UNTRUSTED_MANDATORY_LEVEL;
+                return Win32Consts.UNTRUSTED_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
-                return Win32Const.LOW_MANDATORY_LEVEL;
+                return Win32Consts.LOW_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
-                return Win32Const.MEDIUM_MANDATORY_LEVEL;
+                return Win32Consts.MEDIUM_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
-                return Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL;
+                return Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
-                return Win32Const.HIGH_MANDATORY_LEVEL;
+                return Win32Consts.HIGH_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
-                return Win32Const.SYSTEM_MANDATORY_LEVEL;
+                return Win32Consts.SYSTEM_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
-                return Win32Const.PROTECTED_MANDATORY_LEVEL;
+                return Win32Consts.PROTECTED_MANDATORY_LEVEL;
             else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
-                return Win32Const.SECURE_MANDATORY_LEVEL;
+                return Win32Consts.SECURE_MANDATORY_LEVEL;
             else
                 return null;
         }
@@ -36,21 +36,21 @@ namespace SwitchPriv.Library
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
 
-            if (string.Compare(stringSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
+            if (string.Compare(stringSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
                 return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.LOW_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.LOW_MANDATORY_LEVEL, opt) == 0)
                 return "LOW_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.MEDIUM_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.MEDIUM_MANDATORY_LEVEL, opt) == 0)
                 return "MEDIUM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
                 return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.HIGH_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.HIGH_MANDATORY_LEVEL, opt) == 0)
                 return "HIGH_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.SYSTEM_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.SYSTEM_MANDATORY_LEVEL, opt) == 0)
                 return "SYSTEM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.PROTECTED_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.PROTECTED_MANDATORY_LEVEL, opt) == 0)
                 return "PROTECTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Const.SECURE_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(stringSid, Win32Consts.SECURE_MANDATORY_LEVEL, opt) == 0)
                 return "SECURE_MANDATORY_LEVEL";
             else
                 return null;
@@ -155,7 +155,7 @@ namespace SwitchPriv.Library
 
                 if (!status)
                     Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER || error == Win32Const.ERROR_BAD_LENGTH));
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
 
             if (!status)
                 return IntPtr.Zero;
@@ -276,7 +276,7 @@ namespace SwitchPriv.Library
             if (hToken == IntPtr.Zero)
                 return false;
 
-            var privSet = new PRIVILEGE_SET(1, Win32Const.PRIVILEGE_SET_ALL_NECESSARY);
+            var privSet = new PRIVILEGE_SET(1, Win32Consts.PRIVILEGE_SET_ALL_NECESSARY);
             privSet.Privilege[0].Luid = priv;
             privSet.Privilege[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
 

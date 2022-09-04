@@ -633,8 +633,8 @@ namespace SwitchPriv.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))

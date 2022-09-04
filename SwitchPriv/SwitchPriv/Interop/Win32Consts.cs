@@ -2,7 +2,7 @@
 
 namespace SwitchPriv.Interop
 {
-    internal class Win32Const
+    internal class Win32Consts
     {
         public const int PRIVILEGE_SET_ALL_NECESSARY = 1;
 

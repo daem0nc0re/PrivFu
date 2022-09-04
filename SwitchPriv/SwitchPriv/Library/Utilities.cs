@@ -229,21 +229,21 @@ namespace SwitchPriv.Library
             if (!NativeMethods.ConvertSidToStringSid(sidAndAttrs.Sid, out string strSid))
                 return "N/A";
 
-            if (string.Compare(strSid, Win32Const.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
+            if (string.Compare(strSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
                 return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.LOW_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.LOW_MANDATORY_LEVEL, opt) == 0)
                 return "LOW_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.MEDIUM_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.MEDIUM_MANDATORY_LEVEL, opt) == 0)
                 return "MEDIUM_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
                 return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.HIGH_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.HIGH_MANDATORY_LEVEL, opt) == 0)
                 return "HIGH_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.SYSTEM_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.SYSTEM_MANDATORY_LEVEL, opt) == 0)
                 return "SYSTEM_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.PROTECTED_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.PROTECTED_MANDATORY_LEVEL, opt) == 0)
                 return "PROTECTED_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Const.SECURE_MANDATORY_LEVEL, opt) == 0)
+            else if (string.Compare(strSid, Win32Consts.SECURE_MANDATORY_LEVEL, opt) == 0)
                 return "SECURE_MANDATORY_LEVEL";
             else
                 return "N/A";
@@ -261,12 +261,12 @@ namespace SwitchPriv.Library
 
             ntstatus = NativeMethods.NtQueryInformationProcess(
                 hProcess,
-                PROCESSINFOCLASS.ProcessBasicInformation,
+                PROCESS_INFORMATION_CLASS.ProcessBasicInformation,
                 buffer,
                 sizeInformation,
                 IntPtr.Zero);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to get process information.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
@@ -400,7 +400,7 @@ namespace SwitchPriv.Library
                 SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
             {
                 Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
+                Console.WriteLine("    |-> May not have {0}.\n", Win32Consts.SE_IMPERSONATE_NAME);
 
                 return false;
             }

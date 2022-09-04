@@ -39,7 +39,7 @@ namespace SwitchPriv.Interop
         SYNCHRONIZE = 0x00100000
     }
 
-    internal enum PROCESSINFOCLASS
+    internal enum PROCESS_INFORMATION_CLASS
     {
         ProcessBasicInformation = 0x00,
         ProcessDebugPort = 0x07,
