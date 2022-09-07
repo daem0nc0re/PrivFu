@@ -7,20 +7,22 @@ using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
 {
-    class Utilities
+    using NTSTATUS = Int32;
+
+    internal class Utilities
     {
         public static bool CreateTokenAssignedProcess(
             IntPtr hToken,
             string command)
         {
             int error;
-            var startupInfo = new Win32Struct.STARTUPINFO();
+            var startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(startupInfo);
             startupInfo.lpDesktop = "Winsta0\\Default";
 
             Console.WriteLine("[>] Trying to create a token assigned process.\n");
 
-            bool status = Win32Api.CreateProcessAsUser(
+            bool status = NativeMethods.CreateProcessAsUser(
                 hToken,
                 null,
                 command,
@@ -31,7 +33,7 @@ namespace S4uDelegator.Library
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
                 ref startupInfo,
-                out Win32Struct.PROCESS_INFORMATION processInformation);
+                out PROCESS_INFORMATION processInformation);
 
             if (!status)
             {
@@ -42,9 +44,9 @@ namespace S4uDelegator.Library
                 return false;
             }
 
-            Win32Api.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-            Win32Api.CloseHandle(processInformation.hThread);
-            Win32Api.CloseHandle(processInformation.hProcess);
+            NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
+            NativeMethods.CloseHandle(processInformation.hThread);
+            NativeMethods.CloseHandle(processInformation.hProcess);
 
             return true;
         }
@@ -52,12 +54,12 @@ namespace S4uDelegator.Library
 
         public static void EnableAllPrivileges(IntPtr hToken)
         {
-            Dictionary<Win32Struct.LUID, uint> privs = GetAvailablePrivileges(hToken);
+            Dictionary<LUID, uint> privs = GetAvailablePrivileges(hToken);
             bool isEnabled;
 
             foreach (var priv in privs)
             {
-                isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                 if (!isEnabled)
                 {
@@ -67,17 +69,17 @@ namespace S4uDelegator.Library
         }
 
 
-        public static bool EnableSinglePrivilege(IntPtr hToken, Win32Struct.LUID priv)
+        public static bool EnableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
-            var tp = new Win32Struct.TOKEN_PRIVILEGES(1);
+            var tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED;
+            tp.Privileges[0].Attributes = (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED;
 
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!Win32Api.AdjustTokenPrivileges(
+            if (!NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
@@ -130,7 +132,7 @@ namespace S4uDelegator.Library
                 {
                     if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
                     {
-                        isEnabled = ((priv.Value & (uint)Win32Const.SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                        isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                         if (isEnabled)
                         {
@@ -160,13 +162,13 @@ namespace S4uDelegator.Library
         }
 
 
-        public static Dictionary<Win32Struct.LUID, uint> GetAvailablePrivileges(
+        public static Dictionary<LUID, uint> GetAvailablePrivileges(
             IntPtr hToken)
         {
             int error;
             bool status;
-            int bufferLength = Marshal.SizeOf(typeof(Win32Struct.TOKEN_PRIVILEGES));
-            var availablePrivs = new Dictionary<Win32Struct.LUID, uint>();
+            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            var availablePrivs = new Dictionary<LUID, uint>();
             IntPtr pTokenPrivileges;
 
             do
@@ -174,9 +176,9 @@ namespace S4uDelegator.Library
                 pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
                 Helpers.ZeroMemory(pTokenPrivileges, bufferLength);
 
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken,
-                    Win32Const.TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
                     pTokenPrivileges,
                     bufferLength,
                     out bufferLength);
@@ -184,7 +186,7 @@ namespace S4uDelegator.Library
 
                 if (!status)
                     Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER));
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER));
 
             if (!status)
                 return availablePrivs;
@@ -194,9 +196,9 @@ namespace S4uDelegator.Library
 
             for (var count = 0; count < privCount; count++)
             {
-                var luidAndAttr = (Win32Struct.LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                var luidAndAttr = (LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
                     buffer,
-                    typeof(Win32Struct.LUID_AND_ATTRIBUTES));
+                    typeof(LUID_AND_ATTRIBUTES));
 
                 availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
                 buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
@@ -211,55 +213,55 @@ namespace S4uDelegator.Library
         public static IntPtr GetKerbS4uLogonToken(
             string upn,
             string realm,
-            Win32Const.SECURITY_LOGON_TYPE type,
+            SECURITY_LOGON_TYPE type,
             string[] groupSids)
         {
             int error;
-            int ntstatus;
-            var pkgName = new Win32Struct.LSA_STRING(Win32Const.NEGOSSP_NAME_A);
-            var tokenSource = new Win32Struct.TOKEN_SOURCE("NtLmSsp");
+            NTSTATUS ntstatus;
+            var pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
+            var tokenSource = new TOKEN_SOURCE("NtLmSsp");
             var pTokenGroups = IntPtr.Zero;
 
             Console.WriteLine("[>] Trying to Kerberos S4U logon.");
 
-            ntstatus = Win32Api.LsaConnectUntrusted(out IntPtr hLsa);
+            ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to connect LSA store.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
 
                 return IntPtr.Zero;
             }
 
-            ntstatus = Win32Api.LsaLookupAuthenticationPackage(
+            ntstatus = NativeMethods.LsaLookupAuthenticationPackage(
                 hLsa,
                 ref pkgName,
                 out uint authnPkg);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to lookup auth package.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.LsaClose(hLsa);
+                NativeMethods.LsaClose(hLsa);
 
                 return IntPtr.Zero;
             }
 
-            var kerbS4uLogon = new Win32Struct.KERB_S4U_LOGON(upn, realm);
-            var originName = new Win32Struct.LSA_STRING("S4U");
+            var kerbS4uLogon = new KERB_S4U_LOGON(upn, realm);
+            var originName = new LSA_STRING("S4U");
             var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
 
             if (groupSids.Length > 0)
             {
-                var tokenGroups = new Win32Struct.TOKEN_GROUPS(0);
+                var tokenGroups = new TOKEN_GROUPS(0);
                 pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
 
                 for (var idx = 0; idx < groupSids.Length; idx++)
                 {
-                    if (!Win32Api.ConvertStringSidToSid(
+                    if (!NativeMethods.ConvertStringSidToSid(
                         groupSids[idx],
                         out IntPtr pSid))
                     {
@@ -268,8 +270,8 @@ namespace S4uDelegator.Library
 
                     tokenGroups.Groups[idx].Sid = pSid;
                     tokenGroups.Groups[idx].Attributes = (uint)(
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
                     tokenGroups.GroupCount++;
                 }
 
@@ -284,7 +286,7 @@ namespace S4uDelegator.Library
                 }
             }
 
-            ntstatus = Win32Api.LsaLogonUser(
+            ntstatus = NativeMethods.LsaLogonUser(
                 hLsa,
                 ref originName,
                 type,
@@ -295,14 +297,14 @@ namespace S4uDelegator.Library
                 ref tokenSource,
                 out IntPtr profileBuffer,
                 out int profileBufferLength,
-                out Win32Struct.LUID logonId,
+                out LUID logonId,
                 pS4uTokenBuffer,
-                out Win32Struct.QUOTA_LIMITS quotas,
+                out QUOTA_LIMITS quotas,
                 out int subStatus);
 
             kerbS4uLogon.Dispose();
-            Win32Api.LsaFreeReturnBuffer(profileBuffer);
-            Win32Api.LsaClose(hLsa);
+            NativeMethods.LsaFreeReturnBuffer(profileBuffer);
+            NativeMethods.LsaClose(hLsa);
 
             if (pTokenGroups != IntPtr.Zero)
                 Marshal.FreeHGlobal(pTokenGroups);
@@ -310,9 +312,9 @@ namespace S4uDelegator.Library
             var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
             Marshal.FreeHGlobal(pS4uTokenBuffer);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to S4U logon.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
 
@@ -328,55 +330,55 @@ namespace S4uDelegator.Library
         public static IntPtr GetMsvS4uLogonToken(
             string username,
             string domain,
-            Win32Const.SECURITY_LOGON_TYPE type,
+            SECURITY_LOGON_TYPE type,
             string[] groupSids)
         {
             int error;
-            int ntstatus;
-            var pkgName = new Win32Struct.LSA_STRING(Win32Const.MSV1_0_PACKAGE_NAME);
-            var tokenSource = new Win32Struct.TOKEN_SOURCE("User32");
+            NTSTATUS ntstatus;
+            var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+            var tokenSource = new TOKEN_SOURCE("User32");
             var pTokenGroups = IntPtr.Zero;
 
             Console.WriteLine("[>] Trying to MSV S4U logon.");
 
-            ntstatus = Win32Api.LsaConnectUntrusted(out IntPtr hLsa);
+            ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to connect lsa store.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
 
                 return IntPtr.Zero;
             }
 
-            ntstatus = Win32Api.LsaLookupAuthenticationPackage(
+            ntstatus = NativeMethods.LsaLookupAuthenticationPackage(
                 hLsa,
                 ref pkgName,
                 out uint authnPkg);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to lookup auth package.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.LsaClose(hLsa);
+                NativeMethods.LsaClose(hLsa);
 
                 return IntPtr.Zero;
             }
 
-            var msvS4uLogon = new Win32Struct.MSV1_0_S4U_LOGON(username, domain);
-            var originName = new Win32Struct.LSA_STRING("S4U");
+            var msvS4uLogon = new MSV1_0_S4U_LOGON(username, domain);
+            var originName = new LSA_STRING("S4U");
             var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
 
             if (groupSids.Length > 0)
             {
-                var tokenGroups = new Win32Struct.TOKEN_GROUPS(0);
+                var tokenGroups = new TOKEN_GROUPS(0);
                 pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
 
                 for (var idx = 0; idx < groupSids.Length; idx++)
                 {
-                    if (!Win32Api.ConvertStringSidToSid(
+                    if (!NativeMethods.ConvertStringSidToSid(
                         groupSids[idx],
                         out IntPtr pSid))
                     {
@@ -385,8 +387,8 @@ namespace S4uDelegator.Library
 
                     tokenGroups.Groups[idx].Sid = pSid;
                     tokenGroups.Groups[idx].Attributes = (uint)(
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                        Win32Const.SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
+                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
                     tokenGroups.GroupCount++;
                 }
 
@@ -401,7 +403,7 @@ namespace S4uDelegator.Library
                 }
             }
 
-            ntstatus = Win32Api.LsaLogonUser(
+            ntstatus = NativeMethods.LsaLogonUser(
                 hLsa,
                 ref originName,
                 type,
@@ -412,14 +414,14 @@ namespace S4uDelegator.Library
                 ref tokenSource,
                 out IntPtr profileBuffer,
                 out int profileBufferLength,
-                out Win32Struct.LUID logonId,
+                out LUID logonId,
                 pS4uTokenBuffer,
-                out Win32Struct.QUOTA_LIMITS quotas,
+                out QUOTA_LIMITS quotas,
                 out int subStatus);
 
             msvS4uLogon.Dispose();
-            Win32Api.LsaFreeReturnBuffer(profileBuffer);
-            Win32Api.LsaClose(hLsa);
+            NativeMethods.LsaFreeReturnBuffer(profileBuffer);
+            NativeMethods.LsaClose(hLsa);
 
             if (pTokenGroups != IntPtr.Zero)
                 Marshal.FreeHGlobal(pTokenGroups);
@@ -427,9 +429,9 @@ namespace S4uDelegator.Library
             var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
             Marshal.FreeHGlobal(pS4uTokenBuffer);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to S4U logon.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
 
@@ -460,8 +462,8 @@ namespace S4uDelegator.Library
                 return false;
             }
 
-            IntPtr hProcess = Win32Api.OpenProcess(
-                Win32Const.ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+            IntPtr hProcess = NativeMethods.OpenProcess(
+                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
                 true,
                 smss);
 
@@ -474,55 +476,55 @@ namespace S4uDelegator.Library
                 return false;
             }
 
-            if (!Win32Api.OpenProcessToken(
+            if (!NativeMethods.OpenProcessToken(
                 hProcess,
-                Win32Const.TokenAccessFlags.TOKEN_DUPLICATE,
+                TokenAccessFlags.TOKEN_DUPLICATE,
                 out IntPtr hToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hProcess);
+                NativeMethods.CloseHandle(hProcess);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hProcess);
+            NativeMethods.CloseHandle(hProcess);
 
-            if (!Win32Api.DuplicateTokenEx(
+            if (!NativeMethods.DuplicateTokenEx(
                 hToken,
-                Win32Const.TokenAccessFlags.MAXIMUM_ALLOWED,
+                TokenAccessFlags.MAXIMUM_ALLOWED,
                 IntPtr.Zero,
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                Win32Const.TOKEN_TYPE.TokenPrimary,
+                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                TOKEN_TYPE.TokenPrimary,
                 out IntPtr hDupToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
             if (!EnableMultiplePrivileges(hDupToken, privs))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
             if (!ImpersonateThreadToken(hDupToken))
             {
-                Win32Api.CloseHandle(hDupToken);
-                Win32Api.CloseHandle(hToken);
+                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.CloseHandle(hToken);
 
                 return false;
             }
 
-            Win32Api.CloseHandle(hDupToken);
-            Win32Api.CloseHandle(hToken);
+            NativeMethods.CloseHandle(hDupToken);
+            NativeMethods.CloseHandle(hToken);
 
             return true;
         }
@@ -533,9 +535,9 @@ namespace S4uDelegator.Library
             int error;
 
             Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", Win32Api.GetCurrentThreadId());
+            Console.WriteLine("    |-> Current Thread ID : {0}", NativeMethods.GetCurrentThreadId());
 
-            if (!Win32Api.ImpersonateLoggedOnUser(hImpersonationToken))
+            if (!NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to impersonation.");
@@ -547,16 +549,16 @@ namespace S4uDelegator.Library
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
                 hCurrentToken,
-                Win32Const.TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (Win32Const.SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
+                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
+            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
                 pImpersonationLevel);
-            Win32Api.LocalFree(pImpersonationLevel);
+            NativeMethods.LocalFree(pImpersonationLevel);
 
             if (impersonationLevel ==
-                Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
+                SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
             {
                 Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
+                Console.WriteLine("    |-> May not have {0}.\n", Win32Consts.SE_IMPERSONATE_NAME);
 
                 return false;
             }

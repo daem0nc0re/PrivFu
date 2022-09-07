@@ -5,16 +5,16 @@ using UserRightsUtil.Interop;
 
 namespace UserRightsUtil.Library
 {
-    class Utilities
+    internal class Utilities
     {
-        public static List<Win32Const.Rights> GetUserRights(IntPtr pSid)
+        public static List<Rights> GetUserRights(IntPtr pSid)
         {
             int ntstatus;
             IntPtr hLsa;
-            var userRight = new Win32Struct.LSA_UNICODE_STRING();
+            var userRight = new LSA_UNICODE_STRING();
             IntPtr pUserRight;
-            Win32Const.Rights right;
-            var results = new List<Win32Const.Rights>();
+            Rights right;
+            var results = new List<Rights>();
             var opt = StringComparison.OrdinalIgnoreCase;
             IntPtr pInfo;
             string accountName;
@@ -24,21 +24,21 @@ namespace UserRightsUtil.Library
 
             accountName = Helpers.ConvertSidToAccountName(
                 pSid,
-                out Win32Const.SID_NAME_USE peUse);
+                out SID_NAME_USE peUse);
 
             hLsa = GetSystemLsaHandle(
-                Win32Const.PolicyAccessRights.POLICY_LOOKUP_NAMES);
+                PolicyAccessRights.POLICY_LOOKUP_NAMES);
 
             if (hLsa == IntPtr.Zero)
                 return results;
 
-            ntstatus = Win32Api.LsaEnumerateAccountRights(
+            ntstatus = NativeMethods.LsaEnumerateAccountRights(
                 hLsa,
                 pSid,
                 out IntPtr pUserRightsBuffer,
                 out ulong count);
 
-            if (ntstatus == Win32Const.STATUS_SUCCESS)
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 for (var idx = 0UL; idx < count; idx++)
                 {
@@ -46,12 +46,12 @@ namespace UserRightsUtil.Library
                                 pUserRightsBuffer.ToInt64() +
                                 (long)idx * Marshal.SizeOf(userRight));
 
-                    userRight = (Win32Struct.LSA_UNICODE_STRING)Marshal.PtrToStructure(
+                    userRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
                         pUserRight,
-                        typeof(Win32Struct.LSA_UNICODE_STRING));
+                        typeof(LSA_UNICODE_STRING));
 
-                    right = (Win32Const.Rights)Enum.Parse(
-                        typeof(Win32Const.Rights),
+                    right = (Rights)Enum.Parse(
+                        typeof(Rights),
                         userRight.Buffer);
 
                     if (!results.Contains(right))
@@ -59,37 +59,37 @@ namespace UserRightsUtil.Library
                 }
             }
 
-            if (peUse != Win32Const.SID_NAME_USE.SidTypeAlias)
+            if (peUse != SID_NAME_USE.SidTypeAlias)
             {
-                ntstatus = Win32Api.NetUserGetLocalGroups(
+                ntstatus = NativeMethods.NetUserGetLocalGroups(
                     Environment.MachineName,
                     accountName,
                     0,
-                    Win32Const.LG_INCLUDE_INDIRECT,
+                    Win32Consts.LG_INCLUDE_INDIRECT,
                     out IntPtr pLocalGroupUserInfo,
-                    Win32Const.MAX_PREFERRED_LENGTH,
+                    Win32Consts.MAX_PREFERRED_LENGTH,
                     out int entriesread_LG,
                     out int totalentries_LG);
 
-                if (ntstatus != Win32Const.NERR_Success)
+                if (ntstatus != Win32Consts.NERR_Success)
                 {
-                    Win32Api.LsaClose(hLsa);
+                    NativeMethods.LsaClose(hLsa);
 
                     return results;
                 }
 
-                ntstatus = Win32Api.NetLocalGroupEnum(
+                ntstatus = NativeMethods.NetLocalGroupEnum(
                     Environment.MachineName,
                     0,
                     out IntPtr pLocalGroups,
-                    Win32Const.MAX_PREFERRED_LENGTH,
+                    Win32Consts.MAX_PREFERRED_LENGTH,
                     out int entriesread,
                     out int totalentries,
                     ref resume_handle);
 
-                if (ntstatus != Win32Const.NERR_Success)
+                if (ntstatus != Win32Consts.NERR_Success)
                 {
-                    Win32Api.LsaClose(hLsa);
+                    NativeMethods.LsaClose(hLsa);
 
                     return results;
                 }
@@ -101,7 +101,7 @@ namespace UserRightsUtil.Library
                 }
                 catch
                 {
-                    Win32Api.LsaClose(hLsa);
+                    NativeMethods.LsaClose(hLsa);
 
                     return results;
                 }
@@ -118,9 +118,9 @@ namespace UserRightsUtil.Library
                         strSid = Helpers.ConvertAccountNameToSidString(
                             ref accountName,
                             out peUse);
-                        Win32Api.ConvertStringSidToSid(strSid, out pSid);
+                        NativeMethods.ConvertStringSidToSid(strSid, out pSid);
 
-                        Win32Api.LsaEnumerateAccountRights(
+                        NativeMethods.LsaEnumerateAccountRights(
                             hLsa,
                             pSid,
                             out pUserRightsBuffer,
@@ -132,34 +132,34 @@ namespace UserRightsUtil.Library
                                 pUserRightsBuffer.ToInt64() +
                                 (long)idx * Marshal.SizeOf(userRight));
 
-                            userRight = (Win32Struct.LSA_UNICODE_STRING)Marshal.PtrToStructure(
+                            userRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
                                 pUserRight,
-                                typeof(Win32Struct.LSA_UNICODE_STRING));
+                                typeof(LSA_UNICODE_STRING));
 
-                            right = (Win32Const.Rights)Enum.Parse(
-                                typeof(Win32Const.Rights),
+                            right = (Rights)Enum.Parse(
+                                typeof(Rights),
                                 userRight.Buffer);
 
                             if (!results.Contains(right))
                                 results.Add(right);
                         }
 
-                        Win32Api.LocalFree(pSid);
+                        NativeMethods.LocalFree(pSid);
                     }
                 }
 
-                Win32Api.NetApiBufferFree(pLocalGroups);
-                Win32Api.NetApiBufferFree(pLocalGroupUserInfo);
+                NativeMethods.NetApiBufferFree(pLocalGroups);
+                NativeMethods.NetApiBufferFree(pLocalGroupUserInfo);
             }
 
-            Win32Api.LsaClose(hLsa);
+            NativeMethods.LsaClose(hLsa);
 
             return results;
         }
 
 
         public static List<string> GetUsersWithRight(
-            Win32Const.Rights right)
+            Rights right)
         {
             int error;
             int ntstatus;
@@ -168,34 +168,34 @@ namespace UserRightsUtil.Library
             IntPtr pSid;
             string accountName;
             var results = new List<string>();
-            var policy = Win32Const.PolicyAccessRights.POLICY_LOOKUP_NAMES |
-                Win32Const.PolicyAccessRights.POLICY_VIEW_LOCAL_INFORMATION;
+            var policy = PolicyAccessRights.POLICY_LOOKUP_NAMES |
+                PolicyAccessRights.POLICY_VIEW_LOCAL_INFORMATION;
 
-            var rights = new Win32Struct.LSA_UNICODE_STRING[1];
-            rights[0] = new Win32Struct.LSA_UNICODE_STRING(right.ToString());
+            var rights = new LSA_UNICODE_STRING[1];
+            rights[0] = new LSA_UNICODE_STRING(right.ToString());
 
             hLsa = GetSystemLsaHandle(policy);
 
             if (hLsa == IntPtr.Zero)
                 return results;
 
-            ntstatus = Win32Api.LsaEnumerateAccountsWithUserRight(
+            ntstatus = NativeMethods.LsaEnumerateAccountsWithUserRight(
                 hLsa,
                 rights,
                 out IntPtr EnumerationBuffer,
                 out int CountReturned);
-            Win32Api.LsaClose(hLsa);
+            NativeMethods.LsaClose(hLsa);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
 
                 if (error == 0x00000103)
                     return results;
 
                 Console.WriteLine("[-] Failed to enumerate account rights.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                Win32Api.LsaClose(hLsa);
+                NativeMethods.LsaClose(hLsa);
 
                 return results;
             }
@@ -207,8 +207,8 @@ namespace UserRightsUtil.Library
 
                 accountName = Helpers.ConvertSidToAccountName(
                     pSid,
-                    out Win32Const.SID_NAME_USE peUse);
-                Win32Api.ConvertSidToStringSid(pSid, out string strSid);
+                    out SID_NAME_USE peUse);
+                NativeMethods.ConvertSidToStringSid(pSid, out string strSid);
 
                 results.Add(string.Format(
                     "{0} (SID : {1}, Type : {2})",
@@ -217,29 +217,29 @@ namespace UserRightsUtil.Library
                     peUse.ToString()));
             }
 
-            Win32Api.LsaFreeMemory(EnumerationBuffer);
+            NativeMethods.LsaFreeMemory(EnumerationBuffer);
 
             return results;
         }
 
 
         public static IntPtr GetSystemLsaHandle(
-            Win32Const.PolicyAccessRights policyAccess)
+            PolicyAccessRights policyAccess)
         {
             int error;
             int ntstatus;
-            var lsaObjAttrs = new Win32Struct.LSA_OBJECT_ATTRIBUTES();
+            var lsaObjAttrs = new LSA_OBJECT_ATTRIBUTES();
             lsaObjAttrs.Length = Marshal.SizeOf(lsaObjAttrs);
 
-            ntstatus = Win32Api.LsaOpenPolicy(
+            ntstatus = NativeMethods.LsaOpenPolicy(
                 IntPtr.Zero,
                 ref lsaObjAttrs,
                 policyAccess,
                 out IntPtr lsaHandle);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to get LSA handle.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
 
@@ -252,12 +252,12 @@ namespace UserRightsUtil.Library
         public static bool GrantSingleUserRight(
             IntPtr hLsa,
             string strSid,
-            Win32Const.Rights right)
+            Rights right)
         {
             int error;
             int ntstatus;
 
-            if (!Win32Api.ConvertStringSidToSid(strSid, out IntPtr pSid))
+            if (!NativeMethods.ConvertStringSidToSid(strSid, out IntPtr pSid))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to resolve SID ({0}).", strSid);
@@ -266,16 +266,16 @@ namespace UserRightsUtil.Library
                 return false;
             }
 
-            var privs = new Win32Struct.LSA_UNICODE_STRING[1];
-            privs[0] = new Win32Struct.LSA_UNICODE_STRING(right.ToString());
+            var privs = new LSA_UNICODE_STRING[1];
+            privs[0] = new LSA_UNICODE_STRING(right.ToString());
 
             Console.WriteLine("[>] Trying to grant {0}.", right.ToString());
 
-            ntstatus = Win32Api.LsaAddAccountRights(hLsa, pSid, privs, 1);
+            ntstatus = NativeMethods.LsaAddAccountRights(hLsa, pSid, privs, 1);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to grant right.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
 
@@ -291,12 +291,12 @@ namespace UserRightsUtil.Library
         public static bool RevokeSingleUserRight(
             IntPtr hLsa,
             string strSid,
-            Win32Const.Rights right)
+            Rights right)
         {
             int error;
             int ntstatus;
 
-            if (!Win32Api.ConvertStringSidToSid(strSid, out IntPtr pSid))
+            if (!NativeMethods.ConvertStringSidToSid(strSid, out IntPtr pSid))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to resolve SID ({0}).", strSid);
@@ -305,16 +305,16 @@ namespace UserRightsUtil.Library
                 return false;
             }
 
-            var privs = new Win32Struct.LSA_UNICODE_STRING[1];
-            privs[0] = new Win32Struct.LSA_UNICODE_STRING(right.ToString());
+            var privs = new LSA_UNICODE_STRING[1];
+            privs[0] = new LSA_UNICODE_STRING(right.ToString());
 
             Console.WriteLine("[>] Trying to revoke {0}", right.ToString());
 
-            ntstatus = Win32Api.LsaRemoveAccountRights(hLsa, pSid, false, privs, 1);
+            ntstatus = NativeMethods.LsaRemoveAccountRights(hLsa, pSid, false, privs, 1);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = Win32Api.LsaNtStatusToWinError(ntstatus);
+                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
                 Console.WriteLine("[-] Failed to revoke right.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
 

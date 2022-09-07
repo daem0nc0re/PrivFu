@@ -4,7 +4,7 @@ using System.Text;
 
 namespace UserRightsUtil.Handler
 {
-    class CommandLineParser
+    internal class CommandLineParser
     {
         private class CommandLineOption
         {

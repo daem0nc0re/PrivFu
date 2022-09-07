@@ -62,12 +62,12 @@ namespace TrustExec.Library
 
             ntstatus = Helpers.AddSidMapping(domain, null, pSidDomain);
 
-            if (ntstatus == Win32Const.STATUS_SUCCESS)
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 Helpers.AddSidMapping(domain, username, pSidUser);
                 Console.WriteLine("[+] Added virtual domain and user.");
             }
-            else if (ntstatus == Win32Const.STATUS_INVALID_PARAMETER)
+            else if (ntstatus == Win32Consts.STATUS_INVALID_PARAMETER)
             {
                 Console.WriteLine("[*] {0} or {1} maybe already exists or invalid.", domainSid, domain);
             }
@@ -169,7 +169,7 @@ namespace TrustExec.Library
         {
             int error;
             int ntstatus;
-            LUID authId = Win32Const.SYSTEM_LUID;
+            LUID authId = Win32Consts.SYSTEM_LUID;
             var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
             tokenSource.SourceIdentifier.HighPart = 0;
             tokenSource.SourceIdentifier.LowPart = 0;
@@ -178,50 +178,50 @@ namespace TrustExec.Library
             if (full)
             {
                 privs = new string[] {
-                    Win32Const.SE_CREATE_TOKEN_NAME,
-                    Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                    Win32Const.SE_LOCK_MEMORY_NAME,
-                    Win32Const.SE_INCREASE_QUOTA_NAME,
-                    Win32Const.SE_MACHINE_ACCOUNT_NAME,
-                    Win32Const.SE_TCB_NAME,
-                    Win32Const.SE_SECURITY_NAME,
-                    Win32Const.SE_TAKE_OWNERSHIP_NAME,
-                    Win32Const.SE_LOAD_DRIVER_NAME,
-                    Win32Const.SE_SYSTEM_PROFILE_NAME,
-                    Win32Const.SE_SYSTEMTIME_NAME,
-                    Win32Const.SE_PROFILE_SINGLE_PROCESS_NAME,
-                    Win32Const.SE_INCREASE_BASE_PRIORITY_NAME,
-                    Win32Const.SE_CREATE_PAGEFILE_NAME,
-                    Win32Const.SE_CREATE_PERMANENT_NAME,
-                    Win32Const.SE_BACKUP_NAME,
-                    Win32Const.SE_RESTORE_NAME,
-                    Win32Const.SE_SHUTDOWN_NAME,
-                    Win32Const.SE_DEBUG_NAME,
-                    Win32Const.SE_AUDIT_NAME,
-                    Win32Const.SE_SYSTEM_ENVIRONMENT_NAME,
-                    Win32Const.SE_CHANGE_NOTIFY_NAME,
-                    Win32Const.SE_REMOTE_SHUTDOWN_NAME,
-                    Win32Const.SE_UNDOCK_NAME,
-                    Win32Const.SE_SYNC_AGENT_NAME,
-                    Win32Const.SE_ENABLE_DELEGATION_NAME,
-                    Win32Const.SE_MANAGE_VOLUME_NAME,
-                    Win32Const.SE_IMPERSONATE_NAME,
-                    Win32Const.SE_CREATE_GLOBAL_NAME,
-                    Win32Const.SE_TRUSTED_CREDMAN_ACCESS_NAME,
-                    Win32Const.SE_RELABEL_NAME,
-                    Win32Const.SE_INCREASE_WORKING_SET_NAME,
-                    Win32Const.SE_TIME_ZONE_NAME,
-                    Win32Const.SE_CREATE_SYMBOLIC_LINK_NAME,
-                    Win32Const.SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
+                    Win32Consts.SE_CREATE_TOKEN_NAME,
+                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                    Win32Consts.SE_LOCK_MEMORY_NAME,
+                    Win32Consts.SE_INCREASE_QUOTA_NAME,
+                    Win32Consts.SE_MACHINE_ACCOUNT_NAME,
+                    Win32Consts.SE_TCB_NAME,
+                    Win32Consts.SE_SECURITY_NAME,
+                    Win32Consts.SE_TAKE_OWNERSHIP_NAME,
+                    Win32Consts.SE_LOAD_DRIVER_NAME,
+                    Win32Consts.SE_SYSTEM_PROFILE_NAME,
+                    Win32Consts.SE_SYSTEMTIME_NAME,
+                    Win32Consts.SE_PROFILE_SINGLE_PROCESS_NAME,
+                    Win32Consts.SE_INCREASE_BASE_PRIORITY_NAME,
+                    Win32Consts.SE_CREATE_PAGEFILE_NAME,
+                    Win32Consts.SE_CREATE_PERMANENT_NAME,
+                    Win32Consts.SE_BACKUP_NAME,
+                    Win32Consts.SE_RESTORE_NAME,
+                    Win32Consts.SE_SHUTDOWN_NAME,
+                    Win32Consts.SE_DEBUG_NAME,
+                    Win32Consts.SE_AUDIT_NAME,
+                    Win32Consts.SE_SYSTEM_ENVIRONMENT_NAME,
+                    Win32Consts.SE_CHANGE_NOTIFY_NAME,
+                    Win32Consts.SE_REMOTE_SHUTDOWN_NAME,
+                    Win32Consts.SE_UNDOCK_NAME,
+                    Win32Consts.SE_SYNC_AGENT_NAME,
+                    Win32Consts.SE_ENABLE_DELEGATION_NAME,
+                    Win32Consts.SE_MANAGE_VOLUME_NAME,
+                    Win32Consts.SE_IMPERSONATE_NAME,
+                    Win32Consts.SE_CREATE_GLOBAL_NAME,
+                    Win32Consts.SE_TRUSTED_CREDMAN_ACCESS_NAME,
+                    Win32Consts.SE_RELABEL_NAME,
+                    Win32Consts.SE_INCREASE_WORKING_SET_NAME,
+                    Win32Consts.SE_TIME_ZONE_NAME,
+                    Win32Consts.SE_CREATE_SYMBOLIC_LINK_NAME,
+                    Win32Consts.SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
                 };
             }
             else
             {
                 privs = new string[] {
-                    Win32Const.SE_DEBUG_NAME,
-                    Win32Const.SE_TCB_NAME,
-                    Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                    Win32Const.SE_IMPERSONATE_NAME
+                    Win32Consts.SE_DEBUG_NAME,
+                    Win32Consts.SE_TCB_NAME,
+                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                    Win32Consts.SE_IMPERSONATE_NAME
                 };
             }
 
@@ -229,7 +229,7 @@ namespace TrustExec.Library
                 tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
             if (!NativeMethods.ConvertStringSidToSid(
-                Win32Const.TRUSTED_INSTALLER_RID,
+                Win32Consts.TRUSTED_INSTALLER_RID,
                 out IntPtr pTrustedInstaller))
             {
                 error = Marshal.GetLastWin32Error();
@@ -320,7 +320,7 @@ namespace TrustExec.Library
             var expirationTime = new LARGE_INTEGER(-1L);
             var sqos = new SECURITY_QUALITY_OF_SERVICE(
                 impersonationLevel,
-                Win32Const.SECURITY_STATIC_TRACKING,
+                Win32Consts.SECURITY_STATIC_TRACKING,
                 0);
             var oa = new OBJECT_ATTRIBUTES(string.Empty, 0);
             IntPtr pSqos = Marshal.AllocHGlobal(Marshal.SizeOf(sqos));
@@ -348,7 +348,7 @@ namespace TrustExec.Library
             NativeMethods.LocalFree(pTokenPrimaryGroup);
             NativeMethods.LocalFree(pTokenDefaultDacl);
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to create privileged token.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
@@ -374,7 +374,7 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to generate token group information.");
 
             if (!NativeMethods.ConvertStringSidToSid(
-                Win32Const.DOMAIN_ALIAS_RID_ADMINS,
+                Win32Consts.DOMAIN_ALIAS_RID_ADMINS,
                 out IntPtr pAdminGroup))
             {
                 error = Marshal.GetLastWin32Error();
@@ -385,7 +385,7 @@ namespace TrustExec.Library
             }
 
             if (!NativeMethods.ConvertStringSidToSid(
-                Win32Const.TRUSTED_INSTALLER_RID,
+                Win32Consts.TRUSTED_INSTALLER_RID,
                 out IntPtr pTrustedInstaller))
             {
                 error = Marshal.GetLastWin32Error();
@@ -396,7 +396,7 @@ namespace TrustExec.Library
             }
 
             if (!NativeMethods.ConvertStringSidToSid(
-                Win32Const.SYSTEM_MANDATORY_LEVEL,
+                Win32Consts.SYSTEM_MANDATORY_LEVEL,
                 out IntPtr pSystemIntegrity))
             {
                 error = Marshal.GetLastWin32Error();
@@ -455,8 +455,8 @@ namespace TrustExec.Library
                 username,
                 domain,
                 null,
-                Win32Const.LOGON32_LOGON_INTERACTIVE,
-                Win32Const.LOGON32_PROVIDER_VIRTUAL,
+                Win32Consts.LOGON32_LOGON_INTERACTIVE,
+                Win32Consts.LOGON32_PROVIDER_VIRTUAL,
                 pTokenGroups,
                 out IntPtr hToken,
                 IntPtr.Zero,
@@ -646,7 +646,7 @@ namespace TrustExec.Library
 
                 if (!status)
                     Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER));
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER));
 
             if (!status)
                 return availablePrivs;
@@ -784,7 +784,7 @@ namespace TrustExec.Library
                 SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
             {
                 Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> May not have {0}.\n", Win32Const.SE_IMPERSONATE_NAME);
+                Console.WriteLine("    |-> May not have {0}.\n", Win32Consts.SE_IMPERSONATE_NAME);
 
                 return false;
             }
@@ -836,14 +836,14 @@ namespace TrustExec.Library
 
             ntstatus = Helpers.RemoveSidMapping(domain, username);
 
-            if (ntstatus == Win32Const.STATUS_NOT_FOUND)
+            if (ntstatus == Win32Consts.STATUS_NOT_FOUND)
             {
                 Console.WriteLine("[-] Requested SID is not exist.\n");
 
                 return false;
             }
 
-            if (ntstatus != Win32Const.STATUS_SUCCESS)
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
                 Console.WriteLine("[!] Unexpected error.");
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));

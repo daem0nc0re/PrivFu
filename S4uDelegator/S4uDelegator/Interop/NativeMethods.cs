@@ -4,7 +4,9 @@ using System.Text;
 
 namespace S4uDelegator.Interop
 {
-    class Win32Api
+    using NTSTATUS = Int32;
+
+    internal class NativeMethods
     {
         /*
          * advapi32.dll
@@ -19,7 +21,7 @@ namespace S4uDelegator.Interop
             IntPtr /*out int*/ ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool AllocateLocallyUniqueId(out Win32Struct.LUID Luid);
+        public static extern bool AllocateLocallyUniqueId(out LUID Luid);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
@@ -35,25 +37,25 @@ namespace S4uDelegator.Interop
             IntPtr lpProcessAttributes,
             IntPtr lpThreadAttributes,
             bool bInheritHandles,
-            Win32Const.ProcessCreationFlags dwCreationFlags,
+            ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
-            ref Win32Struct.STARTUPINFO lpStartupInfo,
-            out Win32Struct.PROCESS_INFORMATION lpProcessInformation);
+            ref STARTUPINFO lpStartupInfo,
+            out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public extern static bool DuplicateTokenEx(
             IntPtr hExistingToken,
-            Win32Const.TokenAccessFlags dwDesiredAccess,
+            TokenAccessFlags dwDesiredAccess,
             IntPtr lpTokenAttributes,
-            Win32Const.SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            Win32Const.TOKEN_TYPE TokenType,
+            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
+            TOKEN_TYPE TokenType,
             out IntPtr phNewToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool GetTokenInformation(
             IntPtr TokenHandle,
-            Win32Const.TOKEN_INFORMATION_CLASS TokenInformationClass,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             int TokenInformationLength,
             out int ReturnLength);
@@ -72,7 +74,7 @@ namespace S4uDelegator.Interop
             ref int cbSid,
             StringBuilder ReferencedDomainName,
             ref int cchReferencedDomainName,
-            out Win32Const.SID_NAME_USE peUse);
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupAccountSid(
@@ -82,12 +84,12 @@ namespace S4uDelegator.Interop
             ref int cchName,
             StringBuilder pReferencedDomainName,
             ref int cchReferencedDomainName,
-            out Win32Const.SID_NAME_USE peUse);
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
-            ref Win32Struct.LUID lpLuid,
+            ref LUID lpLuid,
             StringBuilder lpName,
             ref int cchName);
 
@@ -95,7 +97,7 @@ namespace S4uDelegator.Interop
         public static extern bool LookupPrivilegeValue(
             string lpSystemName,
             string lpName,
-            out Win32Struct.LUID lpLuid);
+            out LUID lpLuid);
 
         [DllImport("advapi32.dll")]
         public static extern int LsaClose(IntPtr PolicyHandle);
@@ -106,7 +108,7 @@ namespace S4uDelegator.Interop
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
-            Win32Const.TokenAccessFlags DesiredAccess,
+            TokenAccessFlags DesiredAccess,
             out IntPtr TokenHandle);
 
         /*
@@ -117,7 +119,7 @@ namespace S4uDelegator.Interop
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
-            Win32Const.FormatMessageFlags dwFlags,
+            FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
             int dwLanguageId,
@@ -127,7 +129,7 @@ namespace S4uDelegator.Interop
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool GetComputerNameEx(
-            Win32Const.COMPUTER_NAME_FORMAT NameType,
+            COMPUTER_NAME_FORMAT NameType,
             StringBuilder lpBuffer,
             ref int nSize);
 
@@ -139,7 +141,7 @@ namespace S4uDelegator.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(
-            Win32Const.ProcessAccessFlags processAccess,
+            ProcessAccessFlags processAccess,
             bool bInheritHandle,
             int processId);
 
@@ -152,32 +154,32 @@ namespace S4uDelegator.Interop
          * secur32.dll
          */
         [DllImport("secur32.dll", SetLastError = false)]
-        public static extern int LsaConnectUntrusted(out IntPtr LsaHandle);
+        public static extern NTSTATUS LsaConnectUntrusted(out IntPtr LsaHandle);
         
         [DllImport("secur32.dll", SetLastError = false)]
-        public static extern int LsaFreeReturnBuffer(IntPtr buffer);
+        public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr buffer);
 
         [DllImport("Secur32.dll", SetLastError = true)]
-        public static extern int LsaLogonUser(
+        public static extern NTSTATUS LsaLogonUser(
             IntPtr LsaHandle,
-            ref Win32Struct.LSA_STRING OriginName,
-            Win32Const.SECURITY_LOGON_TYPE LogonType,
+            ref LSA_STRING OriginName,
+            SECURITY_LOGON_TYPE LogonType,
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
             int AuthenticationInformationLength,
             IntPtr /*ref TOKEN_GROUPS*/ pLocalGroups,
-            ref Win32Struct.TOKEN_SOURCE SourceContext,
+            ref TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
             out int ProfileBufferLength,
-            out Win32Struct.LUID LogonId,
+            out LUID LogonId,
             IntPtr /*out IntPtr Token*/ pToken,
-            out Win32Struct.QUOTA_LIMITS Quotas,
+            out QUOTA_LIMITS Quotas,
             out int SubStatus);
 
         [DllImport("Secur32.dll", SetLastError = true)]
-        public static extern int LsaLookupAuthenticationPackage(
+        public static extern NTSTATUS LsaLookupAuthenticationPackage(
             IntPtr LsaHandle,
-            ref Win32Struct.LSA_STRING PackageName,
+            ref LSA_STRING PackageName,
             out uint AuthenticationPackage);
     }
 }

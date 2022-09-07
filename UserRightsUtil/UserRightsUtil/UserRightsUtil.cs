@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UserRightsUtil.Handler;
 
 namespace UserRightsUtil
 {
-    class UserRightsUtil
+    internal class UserRightsUtil
     {
         static void PrintModules()
         {

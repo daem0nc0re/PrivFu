@@ -4,7 +4,7 @@ using S4uDelegator.Library;
 
 namespace S4uDelegator.Handler
 {
-    class Execute
+    internal class Execute
     {
         public static void LookupCommand(CommandLineParser options)
         {

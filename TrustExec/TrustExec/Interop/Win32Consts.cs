@@ -2,7 +2,7 @@
 
 namespace TrustExec.Interop
 {
-    internal class Win32Const
+    internal class Win32Consts
     {
         // NTSTATUS
         public const int STATUS_SUCCESS = 0;

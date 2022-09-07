@@ -4,7 +4,7 @@ using System.Text;
 
 namespace S4uDelegator.Handler
 {
-    class CommandLineParser
+    internal class CommandLineParser
     {
         private class CommandLineOption
         {

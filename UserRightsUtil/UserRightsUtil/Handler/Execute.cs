@@ -4,7 +4,7 @@ using UserRightsUtil.Library;
 
 namespace UserRightsUtil.Handler
 {
-    class Execute
+    internal class Execute
     {
         // Helpers
         static void ListRights()
@@ -58,103 +58,103 @@ namespace UserRightsUtil.Handler
         }
 
 
-        static bool ResolveRights(string right, out Win32Const.Rights userRight)
+        static bool ResolveRights(string right, out Rights userRight)
         {
             var opt = StringComparison.OrdinalIgnoreCase;
-            userRight = Win32Const.Rights.SeTrustedCredManAccessPrivilege;
+            userRight = Rights.SeTrustedCredManAccessPrivilege;
 
             if (string.Compare(right, "TrustedCredManAccess", opt) == 0)
-                userRight = Win32Const.Rights.SeTrustedCredManAccessPrivilege;
+                userRight = Rights.SeTrustedCredManAccessPrivilege;
             else if (string.Compare(right, "NetworkLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeNetworkLogonRight;
+                userRight = Rights.SeNetworkLogonRight;
             else if (string.Compare(right, "Tcb", opt) == 0)
-                userRight = Win32Const.Rights.SeTcbPrivilege;
+                userRight = Rights.SeTcbPrivilege;
             else if (string.Compare(right, "MachineAccount", opt) == 0)
-                userRight = Win32Const.Rights.SeMachineAccountPrivilege;
+                userRight = Rights.SeMachineAccountPrivilege;
             else if (string.Compare(right, "IncreaseQuota", opt) == 0)
-                userRight = Win32Const.Rights.SeIncreaseQuotaPrivilege;
+                userRight = Rights.SeIncreaseQuotaPrivilege;
             else if (string.Compare(right, "InteractiveLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeInteractiveLogonRight;
+                userRight = Rights.SeInteractiveLogonRight;
             else if (string.Compare(right, "RemoteInteractiveLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeRemoteInteractiveLogonRight;
+                userRight = Rights.SeRemoteInteractiveLogonRight;
             else if (string.Compare(right, "Backup", opt) == 0)
-                userRight = Win32Const.Rights.SeBackupPrivilege;
+                userRight = Rights.SeBackupPrivilege;
             else if (string.Compare(right, "ChangeNotify", opt) == 0)
-                userRight = Win32Const.Rights.SeChangeNotifyPrivilege;
+                userRight = Rights.SeChangeNotifyPrivilege;
             else if (string.Compare(right, "Systemtime", opt) == 0)
-                userRight = Win32Const.Rights.SeSystemtimePrivilege;
+                userRight = Rights.SeSystemtimePrivilege;
             else if (string.Compare(right, "TimeZone", opt) == 0)
-                userRight = Win32Const.Rights.SeTimeZonePrivilege;
+                userRight = Rights.SeTimeZonePrivilege;
             else if (string.Compare(right, "CreatePagefile", opt) == 0)
-                userRight = Win32Const.Rights.SeCreatePagefilePrivilege;
+                userRight = Rights.SeCreatePagefilePrivilege;
             else if (string.Compare(right, "CreateToken", opt) == 0)
-                userRight = Win32Const.Rights.SeCreateTokenPrivilege;
+                userRight = Rights.SeCreateTokenPrivilege;
             else if (string.Compare(right, "CreateGlobal", opt) == 0)
-                userRight = Win32Const.Rights.SeCreateGlobalPrivilege;
+                userRight = Rights.SeCreateGlobalPrivilege;
             else if (string.Compare(right, "CreatePermanent", opt) == 0)
-                userRight = Win32Const.Rights.SeCreatePermanentPrivilege;
+                userRight = Rights.SeCreatePermanentPrivilege;
             else if (string.Compare(right, "CreateSymbolicLink", opt) == 0)
-                userRight = Win32Const.Rights.SeCreateSymbolicLinkPrivilege;
+                userRight = Rights.SeCreateSymbolicLinkPrivilege;
             else if (string.Compare(right, "Debug", opt) == 0)
-                userRight = Win32Const.Rights.SeDebugPrivilege;
+                userRight = Rights.SeDebugPrivilege;
             else if (string.Compare(right, "DenyNetworkLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeDenyNetworkLogonRight;
+                userRight = Rights.SeDenyNetworkLogonRight;
             else if (string.Compare(right, "DenyBatchLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeDenyBatchLogonRight;
+                userRight = Rights.SeDenyBatchLogonRight;
             else if (string.Compare(right, "DenyServiceLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeDenyServiceLogonRight;
+                userRight = Rights.SeDenyServiceLogonRight;
             else if (string.Compare(right, "DenyInteractiveLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeDenyInteractiveLogonRight;
+                userRight = Rights.SeDenyInteractiveLogonRight;
             else if (string.Compare(right, "DenyRemoteInteractiveLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeDenyRemoteInteractiveLogonRight;
+                userRight = Rights.SeDenyRemoteInteractiveLogonRight;
             else if (string.Compare(right, "EnableDelegation", opt) == 0)
-                userRight = Win32Const.Rights.SeEnableDelegationPrivilege;
+                userRight = Rights.SeEnableDelegationPrivilege;
             else if (string.Compare(right, "RemoteShutdown", opt) == 0)
-                userRight = Win32Const.Rights.SeRemoteShutdownPrivilege;
+                userRight = Rights.SeRemoteShutdownPrivilege;
             else if (string.Compare(right, "Audit", opt) == 0)
-                userRight = Win32Const.Rights.SeAuditPrivilege;
+                userRight = Rights.SeAuditPrivilege;
             else if (string.Compare(right, "Impersonate", opt) == 0)
-                userRight = Win32Const.Rights.SeImpersonatePrivilege;
+                userRight = Rights.SeImpersonatePrivilege;
             else if (string.Compare(right, "IncreaseWorkingSet", opt) == 0)
-                userRight = Win32Const.Rights.SeIncreaseWorkingSetPrivilege;
+                userRight = Rights.SeIncreaseWorkingSetPrivilege;
             else if (string.Compare(right, "IncreaseBasePriority", opt) == 0)
-                userRight = Win32Const.Rights.SeIncreaseBasePriorityPrivilege;
+                userRight = Rights.SeIncreaseBasePriorityPrivilege;
             else if (string.Compare(right, "LoadDriver", opt) == 0)
-                userRight = Win32Const.Rights.SeLoadDriverPrivilege;
+                userRight = Rights.SeLoadDriverPrivilege;
             else if (string.Compare(right, "LockMemory", opt) == 0)
-                userRight = Win32Const.Rights.SeLockMemoryPrivilege;
+                userRight = Rights.SeLockMemoryPrivilege;
             else if (string.Compare(right, "BatchLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeBatchLogonRight;
+                userRight = Rights.SeBatchLogonRight;
             else if (string.Compare(right, "ServiceLogon", opt) == 0)
-                userRight = Win32Const.Rights.SeServiceLogonRight;
+                userRight = Rights.SeServiceLogonRight;
             else if (string.Compare(right, "Security", opt) == 0)
-                userRight = Win32Const.Rights.SeSecurityPrivilege;
+                userRight = Rights.SeSecurityPrivilege;
             else if (string.Compare(right, "Relabel", opt) == 0)
-                userRight = Win32Const.Rights.SeRelabelPrivilege;
+                userRight = Rights.SeRelabelPrivilege;
             else if (string.Compare(right, "SystemEnvironment", opt) == 0)
-                userRight = Win32Const.Rights.SeSystemEnvironmentPrivilege;
+                userRight = Rights.SeSystemEnvironmentPrivilege;
             else if (string.Compare(right, "DelegateSessionUserImpersonate", opt) == 0)
-                userRight = Win32Const.Rights.SeDelegateSessionUserImpersonatePrivilege;
+                userRight = Rights.SeDelegateSessionUserImpersonatePrivilege;
             else if (string.Compare(right, "ManageVolume", opt) == 0)
-                userRight = Win32Const.Rights.SeManageVolumePrivilege;
+                userRight = Rights.SeManageVolumePrivilege;
             else if (string.Compare(right, "ProfileSingleProcess", opt) == 0)
-                userRight = Win32Const.Rights.SeProfileSingleProcessPrivilege;
+                userRight = Rights.SeProfileSingleProcessPrivilege;
             else if (string.Compare(right, "SystemProfile", opt) == 0)
-                userRight = Win32Const.Rights.SeSystemProfilePrivilege;
+                userRight = Rights.SeSystemProfilePrivilege;
             else if (string.Compare(right, "UnsolicitedInput", opt) == 0)
-                userRight = Win32Const.Rights.SeUnsolicitedInputPrivilege;
+                userRight = Rights.SeUnsolicitedInputPrivilege;
             else if (string.Compare(right, "Undock", opt) == 0)
-                userRight = Win32Const.Rights.SeUndockPrivilege;
+                userRight = Rights.SeUndockPrivilege;
             else if (string.Compare(right, "AssignPrimaryToken", opt) == 0)
-                userRight = Win32Const.Rights.SeAssignPrimaryTokenPrivilege;
+                userRight = Rights.SeAssignPrimaryTokenPrivilege;
             else if (string.Compare(right, "Restore", opt) == 0)
-                userRight = Win32Const.Rights.SeRestorePrivilege;
+                userRight = Rights.SeRestorePrivilege;
             else if (string.Compare(right, "Shutdown", opt) == 0)
-                userRight = Win32Const.Rights.SeShutdownPrivilege;
+                userRight = Rights.SeShutdownPrivilege;
             else if (string.Compare(right, "SyncAgent", opt) == 0)
-                userRight = Win32Const.Rights.SeSyncAgentPrivilege;
+                userRight = Rights.SeSyncAgentPrivilege;
             else if (string.Compare(right, "TakeOwnership", opt) == 0)
-                userRight = Win32Const.Rights.SeTakeOwnershipPrivilege;
+                userRight = Rights.SeTakeOwnershipPrivilege;
             else
                 return false;
 
@@ -207,7 +207,7 @@ namespace UserRightsUtil.Handler
             else if (!string.IsNullOrEmpty(options.GetValue("right")))
             {
                 if (ResolveRights(options.GetValue("right"),
-                    out Win32Const.Rights userRight))
+                    out Rights userRight))
                 {
                     Modules.EnumerateUsersWithRights(userRight);
                 }
@@ -268,7 +268,7 @@ namespace UserRightsUtil.Handler
             {
                 if (!ResolveRights(
                     options.GetValue("grant"),
-                    out Win32Const.Rights userRight))
+                    out Rights userRight))
                 {
                     Console.WriteLine("\n[!] Failed to resolve user right.\n");
                 }
@@ -285,7 +285,7 @@ namespace UserRightsUtil.Handler
             {
                 if (!ResolveRights(
                     options.GetValue("revoke"),
-                    out Win32Const.Rights userRight))
+                    out Rights userRight))
                 {
                     Console.WriteLine("\n[!] Failed to resolve user right.\n");
                 }

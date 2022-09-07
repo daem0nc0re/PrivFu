@@ -23,16 +23,16 @@ namespace TrustExec.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
 
             privs = new string[] {
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Const.SE_INCREASE_QUOTA_NAME
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
@@ -144,16 +144,16 @@ namespace TrustExec.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
 
             privs = new string[] {
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Const.SE_INCREASE_QUOTA_NAME
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
@@ -195,16 +195,16 @@ namespace TrustExec.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
 
             privs = new string[] {
-                Win32Const.SE_CREATE_TOKEN_NAME,
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME
+                Win32Consts.SE_CREATE_TOKEN_NAME,
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))
@@ -276,16 +276,16 @@ namespace TrustExec.Library
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             var privs = new string[] {
-                Win32Const.SE_DEBUG_NAME,
-                Win32Const.SE_IMPERSONATE_NAME
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME
             };
 
             if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
 
             privs = new string[] {
-                Win32Const.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Const.SE_INCREASE_QUOTA_NAME
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
             if (!Utilities.ImpersonateAsSmss(privs))

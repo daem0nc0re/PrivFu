@@ -110,7 +110,7 @@ namespace TrustExec.Library
                     referencedDomainName.Clear();
                     Marshal.FreeHGlobal(pSid);
                 }
-            } while (!status && error == Win32Const.ERROR_INSUFFICIENT_BUFFER);
+            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
 
             if (!status)
                 return null;
@@ -232,7 +232,7 @@ namespace TrustExec.Library
                     pName.Clear();
                     pReferencedDomainName.Clear();
                 }
-            } while (!status && error == Win32Const.ERROR_INSUFFICIENT_BUFFER);
+            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
 
             if (!status)
                 return null;
@@ -277,7 +277,7 @@ namespace TrustExec.Library
 
                 if (!status)
                     Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Const.ERROR_INSUFFICIENT_BUFFER || error == Win32Const.ERROR_BAD_LENGTH));
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
 
             if (!status)
                 return IntPtr.Zero;

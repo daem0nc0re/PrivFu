@@ -3,7 +3,7 @@ using S4uDelegator.Handler;
 
 namespace S4uDelegator
 {
-    class S4uDelegator
+    internal class S4uDelegator
     {
         static void PrintModules()
         {

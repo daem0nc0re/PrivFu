@@ -4,7 +4,9 @@ using System.Text;
 
 namespace UserRightsUtil.Interop
 {
-    class Win32Api
+    using NTSTATUS = Int32;
+
+    internal class NativeMethods
     {
         /*
          * advapi32.dll
@@ -29,7 +31,7 @@ namespace UserRightsUtil.Interop
             ref int cbSid,
             StringBuilder ReferencedDomainName,
             ref int cchReferencedDomainName,
-            out Win32Const.SID_NAME_USE peUse);
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupAccountSid(
@@ -39,13 +41,13 @@ namespace UserRightsUtil.Interop
             ref int cchName,
             StringBuilder pReferencedDomainName,
             ref int cchReferencedDomainName,
-            out Win32Const.SID_NAME_USE peUse);
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int LsaAddAccountRights(
             IntPtr PolicyHandle,
             IntPtr pSID,
-            Win32Struct.LSA_UNICODE_STRING[] UserRights,
+            LSA_UNICODE_STRING[] UserRights,
             int CountOfRights);
 
         [DllImport("advapi32.dll")]
@@ -61,7 +63,7 @@ namespace UserRightsUtil.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int LsaEnumerateAccountsWithUserRight(
             IntPtr PolicyHandle,
-            Win32Struct.LSA_UNICODE_STRING[] UserRights,
+            LSA_UNICODE_STRING[] UserRights,
             out IntPtr EnumerationBuffer,
             out int CountReturned);
 
@@ -74,8 +76,8 @@ namespace UserRightsUtil.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int LsaOpenPolicy(
             IntPtr SystemName, // Win32Struct.LSA_UNICODE_STRING[]
-            ref Win32Struct.LSA_OBJECT_ATTRIBUTES ObjectAttributes,
-            Win32Const.PolicyAccessRights AccessMask,
+            ref LSA_OBJECT_ATTRIBUTES ObjectAttributes,
+            PolicyAccessRights AccessMask,
             out IntPtr PolicyHandle);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -83,7 +85,7 @@ namespace UserRightsUtil.Interop
             IntPtr PolicyHandle,
             IntPtr pSID,
             bool AllRights,
-            Win32Struct.LSA_UNICODE_STRING[] UserRights,
+            LSA_UNICODE_STRING[] UserRights,
             int CountOfRights);
 
         /*
@@ -91,7 +93,7 @@ namespace UserRightsUtil.Interop
          */
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
-            Win32Const.FormatMessageFlags dwFlags,
+            FormatMessageFlags dwFlags,
             IntPtr lpSource,
             int dwMessageId,
             int dwLanguageId,
