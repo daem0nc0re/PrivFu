@@ -365,8 +365,8 @@ namespace SeSecurityPrivilegePoC
                     peUse);
             }
 
-            TimetToSystemTime((long)record.TimeGenerated, out SYSTEMTIME generatedTime);
-            TimetToSystemTime((long)record.TimeWritten, out SYSTEMTIME writtenTime);
+            TimeToSystemTime((long)record.TimeGenerated, out SYSTEMTIME generatedTime);
+            TimeToSystemTime((long)record.TimeWritten, out SYSTEMTIME writtenTime);
 
             Console.WriteLine("Generated Time : {0}", FormatTime(generatedTime));
             Console.WriteLine("Written Time   : {0}", FormatTime(writtenTime));
@@ -456,7 +456,7 @@ namespace SeSecurityPrivilegePoC
         }
 
 
-        static bool TimetToSystemTime(long time, out SYSTEMTIME systemTime)
+        static bool TimeToSystemTime(long time, out SYSTEMTIME systemTime)
         {
             time = (time * 10000000L) + 116444736000000000L;
             var fileTime = new FILETIME
