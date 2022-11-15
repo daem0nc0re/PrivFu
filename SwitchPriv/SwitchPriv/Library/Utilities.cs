@@ -261,7 +261,7 @@ namespace SwitchPriv.Library
 
             ntstatus = NativeMethods.NtQueryInformationProcess(
                 hProcess,
-                PROCESS_INFORMATION_CLASS.ProcessBasicInformation,
+                PROCESSINFOCLASS.ProcessBasicInformation,
                 buffer,
                 sizeInformation,
                 IntPtr.Zero);

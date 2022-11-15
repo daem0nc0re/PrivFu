@@ -233,7 +233,7 @@ namespace TrustExec.Interop
         [DllImport("ntdll.dll")]
         public static extern int ZwSetInformationProcess(
             IntPtr ProcessHandle,
-            PROCESS_INFORMATION_CLASS ProcessInformationClass,
+            PROCESSINFOCLASS ProcessInformationClass,
             IntPtr ProcessInformation,
             int ProcessInformationLength);
 
