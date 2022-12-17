@@ -206,15 +206,10 @@ namespace UserRightsUtil.Handler
             }
             else if (!string.IsNullOrEmpty(options.GetValue("right")))
             {
-                if (ResolveRights(options.GetValue("right"),
-                    out Rights userRight))
-                {
+                if (ResolveRights(options.GetValue("right"), out Rights userRight))
                     Modules.EnumerateUsersWithRights(userRight);
-                }
                 else
-                {
                     Console.WriteLine("\n[-] Failed to resolve user right.\n");
-                }
             }
             else
             {
@@ -266,9 +261,7 @@ namespace UserRightsUtil.Handler
             }
             else if (!string.IsNullOrEmpty(options.GetValue("grant")))
             {
-                if (!ResolveRights(
-                    options.GetValue("grant"),
-                    out Rights userRight))
+                if (!ResolveRights(options.GetValue("grant"), out Rights userRight))
                 {
                     Console.WriteLine("\n[!] Failed to resolve user right.\n");
                 }
@@ -283,9 +276,7 @@ namespace UserRightsUtil.Handler
             }
             else if (!string.IsNullOrEmpty(options.GetValue("revoke")))
             {
-                if (!ResolveRights(
-                    options.GetValue("revoke"),
-                    out Rights userRight))
+                if (!ResolveRights(options.GetValue("revoke"), out Rights userRight))
                 {
                     Console.WriteLine("\n[!] Failed to resolve user right.\n");
                 }

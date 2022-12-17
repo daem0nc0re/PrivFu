@@ -15,8 +15,7 @@ namespace UserRightsUtil.Library
             string accountName;
             SID_NAME_USE peUse;
 
-            if (!string.IsNullOrEmpty(username) &&
-                !string.IsNullOrEmpty(strSid))
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(strSid))
             {
                 Console.WriteLine("\n[!] Username and SID should not be specified at a time.\n");
 
@@ -25,17 +24,11 @@ namespace UserRightsUtil.Library
             else if (!string.IsNullOrEmpty(username))
             {
                 if (!string.IsNullOrEmpty(domain))
-                {
                     accountName = string.Format("{0}\\{1}", domain, username);
-                }
                 else
-                {
                     accountName = username;
-                }
 
-                strSid = Helpers.ConvertAccountNameToSidString(
-                    ref accountName,
-                    out peUse);
+                strSid = Helpers.ConvertAccountNameToSidString(ref accountName, out peUse);
 
                 if (string.IsNullOrEmpty(strSid))
                 {
@@ -55,9 +48,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(
-                    ref strSid,
-                    out peUse);
+                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
@@ -112,8 +103,7 @@ namespace UserRightsUtil.Library
         }
 
 
-        public static bool EnumerateUsersWithRights(
-            Rights right)
+        public static bool EnumerateUsersWithRights(Rights right)
         {
             Console.WriteLine();
             Console.WriteLine("[>] Trying to find users with {0}.", right.ToString());
@@ -145,14 +135,13 @@ namespace UserRightsUtil.Library
             string strSid,
             Rights userRight)
         {
+            bool status;
             IntPtr hLsa;
             string accountName;
             SID_NAME_USE peUse;
-            var policy = PolicyAccessRights.POLICY_LOOKUP_NAMES |
-                PolicyAccessRights.POLICY_CREATE_ACCOUNT;
+            var policy = PolicyAccessRights.POLICY_LOOKUP_NAMES | PolicyAccessRights.POLICY_CREATE_ACCOUNT;
 
-            if (!string.IsNullOrEmpty(username) &&
-                !string.IsNullOrEmpty(strSid))
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(strSid))
             {
                 Console.WriteLine("\n[!] Username and SID should not be specified at a time.\n");
 
@@ -161,17 +150,11 @@ namespace UserRightsUtil.Library
             else if (!string.IsNullOrEmpty(username))
             {
                 if (!string.IsNullOrEmpty(domain))
-                {
                     accountName = string.Format("{0}\\{1}", domain, username);
-                }
                 else
-                {
                     accountName = username;
-                }
 
-                strSid = Helpers.ConvertAccountNameToSidString(
-                    ref accountName,
-                    out peUse);
+                strSid = Helpers.ConvertAccountNameToSidString(ref accountName, out peUse);
 
                 if (string.IsNullOrEmpty(strSid))
                 {
@@ -189,9 +172,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(
-                    ref strSid,
-                    out peUse);
+                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
@@ -225,20 +206,14 @@ namespace UserRightsUtil.Library
             if (hLsa == IntPtr.Zero)
                 return false;
 
-            bool status = Utilities.GrantSingleUserRight(
-                hLsa,
-                strSid,
-                userRight);
+            status = Utilities.GrantSingleUserRight(hLsa, strSid, userRight);
             NativeMethods.LsaClose(hLsa);
 
             return status;
         }
 
 
-        public static bool LookupSid(
-            string domain,
-            string username,
-            string sid)
+        public static bool LookupSid(string domain, string username, string sid)
         {
             string result;
             string accountName;
@@ -325,13 +300,13 @@ namespace UserRightsUtil.Library
             string strSid,
             Rights userRight)
         {
+            bool status;
             IntPtr hLsa;
             string accountName;
             SID_NAME_USE peUse;
             var policy = PolicyAccessRights.POLICY_LOOKUP_NAMES;
 
-            if (!string.IsNullOrEmpty(username) &&
-                !string.IsNullOrEmpty(strSid))
+            if (!string.IsNullOrEmpty(username) && !string.IsNullOrEmpty(strSid))
             {
                 Console.WriteLine("\n[!] Username and SID should not be specified at a time.\n");
 
@@ -340,13 +315,9 @@ namespace UserRightsUtil.Library
             else if (!string.IsNullOrEmpty(username))
             {
                 if (!string.IsNullOrEmpty(domain))
-                {
                     accountName = string.Format("{0}\\{1}", domain, username);
-                }
                 else
-                {
                     accountName = username;
-                }
 
                 strSid = Helpers.ConvertAccountNameToSidString(
                     ref accountName,
@@ -367,9 +338,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(
-                    ref strSid,
-                    out peUse);
+                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
@@ -402,10 +371,7 @@ namespace UserRightsUtil.Library
             if (hLsa == IntPtr.Zero)
                 return false;
 
-            bool status = Utilities.RevokeSingleUserRight(
-                hLsa,
-                strSid,
-                userRight);
+            status = Utilities.RevokeSingleUserRight(hLsa, strSid, userRight);
             NativeMethods.LsaClose(hLsa);
 
             return status;
