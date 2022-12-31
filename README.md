@@ -57,6 +57,11 @@ Tested on Windows 10 version 1809/1903, but they should work most of Windows 10 
 
 [Project](./PrivEditor)
 
+> __Warning__
+> 
+> In some environment, Debug build does not work.
+> Release build is preferred.
+
 PrivEditor is kernel mode WinDbg extension to manipulate token privilege of specific process.
 This extension makes it easy to configure the token privilege you want to investigate:
 
@@ -77,8 +82,6 @@ Commands :
 
 [*] To see command help, execute "!<Command> help" or "!<Command> /?".
 ```
-
-> __WARNING__ This extension supports both x64 and x86 OS as debug target, but not supports x86 WinDbg.
 
 
 ### getps Command
@@ -101,7 +104,7 @@ If you execute this command without any arguments, this command list all process
 
      PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name
 ======== =================== ======================== ============
-       0 0xfffff805`81233630      0x00000000`00000000 System Idle Process
+       0 0xfffff805`81233630      0x00000000`00000000 Idle
        4 0xffffd60f`ec068380      0xffffaf00`cec07a40 System
       68 0xffffd60f`f1780480      0xffffaf00`d3b290a0 svchost.exe
       88 0xffffd60f`ec0db080      0xffffaf00`cec0d080 Registry
@@ -235,7 +238,7 @@ SeTimeZonePrivilege                        Disabled
 0: kd> !addpriv 5704 debug
 
 [>] Trying to add SeDebugPrivilege.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 5704
 
@@ -262,7 +265,7 @@ If you want to add all token privileges at a time, set `all` as the privilege na
 0: kd> !addpriv 5704 all
 
 [>] Trying to add all privileges.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 5704
 
@@ -321,7 +324,7 @@ SeTimeZonePrivilege                        Disabled
 0: kd> !rmpriv 352 changenotify
 
 [>] Trying to remove SeChangeNotifyPrivilege.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 352
 
@@ -344,7 +347,7 @@ As `!addpriv` command, you can remove all token privileges at a time by setting 
 0: kd> !rmpriv 352 all
 
 [>] Trying to remove all privileges.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 352
 
@@ -399,7 +402,7 @@ SeTimeZonePrivilege                        Disabled
 0: kd> !enablepriv 1932 timezone
 
 [>] Trying to enable SeTimeZonePrivilege.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 1932
 
@@ -440,7 +443,7 @@ SeTimeZonePrivilege                        Enabled
 [*] SeDebugPrivilege is not present.
 [>] Trying to add SeDebugPrivilege.
 [>] Trying to enable SeDebugPrivilege.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 1932
 
@@ -502,7 +505,7 @@ SeTimeZonePrivilege                        Enabled
 0: kd> !disablepriv 1932 debug
 
 [>] Trying to disable SeDebugPrivilege.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 1932
 
@@ -555,7 +558,7 @@ SeIncreaseWorkingSetPrivilege              Disabled
 0: kd> !enableall 3792
 
 [>] Trying to enable all available privileges.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 3792
 
@@ -606,7 +609,7 @@ SeIncreaseWorkingSetPrivilege              Enabled
 0: kd> !disableall 3792
 
 [>] Trying to disable all available privileges.
-[*] Completed.
+[*] Done.
 
 0: kd> !getpriv 3792
 

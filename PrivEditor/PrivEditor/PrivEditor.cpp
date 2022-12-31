@@ -82,7 +82,8 @@ VOID WinDbgExtensionDllInit(
 
     dprintf("\n");
 
-    if (g_IsInitialized) {
+    if (g_IsInitialized)
+    {
         dprintf("PrivEditor - Kernel Mode WinDbg extension for token privilege edit.\n");
         dprintf("\n");
         dprintf("Commands :\n");
@@ -96,10 +97,10 @@ VOID WinDbgExtensionDllInit(
         dprintf("    + !disableall  : Disable all privileges available to a process.\n");
         dprintf("\n");
         dprintf("[*] To see command help, execute \"!<Command> help\" or \"!<Command> /?\".\n");
-        dprintf("\n");
     }
-    else {
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
+    else
+    {
+        dprintf("[!] This extension supports kernel mode debugger only.\n");
     }
 
     dprintf("\n");
@@ -119,58 +120,74 @@ DECLARE_API(addpriv)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!addpriv - Add privilege(s) to a process.\n\n");
-        dprintf("Usage : !addpriv <PID> <Privilege>\n\n");
-        dprintf("    PID       : Specifies target process ID.\n");
-        PrintPrivileges();
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!addpriv - Add privilege(s) to a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !addpriv <PID> <Privilege>\n");
+            dprintf("\n");
+            dprintf("    PID       : Specifies target process ID.\n");
+            PrintPrivileges();
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-        priv = matches[2].str();
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!addpriv help\" or \"!addpriv /?\".\n\n");
-        return;
-    }
-
-    processList = ListProcessInformation();
-
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    mask = GetPrivilegeMask(priv);
-
-    if (mask == 0xdeadbeefdeadbeefULL) {
-        dprintf("[-] Requested privilege is invalid.\n\n");
-        return;
-    }
-
-    if (IsPresent(processList[pid].Privileges, mask)) {
-        if (mask == MASK_ALL)
-            dprintf("[*] All privileges are already present.\n\n");
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+            priv = matches[2].str();
+        }
         else
-            dprintf("[*] %s is already present.\n\n", GetPrivilegeName(mask).c_str());
-        return;
-    }
+        {
+            dprintf("[!] Invalid arguments. See \"!addpriv help\" or \"!addpriv /?\".\n");
+            break;
+        }
 
-    if (mask == MASK_ALL)
-        dprintf("[>] Trying to add all privileges.\n");
-    else
-        dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+        processList = ListProcessInformation();
 
-    SetPresent(processList[pid].Privileges, mask);
-    dprintf("[*] Completed.\n\n");
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
+
+        mask = GetPrivilegeMask(priv);
+
+        if (mask == 0xdeadbeefdeadbeefULL)
+        {
+            dprintf("[-] Requested privilege is invalid.\n");
+            break;
+        }
+
+        if (IsPresent(processList[pid].Privileges, mask))
+        {
+            if (mask == MASK_ALL)
+                dprintf("[*] All privileges are already present.\n");
+            else
+                dprintf("[*] %s is already present.\n", GetPrivilegeName(mask).c_str());
+
+            break;
+        }
+
+        if (mask == MASK_ALL)
+            dprintf("[>] Trying to add all privileges.\n");
+        else
+            dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+
+        SetPresent(processList[pid].Privileges, mask);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
 
 
@@ -185,37 +202,50 @@ DECLARE_API(disableall)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!disableall - Disable all privileges available to a process.\n\n");
-        dprintf("Usage : !disableall <PID>\n\n");
-        dprintf("    PID : Specifies target process ID.\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!disableall - Disable all privileges available to a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !disableall <PID>\n");
+            dprintf("\n");
+            dprintf("    PID : Specifies target process ID.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!disableall help\" or \"!disableall /?\".\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+        }
+        else
+        {
+            dprintf("[!] Invalid arguments. See \"!disableall help\" or \"!disableall /?\".\n");
+            break;
+        }
 
-    processList = ListProcessInformation();
+        processList = ListProcessInformation();
 
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
 
-    dprintf("[>] Trying to disable all available privileges.\n");
-    DisableAllAvailable(processList[pid].Privileges);
-    dprintf("[*] Completed.\n\n");
+        dprintf("[>] Trying to disable all available privileges.\n");
+        DisableAllAvailable(processList[pid].Privileges);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
 
 
@@ -232,50 +262,63 @@ DECLARE_API(disablepriv)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!disablepriv - Disable privilege(s) of a process.\n\n");
-        dprintf("Usage : !disablepriv <PID> <Privilege>\n\n");
-        dprintf("    PID       : Specifies target process ID.\n");
-        PrintPrivileges();
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!disablepriv - Disable privilege(s) of a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !disablepriv <PID> <Privilege>\n");
+            dprintf("\n");
+            dprintf("    PID       : Specifies target process ID.\n");
+            PrintPrivileges();
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-        priv = matches[2].str();
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!disablepriv help\" or \"!disablepriv help\".\n\n");
-        return;
-    }
-    
-    processList = ListProcessInformation();
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+            priv = matches[2].str();
+        }
+        else {
+            dprintf("[!] Invalid arguments. See \"!disablepriv help\" or \"!disablepriv help\".\n");
+            break;
+        }
 
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
+        processList = ListProcessInformation();
 
-    mask = GetPrivilegeMask(priv);
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
 
-    if (mask == 0xdeadbeefdeadbeefULL) {
-        dprintf("[-] Requested privilege is invalid.\n\n");
-        return;
-    }
+        mask = GetPrivilegeMask(priv);
 
-    if (mask == MASK_ALL)
-        dprintf("[>] Trying to disable all privileges.\n");
-    else
-        dprintf("[>] Trying to disable %s.\n", GetPrivilegeName(mask).c_str());
-    
-    RemoveEnabled(processList[pid].Privileges, mask);
-    dprintf("[*] Completed.\n\n");
+        if (mask == 0xdeadbeefdeadbeefULL)
+        {
+            dprintf("[-] Requested privilege is invalid.\n");
+            break;
+        }
+
+        if (mask == MASK_ALL)
+            dprintf("[>] Trying to disable all privileges.\n");
+        else
+            dprintf("[>] Trying to disable %s.\n", GetPrivilegeName(mask).c_str());
+
+        RemoveEnabled(processList[pid].Privileges, mask);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
 
 
@@ -290,37 +333,51 @@ DECLARE_API(enableall)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!enableall - Enable all privileges available to a process.\n\n");
-        dprintf("Usage : !enableall <PID>\n\n");
-        dprintf("    PID       : Specifies target process ID.\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!enableall - Enable all privileges available to a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !enableall <PID>\n");
+            dprintf("\n");
+            dprintf("    PID       : Specifies target process ID.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!enableall help\" or \"!enableall /?\".\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+        }
+        else
+        {
+            dprintf("[!] Invalid arguments. See \"!enableall help\" or \"!enableall /?\".\n");
+            break;
+        }
 
-    processList = ListProcessInformation();
+        processList = ListProcessInformation();
 
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
 
-    dprintf("[>] Trying to enable all available privileges.\n");
-    EnableAllAvailable(processList[pid].Privileges);
-    dprintf("[*] Completed.\n\n");
+        dprintf("[>] Trying to enable all available privileges.\n");
+
+        EnableAllAvailable(processList[pid].Privileges);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
 
 
@@ -337,71 +394,90 @@ DECLARE_API(enablepriv)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
-
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!enablepriv - Enable privilege(s) of a process.\n\n");
-        dprintf("Usage : !enablepriv <PID> <Privilege>\n\n");
-        dprintf("    PID       : Specifies target process ID.\n");
-        PrintPrivileges();
-        return;
-    }
-
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-        priv = matches[2].str();
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!enablepriv help\" or \"!enablepriv /?\".\n\n");
-        return;
-    }
-
-    processList = ListProcessInformation();
-
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    mask = GetPrivilegeMask(priv);
-
-    if (mask == 0xdeadbeefdeadbeefULL) {
-        dprintf("[-] Requested privilege is invalid.\n\n");
-        return;
-    }
-
-    if (!IsPresent(processList[pid].Privileges, mask)) {
-        if (mask == MASK_ALL) {
-            dprintf("[*] Not all privileges are present.\n");
-            dprintf("[>] Trying to add all privileges.\n");
-        }
-        else {
-            dprintf("[*] %s is not present.\n", GetPrivilegeName(mask).c_str());
-            dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
         }
 
-        SetPresent(processList[pid].Privileges, mask);
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!enablepriv - Enable privilege(s) of a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !enablepriv <PID> <Privilege>\n");
+            dprintf("\n");
+            dprintf("    PID       : Specifies target process ID.\n");
+            PrintPrivileges();
+            break;
+        }
 
-    if (IsEnabled(processList[pid].Privileges, mask)) {
-        if (mask == MASK_ALL)
-            dprintf("[*] All privileges are already enabled.\n\n");
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+            priv = matches[2].str();
+        }
         else
-            dprintf("[*] %s is already enabled.\n\n", GetPrivilegeName(mask).c_str());
-        return;
-    }
+        {
+            dprintf("[!] Invalid arguments. See \"!enablepriv help\" or \"!enablepriv /?\".\n");
+            break;
+        }
 
-    if (mask == MASK_ALL)
-        dprintf("[>] Trying to enable all privileges.\n");
-    else
-        dprintf("[>] Trying to enable %s.\n", GetPrivilegeName(mask).c_str());
+        processList = ListProcessInformation();
 
-    SetEnabled(processList[pid].Privileges, mask);
-    dprintf("[*] Completed.\n\n");
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
+
+        mask = GetPrivilegeMask(priv);
+
+        if (mask == 0xdeadbeefdeadbeefULL)
+        {
+            dprintf("[-] Requested privilege is invalid.\n");
+            break;
+        }
+
+        if (!IsPresent(processList[pid].Privileges, mask))
+        {
+            if (mask == MASK_ALL)
+            {
+                dprintf("[*] Not all privileges are present.\n");
+                dprintf("[>] Trying to add all privileges.\n");
+            }
+            else
+            {
+                dprintf("[*] %s is not present.\n", GetPrivilegeName(mask).c_str());
+                dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
+            }
+
+            SetPresent(processList[pid].Privileges, mask);
+        }
+
+        if (IsEnabled(processList[pid].Privileges, mask))
+        {
+            if (mask == MASK_ALL)
+                dprintf("[*] All privileges are already enabled.\n");
+            else
+                dprintf("[*] %s is already enabled.\n", GetPrivilegeName(mask).c_str());
+
+            break;
+        }
+
+        if (mask == MASK_ALL)
+            dprintf("[>] Trying to enable all privileges.\n");
+        else
+            dprintf("[>] Trying to enable %s.\n", GetPrivilegeName(mask).c_str());
+
+        SetEnabled(processList[pid].Privileges, mask);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
 
 
@@ -453,53 +529,64 @@ DECLARE_API(getpriv)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!getpriv - List privileges of a process.\n\n");
-        dprintf("Usage : !getpriv <PID>\n\n");
-        dprintf("    PID : Specifies target process ID.\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!getpriv - List privileges of a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !getpriv <PID>\n");
+            dprintf("\n");
+            dprintf("    PID : Specifies target process ID.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!getpriv help\" or \"!getpriv /?\".\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+        }
+        else
+        {
+            dprintf("[!] Invalid arguments. See \"!getpriv help\" or \"!getpriv /?\".\n");
+            break;
+        }
 
-    if (pid == 0) {
-        dprintf("[-] System Idle Process (PID : 0) has no token.\n\n");
-        return;
-    }
+        if (pid == 0) {
+            dprintf("[-] System Idle Process (PID : 0) has no token.\n");
+            break;
+        }
 
-    processList = ListProcessInformation();
+        processList = ListProcessInformation();
 
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
 
-    dprintf("Privilege Name                             State\n");
-    dprintf("========================================== ========\n");
+        dprintf("Privilege Name                             State\n");
+        dprintf("========================================== ========\n");
 
-    for (ULONG64 mask : masks) {
-        if (IsPresent(processList[pid].Privileges, mask))
-            dprintf("%-42s %s\n", GetPrivilegeName(mask).c_str(), IsEnabled(processList[pid].Privileges, mask) ? "Enabled" : "Disabled");
-    }
+        for (ULONG64 mask : masks)
+        {
+            if (IsPresent(processList[pid].Privileges, mask))
+                dprintf("%-42s %s\n", GetPrivilegeName(mask).c_str(), IsEnabled(processList[pid].Privileges, mask) ? "Enabled" : "Disabled");
+        }
 
-    dprintf("\n");
+        dprintf("\n");
 
-    dprintf("[*] PID                      : %d\n", pid);
-    dprintf("[*] Process Name             : %s\n", processList[pid].ProcessName);
-    dprintf("[*] nt!_EPROCESS             : %s\n", PointerToString(processList[pid].Eprocess).c_str());
-    dprintf("[*] nt!_SEP_TOKEN_PRIVILEGES : %s\n", PointerToString(processList[pid].Privileges).c_str());
+        dprintf("[*] PID                      : %d\n", pid);
+        dprintf("[*] Process Name             : %s\n", processList[pid].ProcessName);
+        dprintf("[*] nt!_EPROCESS             : %s\n", PointerToString(processList[pid].Eprocess).c_str());
+        dprintf("[*] nt!_SEP_TOKEN_PRIVILEGES : %s\n", PointerToString(processList[pid].Privileges).c_str());
+    } while (FALSE);
 
     dprintf("\n");
 }
@@ -517,55 +604,74 @@ DECLARE_API(getps)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
-
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!getps - List processes in target system.\n\n");
-        dprintf("Usage : !getps [Process Name]\n\n");
-        dprintf("    Process Name : (OPTIONAL) Specifies filter string for process name.\n\n");
-        return;
-    }
-
-    if (std::regex_match(cmdline, matches, re_expected))
-        filter = matches[1].str();
-
-    processList = ListProcessInformation();
-
-    for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : processList)
+    do
     {
-        if (_strnicmp(filter.c_str(), proc.second.ProcessName, filter.size()) == 0)
-            filteredList[proc.first] = proc.second;
-    }
-
-    if (IsPtr64()) {
-        dprintf("     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
-        dprintf("======== =================== ======================== ============\n");
-    }
-    else {
-        dprintf("     PID nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
-        dprintf("======== ============ ======================== ============\n");
-    }
-
-    for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : filteredList) {
-        if (IsPtr64()) {
-            dprintf("%8d %19s %24s %s\n",
-                proc.first,
-                PointerToString(proc.second.Eprocess).c_str(),
-                PointerToString(proc.second.Privileges).c_str(),
-                proc.second.ProcessName);
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
         }
-        else {
-            dprintf("%8d %12s %24s %s\n",
-                proc.first,
-                PointerToString(proc.second.Eprocess).c_str(),
-                PointerToString(proc.second.Privileges).c_str(),
-                proc.second.ProcessName);
+
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!getps - List processes in target system.\n");
+            dprintf("\n");
+            dprintf("Usage : !getps [Process Name]\n");
+            dprintf("\n");
+            dprintf("    Process Name : (OPTIONAL) Specifies filter string for process name.\n");
+            break;
         }
-    }
+
+        if (std::regex_match(cmdline, matches, re_expected))
+            filter = matches[1].str();
+
+        processList = ListProcessInformation();
+
+        for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : processList)
+        {
+            if (_strnicmp(filter.c_str(), proc.second.ProcessName, filter.size()) == 0)
+                filteredList[proc.first] = proc.second;
+        }
+
+        if (filteredList.size() > 0)
+        {
+            if (IsPtr64())
+            {
+                dprintf("     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
+                dprintf("======== =================== ======================== ============\n");
+            }
+            else
+            {
+                dprintf("     PID nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
+                dprintf("======== ============ ======================== ============\n");
+            }
+
+            for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : filteredList)
+            {
+                if (IsPtr64())
+                {
+                    dprintf("%8d %19s %24s %s\n",
+                        proc.first,
+                        PointerToString(proc.second.Eprocess).c_str(),
+                        PointerToString(proc.second.Privileges).c_str(),
+                        proc.second.ProcessName);
+                }
+                else
+                {
+                    dprintf("%8d %12s %24s %s\n",
+                        proc.first,
+                        PointerToString(proc.second.Eprocess).c_str(),
+                        PointerToString(proc.second.Privileges).c_str(),
+                        proc.second.ProcessName);
+                }
+            }
+        }
+        else
+        {
+            dprintf("[-] No entries.\n");
+        }
+    } while (FALSE);
 
     dprintf("\n");
 }
@@ -584,48 +690,62 @@ DECLARE_API(rmpriv)
 
     dprintf("\n");
 
-    if (!g_IsInitialized) {
-        dprintf("[-] Extension is not initialized.\n");
-        dprintf("[!] This extension supports kernel mode debugger only.\n\n");
-        return;
-    }
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_help)) {
-        dprintf("!rmpriv - Remove privilege(s) from a process.\n\n");
-        dprintf("Usage : !rmpriv <PID> <Privilege>\n\n");
-        dprintf("    PID       : Specifies target process ID.\n");
-        PrintPrivileges();
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!rmpriv - Remove privilege(s) from a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !rmpriv <PID> <Privilege>\n");
+            dprintf("\n");
+            dprintf("    PID       : Specifies target process ID.\n");
+            PrintPrivileges();
+            break;
+        }
 
-    if (std::regex_match(cmdline, matches, re_expected)) {
-        pid = (ULONG_PTR)std::stoull(matches[1].str());
-        priv = matches[2].str();
-    }
-    else {
-        dprintf("[!] Invalid arguments. See \"!rmpriv help\" or \"!rmpriv /?\".\n\n");
-        return;
-    }
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+            priv = matches[2].str();
+        }
+        else
+        {
+            dprintf("[!] Invalid arguments. See \"!rmpriv help\" or \"!rmpriv /?\".\n");
+            break;
+        }
 
-    processList = ListProcessInformation();
+        processList = ListProcessInformation();
 
-    if (processList.find(pid) == processList.end()) {
-        dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
 
-    mask = GetPrivilegeMask(priv);
+        mask = GetPrivilegeMask(priv);
 
-    if (mask == 0xdeadbeefdeadbeefULL) {
-        dprintf("[-] Requested privilege is invalid.\n\n");
-        return;
-    }
+        if (mask == 0xdeadbeefdeadbeefULL)
+        {
+            dprintf("[-] Requested privilege is invalid.\n");
+            break;
+        }
 
-    if (mask == MASK_ALL)
-        dprintf("[>] Trying to remove all privileges.\n");
-    else
-        dprintf("[>] Trying to remove %s.\n", GetPrivilegeName(mask).c_str());
+        if (mask == MASK_ALL)
+            dprintf("[>] Trying to remove all privileges.\n");
+        else
+            dprintf("[>] Trying to remove %s.\n", GetPrivilegeName(mask).c_str());
 
-    RemovePresent(processList[pid].Privileges, mask);
-    dprintf("[*] Completed.\n\n");
+        RemovePresent(processList[pid].Privileges, mask);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
 }
