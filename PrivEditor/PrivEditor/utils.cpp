@@ -1,45 +1,42 @@
 #include "pch.h"
-#include "utils.h"
-#include "helpers.h"
 #include "PrivEditor.h"
+#include "helpers.h"
+#include "utils.h"
 
-ULONG_PTR g_Eprocess = 0;
-KERNEL_OFFSETS g_Offsets = { 0 };
-
-BOOL DisableAllAvailable(ULONG_PTR pTokenPrivilege)
+BOOL DisableAllAvailable(ULONG64 pTokenPrivilege)
 {
-    return WriteQword(pTokenPrivilege + g_Offsets.Enabled, 0ULL);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Enabled, 0ULL);
 }
 
 
-BOOL EnableAllAvailable(ULONG_PTR pTokenPrivilege)
+BOOL EnableAllAvailable(ULONG64 pTokenPrivilege)
 {
     ULONG64 available;
-    ReadQword(pTokenPrivilege + g_Offsets.Present, &available);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Present, &available);
 
-    return WriteQword(pTokenPrivilege + g_Offsets.Enabled, available);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Enabled, available);
 }
 
 
-VOID FlipPresentBit(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+VOID FlipPresentBit(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 currentPrivileges;
     ULONG64 flippedPrivileges;
 
-    ReadQword(pTokenPrivilege + g_Offsets.Present, &currentPrivileges);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Present, &currentPrivileges);
     flippedPrivileges = currentPrivileges ^ mask;
-    WriteQword(pTokenPrivilege + g_Offsets.Present, flippedPrivileges);
+    WriteQword(pTokenPrivilege + g_KernelOffsets.Present, flippedPrivileges);
 }
 
 
-VOID FlipEnabledBit(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+VOID FlipEnabledBit(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 currentPrivileges;
     ULONG64 flippedPrivileges;
 
-    ReadQword(pTokenPrivilege + g_Offsets.Enabled, &currentPrivileges);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Enabled, &currentPrivileges);
     flippedPrivileges = currentPrivileges ^ mask;
-    WriteQword(pTokenPrivilege + g_Offsets.Enabled, flippedPrivileges);
+    WriteQword(pTokenPrivilege + g_KernelOffsets.Enabled, flippedPrivileges);
 }
 
 
@@ -199,37 +196,36 @@ std::string GetPrivilegeName(ULONG64 mask)
 }
 
 
-std::string GetFileName(ULONG_PTR pEprocess)
+std::string GetFileName(ULONG64 pEprocess)
 {
-    ULONG_PTR pImageFilePointer;
-    ULONG_PTR pUnicodeBuffer;
-    std::wstring unicodeName;
-    size_t ret;
-    size_t size;
-    char* buffer;
-    ReadPointer(pEprocess + g_Offsets.ImageFilePointer, &pImageFilePointer);
-    ReadPointer(pImageFilePointer + g_Offsets.FileName + g_Offsets.Buffer, &pUnicodeBuffer);
+    std::string fileName;
+    ULONG64 pImageFilePointer = 0ULL;
+    UNICODE_STRING unicodeString = { 0 };
+    ULONG nFileNameOffset = IsPtr64() ? 0x58UL : 0x30UL; // ntdll!_FILE_OBJECT.FileName
+    ULONG cb = 0UL;
 
-    if (IsKernelAddress(pUnicodeBuffer)) {
-        unicodeName = ReadUnicodeString(pUnicodeBuffer, 128);
-        size = unicodeName.length() * MB_CUR_MAX + 1;
-        buffer = new char[size];
-        wcstombs_s(&ret, buffer, size, unicodeName.c_str(), size);
-
-        return std::string(buffer);
-    }
-    else
+    if (ReadPtr(pEprocess + g_KernelOffsets.ImageFilePointer, &pImageFilePointer))
         return std::string("");
+
+    if (ReadMemory(pImageFilePointer + nFileNameOffset,
+        &unicodeString,
+        sizeof(UNICODE_STRING),
+        &cb))
+    {
+        fileName = ReadUnicodeString((ULONG64)unicodeString.Buffer, unicodeString.Length);
+    }
+
+    return fileName;
 }
 
 
-std::string GetImageFileName(ULONG_PTR pEprocess)
+std::string GetImageFileName(ULONG64 pEprocess)
 {
-    return ReadAnsiString(pEprocess + g_Offsets.ImageFileName, 16);
+    return ReadAnsiString(pEprocess + g_KernelOffsets.ImageFileName, 16);
 }
 
 
-std::string GetProcessName(ULONG_PTR pEprocess)
+std::string GetProcessName(ULONG64 pEprocess)
 {
     std::regex re_expected(R"([\S ]+\\([^\\]+))");
     std::smatch matches;
@@ -246,87 +242,26 @@ std::string GetProcessName(ULONG_PTR pEprocess)
 }
 
 
-ULONG_PTR GetTokenPointer(ULONG_PTR pEprocess)
+ULONG64 GetTokenPointer(ULONG64 pEprocess)
 {
-    ULONG_PTR pTokenPrivilege;
-    ReadPointer(pEprocess + g_Offsets.Token, &pTokenPrivilege);
+    ULONG64 pTokenPrivilege;
+    ReadPtr(pEprocess + g_KernelOffsets.Token, &pTokenPrivilege);
 
     if (IsPtr64())
-        pTokenPrivilege &= 0xfffffffffffffff0ULL;
+        pTokenPrivilege &= 0xFFFFFFFFFFFFFFF0ULL;
     else
-        pTokenPrivilege &= 0xfffffff8UL;
+        pTokenPrivilege &= 0xFFFFFFF8UL;
 
-    pTokenPrivilege += g_Offsets.Privileges;
+    pTokenPrivilege += g_KernelOffsets.Privileges;
 
     return pTokenPrivilege;
 }
 
 
-BOOL Initialize()
-{
-    ULONG_PTR pKthread = GetExpression("nt!KiInitialThread");
-
-    if (pKthread == NULL) {
-        dprintf("[!] Failed to resolve Kernel address.\n");
-        return FALSE;
-    }
-
-    if (FAILED(GetFieldOffset("nt!_KTHREAD", "ApcState", &g_Offsets.ApcState)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_KAPC_STATE", "Process", &g_Offsets.Process)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_EPROCESS", "UniqueProcessId", &g_Offsets.UniqueProcessId)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_EPROCESS", "ActiveProcessLinks", &g_Offsets.ActiveProcessLinks)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_EPROCESS", "Token", &g_Offsets.Token)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_EPROCESS", "ImageFilePointer", &g_Offsets.ImageFilePointer)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_EPROCESS", "ImageFileName", &g_Offsets.ImageFileName)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_TOKEN", "Privileges", &g_Offsets.Privileges)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "Present", &g_Offsets.Present)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "Enabled", &g_Offsets.Enabled)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "EnabledByDefault", &g_Offsets.EnabledByDefault)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("ntdll!_FILE_OBJECT", "FileName", &g_Offsets.FileName)))
-        return FALSE;
-
-    if (FAILED(GetFieldOffset("ntdll!_UNICODE_STRING", "Buffer", &g_Offsets.Buffer)))
-        return FALSE;
-
-    ULONG_PTR pApcState;
-
-    // Resolve System EPROCESS
-    if (!ReadPointer(pKthread + g_Offsets.ApcState, &pApcState))
-        return FALSE;
-
-    if (!ReadPointer(pApcState + g_Offsets.Process, &g_Eprocess))
-        return FALSE;
-
-    return TRUE;
-}
-
-
-BOOL IsEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL IsEnabled(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
-    ReadQword(pTokenPrivilege + g_Offsets.Enabled, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Enabled, &current);
 
     if (mask == MASK_ALL)
         return (current == MASK_ALL);
@@ -335,16 +270,10 @@ BOOL IsEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
 }
 
 
-BOOL IsInitialized()
-{
-    return IsKernelAddress(g_Eprocess);
-}
-
-
-BOOL IsPresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL IsPresent(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
-    ReadQword(pTokenPrivilege + g_Offsets.Present, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Present, &current);
 
     if (mask == MASK_ALL)
         return (current == MASK_ALL);
@@ -353,65 +282,67 @@ BOOL IsPresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
 }
 
 
-std::map<ULONG_PTR, ULONG_PTR> ListEprocess()
+std::map<ULONG_PTR, PROCESS_CONTEXT> ListProcessInformation()
 {
-    ULONG_PTR uniqueProcessId;
-    ULONG_PTR token;
-    ULONG_PTR currentProcess = g_Eprocess;
-    ULONG_PTR activeProcessLink;
-    std::map<ULONG_PTR, ULONG_PTR> processList;
+    std::map<ULONG_PTR, PROCESS_CONTEXT> results;
+    ULONG64 value;
+    ULONG64 pCurrent = g_SystemProcess;
+    std::string processName;
+    PROCESS_CONTEXT context = { 0 };
+    ULONG_PTR uniqueProcessId = 0;
+    ULONG cb = 0UL;
+    size_t len = 0;
 
-    for (int count = 0; count < 1024; count++) {
-        ReadPointer(currentProcess + g_Offsets.UniqueProcessId, &uniqueProcessId);
-        ReadPointer(currentProcess + g_Offsets.Token, &token);
+    do
+    {
+        context = { 0 };
 
-        if (IsPtr64())
-            token &= 0xfffffffffffffff0ULL;
+        if (!ReadPtr(pCurrent + g_KernelOffsets.UniqueProcessId, &value))
+        {
+            uniqueProcessId = (ULONG_PTR)value;
+            context.Eprocess = pCurrent;
+            processName = GetProcessName(pCurrent);
+            len = (processName.length() > 255) ? 255 : processName.length();
+
+            if (len == 0)
+            {
+                uniqueProcessId = 0;
+                processName = std::string("Idle");
+                len = processName.length();
+                context.Token = 0ULL;
+                context.Privileges = 0ULL;
+            }
+            else
+            {
+                ReadPtr(pCurrent + g_KernelOffsets.Token, &context.Token);
+
+                if (IsPtr64())
+                    context.Token &= 0xFFFFFFFFFFFFFFF0ULL;
+                else
+                    context.Token &= 0xFFFFFFF8UL;
+
+                context.Privileges = context.Token + g_KernelOffsets.Privileges;
+            }
+
+            ::strcpy_s(context.ProcessName, (rsize_t)&len, processName.c_str());
+
+            if (results.find(uniqueProcessId) == results.end())
+                results[uniqueProcessId] = context;
+            else
+                break;
+
+            if (!ReadPtr(pCurrent + g_KernelOffsets.ActiveProcessLinks, &value))
+                pCurrent = value - g_KernelOffsets.ActiveProcessLinks;
+            else
+                break;
+        }
         else
-            token &= 0xfffffff8UL;
-
-        if (token == 0)
-            uniqueProcessId = 0;
-
-        if (processList.find(uniqueProcessId) == processList.end())
-            processList[uniqueProcessId] = currentProcess;
-        else
+        {
             break;
+        }
+    } while (pCurrent != g_SystemProcess);
 
-        ReadPointer(currentProcess + g_Offsets.ActiveProcessLinks, &activeProcessLink);
-        currentProcess = activeProcessLink - g_Offsets.ActiveProcessLinks;
-    }
-
-    return processList;
-}
-
-
-VOID PrintDebugInfo()
-{
-    dprintf("[DEBUG INFORMATION]\n");
-    dprintf("nt!_EPROCESS for System @ 0x%p\n", g_Eprocess);
-    dprintf("nt!_KTHREAD\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.ApcState, "ApcState");
-    dprintf("nt!_KAPC_STATE\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Process, "Process");
-    dprintf("nt!_EPROCESS\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.UniqueProcessId, "UniqueProcessId");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.ActiveProcessLinks, "ActiveProcessLinks");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Token, "Token");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.ImageFilePointer, "ImageFilePointer");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.ImageFileName, "ImageFileName");
-    dprintf("nt!_TOKEN\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Privileges, "Privileges");
-    dprintf("nt!_SEP_TOKEN_PRIVILEGES\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Present, "Present");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Enabled, "Enabled");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.EnabledByDefault, "EnabledByDefault");
-    dprintf("ntdll!_FILE_OBJECT\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.FileName, "FileName");
-    dprintf("ntdll!_UNICODE_STRING\n");
-    dprintf("    +0x%-4x : %s\n", g_Offsets.Buffer, "Buffer");
-    dprintf("\n");
-    dprintf("\n_EPROCESS for System (PID : 4) @ 0x%p\n\n", g_Eprocess);
+    return results;
 }
 
 
@@ -457,39 +388,39 @@ VOID PrintPrivileges()
 }
 
 
-BOOL RemoveEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL RemoveEnabled(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
     ULONG64 privMask = MASK_ALL ^ mask;
-    ReadQword(pTokenPrivilege + g_Offsets.Enabled, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Enabled, &current);
 
-    return WriteQword(pTokenPrivilege + g_Offsets.Enabled, current & privMask);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Enabled, current & privMask);
 }
 
 
-BOOL RemovePresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL RemovePresent(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
     ULONG64 privMask = MASK_ALL ^ mask;
-    ReadQword(pTokenPrivilege + g_Offsets.Present, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Present, &current);
 
-    return WriteQword(pTokenPrivilege + g_Offsets.Present, current & privMask);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Present, current & privMask);
 }
 
 
-BOOL SetEnabled(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL SetEnabled(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
-    ReadQword(pTokenPrivilege + g_Offsets.Enabled, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Enabled, &current);
 
-    return WriteQword(pTokenPrivilege + g_Offsets.Enabled, current | mask);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Enabled, current | mask);
 }
 
 
-BOOL SetPresent(ULONG_PTR pTokenPrivilege, ULONG64 mask)
+BOOL SetPresent(ULONG64 pTokenPrivilege, ULONG64 mask)
 {
     ULONG64 current;
-    ReadQword(pTokenPrivilege + g_Offsets.Present, &current);
+    ReadQword(pTokenPrivilege + g_KernelOffsets.Present, &current);
 
-    return WriteQword(pTokenPrivilege + g_Offsets.Present, current | mask);
+    return WriteQword(pTokenPrivilege + g_KernelOffsets.Present, current | mask);
 }

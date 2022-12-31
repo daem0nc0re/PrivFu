@@ -38,25 +38,30 @@
 #define MASK_DELEGATE_SESSION_USER_IMPERSONATE 0x0000001000000000ULL // SeDelegateSessionUserImpersonatePrivilege
 #define MASK_ALL                               0x0000001ffffffffcULL // Mask for all privileges
 
-typedef struct {
-    // nt!_KTHREAD
-    ULONG ApcState;
-    // _KAPC_STATE
-    ULONG Process;
+typedef struct _KERNEL_OFFSETS
+{
     // nt!_EPROCESS
     ULONG UniqueProcessId;
     ULONG ActiveProcessLinks;
-    ULONG Token;
     ULONG ImageFilePointer;
     ULONG ImageFileName;
-    // nt!_TOKEN
+    ULONG Token;
+    // nt!_Token
     ULONG Privileges;
     // nt!_SEP_TOKEN_PRIVILEGES
     ULONG Present;
     ULONG Enabled;
     ULONG EnabledByDefault;
-    // _FILE_OBJECT
-    ULONG FileName;
-    // _UNICODE_STRING
-    ULONG Buffer;
-} KERNEL_OFFSETS;
+} KERNEL_OFFSETS, * PKERNEL_OFFSETS;
+
+typedef struct _PROCESS_CONTEXT
+{
+    ULONG64 Eprocess;
+    ULONG64 Token;
+    ULONG64 Privileges;
+    CHAR ProcessName[256];
+} PROCESS_CONTEXT, * PPROCESS_CONTEXT;
+
+extern BOOL g_IsInitialized;
+extern ULONG64 g_SystemProcess;
+extern KERNEL_OFFSETS g_KernelOffsets;

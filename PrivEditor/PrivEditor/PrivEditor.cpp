@@ -17,18 +17,72 @@ LPEXT_API_VERSION ExtensionApiVersion(void)
     return &ApiVersion;
 }
 
+BOOL g_IsInitialized = FALSE;
+ULONG64 g_SystemProcess = 0ULL;
+KERNEL_OFFSETS g_KernelOffsets = { 0 };
 
 VOID WinDbgExtensionDllInit(
     PWINDBG_EXTENSION_APIS lpExtensionApis,
-    USHORT MajorVersion,
-    USHORT MinorVersion
+    USHORT /* MajorVersion */,
+    USHORT /* MinorVersion */
 )
 {
+    ULONG64 pKthread = 0ULL;
+    ULONG64 pApcState = 0ULL;
+    ULONG nApcStateOffset = 0UL;
+    ULONG nProcessOffset = 0UL;
+    PCSTR reminder = new CHAR[MAX_PATH];
     ExtensionApis = *lpExtensionApis;
+
+    do
+    {
+        if (!GetExpressionEx("nt!KiInitialThread", &pKthread, &reminder))
+            break;
+
+        if (GetFieldOffset("nt!_KTHREAD", "ApcState", &nApcStateOffset) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_KAPC_STATE", "Process", &nProcessOffset) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_EPROCESS", "UniqueProcessId", &g_KernelOffsets.UniqueProcessId) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_EPROCESS", "ActiveProcessLinks", &g_KernelOffsets.ActiveProcessLinks) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_EPROCESS", "ImageFilePointer", &g_KernelOffsets.ImageFilePointer) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_EPROCESS", "ImageFileName", &g_KernelOffsets.ImageFileName) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_EPROCESS", "Token", &g_KernelOffsets.Token) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_TOKEN", "Privileges", &g_KernelOffsets.Privileges) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "Present", &g_KernelOffsets.Present) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "Enabled", &g_KernelOffsets.Enabled) != 0UL)
+            break;
+
+        if (GetFieldOffset("nt!_SEP_TOKEN_PRIVILEGES", "EnabledByDefault", &g_KernelOffsets.EnabledByDefault) != 0UL)
+            break;
+
+        if (ReadPtr(pKthread + nApcStateOffset, &pApcState))
+            break;
+
+        ReadPtr(pApcState + nProcessOffset, &g_SystemProcess);
+    } while (FALSE);
+
+    g_IsInitialized = IsKernelAddress(g_SystemProcess) ? TRUE : FALSE;
 
     dprintf("\n");
 
-    if (Initialize()) {
+    if (g_IsInitialized) {
         dprintf("PrivEditor - Kernel Mode WinDbg extension for token privilege edit.\n");
         dprintf("\n");
         dprintf("Commands :\n");
@@ -45,27 +99,27 @@ VOID WinDbgExtensionDllInit(
         dprintf("\n");
     }
     else {
-        dprintf("[-] Failed to initialize.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
     }
-    // PrintDebugInfo();
+
+    dprintf("\n");
 }
 
 
 DECLARE_API(addpriv)
 {
-    std::string cmdline(args);
-    std::regex re_help(R"(\s*(help|/\?)*\s*)");
-    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
     std::smatch matches;
     ULONG_PTR pid;
     std::string priv;
-    ULONG_PTR pTokenPrivilege;
     ULONG64 mask;
+    std::string cmdline(args);
+    std::regex re_help(R"(\s*(help|/\?)*\s*)");
+    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -88,17 +142,10 @@ DECLARE_API(addpriv)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
         return;
     }
 
@@ -109,7 +156,7 @@ DECLARE_API(addpriv)
         return;
     }
 
-    if (IsPresent(pTokenPrivilege, mask)) {
+    if (IsPresent(processList[pid].Privileges, mask)) {
         if (mask == MASK_ALL)
             dprintf("[*] All privileges are already present.\n\n");
         else
@@ -122,23 +169,23 @@ DECLARE_API(addpriv)
     else
         dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
 
-    SetPresent(pTokenPrivilege, mask);
+    SetPresent(processList[pid].Privileges, mask);
     dprintf("[*] Completed.\n\n");
 }
 
 
 DECLARE_API(disableall)
 {
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    std::smatch matches;
+    ULONG_PTR pid;
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)*\s*)");
     std::regex re_expected(R"(^\s*(\d+)\s*$)");
-    std::smatch matches;
-    ULONG_PTR pid;
-    ULONG_PTR pTokenPrivilege;
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -159,40 +206,33 @@ DECLARE_API(disableall)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
         return;
     }
 
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
-        return;
-    }
-
     dprintf("[>] Trying to disable all available privileges.\n");
-    DisableAllAvailable(pTokenPrivilege);
+    DisableAllAvailable(processList[pid].Privileges);
     dprintf("[*] Completed.\n\n");
 }
 
 
 DECLARE_API(disablepriv)
 {
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    ULONG_PTR pid;
+    std::string priv;
+    ULONG64 mask;
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)*\s*)");
     std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
     std::smatch matches;
-    ULONG_PTR pid;
-    std::string priv;
-    ULONG_PTR pTokenPrivilege;
-    ULONG64 mask;
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -214,18 +254,11 @@ DECLARE_API(disablepriv)
         dprintf("[!] Invalid arguments. See \"!disablepriv help\" or \"!disablepriv help\".\n\n");
         return;
     }
-
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
         return;
     }
 
@@ -241,23 +274,23 @@ DECLARE_API(disablepriv)
     else
         dprintf("[>] Trying to disable %s.\n", GetPrivilegeName(mask).c_str());
     
-    RemoveEnabled(pTokenPrivilege, mask);
+    RemoveEnabled(processList[pid].Privileges, mask);
     dprintf("[*] Completed.\n\n");
 }
 
 
 DECLARE_API(enableall)
 {
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    std::smatch matches;
+    ULONG_PTR pid;
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)*\s*)");
     std::regex re_expected(R"(^\s*(\d+)\s*$)");
-    std::smatch matches;
-    ULONG_PTR pid;
-    ULONG_PTR pTokenPrivilege;
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -278,40 +311,33 @@ DECLARE_API(enableall)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
         return;
     }
 
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
-        return;
-    }
-
     dprintf("[>] Trying to enable all available privileges.\n");
-    EnableAllAvailable(pTokenPrivilege);
+    EnableAllAvailable(processList[pid].Privileges);
     dprintf("[*] Completed.\n\n");
 }
 
 
 DECLARE_API(enablepriv)
 {
-    std::string cmdline(args);
-    std::regex re_help(R"(\s*(help|/\?)*\s*)");
-    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
     std::smatch matches;
     ULONG_PTR pid;
     std::string priv;
-    ULONG_PTR pTokenPrivilege;
     ULONG64 mask;
+    std::string cmdline(args);
+    std::regex re_help(R"(\s*(help|/\?)*\s*)");
+    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -334,17 +360,10 @@ DECLARE_API(enablepriv)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
         return;
     }
 
@@ -355,7 +374,7 @@ DECLARE_API(enablepriv)
         return;
     }
 
-    if (!IsPresent(pTokenPrivilege, mask)) {
+    if (!IsPresent(processList[pid].Privileges, mask)) {
         if (mask == MASK_ALL) {
             dprintf("[*] Not all privileges are present.\n");
             dprintf("[>] Trying to add all privileges.\n");
@@ -365,10 +384,10 @@ DECLARE_API(enablepriv)
             dprintf("[>] Trying to add %s.\n", GetPrivilegeName(mask).c_str());
         }
 
-        SetPresent(pTokenPrivilege, mask);
+        SetPresent(processList[pid].Privileges, mask);
     }
 
-    if (IsEnabled(pTokenPrivilege, mask)) {
+    if (IsEnabled(processList[pid].Privileges, mask)) {
         if (mask == MASK_ALL)
             dprintf("[*] All privileges are already enabled.\n\n");
         else
@@ -381,20 +400,20 @@ DECLARE_API(enablepriv)
     else
         dprintf("[>] Trying to enable %s.\n", GetPrivilegeName(mask).c_str());
 
-    SetEnabled(pTokenPrivilege, mask);
+    SetEnabled(processList[pid].Privileges, mask);
     dprintf("[*] Completed.\n\n");
 }
 
 
 DECLARE_API(getpriv)
 {
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    std::smatch matches;
+    ULONG_PTR pid;
+    std::vector<ULONG64> masks;
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)*\s*)");
     std::regex re_expected(R"(^\s*(\d+)\s*$)");
-    std::smatch matches;
-    ULONG_PTR pid;
-    ULONG_PTR pTokenPrivilege;
-    std::vector<ULONG64> masks;
 
     masks.push_back(MASK_CREATE_TOKEN);
     masks.push_back(MASK_ASSIGN_PRIMARY_TOKEN);
@@ -434,7 +453,7 @@ DECLARE_API(getpriv)
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -460,18 +479,10 @@ DECLARE_API(getpriv)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    std::string processName = GetProcessName(processList[pid]);
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
         return;
     }
 
@@ -479,31 +490,16 @@ DECLARE_API(getpriv)
     dprintf("========================================== ========\n");
 
     for (ULONG64 mask : masks) {
-        if (IsPresent(pTokenPrivilege, mask))
-            dprintf("%-42s %s\n", GetPrivilegeName(mask).c_str(), IsEnabled(pTokenPrivilege, mask) ? "Enabled" : "Disabled");
+        if (IsPresent(processList[pid].Privileges, mask))
+            dprintf("%-42s %s\n", GetPrivilegeName(mask).c_str(), IsEnabled(processList[pid].Privileges, mask) ? "Enabled" : "Disabled");
     }
 
     dprintf("\n");
 
-    if (IsPtr64() && IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[*] PID                      : %d\n", pid);
-        dprintf("[*] Process Name             : %s\n", processName.c_str());
-        dprintf("[*] nt!_EPROCESS             : 0x%08x`%08x\n",
-            (((ULONG64)processList[pid]) >> 32) & 0xffffffff,
-            processList[pid] & 0xffffffff);
-        dprintf("[*] nt!_SEP_TOKEN_PRIVILEGES : 0x%08x`%08x\n",
-            (((ULONG64)pTokenPrivilege) >> 32) & 0xffffffff,
-            pTokenPrivilege & 0xffffffff);
-    }
-    else if (!IsPtr64() && IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[*] PID                      : %d\n", pid);
-        dprintf("[*] Process Name             : %s\n", processName.c_str());
-        dprintf("[*] nt!_EPROCESS             : 0x%08x\n", processList[pid]);
-        dprintf("[*] nt!_SEP_TOKEN_PRIVILEGES : 0x%08x\n", pTokenPrivilege);
-    }
-    else {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES for PID %d.\n", pid);
-    }
+    dprintf("[*] PID                      : %d\n", pid);
+    dprintf("[*] Process Name             : %s\n", processList[pid].ProcessName);
+    dprintf("[*] nt!_EPROCESS             : %s\n", PointerToString(processList[pid].Eprocess).c_str());
+    dprintf("[*] nt!_SEP_TOKEN_PRIVILEGES : %s\n", PointerToString(processList[pid].Privileges).c_str());
 
     dprintf("\n");
 }
@@ -511,17 +507,17 @@ DECLARE_API(getpriv)
 
 DECLARE_API(getps)
 {
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    std::map<ULONG_PTR, PROCESS_CONTEXT> filteredList;
+    std::smatch matches;
+    std::string filter;
     std::string cmdline(args);
     std::regex re_help(R"(\s*(help|/\?)\s*)");
     std::regex re_expected(R"(^([\S ]+)$)");
-    std::smatch matches;
-    std::string processName;
-    std::string filter;
-    ULONG_PTR pTokenPrivilege;
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -537,7 +533,13 @@ DECLARE_API(getps)
     if (std::regex_match(cmdline, matches, re_expected))
         filter = matches[1].str();
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
+
+    for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : processList)
+    {
+        if (_strnicmp(filter.c_str(), proc.second.ProcessName, filter.size()) == 0)
+            filteredList[proc.first] = proc.second;
+    }
 
     if (IsPtr64()) {
         dprintf("     PID        nt!_EPROCESS nt!_SEP_TOKEN_PRIVILEGES Process Name\n");
@@ -548,75 +550,41 @@ DECLARE_API(getps)
         dprintf("======== ============ ======================== ============\n");
     }
 
-    for (auto proc : processList) {
-        if (proc.first == 0) {
-            processName = std::string("System Idle Process");
-            pTokenPrivilege = 0;
+    for (std::pair<ULONG_PTR, PROCESS_CONTEXT> proc : filteredList) {
+        if (IsPtr64()) {
+            dprintf("%8d %19s %24s %s\n",
+                proc.first,
+                PointerToString(proc.second.Eprocess).c_str(),
+                PointerToString(proc.second.Privileges).c_str(),
+                proc.second.ProcessName);
         }
         else {
-            processName = GetProcessName(proc.second);
-            pTokenPrivilege = GetTokenPointer(proc.second);
-        }
-
-        if (filter.empty()) {
-            if (IsPtr64()) {
-                dprintf("%8d 0x%08x`%08x      0x%08x`%08x %s\n",
-                    proc.first <= 0 ? 0 : proc.first,
-                    ((ULONG64)proc.second >> 32) & 0xffffffff,
-                    proc.second & 0xffffffff,
-                    ((ULONG64)pTokenPrivilege >> 32) & 0xffffffff,
-                    pTokenPrivilege & 0xffffffff,
-                    processName.c_str());
-            }
-            else {
-                dprintf("%8d   0x%08x               0x%08x %s\n",
-                    proc.first <= 0 ? 0 : proc.first,
-                    proc.second,
-                    pTokenPrivilege,
-                    processName.c_str());
-            }
-        }
-        else {
-            if (filter.size() > processName.size())
-                continue;
-
-            if (IsPtr64() &&
-                (_strnicmp(filter.c_str(), processName.c_str(), filter.size()) == 0)) {
-                dprintf("%8d 0x%08x`%08x      0x%08x`%08x %s\n",
-                    proc.first <= 0 ? 0 : proc.first,
-                    ((ULONG64)proc.second >> 32) & 0xffffffff,
-                    proc.second & 0xffffffff,
-                    ((ULONG64)pTokenPrivilege >> 32) & 0xffffffff,
-                    pTokenPrivilege & 0xffffffff,
-                    processName.c_str());
-            }
-            else if (_strnicmp(filter.c_str(), processName.c_str(), filter.size()) == 0) {
-                dprintf("%8d   0x%08x               0x%08x %s\n",
-                    proc.first <= 0 ? 0 : proc.first,
-                    proc.second,
-                    pTokenPrivilege,
-                    processName.c_str());
-            }
+            dprintf("%8d %12s %24s %s\n",
+                proc.first,
+                PointerToString(proc.second.Eprocess).c_str(),
+                PointerToString(proc.second.Privileges).c_str(),
+                proc.second.ProcessName);
         }
     }
+
     dprintf("\n");
 }
 
 
 DECLARE_API(rmpriv)
 {
-    std::string cmdline(args);
-    std::regex re_help(R"(\s*(help|/\?)*\s*)");
-    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
     std::smatch matches;
     ULONG_PTR pid;
     std::string priv;
-    ULONG_PTR pTokenPrivilege;
     ULONG64 mask;
+    std::string cmdline(args);
+    std::regex re_help(R"(\s*(help|/\?)*\s*)");
+    std::regex re_expected(R"(^(\d+)\s+([a-zA-Z]+)\s*$)");
 
     dprintf("\n");
 
-    if (!IsInitialized()) {
+    if (!g_IsInitialized) {
         dprintf("[-] Extension is not initialized.\n");
         dprintf("[!] This extension supports kernel mode debugger only.\n\n");
         return;
@@ -639,17 +607,10 @@ DECLARE_API(rmpriv)
         return;
     }
 
-    std::map<ULONG_PTR, ULONG_PTR> processList = ListEprocess();
+    processList = ListProcessInformation();
 
     if (processList.find(pid) == processList.end()) {
         dprintf("[-] Failed to search target PID.\n\n");
-        return;
-    }
-
-    pTokenPrivilege = GetTokenPointer(processList[pid]);
-
-    if (!IsKernelAddress(pTokenPrivilege)) {
-        dprintf("[-] Failed to get _SEP_TOKEN_PRIVILEGES pointer.\n\n");
         return;
     }
 
@@ -665,6 +626,6 @@ DECLARE_API(rmpriv)
     else
         dprintf("[>] Trying to remove %s.\n", GetPrivilegeName(mask).c_str());
 
-    RemovePresent(pTokenPrivilege, mask);
+    RemovePresent(processList[pid].Privileges, mask);
     dprintf("[*] Completed.\n\n");
 }
