@@ -26,10 +26,22 @@ namespace SeSystemEnvironmentPrivilegePoC
          * P/Invoke : Structs
          */
         [StructLayout(LayoutKind.Sequential)]
+        struct OSVERSIONINFOW
+        {
+            public uint dwOSVersionInfoSize;
+            public uint dwMajorVersion;
+            public uint dwMinorVersion;
+            public uint dwBuildNumber;
+            public uint dwPlatformId;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 256)]
+            public byte[] szCSDVersion;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         struct VARIABLE_NAME
         {
             public uint NextEntryOffset;
-            Guid VendorGuid;
+            public Guid VendorGuid;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
             public short[] Name;
         }
@@ -66,6 +78,9 @@ namespace SeSystemEnvironmentPrivilegePoC
             uint InformationClass,
             IntPtr Buffer,
             ref uint BufferLength);
+
+        [DllImport("ntdll.dll")]
+        static extern int RtlGetVersion(out OSVERSIONINFOW lpVersionInformation);
 
         /*
          * Windows Consts
@@ -208,9 +223,27 @@ namespace SeSystemEnvironmentPrivilegePoC
 
         static void Main()
         {
-            Console.WriteLine("[*] If you have SeSystemEnvironmentPrivilege, you can manipulate firmware environment variables.");
-            Console.WriteLine("[*] This PoC tries to enumerate firmware environment variables in this machine.");
-            GetSystemEnvironmentVariables();
+            int ntstatus = RtlGetVersion(out OSVERSIONINFOW versionInfo);
+
+            if (ntstatus == 0)
+            {
+                if (((versionInfo.dwMajorVersion == 10) && (versionInfo.dwBuildNumber >= 17134)) ||
+                    (versionInfo.dwMajorVersion > 10))
+                {
+                    Console.WriteLine("[*] If you have SeSystemEnvironmentPrivilege, you can manipulate firmware environment variables.");
+                    Console.WriteLine("[*] This PoC tries to enumerate firmware environment variables in this machine.");
+                    GetSystemEnvironmentVariables();
+                }
+                else
+                {
+                    Console.WriteLine("[-] Due to OS functionality, this PoC does not work for OSes earlier than Win10 1809.\n");
+                }
+            }
+            else
+            {
+                Console.WriteLine("[-] Failed to get OS version information.");
+                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+            }
         }
     }
 }
