@@ -646,7 +646,7 @@ Currently, released PoCs for a part of them.
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC tries to write test file in `C:\Windows\System32\` by `SeRestorePrivilege`. |
 | [SeSecurityPrivilegePoC](./PrivilegedOperations/SeSecurityPrivilegePoC) | This PoC tries to read the latest security event by `SeSecurityPrivilege`. |
 | [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by `SeShutdownPrivilege`. |
-| [SeSystemEnvironmentPrivilegePoC](./PrivilegedOperations/SeSystemEnvironmentPrivilegePoC) | This PoC tries to enumerate system environment by `SeSystemEnvironmentPrivilege`. Works for UEFI based system only. |
+| [SeSystemEnvironmentPrivilegePoC](./PrivilegedOperations/SeSystemEnvironmentPrivilegePoC) | This PoC tries to enumerate system environment by `SeSystemEnvironmentPrivilege`. Works for UEFI based system only. Due to OS functionality, this PoC does not work for OSes earlier Windows 10 Build 1809. |
 | [SeTakeOwnershipPrivilegePoC](./PrivilegedOperations/SeTakeOwnershipPrivilegePoC) | This PoC tries to change the owner of `HKLM:\SYSTEM\CurrentControlSet\Services\dmwappushservice` to the caller user account by `SeTakeOwnershipPrivilege`. |
 | [SeTcbPrivilegePoC](./PrivilegedOperations/SeTcbPrivilegePoC) | This PoC tries to perform S4U Logon to be `Builtin\Backup Operators` by `SeTcbPrivilege`. |
 | [SeTrustedCredManAccessPrivilegePoC](./PrivilegedOperations/SeTrustedCredManAccessPrivilegePoC) | This PoC tries to access DPAPI blob by `SeTrustedCredManAccessPrivilege`. |
