@@ -385,7 +385,7 @@ namespace SeSecurityPrivilegePoC
             if (record.DataLength > 0)
             {
                 Console.WriteLine("Data:\n");
-                HexDump.Dump(pData, record.DataLength, 1);
+                HexDump.Dump(pData, (uint)record.DataLength, 1);
             }
         }
 

@@ -245,7 +245,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
                 out IntPtr pBlobData))
             {
                 Console.WriteLine("[*] Decrypted Data:\n");
-                HexDump.Dump(pBlobData, (int)nBlobSize, 1);
+                HexDump.Dump(pBlobData, (uint)nBlobSize, 1);
                 LocalFree(pBlobData);
             }
         }

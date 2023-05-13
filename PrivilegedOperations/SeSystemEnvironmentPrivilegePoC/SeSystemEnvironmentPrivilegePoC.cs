@@ -205,7 +205,7 @@ namespace SeSystemEnvironmentPrivilegePoC
                 Console.WriteLine("Vendor GUID : {0}", info.VendorGuid);
                 Console.WriteLine("Name        : {0}", Marshal.PtrToStringUni(pName));
                 Console.WriteLine("Value       :\n");
-                HexDump.Dump(pValue, nSizeValue, 1);
+                HexDump.Dump(pValue, (uint)nSizeValue, 1);
 
                 if (info.NextEntryOffset == 0)
                     break;
