@@ -162,7 +162,7 @@ namespace SeRestorePrivilegePoC
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool WriteFile(
             IntPtr hFile,
-            IntPtr lpBuffer,
+            byte[] lpBuffer,
             int nNumberOfBytesToWrite,
             IntPtr lpNumberOfBytesWritten,
             IntPtr lpOverlapped);
@@ -175,6 +175,12 @@ namespace SeRestorePrivilegePoC
         /*
          * User defined function
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -190,18 +196,14 @@ namespace SeRestorePrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -218,67 +220,54 @@ namespace SeRestorePrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
         static bool CreateTestFileWithRestorePrivilege(string filePath)
         {
             int error;
-            bool status;
+            IntPtr hFile;
             byte[] messageBytes = Encoding.UTF8.GetBytes("This file is created for testing SeRestorePrivilege.");
-            IntPtr buffer = Marshal.AllocHGlobal(messageBytes.Length);
-            Marshal.Copy(messageBytes, 0, buffer, messageBytes.Length);
+            var status = false;
 
-            IntPtr hFile = CreateFile(
-               filePath,
-               EFileAccess.GenericRead | EFileAccess.GenericWrite,
-               EFileShare.None,
-               IntPtr.Zero,
-               ECreationDisposition.CreateAlways,
-               EFileAttributes.BackupSemantics,
-               IntPtr.Zero);
-
-            if (hFile == INVALID_HANDLE_VALUE)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create {0}.", filePath);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                Marshal.FreeHGlobal(buffer);
+                hFile = CreateFile(
+                    filePath,
+                    EFileAccess.GenericRead | EFileAccess.GenericWrite,
+                    EFileShare.None,
+                    IntPtr.Zero,
+                    ECreationDisposition.CreateAlways,
+                    EFileAttributes.BackupSemantics,
+                    IntPtr.Zero);
 
-                return false;
-            }
+                if (hFile == INVALID_HANDLE_VALUE)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create {0}.", filePath);
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-            status = WriteFile(
-                hFile,
-                buffer,
-                messageBytes.Length,
-                IntPtr.Zero,
-                IntPtr.Zero);
-            Marshal.FreeHGlobal(buffer);
-            CloseHandle(hFile);
+                status = WriteFile(hFile, messageBytes, messageBytes.Length, IntPtr.Zero, IntPtr.Zero);
+                CloseHandle(hFile);
 
-            if (!status)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to write content to {0}.", filePath);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to write content to {0}.", filePath);
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                }
+                else
+                {
+                    Console.WriteLine("[+] {0} is created successfully.", filePath);
+                }
+            } while (false);
 
-                return false;
-            }
-
-            Console.WriteLine("[+] {0} is created successfully.", filePath);
-
-            return true;
+            return status;
         }
 
 
