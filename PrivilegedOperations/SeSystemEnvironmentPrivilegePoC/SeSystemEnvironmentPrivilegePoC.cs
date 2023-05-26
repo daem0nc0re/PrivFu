@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Net.NetworkInformation;
 
 namespace SeSystemEnvironmentPrivilegePoC
 {
@@ -93,6 +94,12 @@ namespace SeSystemEnvironmentPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -108,18 +115,14 @@ namespace SeSystemEnvironmentPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -136,88 +139,89 @@ namespace SeSystemEnvironmentPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
         static bool GetSystemEnvironmentVariables()
         {
-            int count = 0;
-            IntPtr buffer;
-            IntPtr pInfo;
+            int ntstatus;
+            IntPtr pOffset;
             IntPtr pName;
             IntPtr pValue;
-            int nSizeValue;
             VARIABLE_NAME_AND_VALUE info;
             uint nBufferLength = 0;
-
-            Console.WriteLine("[>] Trying to enumerate firmware environment variables in this machine.");
-
-            int ntstatus = NtEnumerateSystemEnvironmentValuesEx(
-                VARIABLE_INFORMATION_VALUES,
-                IntPtr.Zero,
-                ref nBufferLength);
-
-            if (ntstatus != STATUS_BUFFER_TOO_SMALL)
-            {
-                Console.WriteLine("[-] Failed to enumerate firmware environment values.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
-
-                return false;
-            }
-
-            buffer = Marshal.AllocHGlobal((int)nBufferLength);
-            ntstatus = NtEnumerateSystemEnvironmentValuesEx(
-                VARIABLE_INFORMATION_VALUES,
-                buffer,
-                ref nBufferLength);
-
-            if (ntstatus != STATUS_SUCCESS)
-            {
-                Console.WriteLine("[-] Failed to enumerate firmware environment values.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
-                Marshal.FreeHGlobal(buffer);
-
-                return false;
-            }
-
-            pInfo = buffer;
+            int count = 0;
+            var nNameOffset = Marshal.OffsetOf(typeof(VARIABLE_NAME_AND_VALUE), "Name").ToInt32();
+            var pInfoBuffer = IntPtr.Zero;
 
             do
             {
-                count++;
-                info = (VARIABLE_NAME_AND_VALUE)Marshal.PtrToStructure(pInfo, typeof(VARIABLE_NAME_AND_VALUE));
-                pInfo = new IntPtr(pInfo.ToInt64() + info.NextEntryOffset);
-                pName = new IntPtr(pInfo.ToInt64() + Marshal.OffsetOf(typeof(VARIABLE_NAME_AND_VALUE), "Name").ToInt64());
-                pValue = new IntPtr(pInfo.ToInt64() + info.ValueOffset);
-                nSizeValue = (int)info.ValueLength;
+                Console.WriteLine("[>] Trying to enumerate firmware environment variables in this machine.");
 
-                Console.WriteLine();
-                Console.WriteLine("Vendor GUID : {0}", info.VendorGuid);
-                Console.WriteLine("Name        : {0}", Marshal.PtrToStringUni(pName));
-                Console.WriteLine("Value       :\n");
-                HexDump.Dump(pValue, (uint)nSizeValue, 1);
+                ntstatus = NtEnumerateSystemEnvironmentValuesEx(
+                    VARIABLE_INFORMATION_VALUES,
+                    IntPtr.Zero,
+                    ref nBufferLength);
 
-                if (info.NextEntryOffset == 0)
+                if (ntstatus != STATUS_BUFFER_TOO_SMALL)
+                {
+                    Console.WriteLine("[-] Failed to enumerate firmware environment values.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
                     break;
-            } while (true);
+                }
 
-            Marshal.FreeHGlobal(buffer);
+                pInfoBuffer = Marshal.AllocHGlobal((int)nBufferLength);
+                ntstatus = NtEnumerateSystemEnvironmentValuesEx(
+                    VARIABLE_INFORMATION_VALUES,
+                    pInfoBuffer,
+                    ref nBufferLength);
+
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    Console.WriteLine("[-] Failed to enumerate firmware environment values.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                    break;
+                }
+
+                pOffset = pInfoBuffer;
+
+                do
+                {
+                    info = (VARIABLE_NAME_AND_VALUE)Marshal.PtrToStructure(pOffset, typeof(VARIABLE_NAME_AND_VALUE));
+
+                    if (Environment.Is64BitProcess)
+                    {
+                        pOffset = new IntPtr(pOffset.ToInt64() + info.NextEntryOffset);
+                        pName = new IntPtr(pOffset.ToInt64() + nNameOffset);
+                        pValue = new IntPtr(pOffset.ToInt64() + info.ValueOffset);
+                    }
+                    else
+                    {
+                        pOffset = new IntPtr(pOffset.ToInt32() + (int)info.NextEntryOffset);
+                        pName = new IntPtr(pOffset.ToInt32() + nNameOffset);
+                        pValue = new IntPtr(pOffset.ToInt32() + (int)info.ValueOffset);
+                    }
+
+                    Console.WriteLine();
+                    Console.WriteLine("Vendor GUID : {0}", info.VendorGuid);
+                    Console.WriteLine("Name        : {0}", Marshal.PtrToStringUni(pName));
+                    Console.WriteLine("Value       :\n");
+                    HexDump.Dump(pValue, info.ValueLength, 1);
+                    count++;
+                } while (info.NextEntryOffset > 0);
+            } while (false);
+
+            if (pInfoBuffer != IntPtr.Zero)
+                Marshal.FreeHGlobal(pInfoBuffer);
 
             Console.WriteLine();
             Console.WriteLine("[*] Enumeration is completed.");
             Console.WriteLine("[*] {0} variables are found.\n", count);
 
-            return true;
+            return (ntstatus == STATUS_SUCCESS);
         }
 
 
