@@ -125,6 +125,12 @@ namespace SeShutdownPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -140,18 +146,14 @@ namespace SeShutdownPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -168,16 +170,9 @@ namespace SeShutdownPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
@@ -185,26 +180,25 @@ namespace SeShutdownPrivilegePoC
         {
             int STATUS_SUCCESS = 0;
             int STATUS_ACCESS_VIOLATION = Convert.ToInt32("0xC0000005", 16);
-
             int ntstatus = NtRaiseHardError(
                 STATUS_ACCESS_VIOLATION,
                 0,
                 IntPtr.Zero,
                 IntPtr.Zero,
                 HARDERROR_RESPONSE_OPTION.OptionShutdownSystem,
-                out HARDERROR_RESPONSE Response);
+                out HARDERROR_RESPONSE _);
 
             if (ntstatus != STATUS_SUCCESS)
             {
                 Console.WriteLine("[-] Failed to raise hard error.");
                 Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
-
-                return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] NtRaiseHardError API is called successfully.");
             }
 
-            Console.WriteLine("[+] NtRaiseHardError API is called successfully.");
-
-            return true;
+            return (ntstatus == STATUS_SUCCESS);
         }
 
         static void Main()
