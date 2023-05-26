@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
 
 namespace SeSecurityPrivilegePoC
 {
@@ -121,6 +121,9 @@ namespace SeSecurityPrivilegePoC
         static extern bool CloseEventLog(IntPtr hEventLog);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern bool ConvertSidToStringSid(IntPtr pSid, out string StringSid);
+
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -184,36 +187,78 @@ namespace SeSecurityPrivilegePoC
         /*
          * User defined functions
          */
-        static string ConvertSidStringToAccountName(
-            ref string sid,
-            out SID_NAME_USE peUse)
+        static bool CompareIgnoreCase(string strA, string strB)
         {
-            string accountName;
-            sid = sid.ToUpper();
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
 
-            if (!ConvertStringSidToSid(sid, out IntPtr pSid))
+
+        static string ConvertSidStringToAccountName(ref string sid, out SID_NAME_USE peUse)
+        {
+            string accountName = null;
+            peUse = SID_NAME_USE.SidTypeUnknown;
+
+            if (ConvertStringSidToSid(sid.ToUpper(), out IntPtr pSid))
             {
-                peUse = 0;
-                return null;
+                accountName = ConvertSidToAccountName(pSid, out peUse);
+                LocalFree(pSid);
             }
-
-            accountName = ConvertSidToAccountName(pSid, out peUse);
-            LocalFree(pSid);
 
             return accountName;
         }
 
+        static string ConvertAccountNameToSid(ref string accountName, out SID_NAME_USE peUse)
+        {
+            int error;
+            bool status;
+            IntPtr pSid;
+            int cbSid = 4;
+            int cchReferencedDomainName = 4;
+            string sid = null;
+            var referencedDomainName = new StringBuilder();
 
-        static string ConvertSidToAccountName(
-            IntPtr pSid,
-            out SID_NAME_USE peUse)
+            do
+            {
+                pSid = Marshal.AllocHGlobal(cbSid);
+                referencedDomainName.Capacity = cchReferencedDomainName;
+                status = LookupAccountName(
+                    null,
+                    accountName,
+                    pSid,
+                    ref cbSid,
+                    referencedDomainName,
+                    ref cchReferencedDomainName,
+                    out peUse);
+                error = Marshal.GetLastWin32Error();
+                referencedDomainName.Clear();
+
+                if (!status)
+                    Marshal.FreeHGlobal(pSid);
+            } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
+
+            if (status)
+            {
+                accountName = ConvertSidToAccountName(pSid, out peUse);
+
+                if (ConvertSidToStringSid(pSid, out string StringSid))
+                    sid = StringSid;
+
+                Marshal.FreeHGlobal(pSid);
+            }
+
+            return sid;
+        }
+
+
+        static string ConvertSidToAccountName(IntPtr pSid, out SID_NAME_USE peUse)
         {
             bool status;
             int error;
-            StringBuilder pName = new StringBuilder();
             int cchName = 4;
-            StringBuilder pReferencedDomainName = new StringBuilder();
             int cchReferencedDomainName = 4;
+            string accountName = null;
+            var pName = new StringBuilder();
+            var pReferencedDomainName = new StringBuilder();
 
             do
             {
@@ -237,27 +282,20 @@ namespace SeSecurityPrivilegePoC
                 }
             } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
 
-            if (!status)
-                return null;
+            if (status)
+            {
+                if ((cchName > 0) && (cchReferencedDomainName > 0))
+                    accountName = string.Format(@"{0}\{1}", pReferencedDomainName.ToString(), pName.ToString());
+                else if (cchName > 0)
+                    accountName = pName.ToString();
+                else if (cchReferencedDomainName > 0)
+                    accountName = pReferencedDomainName.ToString();
+            }
 
-            if (peUse == SID_NAME_USE.SidTypeDomain)
-            {
-                return pReferencedDomainName.ToString();
-            }
-            else if (cchName == 0)
-            {
-                return pReferencedDomainName.ToString();
-            }
-            else if (cchReferencedDomainName == 0)
-            {
-                return pName.ToString();
-            }
-            else
-            {
-                return string.Format("{0}\\{1}",
-                    pReferencedDomainName.ToString(),
-                    pName.ToString());
-            }
+            pName.Clear();
+            pReferencedDomainName.Clear();
+
+            return accountName;
         }
 
 
@@ -290,18 +328,14 @@ namespace SeSecurityPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -318,69 +352,91 @@ namespace SeSecurityPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
-        static void PrintEventRecord(IntPtr buffer)
+        static void PrintEventRecord(IntPtr pBuffer)
         {
-            var record = (EVENTLOGRECORD)Marshal.PtrToStructure(
-                buffer,
-                typeof(EVENTLOGRECORD));
-            short numStrings = record.NumStrings;
-            IntPtr pUserSidString = new IntPtr(buffer.ToInt64() + record.UserSidOffset);
-            IntPtr pStrings = new IntPtr(buffer.ToInt64() + record.StringOffset);
-            IntPtr pData = new IntPtr(buffer.ToInt64() + record.DataOffset);
-            string userSidString = Marshal.PtrToStringUni(pUserSidString);
-            IntPtr pUnicodeText = pStrings;
+            IntPtr pUserSidString;
+            IntPtr pUnicodeText;
+            IntPtr pData;
             string unicodeText;
+            string userSidString;
+            string accountName;
+            SID_NAME_USE peUse;
+            var message = new StringBuilder();
+            var record = (EVENTLOGRECORD)Marshal.PtrToStructure(pBuffer, typeof(EVENTLOGRECORD));
 
-            string accountName = ConvertSidStringToAccountName(
-                ref userSidString,
-                out SID_NAME_USE peUse);
-
-            Console.WriteLine("Event ID       : {0}", record.EventID);
-            Console.WriteLine("Event Type     : {0}", (EVENT_TYPES)record.EventType);
-            Console.WriteLine("Event Category : {0}", record.EventCategory);
-
-            if (string.IsNullOrEmpty(accountName))
+            if (Environment.Is64BitProcess)
             {
-                Console.WriteLine("Security ID    : {0}", userSidString);
+                pUserSidString = new IntPtr(pBuffer.ToInt64() + record.UserSidOffset);
+                pUnicodeText = new IntPtr(pBuffer.ToInt64() + record.StringOffset);
+                pData = new IntPtr(pBuffer.ToInt64() + record.DataOffset);
             }
             else
             {
-                Console.WriteLine(
-                    "Security ID    : {0} (Account : {1}, Type : {2})",
-                    userSidString,
+                pUserSidString = new IntPtr(pBuffer.ToInt32() + record.UserSidOffset);
+                pUnicodeText = new IntPtr(pBuffer.ToInt32() + record.StringOffset);
+                pData = new IntPtr(pBuffer.ToInt32() + record.DataOffset);
+            }
+
+            userSidString = Marshal.PtrToStringUni(pUserSidString);
+
+            if (Regex.IsMatch(userSidString, @"^S-\d-", RegexOptions.IgnoreCase))
+            {
+                accountName = ConvertSidStringToAccountName(ref userSidString, out peUse);
+            }
+            else
+            {
+                accountName = userSidString;
+                userSidString = ConvertAccountNameToSid(ref accountName, out peUse);
+            }
+
+            message.Append(string.Format("Event ID       : {0}\n", record.EventID));
+            message.Append(string.Format("Event Type     : {0}\n", (EVENT_TYPES)record.EventType));
+            message.Append(string.Format("Event Category : {0}\n", record.EventCategory));
+
+            if (string.IsNullOrEmpty(accountName))
+            {
+                message.Append(string.Format("Security ID    : {0}\n", userSidString));
+            }
+            else
+            {
+                message.Append(string.Format(
+                    "Security ID    : {0} (SID : {1}, Type : {2})\n",
                     accountName,
-                    peUse);
+                    userSidString,
+                    peUse));
             }
 
             TimeToSystemTime((long)record.TimeGenerated, out SYSTEMTIME generatedTime);
             TimeToSystemTime((long)record.TimeWritten, out SYSTEMTIME writtenTime);
 
-            Console.WriteLine("Generated Time : {0}", FormatTime(generatedTime));
-            Console.WriteLine("Written Time   : {0}", FormatTime(writtenTime));
+            message.Append(string.Format("Generated Time : {0}\n", FormatTime(generatedTime)));
+            message.Append(string.Format("Written Time   : {0}\n", FormatTime(writtenTime)));
 
-            if (numStrings > 0)
-                Console.WriteLine("String Data    :");
-
-            for (short count = 0; count < numStrings; count++)
+            if (record.NumStrings > 0)
             {
-                unicodeText = Marshal.PtrToStringUni(pUnicodeText);
-                Console.WriteLine("\tEntries[{0}]:", count);
-                Console.WriteLine("\t\t{0}", Regex.Replace(unicodeText, @"\t+", "\t\t"));
-                pUnicodeText = new IntPtr(pUnicodeText.ToInt64() + (unicodeText.Length * 2) + 2);
+                message.Append("String Data    :\n");
+
+                for (short count = 0; count < record.NumStrings; count++)
+                {
+                    unicodeText = Marshal.PtrToStringUni(pUnicodeText);
+                    message.Append(string.Format("\tEntries[{0}]:\n", count));
+                    message.Append(string.Format("\t\t{0}\n", Regex.Replace(unicodeText, @"\t+", "\t\t")));
+
+                    if (Environment.Is64BitProcess)
+                        pUnicodeText = new IntPtr(pUnicodeText.ToInt64() + (unicodeText.Length * 2) + 2);
+                    else
+                        pUnicodeText = new IntPtr(pUnicodeText.ToInt32() + (unicodeText.Length * 2) + 2);
+                }
             }
+
+            Console.WriteLine(message.ToString());
+            message.Clear();
 
             if (record.DataLength > 0)
             {
@@ -393,66 +449,66 @@ namespace SeSecurityPrivilegePoC
         static bool ReadSecurityEvents()
         {
             int error;
-            bool status;
-            IntPtr buffer;
+            IntPtr pBuffer;
+            IntPtr hEventLog;
+            var status = false;
             int nNumberOfBytesToRead = 0x8;
-
-            Console.WriteLine("[>] Trying to open security event logs.");
-            IntPtr hEventLog = OpenEventLog(null, "Security");
-
-            if (hEventLog == IntPtr.Zero)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open security event log.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
-            Console.WriteLine("[+] Got handle to security event logs.");
-            Console.WriteLine("    |-> hEventLog = 0x{0}", hEventLog.ToString("X"));
 
             do
             {
-                buffer = Marshal.AllocHGlobal(nNumberOfBytesToRead);
-                status = ReadEventLog(
-                    hEventLog,
-                    EventReadFlags.EVENTLOG_SEQUENTIAL_READ | EventReadFlags.EVENTLOG_BACKWARDS_READ,
-                    0,
-                    buffer,
-                    nNumberOfBytesToRead,
-                    out int pnBytesRead,
-                    out int pnMinNumberOfBytesNeeded);
-                error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[>] Trying to open security event logs.");
+                hEventLog = OpenEventLog(null, "Security");
+
+                if (hEventLog == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to open security event log.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
+
+                Console.WriteLine("[+] Got handle to security event logs.");
+                Console.WriteLine("    |-> hEventLog = 0x{0}", hEventLog.ToString("X"));
+
+                do
+                {
+                    pBuffer = Marshal.AllocHGlobal(nNumberOfBytesToRead);
+                    status = ReadEventLog(
+                        hEventLog,
+                        EventReadFlags.EVENTLOG_SEQUENTIAL_READ | EventReadFlags.EVENTLOG_BACKWARDS_READ,
+                        0,
+                        pBuffer,
+                        nNumberOfBytesToRead,
+                        out int pnBytesRead,
+                        out int pnMinNumberOfBytesNeeded);
+                    error = Marshal.GetLastWin32Error();
+
+                    if (!status)
+                    {
+                        Marshal.FreeHGlobal(pBuffer);
+                        nNumberOfBytesToRead = pnMinNumberOfBytesNeeded;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[+] A security event log read successfully.");
+                        Console.WriteLine("[*] Event Log Size = {0} bytes", pnBytesRead);
+                        Console.WriteLine("[*] Event Data:\n");
+                        PrintEventRecord(pBuffer);
+                        Marshal.FreeHGlobal(pBuffer);
+                    }
+                } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
 
                 if (!status)
                 {
-                    Marshal.FreeHGlobal(buffer);
-                    nNumberOfBytesToRead = pnMinNumberOfBytesNeeded;
+                    Console.WriteLine("[-] Failed to read security event logs.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
                 }
-                else
-                {
-                    Console.WriteLine("[+] A security event log read successfully.");
-                    Console.WriteLine("[*] Event Log Size = {0} bytes", pnBytesRead);
-                }
-            } while (!status && error == ERROR_INSUFFICIENT_BUFFER);
+            } while (false);
 
             if (hEventLog != IntPtr.Zero)
                 CloseEventLog(hEventLog);
 
-            if (!status)
-            {
-                Console.WriteLine("[-] Failed to read security event logs.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
-            Console.WriteLine("[*] Event Data:\n");
-            PrintEventRecord(buffer);
-            Marshal.FreeHGlobal(buffer);
-
-            return true;
+            return status;
         }
 
 
@@ -465,9 +521,7 @@ namespace SeSecurityPrivilegePoC
                 DateTimeHigh = (uint)((time >> 32) & 0xFFFFFFFFL)
             };
 
-            return FileTimeToSystemTime(
-                ref fileTime,
-                out systemTime);
+            return FileTimeToSystemTime(ref fileTime, out systemTime);
         }
 
 
