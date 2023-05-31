@@ -483,6 +483,12 @@ namespace SeTcbPrivilegePoC
         /*
          * User defined functions
          */
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         static IntPtr GetInformationFromToken(
             IntPtr hToken,
             TOKEN_INFORMATION_CLASS tokenInfoClass)
@@ -682,18 +688,14 @@ namespace SeTcbPrivilegePoC
 
                 foreach (ProcessModule mod in modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(mod.FileName), "ntdll.dll"))
                     {
                         pNtdll = mod.BaseAddress;
                         break;
                     }
                 }
 
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE | FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
             else
             {
@@ -710,16 +712,9 @@ namespace SeTcbPrivilegePoC
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
