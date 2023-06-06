@@ -29,6 +29,7 @@ TokenStealing - PoC to get SYSTEM privileges with token stealing method.
 Usage: TokenStealing.exe [Options]
 
         -h, --help      : Displays this help message.
+        -f, --full      : Flag to enable all token privileges.
         -s, --secondary : Flag to use Secondary Logon Service.
 
 PS C:\Dev>
