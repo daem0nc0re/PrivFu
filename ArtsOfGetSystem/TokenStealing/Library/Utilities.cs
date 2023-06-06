@@ -11,6 +11,52 @@ namespace TokenStealing.Library
 
     internal class Utilities
     {
+        public static bool EnableAllTokenPrivileges(
+            IntPtr hToken,
+            out Dictionary<string, bool> adjustedPrivs)
+        {
+            bool status;
+            adjustedPrivs = new Dictionary<string, bool>();
+
+            do
+            {
+                status = Helpers.GetTokenPrivileges(
+                    hToken,
+                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                if (!status)
+                    break;
+
+                foreach (var priv in availablePrivs)
+                {
+                    var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+                    var isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
+                    adjustedPrivs.Add(priv.Key, isEnabled);
+
+                    if (isEnabled)
+                        continue;
+
+                    if (NativeMethods.LookupPrivilegeValue(
+                        null,
+                        priv.Key,
+                        out tokenPrivileges.Privileges[0].Luid))
+                    {
+                        tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
+                        adjustedPrivs[priv.Key] = NativeMethods.AdjustTokenPrivileges(
+                            hToken,
+                            false,
+                            in tokenPrivileges,
+                            20,
+                            out TOKEN_PRIVILEGES _,
+                            out int _);
+                    }
+                }
+            } while (false);
+
+            return status;
+        }
+
+
         public static bool EnableTokenPrivileges(
             IntPtr hToken,
             List<string> requiredPrivs,
@@ -39,7 +85,7 @@ namespace TokenStealing.Library
                     {
                         if (Helpers.CompareIgnoreCase(available.Key, priv))
                         {
-                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) > 0)
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
                             {
                                 adjustedPrivs[priv] = true;
                             }

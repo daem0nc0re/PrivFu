@@ -13,6 +13,7 @@ namespace TokenStealing
             {
                 options.SetTitle("TokenStealing - PoC to get SYSTEM privileges with token stealing method.");
                 options.AddFlag(false, "h", "help", "Displays this help message.");
+                options.AddFlag(false, "f", "full", "Flag to enable all token privileges.");
                 options.AddFlag(false, "s", "secondary", "Flag to use Secondary Logon Service.");
                 options.Parse(args);
 

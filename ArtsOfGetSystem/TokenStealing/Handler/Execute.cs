@@ -16,9 +16,9 @@ namespace TokenStealing.Handler
             Console.WriteLine();
 
             if (options.GetFlag("secondary"))
-                Modules.GetSystemBySecondaryLogon();
+                Modules.GetSystemBySecondaryLogon(options.GetFlag("full"));
             else
-                Modules.GetSystemByTokenImpersonation();
+                Modules.GetSystemByTokenImpersonation(options.GetFlag("full"));
 
             Console.WriteLine();
         }

