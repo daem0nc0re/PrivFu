@@ -55,6 +55,8 @@ namespace TokenStealing.Library
 
                 hProcess = Utilities.GetSystemProcessHandle(
                     new List<string>(),
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    ACCESS_MASK.TOKEN_DUPLICATE,
                     out int pid,
                     out string processName);
 
@@ -206,6 +208,8 @@ namespace TokenStealing.Library
 
                 hProcess = Utilities.GetSystemProcessHandle(
                     new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME, Win32Consts.SE_INCREASE_QUOTA_NAME },
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    ACCESS_MASK.TOKEN_DUPLICATE,
                     out int pid,
                     out string processName);
 

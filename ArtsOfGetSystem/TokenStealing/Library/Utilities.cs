@@ -78,81 +78,67 @@ namespace TokenStealing.Library
 
         public static IntPtr GetSystemProcessHandle(
             List<string> requiredPrivileges,
+            ACCESS_MASK processAccessMask,
+            ACCESS_MASK tokenAccessMask,
             out int pid,
             out string processName)
         {
             bool status;
             var hProcess = IntPtr.Zero;
+            tokenAccessMask |= ACCESS_MASK.TOKEN_QUERY;
             pid = -1;
             processName = null;
 
             foreach (Process proc in Process.GetProcesses())
             {
-                string tokenUserSid = null;
-                hProcess = NativeMethods.OpenProcess(
-                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    proc.Id);
+                hProcess = NativeMethods.OpenProcess(processAccessMask, false, proc.Id);
 
                 if (hProcess != IntPtr.Zero)
                 {
-                    status = NativeMethods.OpenProcessToken(
-                        hProcess,
-                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_DUPLICATE,
-                        out IntPtr hToken);
+                    status = NativeMethods.OpenProcessToken(hProcess, tokenAccessMask, out IntPtr hToken);
 
                     if (status)
                     {
-                        tokenUserSid = Helpers.GetTokenUserSid(hToken);
+                        bool isSystem = Helpers.IsSystem(hToken);
                         Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges);
                         NativeMethods.NtClose(hToken);
 
-                        if (Helpers.CompareIgnoreCase(tokenUserSid, "S-1-5-18"))
+                        if (isSystem)
                         {
                             var available = true;
 
-                            if (requiredPrivileges.Count > 0)
+                            foreach (var privilege in requiredPrivileges)
                             {
-                                foreach (var privilege in requiredPrivileges)
+                                available = false;
+
+                                foreach (var key in privileges.Keys)
                                 {
-                                    available = false;
+                                    available = Helpers.CompareIgnoreCase(key, privilege);
 
-                                    foreach (var key in privileges.Keys)
-                                    {
-                                        if (Helpers.CompareIgnoreCase(key, privilege))
-                                        {
-                                            available = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!available)
+                                    if (available)
                                         break;
                                 }
+
+                                if (!available)
+                                    break;
                             }
 
                             if (available)
                             {
                                 pid = proc.Id;
                                 processName = proc.ProcessName;
-                                break;
                             }
-                            else
-                            {
-                                NativeMethods.NtClose(hProcess);
-                                hProcess = IntPtr.Zero;
-                            }
-                        }
-                        else
-                        {
-                            NativeMethods.NtClose(hProcess);
-                            hProcess = IntPtr.Zero;
                         }
                     }
-                    else
+
+                    if (pid == -1)
                     {
                         NativeMethods.NtClose(hProcess);
                         hProcess = IntPtr.Zero;
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
             }

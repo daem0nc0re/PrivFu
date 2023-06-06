@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using TokenStealing.Interop;
 
@@ -108,6 +109,12 @@ namespace TokenStealing.Library
                 Marshal.FreeHGlobal(pTokenInformation);
 
             return stringSid;
+        }
+
+
+        public static bool IsSystem()
+        {
+            return IsSystem(WindowsIdentity.GetCurrent().Token);
         }
 
 
