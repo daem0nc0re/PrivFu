@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using TokenStealing.Interop;
 
 namespace TokenStealing.Library
@@ -38,7 +37,6 @@ namespace TokenStealing.Library
                 Console.WriteLine("[>] Trying to enable privileges.");
 
                 Utilities.EnableTokenPrivileges(
-                    WindowsIdentity.GetCurrent().Token,
                     requiredPrivs,
                     out Dictionary<string, bool> adjustedPrivs);
 
@@ -209,7 +207,6 @@ namespace TokenStealing.Library
                 Console.WriteLine("[>] Trying to enable privileges.");
 
                 Utilities.EnableTokenPrivileges(
-                    WindowsIdentity.GetCurrent().Token,
                     requiredPrivs,
                     out Dictionary<string, bool> adjustedPrivs);
 

@@ -11,6 +11,12 @@ namespace TokenStealing.Library
 
     internal class Utilities
     {
+        public static bool EnableAllTokenPrivileges(out Dictionary<string, bool> adjustedPrivs)
+        {
+            return EnableAllTokenPrivileges(WindowsIdentity.GetCurrent().Token, out adjustedPrivs);
+        }
+
+
         public static bool EnableAllTokenPrivileges(
             IntPtr hToken,
             out Dictionary<string, bool> adjustedPrivs)
@@ -54,6 +60,17 @@ namespace TokenStealing.Library
             } while (false);
 
             return status;
+        }
+
+
+        public static bool EnableTokenPrivileges(
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> adjustedPrivs)
+        {
+            return EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                requiredPrivs,
+                out adjustedPrivs);
         }
 
 
