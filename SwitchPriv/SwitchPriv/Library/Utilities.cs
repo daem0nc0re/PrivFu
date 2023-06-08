@@ -9,53 +9,39 @@ namespace SwitchPriv.Library
 {
     internal class Utilities
     {
-        public static bool DisableSinglePrivilege(
-            IntPtr hToken,
-            LUID priv)
+        public static bool DisableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
-
+            bool status;
+            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
             tp.Privileges[0].Attributes = 0;
-
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!NativeMethods.AdjustTokenPrivileges(
+            status = NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
                 0,
                 IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to disable {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
+                IntPtr.Zero);
             error = Marshal.GetLastWin32Error();
+            status = (status && (error == 0));
 
-            if (error != 0)
+            if (!status)
             {
                 Console.WriteLine("[-] Failed to disable {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                
-                return false;
             }
 
-            return true;
+            return status;
         }
 
 
-        public static bool EnableMultiplePrivileges(
-            IntPtr hToken,
-            string[] privs)
+        public static bool EnableMultiplePrivileges(IntPtr hToken, string[] privs)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
+            var opt = StringComparison.OrdinalIgnoreCase;
             Dictionary<string, bool> results = new Dictionary<string, bool>();
             var privList = new List<string>(privs);
             var availablePrivs = GetAvailablePrivileges(hToken);
@@ -76,13 +62,9 @@ namespace SwitchPriv.Library
                         isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
 
                         if (isEnabled)
-                        {
                             results[name] = true;
-                        }
                         else
-                        {
                             results[name] = EnableSinglePrivilege(hToken, priv.Key);
-                        }
                     }
                 }
             }
@@ -91,10 +73,7 @@ namespace SwitchPriv.Library
             {
                 if (!result.Value)
                 {
-                    Console.WriteLine(
-                        "[-] {0} is not available.",
-                        result.Key);
-
+                    Console.WriteLine("[-] {0} is not available.", result.Key);
                     enabledAll = false;
                 }
             }
@@ -103,45 +82,33 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool EnableSinglePrivilege(
-            IntPtr hToken,
-            LUID priv)
+        public static bool EnableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
-
+            bool status;
+            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
             tp.Privileges[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
-
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!NativeMethods.AdjustTokenPrivileges(
+            status = NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
                 0,
                 IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to enable {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
+                IntPtr.Zero);
             error = Marshal.GetLastWin32Error();
+            status = (status && (error == 0));
 
-            if (error != 0)
+            if (!status)
             {
                 Console.WriteLine("[-] Failed to enable {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                
-                return false;
             }
 
-            return true;
+            return status;
         }
 
 
@@ -416,51 +383,37 @@ namespace SwitchPriv.Library
         public static bool RemoveSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
-
+            bool status;
+            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
             tp.Privileges[0].Attributes = (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_REMOVED;
-
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(tp));
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
-            if (!NativeMethods.AdjustTokenPrivileges(
+            status = NativeMethods.AdjustTokenPrivileges(
                 hToken,
                 false,
                 pTokenPrivilege,
                 0,
                 IntPtr.Zero,
-                IntPtr.Zero))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to remove {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
+                IntPtr.Zero);
             error = Marshal.GetLastWin32Error();
+            status = (status && (error == 0));
 
-            if (error != 0)
+            if (!status)
             {
                 Console.WriteLine("[-] Failed to remove {0}.", Helpers.GetPrivilegeName(priv));
                 Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return false;
             }
 
-            return true;
+            return status;
         }
 
-        public static bool SetMandatoryLevel(
-            IntPtr hToken,
-            string mandatoryLevelSid)
+        public static bool SetMandatoryLevel(IntPtr hToken, string mandatoryLevelSid)
         {
             int error;
 
-            if (!NativeMethods.ConvertStringSidToSid(
-                mandatoryLevelSid,
-                out IntPtr pSid))
+            if (!NativeMethods.ConvertStringSidToSid(mandatoryLevelSid, out IntPtr pSid))
             {
                 error = Marshal.GetLastWin32Error();
                 Console.WriteLine("[-] Failed to resolve integrity level SID.");
