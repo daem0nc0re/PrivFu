@@ -21,16 +21,16 @@ namespace TokenStealing.Library
             IntPtr hToken,
             out Dictionary<string, bool> adjustedPrivs)
         {
-            bool status;
+            bool allEnabled;
             adjustedPrivs = new Dictionary<string, bool>();
 
             do
             {
-                status = Helpers.GetTokenPrivileges(
+                allEnabled = Helpers.GetTokenPrivileges(
                     hToken,
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
-                if (!status)
+                if (!allEnabled)
                     break;
 
                 foreach (var priv in availablePrivs)
@@ -55,11 +55,15 @@ namespace TokenStealing.Library
                             20,
                             out TOKEN_PRIVILEGES _,
                             out int _);
+                        adjustedPrivs[priv.Key] = (adjustedPrivs[priv.Key] && (Marshal.GetLastWin32Error() == 0));
+
+                        if (!adjustedPrivs[priv.Key])
+                            allEnabled = false;
                     }
                 }
             } while (false);
 
-            return status;
+            return allEnabled;
         }
 
 
@@ -79,7 +83,7 @@ namespace TokenStealing.Library
             List<string> requiredPrivs,
             out Dictionary<string, bool> adjustedPrivs)
         {
-            var status = true;
+            var allEnabled = true;
             adjustedPrivs = new Dictionary<string, bool>();
 
             do
@@ -87,11 +91,11 @@ namespace TokenStealing.Library
                 if (requiredPrivs.Count == 0)
                     break;
 
-                status = Helpers.GetTokenPrivileges(
+                allEnabled = Helpers.GetTokenPrivileges(
                     hToken,
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
-                if (!status)
+                if (!allEnabled)
                     break;
 
                 foreach (var priv in requiredPrivs)
@@ -123,6 +127,7 @@ namespace TokenStealing.Library
                                         20,
                                         out TOKEN_PRIVILEGES _,
                                         out int _);
+                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
                                 }
                             }
 
@@ -131,11 +136,11 @@ namespace TokenStealing.Library
                     }
 
                     if (!adjustedPrivs[priv])
-                        status = false;
+                        allEnabled = false;
                 }
             } while (false);
 
-            return status;
+            return allEnabled;
         }
 
 
