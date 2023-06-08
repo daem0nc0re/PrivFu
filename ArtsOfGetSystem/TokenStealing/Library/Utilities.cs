@@ -22,45 +22,24 @@ namespace TokenStealing.Library
             out Dictionary<string, bool> adjustedPrivs)
         {
             bool allEnabled;
-            adjustedPrivs = new Dictionary<string, bool>();
 
             do
             {
+                var privsToEnable = new List<string>();
                 allEnabled = Helpers.GetTokenPrivileges(
                     hToken,
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (!allEnabled)
-                    break;
-
-                foreach (var priv in availablePrivs)
                 {
-                    var tokenPrivileges = new TOKEN_PRIVILEGES(1);
-                    var isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
-                    adjustedPrivs.Add(priv.Key, isEnabled);
-
-                    if (isEnabled)
-                        continue;
-
-                    if (NativeMethods.LookupPrivilegeValue(
-                        null,
-                        priv.Key,
-                        out tokenPrivileges.Privileges[0].Luid))
-                    {
-                        tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
-                        adjustedPrivs[priv.Key] = NativeMethods.AdjustTokenPrivileges(
-                            hToken,
-                            false,
-                            in tokenPrivileges,
-                            20,
-                            out TOKEN_PRIVILEGES _,
-                            out int _);
-                        adjustedPrivs[priv.Key] = (adjustedPrivs[priv.Key] && (Marshal.GetLastWin32Error() == 0));
-
-                        if (!adjustedPrivs[priv.Key])
-                            allEnabled = false;
-                    }
+                    adjustedPrivs = new Dictionary<string, bool>();
+                    break;
                 }
+
+                foreach (var privName in availablePrivs.Keys)
+                    privsToEnable.Add(privName);
+
+                allEnabled = EnableTokenPrivileges(hToken, privsToEnable, out adjustedPrivs);
             } while (false);
 
             return allEnabled;
