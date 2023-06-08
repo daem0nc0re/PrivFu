@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -7,25 +8,33 @@ using SwitchPriv.Interop;
 
 namespace SwitchPriv.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Helpers
     {
+        public static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
         public static string ConvertIndexToMandatoryLevelSid(int index)
         {
-            if (index == (int)Globals.MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
+            if (index == (int)MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
                 return Win32Consts.UNTRUSTED_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
                 return Win32Consts.LOW_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
                 return Win32Consts.MEDIUM_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
                 return Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
                 return Win32Consts.HIGH_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
                 return Win32Consts.SYSTEM_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
                 return Win32Consts.PROTECTED_MANDATORY_LEVEL;
-            else if (index == (int)Globals.MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
+            else if (index == (int)MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
                 return Win32Consts.SECURE_MANDATORY_LEVEL;
             else
                 return null;
@@ -136,37 +145,58 @@ namespace SwitchPriv.Library
         }
 
 
-        public static IntPtr GetInformationFromToken(
+        public static bool GetTokenPrivileges(
             IntPtr hToken,
-            TOKEN_INFORMATION_CLASS tokenInfoClass)
+            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
-            bool status;
-            int error;
-            int length = 4;
-            IntPtr buffer;
+            NTSTATUS ntstatus;
+            IntPtr pInformationBuffer;
+            var nInformationLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
 
             do
             {
-                buffer = Marshal.AllocHGlobal(length);
-                ZeroMemory(buffer, length);
-                status = NativeMethods.GetTokenInformation(
-                    hToken, tokenInfoClass, buffer, length, out length);
-                error = Marshal.GetLastWin32Error();
+                pInformationBuffer = Marshal.AllocHGlobal(nInformationLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    pInformationBuffer,
+                    (uint)nInformationLength,
+                    out uint nRequiredLength);
 
-                if (!status)
-                    Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                {
+                    Marshal.FreeHGlobal(pInformationBuffer);
+                    nInformationLength = (int)nRequiredLength;
+                    pInformationBuffer = IntPtr.Zero;
+                }
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
 
-            if (!status)
-                return IntPtr.Zero;
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+                    pInformationBuffer,
+                    typeof(TOKEN_PRIVILEGES));
 
-            return buffer;
+                for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
+                {
+                    int cchName = 128;
+                    var stringBuilder = new StringBuilder(cchName);
+
+                    NativeMethods.LookupPrivilegeName(null, in tokenPrivileges.Privileges[idx].Luid, stringBuilder, ref cchName);
+                    privileges.Add(stringBuilder.ToString(), (SE_PRIVILEGE_ATTRIBUTES)tokenPrivileges.Privileges[idx].Attributes);
+                    stringBuilder.Clear();
+                }
+            }
+
+            if (pInformationBuffer != IntPtr.Zero)
+                Marshal.FreeHGlobal(pInformationBuffer);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 
-        public static bool GetPrivilegeLuid(
-            string privilegeName,
-            out LUID luid)
+        public static bool GetPrivilegeLuid(string privilegeName, out LUID luid)
         {
             int error;
 
@@ -194,7 +224,7 @@ namespace SwitchPriv.Library
 
             if (!NativeMethods.LookupPrivilegeName(
                 null,
-                ref priv,
+                in priv,
                 privilegeName,
                 ref cchName))
             {
@@ -252,53 +282,9 @@ namespace SwitchPriv.Library
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
-        }
-
-
-        public static bool IsPrivilegeEnabled(
-            IntPtr hToken,
-            LUID priv,
-            out bool isEnabled)
-        {
-            int error;
-            isEnabled = false;
-
-            if (hToken == IntPtr.Zero)
-                return false;
-
-            var privSet = new PRIVILEGE_SET(1, Win32Consts.PRIVILEGE_SET_ALL_NECESSARY);
-            privSet.Privilege[0].Luid = priv;
-            privSet.Privilege[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
-
-            IntPtr pPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(privSet));
-            Marshal.StructureToPtr(privSet, pPrivileges, true);
-
-            if (!NativeMethods.PrivilegeCheck(
-                hToken,
-                pPrivileges,
-                out isEnabled))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to check the target privilege is enabled.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                Marshal.FreeHGlobal(pPrivileges);
-
-                return false;
-            }
-
-            Marshal.FreeHGlobal(pPrivileges);
-
-            return true;
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
@@ -356,10 +342,10 @@ namespace SwitchPriv.Library
         }
 
 
-        public static void ZeroMemory(IntPtr buffer, int size)
+        public static void ZeroMemory(IntPtr pBuffer, int nSize)
         {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
+            for (var offset = 0; offset < nSize; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
         }
     }
 }

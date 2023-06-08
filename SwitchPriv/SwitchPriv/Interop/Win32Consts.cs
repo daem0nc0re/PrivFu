@@ -2,12 +2,15 @@
 
 namespace SwitchPriv.Interop
 {
+    using NTSTATUS = Int32;
+
     internal class Win32Consts
     {
         public const int PRIVILEGE_SET_ALL_NECESSARY = 1;
 
         // NtStatus
-        public const uint STATUS_SUCCESS = 0;
+        public const NTSTATUS STATUS_SUCCESS = 0;
+        public static readonly NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         // Win32Error
         public const int ERROR_BAD_LENGTH = 0x00000018;

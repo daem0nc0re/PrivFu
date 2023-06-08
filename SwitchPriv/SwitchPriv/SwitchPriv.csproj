@@ -51,7 +51,7 @@
     <Compile Include="Interop\Win32Consts.cs" />
     <Compile Include="Interop\Win32Enums.cs" />
     <Compile Include="Interop\Win32Structs.cs" />
-    <Compile Include="Library\Globals.cs" />
+    <Compile Include="Library\Header.cs" />
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />
     <Compile Include="Library\Utilities.cs" />

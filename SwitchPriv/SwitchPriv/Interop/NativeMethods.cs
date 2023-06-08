@@ -4,6 +4,8 @@ using System.Text;
 
 namespace SwitchPriv.Interop
 {
+    using NTSTATUS = Int32;
+
     internal class NativeMethods
     {
         /*
@@ -52,7 +54,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
-            ref LUID lpLuid,
+            in LUID lpLuid,
             StringBuilder lpName,
             ref int cchName);
 
@@ -115,6 +117,9 @@ namespace SwitchPriv.Interop
         /*
          * ntdll.dll
          */
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtClose(IntPtr Handle);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtQueryInformationProcess(
             IntPtr ProcessHandle,
@@ -122,5 +127,13 @@ namespace SwitchPriv.Interop
             IntPtr ProcessInformation, 
             int ProcessInformationLength, 
             IntPtr ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
     }
 }

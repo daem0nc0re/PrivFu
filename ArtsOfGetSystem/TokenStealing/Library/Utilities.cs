@@ -194,47 +194,35 @@ namespace TokenStealing.Library
         }
 
 
-        public static bool ImpersonateThreadToken(IntPtr hImpersonateToken)
+        public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
         {
             NTSTATUS ntstatus;
             IntPtr pImpersonationLevel = Marshal.AllocHGlobal(4);
-            var status = NativeMethods.ImpersonateLoggedOnUser(hImpersonateToken);
+            bool status = NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken);
 
             if (status)
             {
-                SECURITY_IMPERSONATION_LEVEL intendedLevel;
-                SECURITY_IMPERSONATION_LEVEL currentLevel;
-                IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-                status = false;
+                SECURITY_IMPERSONATION_LEVEL level;
 
-                do
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pImpersonationLevel,
+                    4u,
+                    out uint _);
+                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+                if (status)
                 {
-                    ntstatus = NativeMethods.NtQueryInformationToken(
-                        hImpersonateToken,
-                        TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
-                        pImpersonationLevel,
-                        4u,
-                        out uint _);
+                    level = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
 
-                    if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                        break;
+                    if (level == SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation)
+                        status = true;
+                    else if (level == SECURITY_IMPERSONATION_LEVEL.SecurityDelegation)
+                        status = true;
                     else
-                        intendedLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
-
-                    ntstatus = NativeMethods.NtQueryInformationToken(
-                        hCurrentToken,
-                        TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
-                        pImpersonationLevel,
-                        4u,
-                        out uint _);
-
-                    if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                        break;
-                    else
-                        currentLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
-
-                    status = (intendedLevel == currentLevel);
-                } while (false);
+                        status = false;
+                }
             }
 
             return status;
