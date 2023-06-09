@@ -14,14 +14,6 @@ namespace SwitchPriv.Interop
     }
 
     [Flags]
-    internal enum PrivilegeAttributeFlags : uint
-    {
-        SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001,
-        SE_PRIVILEGE_ENABLED = 0x00000002,
-        SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000
-    }
-
-    [Flags]
     internal enum ProcessAccessFlags : uint
     {
         PROCESS_ALL_ACCESS = 0x001F0FFF,
@@ -181,10 +173,10 @@ namespace SwitchPriv.Interop
     [Flags]
     internal enum SE_PRIVILEGE_ATTRIBUTES : uint
     {
-        SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001,
-        SE_PRIVILEGE_ENABLED = 0x00000002,
-        SE_PRIVILEGE_REMOVED = 0x00000004,
-        SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000,
+        ENABLED_BY_DEFAULT = 0x00000001,
+        ENABLED = 0x00000002,
+        REMOVED = 0x00000004,
+        USED_FOR_ACCESS = 0x80000000,
     }
 
     [Flags]

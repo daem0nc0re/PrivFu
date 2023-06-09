@@ -20,7 +20,7 @@ namespace SwitchPriv.Interop
     internal struct LUID_AND_ATTRIBUTES
     {
         public LUID Luid;
-        public uint Attributes;
+        public int Attributes;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -40,13 +40,13 @@ namespace SwitchPriv.Interop
     internal struct TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
         public LUID_AND_ATTRIBUTES[] Privileges;
 
-        public TOKEN_PRIVILEGES(int _privilegeCount)
+        public TOKEN_PRIVILEGES(int nPrivilegeCount)
         {
-            PrivilegeCount = _privilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[1];
+            PrivilegeCount = nPrivilegeCount;
+            Privileges = new LUID_AND_ATTRIBUTES[36];
         }
     }
 

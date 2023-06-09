@@ -25,25 +25,21 @@ namespace TokenStealing.Library
         {
             NTSTATUS ntstatus;
             IntPtr pInformationBuffer;
-            var nInformationLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
             privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
 
             do
             {
-                pInformationBuffer = Marshal.AllocHGlobal(nInformationLength);
+                pInformationBuffer = Marshal.AllocHGlobal((int)nInformationLength);
                 ntstatus = NativeMethods.NtQueryInformationToken(
                     hToken,
                     TOKEN_INFORMATION_CLASS.TokenPrivileges,
                     pInformationBuffer,
-                    (uint)nInformationLength,
-                    out uint nRequiredLength);
+                    nInformationLength,
+                    out nInformationLength);
 
                 if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                {
                     Marshal.FreeHGlobal(pInformationBuffer);
-                    nInformationLength = (int)nRequiredLength;
-                    pInformationBuffer = IntPtr.Zero;
-                }
             } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
@@ -61,10 +57,9 @@ namespace TokenStealing.Library
                     privileges.Add(stringBuilder.ToString(), (SE_PRIVILEGE_ATTRIBUTES)tokenPrivileges.Privileges[idx].Attributes);
                     stringBuilder.Clear();
                 }
-            }
 
-            if (pInformationBuffer != IntPtr.Zero)
                 Marshal.FreeHGlobal(pInformationBuffer);
+            }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }

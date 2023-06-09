@@ -11,6 +11,17 @@ namespace SwitchPriv.Library
 
     internal class Utilities
     {
+        public static bool DisableSinglePrivilege(IntPtr hToken, string privName)
+        {
+            bool status = Helpers.GetPrivilegeLuid(privName, out LUID luid);
+
+            if (status)
+                status = DisableSinglePrivilege(hToken, luid);
+
+            return status;
+        }
+
+
         public static bool DisableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
@@ -43,12 +54,11 @@ namespace SwitchPriv.Library
 
         public static bool EnableMultiplePrivileges(IntPtr hToken, string[] privs)
         {
-            var opt = StringComparison.OrdinalIgnoreCase;
             Dictionary<string, bool> results = new Dictionary<string, bool>();
             var privList = new List<string>(privs);
-            var availablePrivs = GetAvailablePrivileges(hToken);
             bool isEnabled;
             bool enabledAll = true;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
             foreach (var name in privList)
             {
@@ -59,14 +69,15 @@ namespace SwitchPriv.Library
             {
                 foreach (var name in privList)
                 {
-                    if (string.Compare(Helpers.GetPrivilegeName(priv.Key), name, opt) == 0)
+                    if (Helpers.CompareIgnoreCase(priv.Key, name))
                     {
-                        isEnabled = ((priv.Value & (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_ENABLED) != 0);
+                        isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
+                        Helpers.GetPrivilegeLuid(priv.Key, out LUID luid);
 
                         if (isEnabled)
                             results[name] = true;
                         else
-                            results[name] = EnableSinglePrivilege(hToken, priv.Key);
+                            results[name] = EnableSinglePrivilege(hToken, luid);
                     }
                 }
             }
@@ -84,6 +95,17 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool EnableSinglePrivilege(IntPtr hToken, string privilegeName)
+        {
+            bool status = NativeMethods.LookupPrivilegeValue(null, privilegeName, out LUID luid);
+
+            if (status)
+                status = EnableSinglePrivilege(hToken, luid);
+
+            return status;
+        }
+
+
         public static bool EnableSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
@@ -91,7 +113,7 @@ namespace SwitchPriv.Library
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED;
+            tp.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
             status = NativeMethods.AdjustTokenPrivileges(
@@ -111,54 +133,6 @@ namespace SwitchPriv.Library
             }
 
             return status;
-        }
-
-
-        public static Dictionary<LUID, uint> GetAvailablePrivileges(IntPtr hToken)
-        {
-            int ERROR_INSUFFICIENT_BUFFER = 122;
-            int error;
-            bool status;
-            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
-            Dictionary<LUID, uint> availablePrivs = new Dictionary<LUID, uint>();
-            IntPtr pTokenPrivileges;
-
-            do
-            {
-                pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
-                Helpers.ZeroMemory(pTokenPrivileges, bufferLength);
-
-                status = NativeMethods.GetTokenInformation(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
-                    pTokenPrivileges,
-                    bufferLength,
-                    out bufferLength);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                    Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER));
-
-            if (!status)
-                return availablePrivs;
-
-            int privCount = Marshal.ReadInt32(pTokenPrivileges);
-            IntPtr buffer = new IntPtr(pTokenPrivileges.ToInt64() + Marshal.SizeOf(privCount));
-
-            for (var count = 0; count < privCount; count++)
-            {
-                var luidAndAttr = (LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                    buffer,
-                    typeof(LUID_AND_ATTRIBUTES));
-
-                availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
-                buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
-            }
-
-            Marshal.FreeHGlobal(pTokenPrivileges);
-
-            return availablePrivs;
         }
 
 
@@ -216,6 +190,12 @@ namespace SwitchPriv.Library
                 return "SECURE_MANDATORY_LEVEL";
             else
                 return "N/A";
+        }
+
+
+        public static int GetParentProcessId()
+        {
+            return GetParentProcessId(Process.GetCurrentProcess().Handle);
         }
 
 
@@ -376,6 +356,17 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool RemoveSinglePrivilege(IntPtr hToken, string privilegeName)
+        {
+            bool status = NativeMethods.LookupPrivilegeValue(null, privilegeName, out LUID luid);
+
+            if (status)
+                status = RemoveSinglePrivilege(hToken, luid);
+
+            return status;
+        }
+
+
         public static bool RemoveSinglePrivilege(IntPtr hToken, LUID priv)
         {
             int error;
@@ -383,7 +374,7 @@ namespace SwitchPriv.Library
             IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
             TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
             tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (uint)SE_PRIVILEGE_ATTRIBUTES.SE_PRIVILEGE_REMOVED;
+            tp.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.REMOVED;
             Marshal.StructureToPtr(tp, pTokenPrivilege, true);
 
             status = NativeMethods.AdjustTokenPrivileges(

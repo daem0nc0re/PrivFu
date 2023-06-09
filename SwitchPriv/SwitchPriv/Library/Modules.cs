@@ -15,7 +15,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -72,16 +72,16 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
             foreach (var priv in privs)
             {
-                isEnabled = ((priv.Value & (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
 
                 if (isEnabled)
                     if (Utilities.DisableSinglePrivilege(hToken, priv.Key))
-                        Console.WriteLine("[+] {0} is disabled successfully.", Helpers.GetPrivilegeName(priv.Key));
+                        Console.WriteLine("[+] {0} is disabled successfully.", priv.Key);
             }
 
             Console.WriteLine("[*] Done.\n");
@@ -96,19 +96,13 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool DisableTokenPrivilege(
-            int pid,
-            string privilegeName,
-            bool asSystem)
+        public static bool DisableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             int error;
             IntPtr hProcess;
 
-            if (!Helpers.GetPrivilegeLuid(privilegeName, out LUID priv))
-                return false;
-
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -131,7 +125,6 @@ namespace SwitchPriv.Library
             if (asSystem)
                 if (!GetSystem())
                     return false;
-
 
             hProcess = NativeMethods.OpenProcess(
                 ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
@@ -166,17 +159,16 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isAvailable = false;
             bool isEnabled = false;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
-            foreach (var luidAndAttr in privs)
+            foreach (var priv in privs)
             {
-                if (luidAndAttr.Key.LowPart == priv.LowPart && luidAndAttr.Key.HighPart == priv.HighPart)
+                if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
                 {
                     isAvailable = true;
-                    isEnabled = ((luidAndAttr.Value & (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
-
+                    isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
                     break;
                 }
             }
@@ -205,7 +197,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            if (Utilities.DisableSinglePrivilege(hToken, priv))
+            if (Utilities.DisableSinglePrivilege(hToken, privilegeName))
                 Console.WriteLine("[+] {0} is disabled successfully.\n", privilegeName);
 
             NativeMethods.CloseHandle(hToken);
@@ -224,7 +216,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -282,16 +274,16 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
             foreach (var priv in privs)
             {
-                isEnabled = ((priv.Value & (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
 
                 if (!isEnabled)
                     if (Utilities.EnableSinglePrivilege(hToken, priv.Key))
-                        Console.WriteLine("[+] {0} is enabled successfully.", Helpers.GetPrivilegeName(priv.Key));
+                        Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
             }
 
             Console.WriteLine("[*] Done.\n");
@@ -306,19 +298,13 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool EnableTokenPrivilege(
-            int pid,
-            string privilegeName,
-            bool asSystem)
+        public static bool EnableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             int error;
             IntPtr hProcess;
 
-            if (!Helpers.GetPrivilegeLuid(privilegeName, out LUID priv))
-                return false;
-
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -341,7 +327,6 @@ namespace SwitchPriv.Library
             if (asSystem)
                 if (!GetSystem())
                     return false;
-
 
             hProcess = NativeMethods.OpenProcess(
                 ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
@@ -376,16 +361,16 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isAvailable = false;
             bool isEnabled = false;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
-            foreach (var luidAndAttr in privs)
+            foreach (var priv in privs)
             {
-                if (luidAndAttr.Key.LowPart == priv.LowPart && luidAndAttr.Key.HighPart == priv.HighPart)
+                if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
                 {
                     isAvailable = true;
-                    isEnabled = ((luidAndAttr.Value & (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
+                    isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
                     break;
                 }
             }
@@ -414,7 +399,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            if (Utilities.EnableSinglePrivilege(hToken, priv))
+            if (Utilities.EnableSinglePrivilege(hToken, privilegeName))
                 Console.WriteLine("[+] {0} is enabled successfully.\n", privilegeName);
 
             NativeMethods.CloseHandle(hToken);
@@ -427,13 +412,9 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool FindPrivilegedProcess(
-            string targetPrivilege,
-            bool asSystem)
+        public static bool FindPrivilegedProcess(string targetPrivilege, bool asSystem)
         {
             IntPtr hProcess;
-            string privilege;
-            Dictionary<LUID, uint> privs;
             var processList = Process.GetProcesses();
             var privilegedProcesses = new Dictionary<int, string>();
             var deniedProcesses = new Dictionary<int, string>();
@@ -468,18 +449,13 @@ namespace SwitchPriv.Library
                     continue;
                 }
 
-                privs = Utilities.GetAvailablePrivileges(hToken);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
                 NativeMethods.CloseHandle(hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                foreach (var luid in privs.Keys)
+                foreach (var priv in privs.Keys)
                 {
-                    privilege = Helpers.GetPrivilegeName(luid);
-
-                    if (string.Compare(
-                        privilege,
-                        targetPrivilege,
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (Helpers.CompareIgnoreCase(priv, targetPrivilege))
                     {
                         privilegedProcesses.Add(proc.Id, proc.ProcessName);
                         break;
@@ -535,7 +511,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -592,9 +568,8 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isEnabled;
-            string privilegeName;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
             Console.WriteLine();
 
@@ -610,9 +585,8 @@ namespace SwitchPriv.Library
 
             foreach (var priv in privs)
             {
-                isEnabled = ((priv.Value & (uint)PrivilegeAttributeFlags.SE_PRIVILEGE_ENABLED) != 0);
-                privilegeName = Helpers.GetPrivilegeName(priv.Key);
-                Console.WriteLine("{0,-42} {1}", privilegeName, isEnabled ? "Enabled" : "Disabled");
+                isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
+                Console.WriteLine("{0,-42} {1}", priv.Key, isEnabled ? "Enabled" : "Disabled");
             }
 
             Console.WriteLine("\n[*] Integrity Level : {0}\n", Utilities.GetIntegrityLevel(hToken));
@@ -655,7 +629,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -713,12 +687,12 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
-            
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
+
             foreach (var priv in privs)
             {
                 if (Utilities.RemoveSinglePrivilege(hToken, priv.Key))
-                    Console.WriteLine("[+] {0} is removed successfully.", Helpers.GetPrivilegeName(priv.Key));
+                    Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
             }
 
             Console.WriteLine("[*] Done.\n");
@@ -733,19 +707,13 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool RemoveTokenPrivilege(
-            int pid,
-            string privilegeName,
-            bool asSystem)
+        public static bool RemoveTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             int error;
             IntPtr hProcess;
 
-            if (!Helpers.GetPrivilegeLuid(privilegeName, out LUID priv))
-                return false;
-
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -768,7 +736,6 @@ namespace SwitchPriv.Library
             if (asSystem)
                 if (!GetSystem())
                     return false;
-
 
             hProcess = NativeMethods.OpenProcess(
                 ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
@@ -803,15 +770,14 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            Dictionary<LUID, uint> privs = Utilities.GetAvailablePrivileges(hToken);
             bool isAvailable = false;
+            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
 
-            foreach (var luidAndAttr in privs)
+            foreach (var priv in privs.Keys)
             {
-                if (luidAndAttr.Key.LowPart == priv.LowPart && luidAndAttr.Key.HighPart == priv.HighPart)
+                if (Helpers.CompareIgnoreCase(priv, privilegeName))
                 {
                     isAvailable = true;
-
                     break;
                 }
             }
@@ -828,7 +794,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            if (Utilities.RemoveSinglePrivilege(hToken, priv))
+            if (Utilities.RemoveSinglePrivilege(hToken, privilegeName))
                 Console.WriteLine("[+] {0} is removed successfully.\n", privilegeName);
 
             NativeMethods.CloseHandle(hToken);
@@ -841,17 +807,14 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool SetIntegrityLevel(
-            int pid,
-            int integrityLevelIndex,
-            bool asSystem)
+        public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool asSystem)
         {
             int error;
             IntPtr hProcess;
             string mandatoryLevelSid = Helpers.ConvertIndexToMandatoryLevelSid(integrityLevelIndex);
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId(new IntPtr(-1));
+                pid = Utilities.GetParentProcessId();
 
             if (pid == 0)
                 return false;
