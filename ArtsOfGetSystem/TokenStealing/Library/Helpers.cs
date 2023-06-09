@@ -122,13 +122,12 @@ namespace TokenStealing.Library
 
             if (isNtStatus)
             {
-                dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;
-
                 foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
                 {
                     if (CompareIgnoreCase(Path.GetFileName(module.FileName), "ntdll.dll"))
                     {
                         pNtdll = module.BaseAddress;
+                        dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;
                         break;
                     }
                 }
