@@ -68,33 +68,28 @@ namespace TokenStealing.Library
         public static string GetTokenUserSid(IntPtr hToken)
         {
             NTSTATUS ntstatus;
-            bool status;
             string stringSid = null;
             IntPtr pTokenInformation;
-            var nInformationLength = Marshal.SizeOf(typeof(TOKEN_USER));
+            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_USER));
 
             do
             {
-                pTokenInformation = Marshal.AllocHGlobal(nInformationLength);
+                pTokenInformation = Marshal.AllocHGlobal((int)nInformationLength);
                 ntstatus = NativeMethods.NtQueryInformationToken(
                     hToken,
                     TOKEN_INFORMATION_CLASS.TokenUser,
                     pTokenInformation,
-                    (uint)nInformationLength,
-                    out uint nRequreidLength);
+                    nInformationLength,
+                    out nInformationLength);
 
                 if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                {
                     Marshal.FreeHGlobal(pTokenInformation);
-                    nInformationLength = (int)nRequreidLength;
-                    pTokenInformation = IntPtr.Zero;
-                }
             } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 var tokenUser = (TOKEN_USER)Marshal.PtrToStructure(pTokenInformation, typeof(TOKEN_USER));
-                status = NativeMethods.ConvertSidToStringSid(tokenUser.User.Sid, out stringSid);
+                bool status = NativeMethods.ConvertSidToStringSid(tokenUser.User.Sid, out stringSid);
                 Marshal.FreeHGlobal(pTokenInformation);
 
                 if (!status)
