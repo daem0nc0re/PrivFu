@@ -261,46 +261,16 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool GetPrivilegeLuid(string privilegeName, out LUID luid)
-        {
-            int error;
-
-            if (!NativeMethods.LookupPrivilegeValue(
-                null,
-                privilegeName,
-                out luid))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                
-                return false;
-            }
-
-            return true;
-        }
-
-
         public static string GetPrivilegeName(LUID priv)
         {
-            int error;
+            string privilegeName = null;
             int cchName = 255;
-            StringBuilder privilegeName = new StringBuilder(255);
+            var name = new StringBuilder(cchName);
 
-            if (!NativeMethods.LookupPrivilegeName(
-                null,
-                in priv,
-                privilegeName,
-                ref cchName))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to lookup privilege name.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                
-                return null;
-            }
+            if (NativeMethods.LookupPrivilegeName(null, in priv, name, ref cchName))
+                privilegeName = name.ToString();
 
-            return privilegeName.ToString();
+            return privilegeName;
         }
 
 

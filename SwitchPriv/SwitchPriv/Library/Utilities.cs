@@ -13,7 +13,7 @@ namespace SwitchPriv.Library
     {
         public static bool DisableSinglePrivilege(IntPtr hToken, string privName)
         {
-            bool status = Helpers.GetPrivilegeLuid(privName, out LUID luid);
+            bool status = NativeMethods.LookupPrivilegeValue(null, privName, out LUID luid);
 
             if (status)
                 status = DisableSinglePrivilege(hToken, luid);
@@ -72,7 +72,7 @@ namespace SwitchPriv.Library
                     if (Helpers.CompareIgnoreCase(priv.Key, name))
                     {
                         isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
-                        Helpers.GetPrivilegeLuid(priv.Key, out LUID luid);
+                        NativeMethods.LookupPrivilegeValue(null, priv.Key, out LUID luid);
 
                         if (isEnabled)
                             results[name] = true;
@@ -145,7 +145,6 @@ namespace SwitchPriv.Library
         public static bool ImpersonateAsSmss(string[] privs)
         {
             int smss;
-            IntPtr hProcess;
             var status = false;
 
             try
@@ -159,7 +158,7 @@ namespace SwitchPriv.Library
 
             do
             {
-                hProcess = NativeMethods.OpenProcess(
+                IntPtr hProcess = NativeMethods.OpenProcess(
                     ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
                     true,
                     smss);

