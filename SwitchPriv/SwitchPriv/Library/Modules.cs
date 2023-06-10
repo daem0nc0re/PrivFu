@@ -15,7 +15,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -102,7 +102,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -216,7 +216,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -304,7 +304,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -511,7 +511,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -589,7 +589,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("{0,-42} {1}", priv.Key, isEnabled ? "Enabled" : "Disabled");
             }
 
-            Console.WriteLine("\n[*] Integrity Level : {0}\n", Utilities.GetIntegrityLevel(hToken));
+            Console.WriteLine("\n[*] Integrity Level : {0}\n", Helpers.GetTokenIntegrityLevelString(hToken));
 
             NativeMethods.CloseHandle(hToken);
             NativeMethods.CloseHandle(hProcess);
@@ -619,7 +619,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            return Utilities.ImpersonateAsSmss(new string[] { });
+            return Utilities.ImpersonateAsSmss();
         }
 
 
@@ -629,7 +629,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -713,7 +713,7 @@ namespace SwitchPriv.Library
             IntPtr hProcess;
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;
@@ -814,7 +814,7 @@ namespace SwitchPriv.Library
             string mandatoryLevelSid = Helpers.ConvertIndexToMandatoryLevelSid(integrityLevelIndex);
 
             if (pid == 0)
-                pid = Utilities.GetParentProcessId();
+                pid = Helpers.GetParentProcessId();
 
             if (pid == 0)
                 return false;

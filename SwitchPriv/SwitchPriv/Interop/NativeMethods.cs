@@ -125,8 +125,8 @@ namespace SwitchPriv.Interop
             IntPtr ProcessHandle,
             PROCESSINFOCLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 
-            int ProcessInformationLength, 
-            IntPtr ReturnLength);
+            uint ProcessInformationLength, 
+            out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(

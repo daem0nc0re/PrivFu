@@ -43,23 +43,21 @@ namespace SwitchPriv.Library
 
         public static string ConvertStringSidToMandatoryLevelName(string stringSid)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-
-            if (string.Compare(stringSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
+            if (CompareIgnoreCase(stringSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL))
                 return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.LOW_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.LOW_MANDATORY_LEVEL))
                 return "LOW_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.MEDIUM_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.MEDIUM_MANDATORY_LEVEL))
                 return "MEDIUM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL))
                 return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.HIGH_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.HIGH_MANDATORY_LEVEL))
                 return "HIGH_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.SYSTEM_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.SYSTEM_MANDATORY_LEVEL))
                 return "SYSTEM_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.PROTECTED_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.PROTECTED_MANDATORY_LEVEL))
                 return "PROTECTED_MANDATORY_LEVEL";
-            else if (string.Compare(stringSid, Win32Consts.SECURE_MANDATORY_LEVEL, opt) == 0)
+            else if (CompareIgnoreCase(stringSid, Win32Consts.SECURE_MANDATORY_LEVEL))
                 return "SECURE_MANDATORY_LEVEL";
             else
                 return null;
@@ -68,80 +66,152 @@ namespace SwitchPriv.Library
 
         public static string GetFullPrivilegeName(string shortenName)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-
-            if (string.Compare(shortenName, "CreateToken", opt) == 0)
+            if (CompareIgnoreCase(shortenName, "CreateToken"))
                 return "SeCreateTokenPrivilege";
-            else if (string.Compare(shortenName, "AssignPrimaryToken", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "AssignPrimaryToken"))
                 return "SeAssignPrimaryTokenPrivilege";
-            else if (string.Compare(shortenName, "LockMemory", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "LockMemory"))
                 return "SeLockMemoryPrivilege";
-            else if (string.Compare(shortenName, "IncreaseQuota", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "IncreaseQuota"))
                 return "SeIncreaseQuotaPrivilege";
-            else if (string.Compare(shortenName, "MachineAccount", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "MachineAccount"))
                 return "SeMachineAccountPrivilege";
-            else if (string.Compare(shortenName, "Tcb", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Tcb"))
                 return "SeTcbPrivilege";
-            else if (string.Compare(shortenName, "Security", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Security"))
                 return "SeSecurityPrivilege";
-            else if (string.Compare(shortenName, "TakeOwnership", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "TakeOwnership"))
                 return "SeTakeOwnershipPrivilege";
-            else if (string.Compare(shortenName, "LoadDriver", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "LoadDriver"))
                 return "SeLoadDriverPrivilege";
-            else if (string.Compare(shortenName, "SystemProfile", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "SystemProfile"))
                 return "SeSystemProfilePrivilege";
-            else if (string.Compare(shortenName, "Systemtime", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Systemtime"))
                 return "SeSystemtimePrivilege";
-            else if (string.Compare(shortenName, "ProfileSingleProcess", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "ProfileSingleProcess"))
                 return "SeProfileSingleProcessPrivilege";
-            else if (string.Compare(shortenName, "IncreaseBasePriority", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "IncreaseBasePriority"))
                 return "SeIncreaseBasePriorityPrivilege";
-            else if (string.Compare(shortenName, "CreatePagefile", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "CreatePagefile"))
                 return "SeCreatePagefilePrivilege";
-            else if (string.Compare(shortenName, "CreatePermanent", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "CreatePermanent"))
                 return "SeCreatePermanentPrivilege";
-            else if (string.Compare(shortenName, "Backup", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Backup"))
                 return "SeBackupPrivilege";
-            else if (string.Compare(shortenName, "Restore", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Restore"))
                 return "SeRestorePrivilege";
-            else if (string.Compare(shortenName, "Shutdown", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Shutdown"))
                 return "SeShutdownPrivilege";
-            else if (string.Compare(shortenName, "Debug", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Debug"))
                 return "SeDebugPrivilege";
-            else if (string.Compare(shortenName, "Audit", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Audit"))
                 return "SeAuditPrivilege";
-            else if (string.Compare(shortenName, "SystemEnvironment", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "SystemEnvironment"))
                 return "SeSystemEnvironmentPrivilege";
-            else if (string.Compare(shortenName, "ChangeNotify", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "ChangeNotify"))
                 return "SeChangeNotifyPrivilege";
-            else if (string.Compare(shortenName, "RemoteShutdown", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "RemoteShutdown"))
                 return "SeRemoteShutdownPrivilege";
-            else if (string.Compare(shortenName, "Undock", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Undock"))
                 return "SeUndockPrivilege";
-            else if (string.Compare(shortenName, "SyncAgent", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "SyncAgent"))
                 return "SeSyncAgentPrivilege";
-            else if (string.Compare(shortenName, "EnableDelegation", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "EnableDelegation"))
                 return "SeEnableDelegationPrivilege";
-            else if (string.Compare(shortenName, "ManageVolume", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "ManageVolume"))
                 return "SeManageVolumePrivilege";
-            else if (string.Compare(shortenName, "Impersonate", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Impersonate"))
                 return "SeImpersonatePrivilege";
-            else if (string.Compare(shortenName, "CreateGlobal", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "CreateGlobal"))
                 return "SeCreateGlobalPrivilege";
-            else if (string.Compare(shortenName, "TrustedCredManAccess", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "TrustedCredManAccess"))
                 return "SeTrustedCredManAccessPrivilege";
-            else if (string.Compare(shortenName, "Relabel", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "Relabel"))
                 return "SeRelabelPrivilege";
-            else if (string.Compare(shortenName, "IncreaseWorkingSet", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "IncreaseWorkingSet"))
                 return "SeIncreaseWorkingSetPrivilege";
-            else if (string.Compare(shortenName, "TimeZone", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "TimeZone"))
                 return "SeTimeZonePrivilege";
-            else if (string.Compare(shortenName, "CreateSymbolicLink", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "CreateSymbolicLink"))
                 return "SeCreateSymbolicLinkPrivilege";
-            else if (string.Compare(shortenName, "DelegateSessionUserImpersonate", opt) == 0)
+            else if (CompareIgnoreCase(shortenName, "DelegateSessionUserImpersonate"))
                 return "SeDelegateSessionUserImpersonatePrivilege";
             else
                 return null;
+        }
+
+
+        public static int GetParentProcessId()
+        {
+            return GetParentProcessId(Process.GetCurrentProcess().Handle);
+        }
+
+
+        public static int GetParentProcessId(IntPtr hProcess)
+        {
+            NTSTATUS ntstatus;
+            int ppid = 0;
+            var nInfoSize = Marshal.SizeOf(typeof(PROCESS_BASIC_INFORMATION));
+            var pInfoBuffer = Marshal.AllocHGlobal(nInfoSize);
+
+            ntstatus = NativeMethods.NtQueryInformationProcess(
+                hProcess,
+                PROCESSINFOCLASS.ProcessBasicInformation,
+                pInfoBuffer,
+                (uint)nInfoSize,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var pbi = (PROCESS_BASIC_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(PROCESS_BASIC_INFORMATION));
+                ppid = pbi.InheritedFromUniqueProcessId.ToInt32();
+            }
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return ppid;
+        }
+
+
+        public static string GetTokenIntegrityLevelString(IntPtr hToken)
+        {
+            NTSTATUS ntstatus;
+            bool status;
+            IntPtr pInfoBuffer;
+            string integrityLevel = "N/A";
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+                if (!status)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (status)
+            {
+                var mandatoryLabel = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_MANDATORY_LABEL));
+
+                if (NativeMethods.ConvertSidToStringSid(mandatoryLabel.Label.Sid, out string strSid))
+                    integrityLevel = Helpers.ConvertStringSidToMandatoryLevelName(strSid);
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return integrityLevel;
         }
 
 

@@ -136,111 +136,17 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetIntegrityLevel(IntPtr hToken)
+        public static bool ImpersonateAsSmss()
         {
-            int ERROR_INSUFFICIENT_BUFFER = 122;
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-            int error;
-            bool status;
-            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
-            IntPtr pTokenIntegrity;
-
-            do
-            {
-                pTokenIntegrity = Marshal.AllocHGlobal(bufferLength);
-                Helpers.ZeroMemory(pTokenIntegrity, bufferLength);
-
-                status = NativeMethods.GetTokenInformation(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-                    pTokenIntegrity,
-                    bufferLength,
-                    out bufferLength);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                    Marshal.FreeHGlobal(pTokenIntegrity);
-            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER));
-
-            if (!status)
-                return "N/A";
-
-            var sidAndAttrs = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                pTokenIntegrity,
-                typeof(SID_AND_ATTRIBUTES));
-
-            if (!NativeMethods.ConvertSidToStringSid(sidAndAttrs.Sid, out string strSid))
-                return "N/A";
-
-            if (string.Compare(strSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL, opt) == 0)
-                return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.LOW_MANDATORY_LEVEL, opt) == 0)
-                return "LOW_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.MEDIUM_MANDATORY_LEVEL, opt) == 0)
-                return "MEDIUM_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL, opt) == 0)
-                return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.HIGH_MANDATORY_LEVEL, opt) == 0)
-                return "HIGH_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.SYSTEM_MANDATORY_LEVEL, opt) == 0)
-                return "SYSTEM_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.PROTECTED_MANDATORY_LEVEL, opt) == 0)
-                return "PROTECTED_MANDATORY_LEVEL";
-            else if (string.Compare(strSid, Win32Consts.SECURE_MANDATORY_LEVEL, opt) == 0)
-                return "SECURE_MANDATORY_LEVEL";
-            else
-                return "N/A";
-        }
-
-
-        public static int GetParentProcessId()
-        {
-            return GetParentProcessId(Process.GetCurrentProcess().Handle);
-        }
-
-
-        public static int GetParentProcessId(IntPtr hProcess)
-        {
-            int ntstatus;
-            var sizeInformation = Marshal.SizeOf(typeof(PROCESS_BASIC_INFORMATION));
-            var buffer = Marshal.AllocHGlobal(sizeInformation);
-
-            if (hProcess == IntPtr.Zero)
-                return 0;
-
-            ntstatus = NativeMethods.NtQueryInformationProcess(
-                hProcess,
-                PROCESSINFOCLASS.ProcessBasicInformation,
-                buffer,
-                sizeInformation,
-                IntPtr.Zero);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                Console.WriteLine("[-] Failed to get process information.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(ntstatus, true));
-                Marshal.FreeHGlobal(buffer);
-                
-                return 0;
-            }
-
-            var basicInfo = (PROCESS_BASIC_INFORMATION)Marshal.PtrToStructure(
-                buffer,
-                typeof(PROCESS_BASIC_INFORMATION));
-            int ppid = basicInfo.InheritedFromUniqueProcessId.ToInt32();
-
-            Marshal.FreeHGlobal(buffer);
-
-            return ppid;
+            return ImpersonateAsSmss(new string[] { });
         }
 
 
         public static bool ImpersonateAsSmss(string[] privs)
         {
-            int error;
             int smss;
-
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+            IntPtr hProcess;
+            var status = false;
 
             try
             {
@@ -248,76 +154,46 @@ namespace SwitchPriv.Library
             }
             catch
             {
-                Console.WriteLine("[-] Failed to get process id of smss.exe.\n");
-
-                return false;
+                return status;
             }
 
-            IntPtr hProcess = NativeMethods.OpenProcess(
-                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                true,
-                smss);
-
-            if (hProcess == IntPtr.Zero)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get handle to smss.exe process.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                hProcess = NativeMethods.OpenProcess(
+                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                    true,
+                    smss);
 
-                return false;
-            }
+                if (hProcess == IntPtr.Zero)
+                    break;
 
-            if (!NativeMethods.OpenProcessToken(
-                hProcess,
-                TokenAccessFlags.TOKEN_DUPLICATE,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_DUPLICATE,
+                    out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                return false;
-            }
+                if (!status)
+                    break;
 
-            NativeMethods.CloseHandle(hProcess);
-
-            if (!NativeMethods.DuplicateTokenEx(
-                hToken,
-                TokenAccessFlags.MAXIMUM_ALLOWED,
-                IntPtr.Zero,
-                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                TOKEN_TYPE.TokenPrimary,
-                out IntPtr hDupToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                status = NativeMethods.DuplicateTokenEx(
+                    hToken,
+                    TokenAccessFlags.MAXIMUM_ALLOWED,
+                    IntPtr.Zero,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                    TOKEN_TYPE.TokenImpersonation,
+                    out IntPtr hDupToken);
                 NativeMethods.CloseHandle(hToken);
 
-                return false;
-            }
+                if (!status)
+                    break;
 
-            if (!EnableMultiplePrivileges(hDupToken, privs))
-            {
+                EnableMultiplePrivileges(hDupToken, privs);
+                status = ImpersonateThreadToken(hDupToken);
                 NativeMethods.CloseHandle(hDupToken);
-                NativeMethods.CloseHandle(hToken);
+            } while (false);
 
-                return false;
-            }
-
-            if (!ImpersonateThreadToken(hDupToken))
-            {
-                NativeMethods.CloseHandle(hDupToken);
-                NativeMethods.CloseHandle(hToken);
-
-                return false;
-            }
-
-            NativeMethods.CloseHandle(hDupToken);
-            NativeMethods.CloseHandle(hToken);
-
-            return true;
+            return status;
         }
 
 
