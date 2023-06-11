@@ -1,6 +1,7 @@
 # Arts Of Get System
 
 This directory is for PoCs to help learning how to get SYSTEM privilege.
+Currently, token stealing PoC is the only uploaded code, but more PoCs will be uploaded later.
 
 ## Token Stealing
 
