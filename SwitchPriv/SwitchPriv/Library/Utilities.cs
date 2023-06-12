@@ -11,44 +11,68 @@ namespace SwitchPriv.Library
 
     internal class Utilities
     {
-        public static bool DisableSinglePrivilege(IntPtr hToken, string privName)
+        public static bool DisableTokenPrivileges(
+            IntPtr hToken,
+            List<string> privsToDisabled,
+            out Dictionary<string, bool> adjustedPrivs)
         {
-            bool status = NativeMethods.LookupPrivilegeValue(null, privName, out LUID luid);
+            var allDisabled = true;
+            adjustedPrivs = new Dictionary<string, bool>();
 
-            if (status)
-                status = DisableSinglePrivilege(hToken, luid);
-
-            return status;
-        }
-
-
-        public static bool DisableSinglePrivilege(IntPtr hToken, LUID priv)
-        {
-            int error;
-            bool status;
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
-            tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = 0;
-            Marshal.StructureToPtr(tp, pTokenPrivilege, true);
-
-            status = NativeMethods.AdjustTokenPrivileges(
-                hToken,
-                false,
-                pTokenPrivilege,
-                0,
-                IntPtr.Zero,
-                IntPtr.Zero);
-            error = Marshal.GetLastWin32Error();
-            status = (status && (error == 0));
-
-            if (!status)
+            do
             {
-                Console.WriteLine("[-] Failed to disable {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-            }
+                if (privsToDisabled.Count == 0)
+                    break;
 
-            return status;
+                allDisabled = Helpers.GetTokenPrivileges(
+                    hToken,
+                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                if (!allDisabled)
+                    break;
+
+                foreach (var priv in privsToDisabled)
+                {
+                    adjustedPrivs.Add(priv, true);
+
+                    foreach (var available in availablePrivs)
+                    {
+                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        {
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) == 0)
+                            {
+                                adjustedPrivs[priv] = false;
+                            }
+                            else
+                            {
+                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+
+                                if (NativeMethods.LookupPrivilegeValue(
+                                    null,
+                                    priv,
+                                    out tokenPrivileges.Privileges[0].Luid))
+                                {
+                                    adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
+                                        hToken,
+                                        false,
+                                        in tokenPrivileges,
+                                        20,
+                                        out TOKEN_PRIVILEGES _,
+                                        out int _);
+                                    adjustedPrivs[priv] = !(adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
+                                }
+                            }
+
+                            break;
+                        }
+                    }
+
+                    if (adjustedPrivs[priv])
+                        allDisabled = false;
+                }
+            } while (false);
+
+            return allDisabled;
         }
 
 
