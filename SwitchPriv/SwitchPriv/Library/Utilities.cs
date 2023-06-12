@@ -52,97 +52,90 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool EnableMultiplePrivileges(IntPtr hToken, string[] privs)
+        public static bool EnableTokenPrivileges(
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> adjustedPrivs)
         {
-            Dictionary<string, bool> results = new Dictionary<string, bool>();
-            var privList = new List<string>(privs);
-            bool isEnabled;
-            bool enabledAll = true;
-            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+            return EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                requiredPrivs,
+                out adjustedPrivs);
+        }
 
-            foreach (var name in privList)
-            {
-                results.Add(name, false);
-            }
 
-            foreach (var priv in availablePrivs)
+        public static bool EnableTokenPrivileges(
+            IntPtr hToken,
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> adjustedPrivs)
+        {
+            var allEnabled = true;
+            adjustedPrivs = new Dictionary<string, bool>();
+
+            do
             {
-                foreach (var name in privList)
+                if (requiredPrivs.Count == 0)
+                    break;
+
+                allEnabled = Helpers.GetTokenPrivileges(
+                    hToken,
+                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                if (!allEnabled)
+                    break;
+
+                foreach (var priv in requiredPrivs)
                 {
-                    if (Helpers.CompareIgnoreCase(priv.Key, name))
+                    adjustedPrivs.Add(priv, false);
+
+                    foreach (var available in availablePrivs)
                     {
-                        isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
-                        NativeMethods.LookupPrivilegeValue(null, priv.Key, out LUID luid);
+                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        {
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
+                            {
+                                adjustedPrivs[priv] = true;
+                            }
+                            else
+                            {
+                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
 
-                        if (isEnabled)
-                            results[name] = true;
-                        else
-                            results[name] = EnableSinglePrivilege(hToken, luid);
+                                if (NativeMethods.LookupPrivilegeValue(
+                                    null,
+                                    priv,
+                                    out tokenPrivileges.Privileges[0].Luid))
+                                {
+                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
+                                    adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
+                                        hToken,
+                                        false,
+                                        in tokenPrivileges,
+                                        20,
+                                        out TOKEN_PRIVILEGES _,
+                                        out int _);
+                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
+                                }
+                            }
+
+                            break;
+                        }
                     }
+
+                    if (!adjustedPrivs[priv])
+                        allEnabled = false;
                 }
-            }
+            } while (false);
 
-            foreach (var result in results)
-            {
-                if (!result.Value)
-                {
-                    Console.WriteLine("[-] {0} is not available.", result.Key);
-                    enabledAll = false;
-                }
-            }
-
-            return enabledAll;
-        }
-
-
-        public static bool EnableSinglePrivilege(IntPtr hToken, string privilegeName)
-        {
-            bool status = NativeMethods.LookupPrivilegeValue(null, privilegeName, out LUID luid);
-
-            if (status)
-                status = EnableSinglePrivilege(hToken, luid);
-
-            return status;
-        }
-
-
-        public static bool EnableSinglePrivilege(IntPtr hToken, LUID priv)
-        {
-            int error;
-            bool status;
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
-            tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
-            Marshal.StructureToPtr(tp, pTokenPrivilege, true);
-
-            status = NativeMethods.AdjustTokenPrivileges(
-                hToken,
-                false,
-                pTokenPrivilege,
-                0,
-                IntPtr.Zero,
-                IntPtr.Zero);
-            error = Marshal.GetLastWin32Error();
-            status = (status && (error == 0));
-
-            if (!status)
-            {
-                Console.WriteLine("[-] Failed to enable {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-            }
-
-            return status;
+            return allEnabled;
         }
 
 
         public static bool ImpersonateAsSmss()
         {
-            return ImpersonateAsSmss(new string[] { });
+            return ImpersonateAsSmss(new List<string> { });
         }
 
 
-        public static bool ImpersonateAsSmss(string[] privs)
+        public static bool ImpersonateAsSmss(List<string> privs)
         {
             int smss;
             var status = false;
@@ -187,7 +180,7 @@ namespace SwitchPriv.Library
                 if (!status)
                     break;
 
-                EnableMultiplePrivileges(hDupToken, privs);
+                EnableTokenPrivileges(hDupToken, privs, out Dictionary<string, bool> _);
                 status = ImpersonateThreadToken(hDupToken);
                 NativeMethods.CloseHandle(hDupToken);
             } while (false);
