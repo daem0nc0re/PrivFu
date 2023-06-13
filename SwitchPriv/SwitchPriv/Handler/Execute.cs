@@ -15,13 +15,11 @@ namespace SwitchPriv.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-
                 return;
             }
             else if (options.GetFlag("list"))
             {
                 Helpers.ListPrivilegeOptionValues();
-
                 return;
             }
 
@@ -35,14 +33,15 @@ namespace SwitchPriv.Handler
                 {
                     options.GetHelp();
                     Console.WriteLine("[-] Failed to parse the specified --pid option value.\n");
-                    
                     return;
                 }
             }
             else
             {
-                pid = 0;
+                pid = -1;
             }
+
+            Console.WriteLine();
             
             if (options.GetFlag("get"))
             {
@@ -61,7 +60,7 @@ namespace SwitchPriv.Handler
                     if (priv == null)
                     {
                         options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify requested token privilege.\n");
+                        Console.WriteLine("[-] Failed to specify requested token privilege.");
 
                         return;
                     }
@@ -82,7 +81,7 @@ namespace SwitchPriv.Handler
                     if (string.IsNullOrEmpty(priv))
                     {
                         options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify the requested token privilege.\n");
+                        Console.WriteLine("[-] Failed to specify the requested token privilege.");
 
                         return;
                     }
@@ -103,7 +102,7 @@ namespace SwitchPriv.Handler
                     if (string.IsNullOrEmpty(priv))
                     {
                         options.GetHelp();
-                        Console.WriteLine("[-] Failed to the specify requested token privilege.\n");
+                        Console.WriteLine("[-] Failed to the specify requested token privilege.");
 
                         return;
                     }
@@ -124,7 +123,7 @@ namespace SwitchPriv.Handler
                     if (string.IsNullOrEmpty(priv))
                     {
                         options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify the requested token privilege.\n");
+                        Console.WriteLine("[-] Failed to specify the requested token privilege.");
 
                         return;
                     }
@@ -141,7 +140,7 @@ namespace SwitchPriv.Handler
                 catch
                 {
                     options.GetHelp();
-                    Console.WriteLine("[-] Failed to parse the specified --integrity option value.\n");
+                    Console.WriteLine("[-] Failed to parse the specified --integrity option value.");
 
                     return;
                 }
@@ -150,8 +149,10 @@ namespace SwitchPriv.Handler
             }
             else
             {
-                options.GetHelp();
+                Console.WriteLine("[-] No options.");
             }
+
+            Console.WriteLine();
         }
     }
 }

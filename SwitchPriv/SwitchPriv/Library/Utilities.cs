@@ -247,95 +247,118 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool RemoveSinglePrivilege(IntPtr hToken, string privilegeName)
+        public static bool RemoveTokenPrivileges(
+            IntPtr hToken,
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> operationStatus)
         {
-            bool status = NativeMethods.LookupPrivilegeValue(null, privilegeName, out LUID luid);
+            var allRemoved = true;
+            operationStatus = new Dictionary<string, bool>();
 
-            if (status)
-                status = RemoveSinglePrivilege(hToken, luid);
+            do
+            {
+                if (requiredPrivs.Count == 0)
+                    break;
 
-            return status;
+                allRemoved = Helpers.GetTokenPrivileges(
+                    hToken,
+                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                if (!allRemoved)
+                    break;
+
+                foreach (var priv in requiredPrivs)
+                {
+                    operationStatus.Add(priv, true);
+
+                    foreach (var available in availablePrivs)
+                    {
+                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        {
+                            var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+
+                            if (NativeMethods.LookupPrivilegeValue(
+                                null,
+                                priv,
+                                out tokenPrivileges.Privileges[0].Luid))
+                            {
+                                tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.REMOVED;
+                                operationStatus[priv] = NativeMethods.AdjustTokenPrivileges(
+                                    hToken,
+                                    false,
+                                    in tokenPrivileges,
+                                    20,
+                                    out TOKEN_PRIVILEGES _,
+                                    out int _);
+                                operationStatus[priv] = (operationStatus[priv] && (Marshal.GetLastWin32Error() == 0));
+                            }
+
+                            break;
+                        }
+                    }
+
+                    if (!operationStatus[priv])
+                        allRemoved = false;
+                }
+            } while (false);
+
+            return allRemoved;
         }
 
 
-        public static bool RemoveSinglePrivilege(IntPtr hToken, LUID priv)
+        public static int ResolveProcessId(int pid, out string processName)
         {
-            int error;
-            bool status;
-            IntPtr pTokenPrivilege = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-            TOKEN_PRIVILEGES tp = new TOKEN_PRIVILEGES(1);
-            tp.Privileges[0].Luid = priv;
-            tp.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.REMOVED;
-            Marshal.StructureToPtr(tp, pTokenPrivilege, true);
+            processName = null;
 
-            status = NativeMethods.AdjustTokenPrivileges(
-                hToken,
-                false,
-                pTokenPrivilege,
-                0,
-                IntPtr.Zero,
-                IntPtr.Zero);
-            error = Marshal.GetLastWin32Error();
-            status = (status && (error == 0));
+            if (pid == -1)
+                pid = Helpers.GetParentProcessId();
 
-            if (!status)
+            if (pid != -1)
             {
-                Console.WriteLine("[-] Failed to remove {0}.", Helpers.GetPrivilegeName(priv));
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                try
+                {
+                    processName = Process.GetProcessById(pid).ProcessName;
+                }
+                catch
+                {
+                    pid = -1;
+                    processName = null;
+                }
             }
 
-            return status;
+            return pid;
         }
 
 
         public static bool SetMandatoryLevel(IntPtr hToken, string mandatoryLevelSid)
         {
-            int error;
+            var status = false;
 
-            if (!NativeMethods.ConvertStringSidToSid(mandatoryLevelSid, out IntPtr pSid))
+            if (NativeMethods.ConvertStringSidToSid(mandatoryLevelSid, out IntPtr pSid))
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to resolve integrity level SID.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return false;
-            }
-
-            var tokenIntegrityLevel = new TOKEN_MANDATORY_LABEL
-            {
-                Label = new SID_AND_ATTRIBUTES
+                NTSTATUS ntstatus;
+                var nBufferSize = Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
+                var pTokenIntegrityLevel = Marshal.AllocHGlobal(nBufferSize);
+                var tokenIntegrityLevel = new TOKEN_MANDATORY_LABEL
                 {
-                    Sid = pSid,
-                    Attributes = (uint)(SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY),
-                }
-            };
+                    Label = new SID_AND_ATTRIBUTES
+                    {
+                        Sid = pSid,
+                        Attributes = (uint)(SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY),
+                    }
+                };
+                Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);
+                nBufferSize += NativeMethods.GetLengthSid(pSid);
 
-            var size = Marshal.SizeOf(tokenIntegrityLevel);
-            var pTokenIntegrityLevel = Marshal.AllocHGlobal(size);
-            Helpers.ZeroMemory(pTokenIntegrityLevel, size);
-            Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);
-            size += NativeMethods.GetLengthSid(pSid);
-
-            Console.WriteLine("[>] Trying to set {0}.",
-                Helpers.ConvertStringSidToMandatoryLevelName(mandatoryLevelSid));
-
-            if (!NativeMethods.SetTokenInformation(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-                pTokenIntegrityLevel,
-                size))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to set integrity level.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                
-                return false;
+                ntstatus = NativeMethods.NtSetInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    pTokenIntegrityLevel,
+                    (uint)nBufferSize);
+                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
             }
 
-            Console.WriteLine("[+] {0} is set successfully.\n",
-                Helpers.ConvertStringSidToMandatoryLevelName(mandatoryLevelSid));
-
-            return true;
+            return status;
         }
     }
 }

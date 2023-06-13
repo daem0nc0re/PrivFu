@@ -150,7 +150,7 @@ namespace SwitchPriv.Library
         public static int GetParentProcessId(IntPtr hProcess)
         {
             NTSTATUS ntstatus;
-            int ppid = 0;
+            int ppid = -1;
             var nInfoSize = Marshal.SizeOf(typeof(PROCESS_BASIC_INFORMATION));
             var pInfoBuffer = Marshal.AllocHGlobal(nInfoSize);
 

@@ -12,16 +12,12 @@ namespace SwitchPriv.Library
         public static bool DisableAllPrivileges(int pid, bool asSystem)
         {
             var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
+            if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
-
-                if (pid == 0)
-                {
-                    Console.WriteLine("[-] Failed to specify the target PID.");
-                    return status;
-                }
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
             do
@@ -30,17 +26,9 @@ namespace SwitchPriv.Library
                 IntPtr hProcess;
                 var privsToDisable = new List<string>();
 
-                try
-                {
-                    Console.WriteLine("[>] Trying to disable all token privileges.");
-                    Console.WriteLine("    [*] Target PID   : {0}", pid);
-                    Console.WriteLine("    [*] Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to find the specified PID.");
-                    break;
-                }
+                Console.WriteLine("[>] Trying to disable all token privileges.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
                 {
@@ -118,16 +106,12 @@ namespace SwitchPriv.Library
         public static bool DisableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
+            if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
-
-                if (pid == 0)
-                {
-                    Console.WriteLine("[-] Failed to specify the target PID.");
-                    return status;
-                }
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
             do
@@ -136,17 +120,9 @@ namespace SwitchPriv.Library
                 IntPtr hProcess;
                 var isAvailable = false;
 
-                try
-                {
-                    Console.WriteLine("[>] Trying to disable {0}.", privilegeName);
-                    Console.WriteLine("    [*] Target PID   : {0}", pid);
-                    Console.WriteLine("    [*] Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to find the specified PID.");
-                    break;
-                }
+                Console.WriteLine("[>] Trying to disable {0}.", privilegeName);
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
                 {
@@ -236,16 +212,12 @@ namespace SwitchPriv.Library
         public static bool EnableAllPrivileges(int pid, bool asSystem)
         {
             var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
+            if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
-
-                if (pid == 0)
-                {
-                    Console.WriteLine("[-] Failed to specify the target PID.");
-                    return status;
-                }
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
             do
@@ -254,17 +226,9 @@ namespace SwitchPriv.Library
                 IntPtr hProcess;
                 var privsToEnable = new List<string>();
 
-                try
-                {
-                    Console.WriteLine("[>] Trying to enable all token privileges.");
-                    Console.WriteLine("    [*] Target PID   : {0}", pid);
-                    Console.WriteLine("    [*] Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to find the specified PID.");
-                    break;
-                }
+                Console.WriteLine("[>] Trying to enable all token privileges.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
                 {
@@ -342,16 +306,12 @@ namespace SwitchPriv.Library
         public static bool EnableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
+            if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
-
-                if (pid == 0)
-                {
-                    Console.WriteLine("[-] Failed to specify the target PID.");
-                    return status;
-                }
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
             do
@@ -360,17 +320,9 @@ namespace SwitchPriv.Library
                 IntPtr hProcess;
                 var isAvailable = false;
 
-                try
-                {
-                    Console.WriteLine("[>] Trying to enable {0}.", privilegeName);
-                    Console.WriteLine("    [*] Target PID   : {0}", pid);
-                    Console.WriteLine("    [*] Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to find the specified PID.");
-                    break;
-                }
+                Console.WriteLine("[>] Trying to enable {0}.", privilegeName);
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
                 {
@@ -459,110 +411,98 @@ namespace SwitchPriv.Library
 
         public static bool FindPrivilegedProcess(string targetPrivilege, bool asSystem)
         {
-            IntPtr hProcess;
-            var processList = Process.GetProcesses();
             var privilegedProcesses = new Dictionary<int, string>();
             var deniedProcesses = new Dictionary<int, string>();
 
-            Console.WriteLine();
-            Console.WriteLine("[>] Searching process have {0}.", targetPrivilege);
-
-            if (asSystem)
-                if (!GetSystem())
-                    return false;
-
-            foreach (var proc in processList)
+            do
             {
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    proc.Id);
+                bool status;
+                IntPtr hProcess;
 
-                if (hProcess == IntPtr.Zero)
+                Console.WriteLine("[>] Searching processes have {0}.", targetPrivilege);
+
+                if (asSystem)
                 {
-                    deniedProcesses.Add(proc.Id, proc.ProcessName);
-                    continue;
-                }
+                    asSystem = GetSystem();
 
-                if (!NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY,
-                    out IntPtr hToken))
-                {
-                    deniedProcesses.Add(proc.Id, proc.ProcessName);
-                    NativeMethods.CloseHandle(hProcess);
-                    continue;
-                }
-
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
-                NativeMethods.CloseHandle(hToken);
-                NativeMethods.CloseHandle(hProcess);
-
-                foreach (var priv in privs.Keys)
-                {
-                    if (Helpers.CompareIgnoreCase(priv, targetPrivilege))
-                    {
-                        privilegedProcesses.Add(proc.Id, proc.ProcessName);
+                    if (!asSystem)
                         break;
+                }
+
+                foreach (var proc in Process.GetProcesses())
+                {
+                    hProcess = NativeMethods.OpenProcess(
+                        ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                        false,
+                        proc.Id);
+
+                    if (hProcess == IntPtr.Zero)
+                    {
+                        deniedProcesses.Add(proc.Id, proc.ProcessName);
+                        continue;
+                    }
+
+                    status = NativeMethods.OpenProcessToken(hProcess, TokenAccessFlags.TOKEN_QUERY, out IntPtr hToken);
+                    NativeMethods.CloseHandle(hProcess);
+
+                    if (!status)
+                    {
+                        deniedProcesses.Add(proc.Id, proc.ProcessName);
+                        continue;
+                    }
+
+                    Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
+                    NativeMethods.CloseHandle(hToken);
+
+                    foreach (var priv in privs.Keys)
+                    {
+                        if (Helpers.CompareIgnoreCase(priv, targetPrivilege))
+                        {
+                            privilegedProcesses.Add(proc.Id, proc.ProcessName);
+                            break;
+                        }
                     }
                 }
-            }
+
+                if (privilegedProcesses.Count == 0)
+                {
+                    Console.WriteLine("[-] No process has {0}.", targetPrivilege);
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got {0} process(es).", privilegedProcesses.Count);
+
+                    foreach (var proc in privilegedProcesses)
+                        Console.WriteLine("    [*] {0} (PID : {1})", proc.Value, proc.Key);
+                }
+
+                if (deniedProcesses.Count > 0)
+                {
+                    Console.WriteLine("[*] Access is denied by following {0} process(es).", deniedProcesses.Count);
+
+                    foreach (var denied in deniedProcesses)
+                        Console.WriteLine("    [*] {0} (PID : {1})", denied.Value, denied.Key);
+                }
+            } while (false);
 
             if (asSystem)
                 NativeMethods.RevertToSelf();
 
-            if (privilegedProcesses.Count == 0)
-            {
-                Console.WriteLine("[-] No process has {0}.", targetPrivilege);
-            }
-            else
-            {
-                if (privilegedProcesses.Count == 1)
-                    Console.WriteLine("[+] Following process has {0}.", targetPrivilege);
-                else
-                    Console.WriteLine("[+] Following processes have {0}.", targetPrivilege);
+            Console.WriteLine("[*] Done.");
 
-                foreach (var proc in privilegedProcesses)
-                    Console.WriteLine("    [*] {0} (PID : {1})", proc.Value, proc.Key);
-
-                if (privilegedProcesses.Count == 1)
-                    Console.WriteLine("[+] 1 process has {0}.", targetPrivilege);
-                else
-                    Console.WriteLine("[+] {0} processes have {1}.", privilegedProcesses.Count, targetPrivilege);
-            }
-
-            if (deniedProcesses.Count > 0)
-            {
-                if (deniedProcesses.Count == 1)
-                    Console.WriteLine("[*] Access is denied by following 1 process.");
-                else
-                    Console.WriteLine("[*] Access is denied by following {0} processes.", deniedProcesses.Count);
-
-                foreach (var denied in deniedProcesses)
-                {
-                    Console.WriteLine("    [*] {0} (PID : {1})", denied.Value, denied.Key);
-                }
-            }
-
-            Console.WriteLine("[*] Done.\n");
-
-            return true;
+            return (privilegedProcesses.Count > 0);
         }
 
 
         public static bool GetPrivileges(int pid, bool asSystem)
         {
             var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
+            if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
-
-                if (pid == 0)
-                {
-                    Console.WriteLine("[-] Failed to specify the target PID.");
-                    return status;
-                }
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
             do
@@ -572,17 +512,9 @@ namespace SwitchPriv.Library
                 bool isEnabled;
                 var resultsBuilder = new StringBuilder();
 
-                try
-                {
-                    Console.WriteLine("[>] Trying to get available token privilege(s) for the target process.");
-                    Console.WriteLine("    [*] Target PID   : {0}", pid);
-                    Console.WriteLine("    [*] Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to find the specified PID.");
-                    break;
-                }
+                Console.WriteLine("[>] Trying to get available token privilege(s) for the target process.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
                 {
@@ -634,13 +566,15 @@ namespace SwitchPriv.Library
                         isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
                         resultsBuilder.Append(string.Format("{0,-42} {1}\n", priv.Key, isEnabled ? "Enabled" : "Disabled"));
                     }
+
+                    resultsBuilder.Append("\n");
                 }
                 else
                 {
-                    resultsBuilder.Append("[*] No available token privilege.");
+                    resultsBuilder.Append("[*] No available token privileges.\n");
                 }
 
-                resultsBuilder.Append(string.Format("\n[*] Integrity Level : {0}\n", Helpers.GetTokenIntegrityLevelString(hToken)));
+                resultsBuilder.Append(string.Format("[*] Integrity Level : {0}", Helpers.GetTokenIntegrityLevelString(hToken)));
                 NativeMethods.CloseHandle(hProcess);
 
                 Console.WriteLine(resultsBuilder.ToString());
@@ -680,7 +614,9 @@ namespace SwitchPriv.Library
             {
                 status = Utilities.ImpersonateAsSmss();
 
-                if (!status)
+                if (status)
+                    Console.WriteLine("[+] Got SYSTEM privilege.");
+                else
                     Console.WriteLine("[-] Failed to impersonate as smss.exe.");
             }
 
@@ -690,268 +626,268 @@ namespace SwitchPriv.Library
 
         public static bool RemoveAllPrivileges(int pid, bool asSystem)
         {
-            int error;
-            IntPtr hProcess;
+            var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
-                pid = Helpers.GetParentProcessId();
-
-            if (pid == 0)
-                return false;
-
-            Console.WriteLine();
-            Console.WriteLine("[>] Trying to remove all token privileges.");
-            Console.WriteLine("    |-> Target PID   : {0}", pid);
-
-            try
+            if (pid == -1)
             {
-                Console.WriteLine("    |-> Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-            }
-            catch
-            {
-                Console.WriteLine("\n[-] There is no target process, or integrity level is insufficient.\n");
-
-                return false;
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
-            if (asSystem)
-                if (!GetSystem())
-                    return false;
+            do
+            {
+                int error;
+                IntPtr hProcess;
+                var privsToRemove = new List<string>();
 
+                Console.WriteLine("[>] Trying to remove all token privileges.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
-            hProcess = NativeMethods.OpenProcess(
+                if (asSystem)
+                {
+                    asSystem = GetSystem();
+
+                    if (!asSystem)
+                        break;
+                }
+
+                hProcess = NativeMethods.OpenProcess(
                     ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
                     false,
                     pid);
 
-            if (hProcess == IntPtr.Zero)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                if (hProcess == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-                if (asSystem)
-                    NativeMethods.RevertToSelf();
-
-                return false;
-            }
-
-            if (!NativeMethods.OpenProcessToken(
-                hProcess,
-                TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
+                    out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                if (asSystem)
-                    NativeMethods.RevertToSelf();
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-                return false;
-            }
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
-            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
+                if (availablePrivs.Count == 0)
+                {
+                    Console.WriteLine("[*] All token privileges are already removed.");
+                    break;
+                }
+                else
+                {
+                    foreach (var priv in availablePrivs)
+                        privsToRemove.Add(priv.Key);
+                }
 
-            foreach (var priv in privs)
-            {
-                if (Utilities.RemoveSinglePrivilege(hToken, priv.Key))
-                    Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
-            }
+                status = Utilities.RemoveTokenPrivileges(
+                    hToken,
+                    privsToRemove,
+                    out Dictionary<string, bool> operationStatus);
+                NativeMethods.CloseHandle(hToken);
 
-            Console.WriteLine("[*] Done.\n");
-
-            NativeMethods.CloseHandle(hToken);
-            NativeMethods.CloseHandle(hProcess);
+                foreach (var priv in operationStatus)
+                {
+                    if (priv.Value)
+                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                    else
+                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                }
+            } while (false);
 
             if (asSystem)
                 NativeMethods.RevertToSelf();
 
-            return true;
+            Console.WriteLine("[*] Done.");
+
+            return status;
         }
 
 
         public static bool RemoveTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
-            int error;
-            IntPtr hProcess;
+            var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
-                pid = Helpers.GetParentProcessId();
-
-            if (pid == 0)
-                return false;
-
-            Console.WriteLine();
-            Console.WriteLine("[>] Trying to remove {0}.", privilegeName);
-            Console.WriteLine("    |-> Target PID   : {0}", pid);
-
-            try
+            if (pid == -1)
             {
-                Console.WriteLine("    |-> Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-            }
-            catch
-            {
-                Console.WriteLine("\n[-] There is no target process, or integrity level is insufficient.\n");
-
-                return false;
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
-            if (asSystem)
-                if (!GetSystem())
-                    return false;
-
-            hProcess = NativeMethods.OpenProcess(
-                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                pid);
-
-            if (hProcess == IntPtr.Zero)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                int error;
+                IntPtr hProcess;
+                var isAvailable = false;
+
+                Console.WriteLine("[>] Trying to remove {0}.", privilegeName);
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
-                    NativeMethods.RevertToSelf();
-
-                return false;
-            }
-
-            if (!NativeMethods.OpenProcessToken(
-                hProcess,
-                TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                NativeMethods.CloseHandle(hProcess);
-
-                if (asSystem)
-                    NativeMethods.RevertToSelf();
-
-                return false;
-            }
-
-            bool isAvailable = false;
-            Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
-
-            foreach (var priv in privs.Keys)
-            {
-                if (Helpers.CompareIgnoreCase(priv, privilegeName))
                 {
-                    isAvailable = true;
+                    asSystem = GetSystem();
+
+                    if (!asSystem)
+                        break;
+                }
+
+                hProcess = NativeMethods.OpenProcess(
+                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                    false,
+                    pid);
+
+                if (hProcess == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     break;
                 }
-            }
 
-            if (!isAvailable)
-            {
-                Console.WriteLine("[-] {0} is already removed.\n", privilegeName);
-                NativeMethods.CloseHandle(hToken);
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
+                    out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                if (asSystem)
-                    NativeMethods.RevertToSelf();
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-                return false;
-            }
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
-            if (Utilities.RemoveSinglePrivilege(hToken, privilegeName))
-                Console.WriteLine("[+] {0} is removed successfully.\n", privilegeName);
+                foreach (var priv in availablePrivs)
+                {
+                    if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
+                    {
+                        isAvailable = true;
+                        privilegeName = priv.Key;
+                        break;
+                    }
+                }
 
-            NativeMethods.CloseHandle(hToken);
-            NativeMethods.CloseHandle(hProcess);
+                if (!isAvailable)
+                {
+                    Console.WriteLine("[*] {0} is already removed.", privilegeName);
+                    break;
+                }
+
+                status = Utilities.RemoveTokenPrivileges(
+                    hToken,
+                    new List<string> { privilegeName },
+                    out Dictionary<string, bool> operationStatus);
+                NativeMethods.CloseHandle(hToken);
+
+                foreach (var priv in operationStatus)
+                {
+                    if (priv.Value)
+                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                    else
+                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                }
+            } while (false);
 
             if (asSystem)
                 NativeMethods.RevertToSelf();
 
-            return true;
+            Console.WriteLine("[*] Done.");
+
+            return status;
         }
 
 
         public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool asSystem)
         {
-            int error;
-            IntPtr hProcess;
             string mandatoryLevelSid = Helpers.ConvertIndexToMandatoryLevelSid(integrityLevelIndex);
+            var status = false;
+            pid = Utilities.ResolveProcessId(pid, out string processName);
 
-            if (pid == 0)
-                pid = Helpers.GetParentProcessId();
-
-            if (pid == 0)
-                return false;
-
-            Console.WriteLine();
-            Console.WriteLine("[>] Trying to set integrity level.");
-            Console.WriteLine("    |-> Target PID   : {0}", pid);
-
-            try
+            if (pid == -1)
             {
-                Console.WriteLine("    |-> Process Name : {0}", (Process.GetProcessById(pid)).ProcessName);
-            }
-            catch
-            {
-                Console.WriteLine("\n[-] There is no target process, or integrity level is insufficient.\n");
-
-                return false;
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return status;
             }
 
-            if (string.IsNullOrEmpty(mandatoryLevelSid))
+            do
             {
-                Console.WriteLine("[-] Failed to resolve integrity level.");
+                int error;
+                IntPtr hProcess;
 
-                return false;
-            }
-
-            if (asSystem)
-                if(!GetSystem())
-                    return false;
-
-            hProcess = NativeMethods.OpenProcess(
-                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                pid);
-
-            if (hProcess == IntPtr.Zero)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open target process (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                Console.WriteLine("[>] Trying to update Integrity Level.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
 
                 if (asSystem)
-                    NativeMethods.RevertToSelf();
+                {
+                    asSystem = GetSystem();
 
-                return false;
-            }
+                    if (!asSystem)
+                        break;
+                }
 
-            if (!NativeMethods.OpenProcessToken(
-                hProcess,
-                TokenAccessFlags.MAXIMUM_ALLOWED,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get target process token (PID = {0}).", pid);
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                hProcess = NativeMethods.OpenProcess(
+                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                    false,
+                    pid);
+
+                if (hProcess == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
+
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_ADJUST_DEFAULT,
+                    out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                if (asSystem)
-                    NativeMethods.RevertToSelf();
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
-                return false;
-            }
+                Console.WriteLine("[>] Trying to update Integrity Level to {0}.", ((MANDATORY_LEVEL_INDEX)integrityLevelIndex).ToString());
 
-            Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
+                status = Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
+                NativeMethods.CloseHandle(hToken);
 
-            NativeMethods.CloseHandle(hToken);
-            NativeMethods.CloseHandle(hProcess);
+                if (status)
+                    Console.WriteLine("[+] Integrity Level is updated successfully.");
+                else
+                    Console.WriteLine("[-] Failed to update Integrity Level.");
+            } while (false);
 
             if (asSystem)
                 NativeMethods.RevertToSelf();
 
-            return true;
+            Console.WriteLine("[*] Done.");
+
+            return status;
         }
     }
 }
