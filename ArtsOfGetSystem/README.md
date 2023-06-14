@@ -1,7 +1,28 @@
-# Arts Of Get System
+# Arts Of GetSystem
 
 This directory is for PoCs to help learning how to get SYSTEM privilege.
 Currently, token stealing PoC is the only uploaded code, but more PoCs will be uploaded later.
+
+## Named Pipe Impersonation
+
+Named Pipe impersonation technique is one of the most popular technique to get SYSTEM privilege.
+This methods is implemented in the PoC named [NamedPipeImpersonation](./NamedPipeImpersonation):
+
+```
+PS C:\Dev> .\NamedPipeImpersonation.exe -h
+
+NamedPipeImpersonation - PoC to get SYSTEM privileges with named pipe method.
+
+Usage: NamedPipeImpersonation.exe [Options]
+
+        -h, --help    : Displays this help message.
+        -t, --timeout : Specifies timeout in milliseconds. Default is 3,000 ms.
+
+PS C:\Dev>
+```
+
+![](./figures/NamedPipeImpersonation.png)
+
 
 ## Token Stealing
 
