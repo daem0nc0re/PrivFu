@@ -13,6 +13,7 @@ namespace NamedPipeImpersonation
             {
                 options.SetTitle("NamedPipeImpersonation - PoC to get SYSTEM privileges with named pipe method.");
                 options.AddFlag(false, "h", "help", "Displays this help message.");
+                options.AddParameter(false, "t", "timeout", "3000", "Specifies timeout in milliseconds. Default is 3,000 ms.");
                 options.Parse(args);
 
                 Execute.Run(options);

