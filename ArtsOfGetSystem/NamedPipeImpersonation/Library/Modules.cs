@@ -115,7 +115,7 @@ namespace NamedPipeImpersonation.Library
                                     error = Marshal.GetLastWin32Error();
                                     Console.WriteLine("[-] Failed to get primary SYSTEM token.");
                                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                                    break;
+                                    hPrimaryToken = IntPtr.Zero;
                                 }
                             }
                             else
@@ -147,7 +147,7 @@ namespace NamedPipeImpersonation.Library
                     }
                 }
 
-                if (!isImpersonated)
+                if (!isImpersonated || (hPrimaryToken == IntPtr.Zero))
                 {
                     break;
                 }
@@ -155,7 +155,7 @@ namespace NamedPipeImpersonation.Library
                 {
                     Console.WriteLine("[>] Trying to S4U logon.");
 
-                    status = Utilities.Msv4S4uLogonImpersonation(s4uUser, s4uDomain);
+                    status = Utilities.MsvS4uLogonImpersonation(s4uUser, s4uDomain);
 
                     if (!status)
                     {

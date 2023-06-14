@@ -165,18 +165,16 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-        public static bool Msv4S4uLogonImpersonation(string upn, string domain)
+        public static bool MsvS4uLogonImpersonation(string upn, string domain)
         {
-            NTSTATUS ntstatus;
             var status = false;
 
             do
             {
-                IntPtr hS4uLogonToken;
                 var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
                 var tokenGroups = new TOKEN_GROUPS(5);
 
-                ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
+                NTSTATUS ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
 
                 if (ntstatus != Win32Consts.STATUS_SUCCESS)
                 {
@@ -236,11 +234,10 @@ namespace NamedPipeImpersonation.Library
                     if (ntstatus != Win32Consts.STATUS_SUCCESS)
                     {
                         NativeMethods.SetLastError(NativeMethods.LsaNtStatusToWinError(ntstatus));
-                        hS4uLogonToken = IntPtr.Zero;
                     }
                     else
                     {
-                        hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
+                        var hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
                         status = ImpersonateThreadToken(hS4uLogonToken);
                         NativeMethods.NtClose(hS4uLogonToken);
                     }
