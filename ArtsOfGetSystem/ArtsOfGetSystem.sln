@@ -5,6 +5,8 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenStealing", "TokenStealing\TokenStealing.csproj", "{4C574B86-DC07-47EA-BB02-FD50AE002910}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NamedPipeImpersonation", "NamedPipeImpersonation\NamedPipeImpersonation.csproj", "{04FC654C-D89A-44F9-9E34-6D95CE152E9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{4C574B86-DC07-47EA-BB02-FD50AE002910}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4C574B86-DC07-47EA-BB02-FD50AE002910}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4C574B86-DC07-47EA-BB02-FD50AE002910}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04FC654C-D89A-44F9-9E34-6D95CE152E9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04FC654C-D89A-44F9-9E34-6D95CE152E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04FC654C-D89A-44F9-9E34-6D95CE152E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04FC654C-D89A-44F9-9E34-6D95CE152E9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
