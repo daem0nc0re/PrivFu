@@ -5,7 +5,8 @@ namespace NamedPipeImpersonation.Library
     internal class Globals
     {
         public static string BinaryPath { get; set; } = null;
-        public static bool IsPipeConnected { get; set; } = false;
+        public static IntPtr ConnectEventHandle { get; set; } = IntPtr.Zero;
+        public static IntPtr PipeEventHandle { get; set; } = IntPtr.Zero;
         public static IntPtr ServiceHandle { get; set; } = IntPtr.Zero;
         public static string ServiceName { get; } = "PrivFuPipeSvc";
         public static int Timeout { get; set; } = 3000;

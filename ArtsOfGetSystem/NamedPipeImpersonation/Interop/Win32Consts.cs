@@ -10,6 +10,7 @@ namespace NamedPipeImpersonation.Interop
          * NTSTATUS
          */
         public const NTSTATUS STATUS_SUCCESS = 0;
+        public const NTSTATUS STATUS_TIMEOUT = 0x00000102;
         public static NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         /*

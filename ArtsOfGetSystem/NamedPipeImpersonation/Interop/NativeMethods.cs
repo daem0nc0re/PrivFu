@@ -124,6 +124,13 @@ namespace NamedPipeImpersonation.Interop
         /*
          * kernel32.dll
          */
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr CreateEvent(
+            IntPtr lpEventAttributes,
+            bool bManualReset,
+            bool bInitialState,
+            string lpName);
+
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
             FormatMessageFlags dwFlags,
@@ -136,6 +143,9 @@ namespace NamedPipeImpersonation.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LocalFree(IntPtr hMem);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool SetEvent(IntPtr hEvent);
 
         [DllImport("kernel32.dll")]
         public static extern void SetLastError(int dwErrCode);
