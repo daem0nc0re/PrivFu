@@ -30,7 +30,7 @@ If you set `1`, `NamedPipeImpersonation.exe` will drop service binary in tempora
 This method is less likely to be detected by Anti-Virus than in-memory method.
 Dropper binary source is [NamedPipeClient](./NamedPipeClient), and the compiled binary is implanted in [NamedPipeImpersonation/Library/Globals.cs](./NamedPipeImpersonation/Library/Globals.cs) as `BinaryData` property.
 
-![](./figures/NamedPipeImpersonation.png)
+![](./figures/NamedPipeImpersonationDropper.png)
 
 
 ## Token Stealing
