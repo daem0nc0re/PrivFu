@@ -17,17 +17,13 @@ namespace NamedPipeImpersonation.Library
                 @"{0} /c echo {1} > \\.\pipe\{1}",
                 Environment.GetEnvironmentVariable("COMSPEC"),
                 serviceName);
+            IntPtr hSCManager = NativeMethods.OpenSCManager(
+                null,
+                null,
+                ACCESS_MASK.SC_MANAGER_CONNECT | ACCESS_MASK.SC_MANAGER_CREATE_SERVICE);
 
-            do
+            if (hSCManager != IntPtr.Zero)
             {
-                IntPtr hSCManager = NativeMethods.OpenSCManager(
-                    null,
-                    null,
-                    ACCESS_MASK.SC_MANAGER_CONNECT | ACCESS_MASK.SC_MANAGER_CREATE_SERVICE);
-
-                if (hSCManager == IntPtr.Zero)
-                    break;
-
                 hService = NativeMethods.CreateService(
                     hSCManager,
                     serviceName,
@@ -44,11 +40,9 @@ namespace NamedPipeImpersonation.Library
                     null);
                 NativeMethods.CloseServiceHandle(hSCManager);
 
-                if (hService == IntPtr.Zero)
-                    break;
-
-                NativeMethods.StartService(hService, 0, IntPtr.Zero);
-            } while (false);
+                if (hService != IntPtr.Zero)
+                    NativeMethods.StartService(hService, 0, IntPtr.Zero);
+            }
 
             return hService;
         }

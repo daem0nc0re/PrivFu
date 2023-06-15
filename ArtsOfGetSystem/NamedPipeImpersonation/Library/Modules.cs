@@ -175,7 +175,7 @@ namespace NamedPipeImpersonation.Library
                 status = NativeMethods.CreateProcessAsUser(
                     hPrimaryToken,
                     null,
-                    @"C:\Windows\System32\cmd.exe",
+                    Environment.GetEnvironmentVariable("COMSPEC"),
                     IntPtr.Zero,
                     IntPtr.Zero,
                     false,
