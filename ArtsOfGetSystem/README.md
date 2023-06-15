@@ -28,7 +28,7 @@ Method option is required.
 If you want to use in-memory method, set this option to `0`, but it is likely to be detected by Anti-Virus.
 If you set `1`, `NamedPipeImpersonation.exe` will drop service binary in temporary directory.
 This method is less likely to be detected by Anti-Virus than in-memory method.
-Dropper binary source is [NamedPipeClient](./NamedPipeClient), and the compiled binary is implanted in ![NamedPipeImpersonation/Library/Globals.cs](./NamedPipeImpersonation/Library/Globals.cs) as `BinaryData` property.
+Dropper binary source is [NamedPipeClient](./NamedPipeClient), and the compiled binary is implanted in [NamedPipeImpersonation/Library/Globals.cs](./NamedPipeImpersonation/Library/Globals.cs) as `BinaryData` property.
 
 ![](./figures/NamedPipeImpersonation.png)
 
