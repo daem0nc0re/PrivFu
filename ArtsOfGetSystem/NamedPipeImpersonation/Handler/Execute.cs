@@ -15,17 +15,37 @@ namespace NamedPipeImpersonation.Handler
 
             Console.WriteLine();
 
-            try
+            do
             {
-                Globals.timeout = Convert.ToInt32(options.GetValue("timeout"));
-            }
-            catch
-            {
-                Console.WriteLine("[-] Failed to parse timeout. Use default value (3,000 ms).");
-                Globals.timeout = 3000;
-            }
+                try
+                {
+                    Globals.Timeout = Convert.ToInt32(options.GetValue("timeout"));
+                }
+                catch
+                {
+                    Console.WriteLine("[-] Failed to parse timeout. Use default value (3,000 ms).");
+                    Globals.Timeout = 3000;
+                }
 
-            Modules.GetSystemWithNamedPipe();
+                try
+                {
+                    int methodId = Convert.ToInt32(options.GetValue("method"));
+
+                    if (methodId == 0)
+                        Globals.UseDropper = false;
+                    else if (methodId == 1)
+                        Globals.UseDropper = true;
+                    else
+                        break;
+                }
+                catch
+                {
+                    Console.WriteLine("[-] Failed to specify method.");
+                    break;
+                }
+
+                Modules.GetSystemWithNamedPipe();
+            } while (false);
 
             Console.WriteLine();
         }
