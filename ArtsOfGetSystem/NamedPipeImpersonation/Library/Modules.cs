@@ -39,8 +39,7 @@ namespace NamedPipeImpersonation.Library
                 Globals.ConnectEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ConnectEvent");
                 Globals.PipeEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ServiceEvent");
 
-                if ((Globals.ConnectEventHandle == IntPtr.Zero) ||
-                    (Globals.PipeEventHandle == IntPtr.Zero))
+                if ((Globals.ConnectEventHandle == IntPtr.Zero) || (Globals.PipeEventHandle == IntPtr.Zero))
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create service handling event.");
@@ -204,12 +203,6 @@ namespace NamedPipeImpersonation.Library
                 }
             } while (false);
 
-            if (Globals.ServiceHandle != IntPtr.Zero)
-            {
-                Console.WriteLine("[!] Failed to delete pipe service. Delete it mannually.");
-                Console.WriteLine("    [*] Service Name : {0}", Globals.ServiceName);
-            }
-
             if (isImpersonated)
                 NativeMethods.RevertToSelf();
             else
@@ -224,15 +217,16 @@ namespace NamedPipeImpersonation.Library
         private static void ServiceThreadProc()
         {
             NTSTATUS ntstatus;
+            IntPtr hService;
             var timeout = LARGE_INTEGER.FromInt64(-(Globals.Timeout * 10000));
 
             Console.WriteLine("[>] Trying to create and start named pipe client service.");
             Console.WriteLine("    [*] Service Name : {0}", Globals.ServiceName);
 
             Thread.Sleep(100);
-            Globals.ServiceHandle = Utilities.StartNamedPipeClientService();
+            hService = Utilities.StartNamedPipeClientService();
 
-            if (Globals.ServiceHandle == IntPtr.Zero)
+            if (hService == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to start named pipe client service.");
                 Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
@@ -242,10 +236,10 @@ namespace NamedPipeImpersonation.Library
                 Console.WriteLine("[+] Named pipe client service is started successfully.");
 
                 if (Globals.UseDropper)
-                    Console.WriteLine("[*] Service binary is @ {0}", Globals.BinaryPath);
+                    Console.WriteLine("[*] Service binary @ {0}", Globals.BinaryPath);
             }
 
-            ntstatus = NativeMethods.NtWaitForSingleObject(Globals.ConnectEventHandle, false, in timeout);
+            ntstatus = NativeMethods.NtWaitForSingleObject(hService, false, in timeout);
 
             if (ntstatus == Win32Consts.STATUS_TIMEOUT)
             {
@@ -261,18 +255,17 @@ namespace NamedPipeImpersonation.Library
                 catch { }
             }
 
-            if (Globals.ServiceHandle != IntPtr.Zero)
+            if (hService != IntPtr.Zero)
             {
                 Console.WriteLine("[>] Deleting named pipe client service.");
 
-                if (!NativeMethods.DeleteService(Globals.ServiceHandle))
+                if (!NativeMethods.DeleteService(hService))
                 {
-                    Console.WriteLine("[-] Failed to delete named pipe client servce.");
+                    Console.WriteLine("[-] Failed to delete named pipe client servce (Service Name = {0}).", Globals.ServiceName);
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                 }
                 else
                 {
-                    Globals.ServiceHandle = IntPtr.Zero;
                     Console.WriteLine("[+] Named pipe client service is deleted successfully.");
                 }
             }
