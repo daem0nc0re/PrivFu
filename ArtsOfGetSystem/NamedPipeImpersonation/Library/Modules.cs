@@ -239,7 +239,7 @@ namespace NamedPipeImpersonation.Library
                     Console.WriteLine("[*] Service binary @ {0}", Globals.BinaryPath);
             }
 
-            ntstatus = NativeMethods.NtWaitForSingleObject(hService, false, in timeout);
+            ntstatus = NativeMethods.NtWaitForSingleObject(Globals.ConnectEventHandle, false, in timeout);
 
             if (ntstatus == Win32Consts.STATUS_TIMEOUT)
             {
