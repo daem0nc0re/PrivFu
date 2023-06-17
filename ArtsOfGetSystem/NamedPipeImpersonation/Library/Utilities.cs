@@ -181,7 +181,7 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-        public static bool MsvS4uLogonImpersonation(string upn, string domain)
+        public static bool ImpersonateWithMsvS4uLogon(string upn, string domain)
         {
             var status = false;
 
