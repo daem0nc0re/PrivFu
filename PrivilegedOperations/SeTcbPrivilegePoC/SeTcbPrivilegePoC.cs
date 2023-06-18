@@ -388,7 +388,7 @@ namespace SeTcbPrivilegePoC
             out QUOTA_LIMITS Quotas,
             out NTSTATUS SubStatus);
 
-        [DllImport("Secur32.dll", SetLastError = true)]
+        [DllImport("secur32.dll", SetLastError = true)]
         static extern NTSTATUS LsaLookupAuthenticationPackage(
             IntPtr LsaHandle,
             in LSA_STRING PackageName,
@@ -552,6 +552,7 @@ namespace SeTcbPrivilegePoC
                 LocalFree(pLocalSystemSid);
                 LocalFree(pNetworkServiceSid);
                 LocalFree(pAdminSid);
+                LocalFree(pBackupOperatorSid);
             } while (false);
 
             return hS4uLogonToken;
