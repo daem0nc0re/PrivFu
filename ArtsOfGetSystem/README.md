@@ -4,6 +4,9 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
 
 ## Named Pipe Impersonation
 
+> __WARNING__ This PoC currently does not support domain account due to S4U logon handling.
+> I will add domain account support to this PoC later.
+
 Named Pipe impersonation technique is one of the most popular technique to get SYSTEM privilege.
 This methods is implemented in the PoC named [NamedPipeImpersonation](./NamedPipeImpersonation):
 
