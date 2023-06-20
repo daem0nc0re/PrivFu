@@ -248,7 +248,7 @@ namespace NamedPipeImpersonation.Library
                     using (var pipeClient = new NamedPipeClientStream(".", Globals.ServiceName, PipeDirection.Out))
                     {
                         var message = Encoding.ASCII.GetBytes("timeout");
-                        pipeClient.Connect();
+                        pipeClient.Connect(3000);
                         pipeClient.Write(message, 0, message.Length);
                     }
                 }

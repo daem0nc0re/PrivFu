@@ -1,4 +1,5 @@
-﻿using System.IO.Pipes;
+﻿using System;
+using System.IO.Pipes;
 using System.Text;
 
 namespace NamedPipeClient
@@ -14,7 +15,7 @@ namespace NamedPipeClient
                     using (var pipeClient = new NamedPipeClientStream(".", args[0], PipeDirection.Out))
                     {
                         var message = Encoding.ASCII.GetBytes(args[0]);
-                        pipeClient.Connect();
+                        pipeClient.Connect(3000);
                         pipeClient.Write(message, 0, message.Length);
                     }
                 }
