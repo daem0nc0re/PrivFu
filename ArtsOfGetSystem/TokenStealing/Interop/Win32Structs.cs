@@ -33,6 +33,20 @@ namespace TokenStealing.Interop
     {
         public int LowPart;
         public int HighPart;
+
+        public long ToInt64()
+        {
+            return ((long)this.HighPart << 32) | (uint)this.LowPart;
+        }
+
+        public static LUID FromInt64(long value)
+        {
+            return new LUID
+            {
+                LowPart = (int)(value),
+                HighPart = (int)((value >> 32))
+            };
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -82,16 +96,22 @@ namespace TokenStealing.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_PRIVILEGES
+    internal class TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public LUID_AND_ATTRIBUTES[] Privileges;
+
+        public TOKEN_PRIVILEGES()
+        {
+            PrivilegeCount = 0;
+            Privileges = new LUID_AND_ATTRIBUTES[1];
+        }
 
         public TOKEN_PRIVILEGES(int nPrivilegeCount)
         {
             PrivilegeCount = nPrivilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[36];
+            Privileges = new LUID_AND_ATTRIBUTES[1];
         }
     }
 

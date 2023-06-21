@@ -91,6 +91,7 @@ namespace TokenStealing.Library
                             }
                             else
                             {
+                                IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
                                 var tokenPrivileges = new TOKEN_PRIVILEGES(1);
 
                                 if (NativeMethods.LookupPrivilegeValue(
@@ -99,15 +100,19 @@ namespace TokenStealing.Library
                                     out tokenPrivileges.Privileges[0].Luid))
                                 {
                                     tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
+                                    Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
+
                                     adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
                                         hToken,
                                         false,
-                                        in tokenPrivileges,
-                                        20,
-                                        out TOKEN_PRIVILEGES _,
+                                        pTokenPrivileges,
+                                        Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
+                                        IntPtr.Zero,
                                         out int _);
                                     adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
                                 }
+
+                                Marshal.FreeHGlobal(pTokenPrivileges);
                             }
 
                             break;
