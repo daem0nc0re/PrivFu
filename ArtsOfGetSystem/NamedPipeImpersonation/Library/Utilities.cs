@@ -193,7 +193,7 @@ namespace NamedPipeImpersonation.Library
             do
             {
                 var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-                var tokenGroups = new TOKEN_GROUPS(5);
+                var tokenGroups = new TOKEN_GROUPS(1);
 
                 NTSTATUS ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
 
@@ -212,22 +212,9 @@ namespace NamedPipeImpersonation.Library
                     break;
                 }
 
-                NativeMethods.ConvertStringSidToSid("S-1-1-0", out IntPtr pEveryoneSid);
-                NativeMethods.ConvertStringSidToSid("S-1-5-11", out IntPtr pAuthenticatedUsersSid);
-                NativeMethods.ConvertStringSidToSid("S-1-5-18", out IntPtr pLocalSystemSid);
                 NativeMethods.ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
-                NativeMethods.ConvertStringSidToSid("S-1-5-32-544", out IntPtr pAdminSid);
-
-                tokenGroups.Groups[0].Sid = pEveryoneSid;
+                tokenGroups.Groups[0].Sid = pNetworkServiceSid;
                 tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[1].Sid = pAuthenticatedUsersSid;
-                tokenGroups.Groups[1].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[2].Sid = pLocalSystemSid;
-                tokenGroups.Groups[2].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[3].Sid = pNetworkServiceSid;
-                tokenGroups.Groups[3].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[4].Sid = pAdminSid;
-                tokenGroups.Groups[4].Attributes = (int)(SE_GROUP_ATTRIBUTES.OWNER | SE_GROUP_ATTRIBUTES.ENABLED);
 
                 using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
                 {
@@ -266,11 +253,7 @@ namespace NamedPipeImpersonation.Library
                     Marshal.FreeHGlobal(pTokenBuffer);
                 }
 
-                NativeMethods.LocalFree(pEveryoneSid);
-                NativeMethods.LocalFree(pAuthenticatedUsersSid);
-                NativeMethods.LocalFree(pLocalSystemSid);
                 NativeMethods.LocalFree(pNetworkServiceSid);
-                NativeMethods.LocalFree(pAdminSid);
             } while (false);
 
             return status;
