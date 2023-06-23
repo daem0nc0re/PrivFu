@@ -192,6 +192,7 @@ namespace NamedPipeImpersonation.Library
 
             do
             {
+                IntPtr pTokenGroups;
                 var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
                 var tokenGroups = new TOKEN_GROUPS(1);
 
@@ -212,9 +213,13 @@ namespace NamedPipeImpersonation.Library
                     break;
                 }
 
+                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_GROUPS)));
+
                 NativeMethods.ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
                 tokenGroups.Groups[0].Sid = pNetworkServiceSid;
                 tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+
+                Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
 
                 using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
                 {
@@ -228,7 +233,7 @@ namespace NamedPipeImpersonation.Library
                         authnPkg,
                         msv.Buffer,
                         (uint)msv.Length,
-                        in tokenGroups,
+                        pTokenGroups,
                         in tokenSource,
                         out IntPtr ProfileBuffer,
                         out uint _,
@@ -253,6 +258,7 @@ namespace NamedPipeImpersonation.Library
                     Marshal.FreeHGlobal(pTokenBuffer);
                 }
 
+                Marshal.FreeHGlobal(pTokenGroups);
                 NativeMethods.LocalFree(pNetworkServiceSid);
             } while (false);
 

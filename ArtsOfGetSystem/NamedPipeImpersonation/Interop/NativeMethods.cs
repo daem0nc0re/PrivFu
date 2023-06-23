@@ -193,7 +193,7 @@ namespace NamedPipeImpersonation.Interop
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
             uint AuthenticationInformationLength,
-            in TOKEN_GROUPS LocalGroups,
+            IntPtr /* in TOKEN_GROUPS */ LocalGroups,
             in TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
             out uint ProfileBufferLength,

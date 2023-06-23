@@ -229,16 +229,22 @@ namespace NamedPipeImpersonation.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_GROUPS
+    internal class TOKEN_GROUPS
     {
         public uint GroupCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public SID_AND_ATTRIBUTES[] Groups;
+
+        public TOKEN_GROUPS()
+        {
+            GroupCount = 1;
+            Groups = new SID_AND_ATTRIBUTES[1];
+        }
 
         public TOKEN_GROUPS(uint groupCount)
         {
             GroupCount = groupCount;
-            Groups = new SID_AND_ATTRIBUTES[8];
+            Groups = new SID_AND_ATTRIBUTES[1];
         }
     }
 

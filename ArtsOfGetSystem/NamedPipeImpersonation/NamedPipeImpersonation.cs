@@ -1,6 +1,9 @@
 ﻿using System;
 using NamedPipeImpersonation.Handler;
 
+using NamedPipeImpersonation.Interop;
+using System.Runtime.InteropServices;
+
 namespace NamedPipeImpersonation
 {
     internal class NamedPipeImpersonation
