@@ -271,16 +271,22 @@ namespace SeTcbPrivilegePoC
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        struct TOKEN_GROUPS
+        class TOKEN_GROUPS
         {
-            public int GroupCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+            public uint GroupCount;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
             public SID_AND_ATTRIBUTES[] Groups;
 
-            public TOKEN_GROUPS(int privilegeCount)
+            public TOKEN_GROUPS()
             {
-                GroupCount = privilegeCount;
-                Groups = new SID_AND_ATTRIBUTES[8];
+                GroupCount = 0;
+                Groups = new SID_AND_ATTRIBUTES[1];
+            }
+
+            public TOKEN_GROUPS(uint groupCount)
+            {
+                GroupCount = groupCount;
+                Groups = new SID_AND_ATTRIBUTES[1];
             }
         }
 

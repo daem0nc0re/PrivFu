@@ -234,10 +234,6 @@ namespace NamedPipeImpersonation.Library
                             pSidBuffersToLocalFree.Add(pSid);
                             nGroupCount++;
                         }
-                        else
-                        {
-                            Console.WriteLine(Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
-                        }
                     }
 
                     if (nGroupCount == 0)
