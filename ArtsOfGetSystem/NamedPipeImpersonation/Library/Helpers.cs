@@ -186,5 +186,12 @@ namespace NamedPipeImpersonation.Library
             else
                 return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
+
+
+        public static void ZeroMemory(IntPtr pBuffer, int nLength)
+        {
+            for (var offset = 0; offset < nLength; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
+        }
     }
 }

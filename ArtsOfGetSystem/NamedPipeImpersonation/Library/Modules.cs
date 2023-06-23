@@ -156,7 +156,7 @@ namespace NamedPipeImpersonation.Library
                 {
                     Console.WriteLine("[>] Trying to S4U logon.");
 
-                    status = Utilities.ImpersonateWithMsvS4uLogon(s4uUser, s4uDomain);
+                    status = Utilities.ImpersonateWithMsvS4uLogon(s4uUser, s4uDomain, new List<string> { "S-1-5-20" });
 
                     if (!status)
                     {

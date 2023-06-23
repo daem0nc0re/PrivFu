@@ -186,15 +186,19 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-        public static bool ImpersonateWithMsvS4uLogon(string upn, string domain)
+        public static bool ImpersonateWithMsvS4uLogon(string upn, string domain, List<string> localGroupSids)
         {
             var status = false;
 
             do
             {
                 IntPtr pTokenGroups;
+                int nGroupCount = localGroupSids.Count;
                 var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-                var tokenGroups = new TOKEN_GROUPS(1);
+                var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                var nTokenGroupsSize = nGroupsOffset;
+                var pSidBuffersToLocalFree = new List<IntPtr>();
+                nTokenGroupsSize += (Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES)) * nGroupCount);
 
                 NTSTATUS ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
 
@@ -213,13 +217,43 @@ namespace NamedPipeImpersonation.Library
                     break;
                 }
 
-                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_GROUPS)));
+                if (nGroupCount > 0)
+                {
+                    int nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                    var attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                    pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsSize);
+                    nGroupCount = 0;
+                    Helpers.ZeroMemory(pTokenGroups, nTokenGroupsSize);
 
-                NativeMethods.ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
-                tokenGroups.Groups[0].Sid = pNetworkServiceSid;
-                tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                    foreach (var stringSid in localGroupSids)
+                    {
+                        if (NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
+                        {
+                            Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
+                            Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
+                            pSidBuffersToLocalFree.Add(pSid);
+                            nGroupCount++;
+                        }
+                        else
+                        {
+                            Console.WriteLine(Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                        }
+                    }
 
-                Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
+                    if (nGroupCount == 0)
+                    {
+                        Marshal.FreeHGlobal(pTokenGroups);
+                        pTokenGroups = IntPtr.Zero;
+                    }
+                    else
+                    {
+                        Marshal.WriteInt32(pTokenGroups, nGroupCount);
+                    }
+                }
+                else
+                {
+                    pTokenGroups = IntPtr.Zero;
+                }
 
                 using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
                 {
@@ -258,8 +292,11 @@ namespace NamedPipeImpersonation.Library
                     Marshal.FreeHGlobal(pTokenBuffer);
                 }
 
-                Marshal.FreeHGlobal(pTokenGroups);
-                NativeMethods.LocalFree(pNetworkServiceSid);
+                if (pTokenGroups != IntPtr.Zero)
+                    Marshal.FreeHGlobal(pTokenGroups);
+
+                foreach (var pSidBuffer in pSidBuffersToLocalFree)
+                    NativeMethods.LocalFree(pSidBuffer);
             } while (false);
 
             return status;

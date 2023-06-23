@@ -237,7 +237,7 @@ namespace NamedPipeImpersonation.Interop
 
         public TOKEN_GROUPS()
         {
-            GroupCount = 1;
+            GroupCount = 0;
             Groups = new SID_AND_ATTRIBUTES[1];
         }
 
