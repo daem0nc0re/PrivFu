@@ -229,10 +229,16 @@ namespace NamedPipeImpersonation.Library
                     {
                         if (NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
                         {
-                            Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
-                            Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
-                            pSidBuffersToLocalFree.Add(pSid);
-                            nGroupCount++;
+                            Helpers.ConvertSidToAccountName(pSid, out string _, out string _, out SID_NAME_USE sidType);
+
+                            if ((sidType == SID_NAME_USE.SidTypeAlias) ||
+                                (sidType == SID_NAME_USE.SidTypeWellKnownGroup))
+                            {
+                                Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
+                                Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
+                                pSidBuffersToLocalFree.Add(pSid);
+                                nGroupCount++;
+                            }
                         }
                     }
 
