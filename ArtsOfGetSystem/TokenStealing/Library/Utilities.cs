@@ -202,9 +202,9 @@ namespace TokenStealing.Library
         public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
         {
             IntPtr pImpersonationLevel = Marshal.AllocHGlobal(4);
-            bool status = NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken);
+            var status = false;
 
-            if (status)
+            if (NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
             {
                 NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
                     WindowsIdentity.GetCurrent().Token,
@@ -212,9 +212,8 @@ namespace TokenStealing.Library
                     pImpersonationLevel,
                     4u,
                     out uint _);
-                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
 
-                if (status)
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 {
                     var level = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
 
