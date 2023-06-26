@@ -1,6 +1,5 @@
 ﻿using System;
 using NamedPipeImpersonation.Handler;
-using NamedPipeImpersonation.Library;
 
 namespace NamedPipeImpersonation
 {
