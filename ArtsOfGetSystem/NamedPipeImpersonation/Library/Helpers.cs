@@ -54,6 +54,34 @@ namespace NamedPipeImpersonation.Library
         }
 
 
+        public static string GetCurrentDomainName()
+        {
+            bool status;
+            int nNameLength = 255;
+            string domainName = Environment.UserDomainName;
+            var nameBuilder = new StringBuilder(nNameLength);
+
+            do
+            {
+                status = NativeMethods.GetComputerNameEx(
+                    COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
+                    nameBuilder,
+                    ref nNameLength);
+
+                if (!status)
+                {
+                    nameBuilder.Clear();
+                    nameBuilder.Capacity = nNameLength;
+                }
+            } while (Marshal.GetLastWin32Error() == Win32Consts.ERROR_MORE_DATA);
+
+            if (status && (nNameLength > 0))
+                domainName = nameBuilder.ToString();
+
+            return domainName;
+        }
+
+
         public static bool GetTokenPrivileges(
             IntPtr hToken,
             out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)

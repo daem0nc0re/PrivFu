@@ -154,6 +154,19 @@ namespace NamedPipeImpersonation.Interop
         SECTION_ALL_ACCESS = 0x000F001F
     }
 
+    internal enum COMPUTER_NAME_FORMAT
+    {
+        ComputerNameNetBIOS,
+        ComputerNameDnsHostname,
+        ComputerNameDnsDomain,
+        ComputerNameDnsFullyQualified,
+        ComputerNamePhysicalNetBIOS,
+        ComputerNamePhysicalDnsHostname,
+        ComputerNamePhysicalDnsDomain,
+        ComputerNamePhysicalDnsFullyQualified,
+        ComputerNameMax
+    }
+
     internal enum ERROR_CONTROL
     {
         IGNORE,

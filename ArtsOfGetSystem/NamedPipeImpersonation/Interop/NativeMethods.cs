@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -140,6 +141,12 @@ namespace NamedPipeImpersonation.Interop
             StringBuilder lpBuffer,
             int nSize,
             IntPtr Arguments);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool GetComputerNameEx(
+            COMPUTER_NAME_FORMAT NameType,
+            StringBuilder lpBuffer,
+            ref int nSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LocalFree(IntPtr hMem);

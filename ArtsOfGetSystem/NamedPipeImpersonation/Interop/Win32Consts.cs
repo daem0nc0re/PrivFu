@@ -14,6 +14,11 @@ namespace NamedPipeImpersonation.Interop
         public static NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         /*
+         * Win32 Error
+         */
+        public const int ERROR_MORE_DATA = 0x000000EA;
+
+        /*
          * Well known value for CreateNamedPipe nMaxInstances
          */
         public const int PIPE_UNLIMITED_INSTANCES = 255;
