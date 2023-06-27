@@ -16,6 +16,7 @@ namespace NamedPipeImpersonation.Interop
         /*
          * Win32 Error
          */
+        public const int ERROR_SUCCESS = 0;
         public const int ERROR_MORE_DATA = 0x000000EA;
 
         /*

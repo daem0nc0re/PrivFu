@@ -82,6 +82,49 @@ namespace NamedPipeImpersonation.Library
         }
 
 
+        public static bool GetLocalAccounts(out Dictionary<string, bool> localAccounts)
+        {
+            bool status;
+            int error;
+            int nEntrySize = Marshal.SizeOf(typeof(USER_INFO_1));
+            int nMaximumLength = nEntrySize * 0x100;
+            localAccounts = new Dictionary<string, bool>();
+
+            error = NativeMethods.NetUserEnum(
+                null,
+                1,
+                USER_INFO_FILTER.NORMAL_ACCOUNT,
+                out IntPtr pDataBuffer,
+                nMaximumLength,
+                out int nEntries,
+                out int _,
+                IntPtr.Zero);
+            status = (error == Win32Consts.ERROR_SUCCESS);
+            
+            if (status)
+            {
+                IntPtr pEntry;
+                bool available;
+
+                for (var idx = 0; idx < nEntries; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pDataBuffer.ToInt64() + (idx * nEntrySize));
+                    else
+                        pEntry = new IntPtr(pDataBuffer.ToInt32() + (idx * nEntrySize));
+
+                    var entry = (USER_INFO_1)Marshal.PtrToStructure(pEntry, typeof(USER_INFO_1));
+                    available = !((entry.usri1_flags & (USER_FLAGS.UF_ACCOUNTDISABLE | USER_FLAGS.UF_LOCKOUT)) != 0);
+                    localAccounts.Add(entry.usri1_name, available);
+                }
+
+                NativeMethods.NetApiBufferFree(pDataBuffer);
+            }
+
+            return status;
+        }
+
+
         public static bool GetTokenPrivileges(
             IntPtr hToken,
             out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)

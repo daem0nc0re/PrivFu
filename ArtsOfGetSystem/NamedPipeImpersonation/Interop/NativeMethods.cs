@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -156,6 +155,23 @@ namespace NamedPipeImpersonation.Interop
 
         [DllImport("kernel32.dll")]
         public static extern void SetLastError(int dwErrCode);
+
+        /*
+         * netapi32.dll
+         */
+        [DllImport("netapi32.dll")]
+        public static extern int NetApiBufferFree(IntPtr Buffer);
+
+        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int NetUserEnum(
+            string servername,
+            int level,
+            USER_INFO_FILTER filter,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr resume_handle);
 
         /*
          * ntdll.dll
