@@ -8,6 +8,7 @@ Codes in this repository are intended to help investigate how token privileges w
 ## Table Of Contents
 
 - [PrivFu](#privfu)
+  - [ArtsOfGetSystem](#ArtsOfGetSystem)
   - [KernelWritePoCs](#KernelWritePoCs)
   - [PrivEditor](#priveditor)
     - [getps Command](#getps-command)
@@ -25,6 +26,16 @@ Codes in this repository are intended to help investigate how token privileges w
   - [UserRightsUtil](#userrightsutil)
   - [Reference](#reference)
   - [Acknowledgments](#acknowledgments)
+
+## ArtsOfGetSystem
+
+[Back to Top](#privfu)
+
+[Project](./ArtsOfGetSystem)
+
+This project covers how to get system privileges from high integrity level shell.
+See [README.md](./ArtsOfGetSystem/README.md) for details.
+
 
 ## KernelWritePoCs
 
