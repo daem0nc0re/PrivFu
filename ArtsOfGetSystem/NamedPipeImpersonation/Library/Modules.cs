@@ -164,7 +164,7 @@ namespace NamedPipeImpersonation.Library
                 {
                     Console.WriteLine("[>] Trying to S4U logon.");
 
-                    status = Utilities.ImpersonateWithMsvS4uLogon(
+                    status = Utilities.ImpersonateWithS4uLogon(
                         s4uUser,
                         s4uDomain,
                         in pkgName,

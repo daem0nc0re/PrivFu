@@ -174,7 +174,7 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-        public static bool ImpersonateWithMsvS4uLogon(
+        public static bool ImpersonateWithS4uLogon(
             string upn,
             string domain,
             in LSA_STRING pkgName,
