@@ -162,7 +162,7 @@ namespace NamedPipeImpersonation.Library
                 }
                 else
                 {
-                    Console.WriteLine("[>] Trying to S4U logon.");
+                    Console.WriteLine("[>] Trying to S4U logon as \"{0}\\{1}\".", s4uDomain, s4uUser);
 
                     status = Utilities.ImpersonateWithS4uLogon(
                         s4uUser,
