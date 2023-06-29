@@ -67,7 +67,7 @@ namespace NamedPipeImpersonation.Interop
          * LSA PackageName
          */
         public const string MSV1_0_PACKAGE_NAME = "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0";
-        public const string MICROSOFT_KERBEROS_NAME_A = "Kerberos";
-        public const string NEGOSSP_NAME_A = "Negotiate";
+        public const string MICROSOFT_KERBEROS_NAME = "Kerberos";
+        public const string NEGOSSP_NAME = "Negotiate";
     }
 }

