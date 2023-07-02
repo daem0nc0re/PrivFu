@@ -243,14 +243,21 @@ namespace SwitchPriv.Library
                 var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
                     pInformationBuffer,
                     typeof(TOKEN_PRIVILEGES));
+                var nEntryOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+                var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
 
                 for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
                 {
                     int cchName = 128;
                     var stringBuilder = new StringBuilder(cchName);
+                    var luid = LUID.FromInt64(Marshal.ReadInt64(pInformationBuffer, nEntryOffset + (nUnitSize * idx)));
+                    var nAttributesOffset = Marshal.OffsetOf(typeof(LUID_AND_ATTRIBUTES), "Attributes").ToInt32();
+                    var attributes = (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(
+                        pInformationBuffer,
+                        nEntryOffset + (nUnitSize * idx) + nAttributesOffset);
 
-                    NativeMethods.LookupPrivilegeName(null, in tokenPrivileges.Privileges[idx].Luid, stringBuilder, ref cchName);
-                    privileges.Add(stringBuilder.ToString(), (SE_PRIVILEGE_ATTRIBUTES)tokenPrivileges.Privileges[idx].Attributes);
+                    NativeMethods.LookupPrivilegeName(null, in luid, stringBuilder, ref cchName);
+                    privileges.Add(stringBuilder.ToString(), attributes);
                     stringBuilder.Clear();
                 }
 
