@@ -208,7 +208,7 @@ namespace NamedPipeImpersonation.Library
                 }
                 else
                 {
-                    Console.WriteLine("[+] SYSTEM shell is executed succcessfully.");
+                    Console.WriteLine("[+] SYSTEM shell is executed successfully.");
 
                     NativeMethods.NtWaitForSingleObject(processInformation.hThread, true, IntPtr.Zero);
                     NativeMethods.NtClose(processInformation.hThread);
