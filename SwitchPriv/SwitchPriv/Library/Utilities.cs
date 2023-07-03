@@ -284,6 +284,7 @@ namespace SwitchPriv.Library
                     {
                         if (Helpers.CompareIgnoreCase(available.Key, priv))
                         {
+                            IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
                             var tokenPrivileges = new TOKEN_PRIVILEGES(1);
 
                             if (NativeMethods.LookupPrivilegeValue(
@@ -292,12 +293,14 @@ namespace SwitchPriv.Library
                                 out tokenPrivileges.Privileges[0].Luid))
                             {
                                 tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.REMOVED;
+                                Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
+
                                 operationStatus[priv] = NativeMethods.AdjustTokenPrivileges(
                                     hToken,
                                     false,
-                                    in tokenPrivileges,
-                                    20,
-                                    out TOKEN_PRIVILEGES _,
+                                    pTokenPrivileges,
+                                    Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
+                                    IntPtr.Zero,
                                     out int _);
                                 operationStatus[priv] = (operationStatus[priv] && (Marshal.GetLastWin32Error() == 0));
                             }
