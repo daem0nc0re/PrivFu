@@ -47,13 +47,13 @@ namespace SwitchPriv.Library
                             {
                                 IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
                                 var tokenPrivileges = new TOKEN_PRIVILEGES(1);
-                                Helpers.ZeroMemory(pTokenPrivileges, Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
 
                                 if (NativeMethods.LookupPrivilegeValue(
                                     null,
                                     priv,
                                     out tokenPrivileges.Privileges[0].Luid))
                                 {
+                                    tokenPrivileges.Privileges[0].Attributes = 0;
                                     Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
 
                                     adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
@@ -65,6 +65,8 @@ namespace SwitchPriv.Library
                                         out int _);
                                     adjustedPrivs[priv] = !(adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
                                 }
+
+                                Marshal.FreeHGlobal(pTokenPrivileges);
                             }
 
                             break;
@@ -305,6 +307,7 @@ namespace SwitchPriv.Library
                                 operationStatus[priv] = (operationStatus[priv] && (Marshal.GetLastWin32Error() == 0));
                             }
 
+                            Marshal.FreeHGlobal(pTokenPrivileges);
                             break;
                         }
                     }
@@ -349,8 +352,8 @@ namespace SwitchPriv.Library
             if (NativeMethods.ConvertStringSidToSid(mandatoryLevelSid, out IntPtr pSid))
             {
                 NTSTATUS ntstatus;
-                var nBufferSize = Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
-                var pTokenIntegrityLevel = Marshal.AllocHGlobal(nBufferSize);
+                int nBufferSize = Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
+                IntPtr pTokenIntegrityLevel = Marshal.AllocHGlobal(nBufferSize);
                 var tokenIntegrityLevel = new TOKEN_MANDATORY_LABEL
                 {
                     Label = new SID_AND_ATTRIBUTES
@@ -368,6 +371,7 @@ namespace SwitchPriv.Library
                     pTokenIntegrityLevel,
                     (uint)nBufferSize);
                 status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+                Marshal.FreeHGlobal(pTokenIntegrityLevel);
             }
 
             return status;
