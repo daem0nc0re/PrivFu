@@ -17,15 +17,6 @@ namespace SwitchPriv.Interop
         public static extern bool AdjustTokenPrivileges(
             IntPtr TokenHandle,
             bool DisableAllPrivileges,
-            in TOKEN_PRIVILEGES NewState,
-            int BufferLength,
-            out TOKEN_PRIVILEGES PreviousState,
-            out int ReturnLength);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            bool DisableAllPrivileges,
             IntPtr /* in TOKEN_PRIVILEGES */ NewState,
             int BufferLength,
             IntPtr /* out TOKEN_PRIVILEGES */ PreviousState,

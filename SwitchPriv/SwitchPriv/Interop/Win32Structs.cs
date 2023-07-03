@@ -32,33 +32,6 @@ namespace SwitchPriv.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct SID_AND_ATTRIBUTES
-    {
-        public IntPtr Sid; // PSID
-        public uint Attributes;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_MANDATORY_LABEL
-    {
-        public SID_AND_ATTRIBUTES Label;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_PRIVILEGES
-    {
-        public int PrivilegeCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
-        public LUID_AND_ATTRIBUTES[] Privileges;
-
-        public TOKEN_PRIVILEGES(int nPrivilegeCount)
-        {
-            PrivilegeCount = nPrivilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[36];
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct PRIVILEGE_SET
     {
         public int PrivilegeCount;
@@ -83,5 +56,38 @@ namespace SwitchPriv.Interop
         public IntPtr BasePriority;
         public IntPtr UniquePID;
         public IntPtr InheritedFromUniqueProcessId;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SID_AND_ATTRIBUTES
+    {
+        public IntPtr Sid; // PSID
+        public uint Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_MANDATORY_LABEL
+    {
+        public SID_AND_ATTRIBUTES Label;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal class TOKEN_PRIVILEGES
+    {
+        public int PrivilegeCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public LUID_AND_ATTRIBUTES[] Privileges;
+
+        public TOKEN_PRIVILEGES()
+        {
+            PrivilegeCount = 0;
+            Privileges = new LUID_AND_ATTRIBUTES[1];
+        }
+
+        public TOKEN_PRIVILEGES(int nPrivilegeCount)
+        {
+            PrivilegeCount = nPrivilegeCount;
+            Privileges = new LUID_AND_ATTRIBUTES[1];
+        }
     }
 }
