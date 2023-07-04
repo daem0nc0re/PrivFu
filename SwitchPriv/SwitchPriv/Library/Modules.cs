@@ -555,16 +555,36 @@ namespace SwitchPriv.Library
 
                 if (availablePrivs.Count > 0)
                 {
-                    resultsBuilder.Append(string.Format("[+] Got {0} token privilege(s).\n\n", availablePrivs.Count));
-                    resultsBuilder.Append("PRIVILEGES INFORMATION\n");
-                    resultsBuilder.Append("----------------------\n");
-                    resultsBuilder.Append("Privilege Name                             State\n");
-                    resultsBuilder.Append("========================================== ========\n");
+                    var nameHeader = "Privilege Name";
+                    var stateHeader = "State";
+                    var nNameLength = nameHeader.Length;
+                    var nStateLength = stateHeader.Length;
 
                     foreach (var priv in availablePrivs)
                     {
                         isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
-                        resultsBuilder.Append(string.Format("{0,-42} {1}\n", priv.Key, isEnabled ? "Enabled" : "Disabled"));
+
+                        if (priv.Key.Length > nNameLength)
+                            nNameLength = priv.Key.Length;
+
+                        if (isEnabled && ("Enabled".Length > nStateLength))
+                            nStateLength = "Enabled".Length;
+                        else if (!isEnabled && ("Disabled".Length > nStateLength))
+                            nStateLength = "Disabled".Length;
+                    }
+
+                    var lineFormat = string.Format("{{0,-{0}}} {{1,-{1}}}\n", nNameLength, nStateLength);
+
+                    resultsBuilder.Append(string.Format("[+] Got {0} token privilege(s).\n\n", availablePrivs.Count));
+                    resultsBuilder.Append("PRIVILEGES INFORMATION\n");
+                    resultsBuilder.Append("----------------------\n\n");
+                    resultsBuilder.Append(string.Format(lineFormat, nameHeader, stateHeader));
+                    resultsBuilder.Append(string.Format(lineFormat, new string('=', nNameLength), new string('=', nStateLength)));
+
+                    foreach (var priv in availablePrivs)
+                    {
+                        isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
+                        resultsBuilder.Append(string.Format(lineFormat, priv.Key, isEnabled ? "Enabled" : "Disabled"));
                     }
 
                     resultsBuilder.Append("\n");
