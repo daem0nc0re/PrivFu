@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Principal;
-using System.Collections.Generic;
 
 namespace TcbS4uAssignTokenVariant
 {
@@ -659,13 +659,13 @@ namespace TcbS4uAssignTokenVariant
         struct TOKEN_GROUPS
         {
             public int GroupCount;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
             public SID_AND_ATTRIBUTES[] Groups;
 
             public TOKEN_GROUPS(int privilegeCount)
             {
                 GroupCount = privilegeCount;
-                Groups = new SID_AND_ATTRIBUTES[32];
+                Groups = new SID_AND_ATTRIBUTES[1];
             }
         };
 
@@ -1169,7 +1169,7 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
-        public static bool GetLocalAccounts(out Dictionary<string, bool> localAccounts)
+        static bool GetLocalAccounts(out Dictionary<string, bool> localAccounts)
         {
             bool status;
             int error;
