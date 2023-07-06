@@ -4,6 +4,8 @@ using System.Text;
 
 namespace TrustExec.Interop
 {
+    using NTSTATUS = Int32;
+
     internal class NativeMethods
     {
         /*
@@ -215,7 +217,15 @@ namespace TrustExec.Interop
             ref int BuildNumber);
 
         [DllImport("ntdll.dll")]
-        public static extern int ZwCreateToken(
+        public static extern NTSTATUS NtQueryInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS ZwCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
@@ -231,7 +241,7 @@ namespace TrustExec.Interop
             ref TOKEN_SOURCE TokenSource);
 
         [DllImport("ntdll.dll")]
-        public static extern int ZwSetInformationProcess(
+        public static extern NTSTATUS ZwSetInformationProcess(
             IntPtr ProcessHandle,
             PROCESSINFOCLASS ProcessInformationClass,
             IntPtr ProcessInformation,

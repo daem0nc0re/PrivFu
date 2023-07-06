@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using TrustExec.Interop;
 
 namespace TrustExec.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Utilities
     {
         public static bool AddVirtualAccount(
@@ -622,8 +625,7 @@ namespace TrustExec.Library
         }
 
 
-        public static Dictionary<LUID, uint> GetAvailablePrivileges(
-            IntPtr hToken)
+        public static Dictionary<LUID, uint> GetAvailablePrivileges(IntPtr hToken)
         {
             int error;
             bool status;
@@ -758,42 +760,34 @@ namespace TrustExec.Library
 
         public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
         {
-            int error;
+            IntPtr pImpersonationLevel = Marshal.AllocHGlobal(4);
+            var status = false;
 
-            Console.WriteLine("[>] Trying to impersonate thread token.");
-            Console.WriteLine("    |-> Current Thread ID : {0}", NativeMethods.GetCurrentThreadId());
-
-            if (!NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
+            if (NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken))
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pImpersonationLevel,
+                    4u,
+                    out uint _);
 
-                return false;
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                {
+                    var level = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
+
+                    if (level == SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation)
+                        status = true;
+                    else if (level == SECURITY_IMPERSONATION_LEVEL.SecurityDelegation)
+                        status = true;
+                    else
+                        status = false;
+                }
             }
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            IntPtr pImpersonationLevel = Helpers.GetInformationFromToken(
-                hCurrentToken,
-                TOKEN_INFORMATION_CLASS.TokenImpersonationLevel);
-            var impersonationLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(
-                pImpersonationLevel);
-            NativeMethods.LocalFree(pImpersonationLevel);
+            Marshal.FreeHGlobal(pImpersonationLevel);
 
-            if (impersonationLevel ==
-                SECURITY_IMPERSONATION_LEVEL.SecurityIdentification)
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-                Console.WriteLine("    |-> May not have {0}.\n", Win32Consts.SE_IMPERSONATE_NAME);
-
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-
-                return true;
-            }
+            return status;
         }
 
 
@@ -822,7 +816,7 @@ namespace TrustExec.Library
 
             string sid = Helpers.ConvertAccountNameToSidString(
                 ref accountName,
-                out SID_NAME_USE peUse);
+                out SID_NAME_USE _);
 
             if (string.IsNullOrEmpty(sid))
             {
