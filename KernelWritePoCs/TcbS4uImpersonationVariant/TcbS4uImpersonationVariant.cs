@@ -439,7 +439,7 @@ namespace TcbS4uImpersonationVariant
 
         // Windows Struct
         [StructLayout(LayoutKind.Sequential)]
-        public struct LSA_STRING
+        struct LSA_STRING
         {
             public ushort Length;
             public ushort MaximumLength;
@@ -716,7 +716,7 @@ namespace TcbS4uImpersonationVariant
         static extern int LsaClose(IntPtr PolicyHandle);
 
         [DllImport("advapi32")]
-        public static extern int LsaNtStatusToWinError(NTSTATUS NTSTATUS);
+        static extern int LsaNtStatusToWinError(NTSTATUS NTSTATUS);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         static extern bool OpenProcessToken(
