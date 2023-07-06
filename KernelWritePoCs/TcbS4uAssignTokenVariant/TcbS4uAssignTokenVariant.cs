@@ -667,7 +667,7 @@ namespace TcbS4uAssignTokenVariant
                 GroupCount = privilegeCount;
                 Groups = new SID_AND_ATTRIBUTES[1];
             }
-        };
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         struct TOKEN_MANDATORY_LABEL
