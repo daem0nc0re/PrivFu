@@ -21,6 +21,15 @@ namespace TrustExec.Interop
             IntPtr ReturnLength); // out int
 
         [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool AdjustTokenPrivileges(
+            IntPtr TokenHandle,
+            bool DisableAllPrivileges,
+            IntPtr NewState, // ref TOKEN_PRIVILEGES
+            int BufferLength,
+            IntPtr PreviousState, // out TOKEN_PRIVILEGES
+            out int ReturnLength);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool AllocateAndInitializeSid(
             ref SID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
             byte nSubAuthorityCount,
@@ -115,7 +124,7 @@ namespace TrustExec.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
-            ref LUID lpLuid,
+            in LUID lpLuid,
             StringBuilder lpName,
             ref int cchName);
 

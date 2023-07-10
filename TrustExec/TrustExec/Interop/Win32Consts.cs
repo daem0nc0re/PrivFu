@@ -1,21 +1,25 @@
 ﻿using System;
+using System.Net.NetworkInformation;
 
 namespace TrustExec.Interop
 {
+    using NTSTATUS = Int32;
+
     internal class Win32Consts
     {
         // NTSTATUS
-        public const int STATUS_SUCCESS = 0;
-        public static readonly int STATUS_INVALID_PARAMETER = Convert.ToInt32("0xC000000D", 16);
-        public static readonly int STATUS_NOT_FOUND = Convert.ToInt32("0xC0000225", 16);
+        public const NTSTATUS STATUS_SUCCESS = 0;
+        public static readonly NTSTATUS STATUS_INVALID_PARAMETER = Convert.ToInt32("0xC000000D", 16);
+        public static readonly NTSTATUS STATUS_NOT_FOUND = Convert.ToInt32("0xC0000225", 16);
+        public static readonly NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         // Win32Error
         public const int ERROR_BAD_LENGTH = 0x00000018;
         public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
 
         // Well known LUID
-        public static readonly LUID ANONYMOUS_LOGON_LUID = new LUID(0x3e6, 0);
-        public static readonly LUID SYSTEM_LUID = new LUID(0x3e7, 0);
+        public static readonly LUID ANONYMOUS_LOGON_LUID = LUID.FromInt64(0x3e6);
+        public static readonly LUID SYSTEM_LUID = LUID.FromInt64(0x3e7);
 
         // Well known RID
         public const string SECURITY_WORLD_RID = "S-1-1-0";

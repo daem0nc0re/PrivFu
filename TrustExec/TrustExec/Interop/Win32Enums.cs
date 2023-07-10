@@ -332,9 +332,9 @@ namespace TrustExec.Interop
     [Flags]
     internal enum SE_PRIVILEGE_ATTRIBUTES : uint
     {
-        SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001,
-        SE_PRIVILEGE_ENABLED = 0x00000002,
-        SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000,
+        ENABLED_BY_DEFAULT = 0x00000001,
+        ENABLED = 0x00000002,
+        USED_FOR_ACCESS = 0x80000000,
     }
 
     internal enum SID_NAME_USE

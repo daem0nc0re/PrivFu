@@ -62,13 +62,21 @@ namespace TrustExec.Interop
     [StructLayout(LayoutKind.Sequential)]
     internal struct LUID
     {
-        public uint LowPart;
-        public uint HighPart;
+        public int LowPart;
+        public int HighPart;
 
-        public LUID(uint _lowPart, uint _highPart)
+        public long ToInt64()
         {
-            LowPart = _lowPart;
-            HighPart = _highPart;
+            return ((long)this.HighPart << 32) | (uint)this.LowPart;
+        }
+
+        public static LUID FromInt64(long value)
+        {
+            return new LUID
+            {
+                LowPart = (int)(value),
+                HighPart = (int)((value >> 32))
+            };
         }
     }
 

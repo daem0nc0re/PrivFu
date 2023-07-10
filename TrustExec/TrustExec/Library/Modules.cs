@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Principal;
 using TrustExec.Interop;
 
@@ -22,15 +23,15 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
+            var privs = new List<string> {
                 Win32Consts.SE_DEBUG_NAME,
                 Win32Consts.SE_IMPERSONATE_NAME
             };
 
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
                 return false;
 
-            privs = new string[] {
+            privs = new List<string> {
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
@@ -152,15 +153,15 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
+            var privs = new List<string> {
                 Win32Consts.SE_DEBUG_NAME,
                 Win32Consts.SE_IMPERSONATE_NAME
             };
 
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
                 return false;
 
-            privs = new string[] {
+            privs = new List<string> {
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
@@ -212,15 +213,15 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
+            var privs = new List<string> {
                 Win32Consts.SE_DEBUG_NAME,
                 Win32Consts.SE_IMPERSONATE_NAME
             };
 
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
                 return false;
 
-            privs = new string[] {
+            privs = new List<string> {
                 Win32Consts.SE_CREATE_TOKEN_NAME,
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
             };
@@ -302,15 +303,15 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
+            var privs = new List<string> {
                 Win32Consts.SE_DEBUG_NAME,
                 Win32Consts.SE_IMPERSONATE_NAME
             };
 
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
+            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
                 return false;
 
-            privs = new string[] {
+            privs = new List<string> {
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
@@ -337,7 +338,7 @@ namespace TrustExec.Library
                 return false;
 
             if (fullPrivilege)
-                Utilities.EnableAllPrivileges(hToken);
+                Utilities.EnableAllTokenPrivileges(hToken, out Dictionary<string, bool> _);
 
             bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
             NativeMethods.CloseHandle(hToken);
