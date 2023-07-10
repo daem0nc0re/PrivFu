@@ -198,7 +198,7 @@ namespace TrustExec.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr OpenProcess(
-            ProcessAccessFlags processAccess,
+            ACCESS_MASK processAccess,
             bool bInheritHandle,
             int processId);
 

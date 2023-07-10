@@ -573,9 +573,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool EnableMultiplePrivileges(
-            IntPtr hToken,
-            string[] privs)
+        public static bool EnableMultiplePrivileges(IntPtr hToken, string[] privs)
         {
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
             Dictionary<string, bool> results = new Dictionary<string, bool>();
@@ -674,10 +672,8 @@ namespace TrustExec.Library
 
         public static bool ImpersonateAsSmss(string[] privs)
         {
-            int error;
             int smss;
-
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+            var status = false;
 
             try
             {
@@ -685,76 +681,47 @@ namespace TrustExec.Library
             }
             catch
             {
-                Console.WriteLine("[-] Failed to get process id of smss.exe.\n");
-
-                return false;
+                return status;
             }
 
-            IntPtr hProcess = NativeMethods.OpenProcess(
-                ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                true,
-                smss);
-
-            if (hProcess == IntPtr.Zero)
+            do
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get handle to smss.exe process.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                
-                return false;
-            }
+                IntPtr hProcess = NativeMethods.OpenProcess(
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    true,
+                    smss);
 
-            if (!NativeMethods.OpenProcessToken(
-                hProcess,
-                TokenAccessFlags.TOKEN_DUPLICATE,
-                out IntPtr hToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get handle to smss.exe process token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                if (hProcess == IntPtr.Zero)
+                    break;
+
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_DUPLICATE,
+                    out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
-                return false;
-            }
+                if (!status)
+                    break;
 
-            NativeMethods.CloseHandle(hProcess);
-
-            if (!NativeMethods.DuplicateTokenEx(
-                hToken,
-                TokenAccessFlags.MAXIMUM_ALLOWED,
-                IntPtr.Zero,
-                SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
-                TOKEN_TYPE.TokenPrimary,
-                out IntPtr hDupToken))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to duplicate smss.exe process token.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
+                status = NativeMethods.DuplicateTokenEx(
+                    hToken,
+                    TokenAccessFlags.MAXIMUM_ALLOWED,
+                    IntPtr.Zero,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                    TOKEN_TYPE.TokenPrimary,
+                    out IntPtr hDupToken);
                 NativeMethods.CloseHandle(hToken);
-                
-                return false;
-            }
 
-            if (!EnableMultiplePrivileges(hDupToken, privs))
-            {
+                if (!status)
+                    break;
+
+                EnableMultiplePrivileges(hDupToken, privs);
+
+                status = ImpersonateThreadToken(hDupToken);
                 NativeMethods.CloseHandle(hDupToken);
-                NativeMethods.CloseHandle(hToken);
+            } while (false);
 
-                return false;
-            }
-
-            if (!ImpersonateThreadToken(hDupToken))
-            {
-                NativeMethods.CloseHandle(hDupToken);
-                NativeMethods.CloseHandle(hToken);
-
-                return false;
-            }
-
-            NativeMethods.CloseHandle(hDupToken);
-            NativeMethods.CloseHandle(hToken);
-
-            return true;
+            return status;
         }
 
 

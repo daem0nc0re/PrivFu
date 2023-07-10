@@ -35,8 +35,17 @@ namespace TrustExec.Library
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
+            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+
             if (!Utilities.ImpersonateAsSmss(privs))
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
                 return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+            }
 
             bool status = Utilities.AddVirtualAccount(domain, username, domainRid);
             NativeMethods.RevertToSelf();
@@ -156,8 +165,17 @@ namespace TrustExec.Library
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
+            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+
             if (!Utilities.ImpersonateAsSmss(privs))
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
                 return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+            }
 
             bool status = Utilities.RemoveVirtualAccount(domain, username);
             NativeMethods.RevertToSelf();
@@ -207,8 +225,17 @@ namespace TrustExec.Library
                 Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
             };
 
+            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+
             if (!Utilities.ImpersonateAsSmss(privs))
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
                 return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+            }
 
             IntPtr hToken = Utilities.CreateTrustedInstallerToken(
                 TOKEN_TYPE.TokenPrimary,
@@ -288,8 +315,17 @@ namespace TrustExec.Library
                 Win32Consts.SE_INCREASE_QUOTA_NAME
             };
 
+            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+
             if (!Utilities.ImpersonateAsSmss(privs))
+            {
+                Console.WriteLine("[-] Failed to impersonation.");
                 return false;
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation is successful.");
+            }
 
             IntPtr hToken = Utilities.CreateTrustedInstallerTokenWithVirtualLogon(
                 domain,
