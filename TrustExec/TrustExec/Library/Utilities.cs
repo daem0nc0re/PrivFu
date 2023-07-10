@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using TrustExec.Interop;
@@ -612,53 +611,6 @@ namespace TrustExec.Library
             } while (false);
 
             return allEnabled;
-        }
-
-
-        public static Dictionary<LUID, uint> GetAvailablePrivileges(IntPtr hToken)
-        {
-            int error;
-            bool status;
-            int bufferLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
-            var availablePrivs = new Dictionary<LUID, uint>();
-            IntPtr pTokenPrivileges;
-
-            do
-            {
-                pTokenPrivileges = Marshal.AllocHGlobal(bufferLength);
-                Helpers.ZeroMemory(pTokenPrivileges, bufferLength);
-
-                status = NativeMethods.GetTokenInformation(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
-                    pTokenPrivileges,
-                    bufferLength,
-                    out bufferLength);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                    Marshal.FreeHGlobal(pTokenPrivileges);
-            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER));
-
-            if (!status)
-                return availablePrivs;
-
-            int privCount = Marshal.ReadInt32(pTokenPrivileges);
-            IntPtr buffer = new IntPtr(pTokenPrivileges.ToInt64() + Marshal.SizeOf(privCount));
-
-            for (var count = 0; count < privCount; count++)
-            {
-                var luidAndAttr = (LUID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                    buffer,
-                    typeof(LUID_AND_ATTRIBUTES));
-
-                availablePrivs.Add(luidAndAttr.Luid, luidAndAttr.Attributes);
-                buffer = new IntPtr(buffer.ToInt64() + Marshal.SizeOf(luidAndAttr));
-            }
-
-            Marshal.FreeHGlobal(pTokenPrivileges);
-
-            return availablePrivs;
         }
 
 

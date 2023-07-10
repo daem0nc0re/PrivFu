@@ -187,69 +187,77 @@ namespace TrustExec.Library
 
         public static bool RunTrustedInstallerProcess(string command, string extraSidsString, bool full)
         {
+            bool status;
             string execute;
             string[] extraSidsArray;
+            var isImpersonated = false;
 
             if (string.IsNullOrEmpty(command))
-            {
                 execute = @"C:\Windows\System32\cmd.exe";
-            }
             else
-            {
                 execute = command;
-            }
+
+            if (string.IsNullOrEmpty(extraSidsString))
+                extraSidsArray = new string[] { };
+            else
+                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
 
             Console.WriteLine();
 
-            if (string.IsNullOrEmpty(extraSidsString))
+            do
             {
-                extraSidsArray = new string[] { };
-            }
-            else
-            {
-                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
-            }
+                IntPtr hToken;
+                var privs = new List<string> {
+                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                    Win32Consts.SE_CREATE_TOKEN_NAME,
+                    Win32Consts.SE_INCREASE_QUOTA_NAME
+                };
 
-            Console.WriteLine("[>] Trying to get SYSTEM.");
+                Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new List<string> {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
-            };
+                status = Utilities.EnableTokenPrivileges(
+                    WindowsIdentity.GetCurrent().Token,
+                    new List<string> { Win32Consts.SE_DEBUG_NAME, Win32Consts.SE_IMPERSONATE_NAME },
+                    out Dictionary<string, bool> adjustedPrivs);
 
-            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
-                return false;
+                if (!status)
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] {0} is not available.", priv.Key);
+                    }
 
-            privs = new List<string> {
-                Win32Consts.SE_CREATE_TOKEN_NAME,
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
-            };
+                    break;
+                }
 
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
+                isImpersonated = Utilities.ImpersonateAsSmss(privs);
 
-            if (!Utilities.ImpersonateAsSmss(privs))
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-            }
+                if (!isImpersonated)
+                {
+                    Console.WriteLine("[-] Failed to impersonation.");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Impersonation is successful.");
+                }
 
-            IntPtr hToken = Utilities.CreateTrustedInstallerToken(
-                TOKEN_TYPE.TokenPrimary,
-                SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
-                extraSidsArray,
-                full);
+                hToken = Utilities.CreateTrustedInstallerToken(
+                    TOKEN_TYPE.TokenPrimary,
+                    SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                    extraSidsArray,
+                    full);
 
-            if (hToken == IntPtr.Zero)
-                return false;
+                if (hToken == IntPtr.Zero)
+                    break;
 
-            bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
-            NativeMethods.CloseHandle(hToken);
-            NativeMethods.RevertToSelf();
+                status = Utilities.CreateTokenAssignedProcess(hToken, execute);
+                NativeMethods.CloseHandle(hToken);
+            } while (false);
+
+            if (isImpersonated)
+                NativeMethods.RevertToSelf();
 
             return status;
         }
@@ -281,24 +289,16 @@ namespace TrustExec.Library
             }
 
             if (string.IsNullOrEmpty(command))
-            {
                 execute = @"C:\Windows\System32\cmd.exe";
-            }
             else
-            {
                 execute = command;
-            }
 
             Console.WriteLine();
 
             if (string.IsNullOrEmpty(extraSidsString))
-            {
                 extraSidsArray = new string[] { };
-            }
             else
-            {
                 extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
-            }
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
