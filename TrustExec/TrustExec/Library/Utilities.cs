@@ -63,6 +63,7 @@ namespace TrustExec.Library
             }
 
             ntstatus = Helpers.AddSidMapping(domain, null, pSidDomain);
+            NativeMethods.LocalFree(pSidDomain);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {

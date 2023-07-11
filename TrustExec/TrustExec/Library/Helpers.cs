@@ -13,34 +13,24 @@ namespace TrustExec.Library
 
     internal class Helpers
     {
-        public static int AddSidMapping(
-            string domain,
-            string username,
-            IntPtr pSid)
+        public static NTSTATUS AddSidMapping(string domain, string username, IntPtr pSid)
         {
-            int ntstatus;
-            var input = new LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT();
+            NTSTATUS ntstatus;
+            var input = new LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT { Sid = pSid };
 
-            if (string.IsNullOrEmpty(domain) || pSid == IntPtr.Zero)
-                return -1;
+            if (!string.IsNullOrEmpty(domain))
+                input.DomainName = new UNICODE_STRING(domain);
 
-            input.DomainName = new UNICODE_STRING(domain);
-
-            if (username != null)
+            if (!string.IsNullOrEmpty(username))
                 input.AccountName = new UNICODE_STRING(username);
-
-            input.Sid = pSid;
 
             ntstatus = NativeMethods.LsaManageSidNameMapping(
                 LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Add,
                 input,
-                out IntPtr output);
+                out IntPtr pOutputBuffer);
 
-            if (pSid != IntPtr.Zero)
-                NativeMethods.LocalFree(pSid);
-
-            if (output != IntPtr.Zero)
-                NativeMethods.LsaFreeMemory(output);
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                NativeMethods.LsaFreeMemory(pOutputBuffer);
 
             return ntstatus;
         }
@@ -357,26 +347,24 @@ namespace TrustExec.Library
         }
 
 
-        public static int RemoveSidMapping(string domain, string username)
+        public static NTSTATUS RemoveSidMapping(string domain, string username)
         {
-            int ntstatus;
+            NTSTATUS ntstatus;
             var input = new LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
 
             if (string.IsNullOrEmpty(domain))
-                return -1;
+                input.DomainName = new UNICODE_STRING(domain);
 
-            input.DomainName = new UNICODE_STRING(domain);
-
-            if (username != null)
+            if (string.IsNullOrEmpty(username))
                 input.AccountName = new UNICODE_STRING(username);
 
             ntstatus = NativeMethods.LsaManageSidNameMapping(
                 LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Remove,
                 input,
-                out IntPtr output);
+                out IntPtr pOutputBuffer);
 
-            if (output != IntPtr.Zero)
-                NativeMethods.LsaFreeMemory(output);
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                NativeMethods.LsaFreeMemory(pOutputBuffer);
 
             return ntstatus;
         }
