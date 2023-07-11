@@ -16,7 +16,6 @@ namespace TrustExec.Handler
                 Console.WriteLine("Available Technique IDs:\n");
                 Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
                 Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
-                Console.WriteLine();
 
                 return;
             }
@@ -42,7 +41,9 @@ namespace TrustExec.Handler
 
                 return;
             }
-            
+
+            Console.WriteLine();
+
             if (options.GetFlag("shell"))
             {
                 if (techId == 0)
@@ -52,9 +53,7 @@ namespace TrustExec.Handler
                         options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
-                        Console.WriteLine();
                         Console.WriteLine("[>] Exit.");
-                        Console.WriteLine();
                     }
                 }
                 else if (techId == 1)
@@ -67,7 +66,6 @@ namespace TrustExec.Handler
                         options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
-                        Console.WriteLine();
                         Console.WriteLine("[>] Exit.");
                     }
 
@@ -79,7 +77,6 @@ namespace TrustExec.Handler
                     Console.WriteLine("    |-> To remove added virtual domain SID : {0} -m sid -r -d {1}",
                         AppDomain.CurrentDomain.FriendlyName,
                         options.GetValue("domain"));
-                    Console.WriteLine();
                 }
                 else
                 {
@@ -88,7 +85,6 @@ namespace TrustExec.Handler
                     Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
                     Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
                     Console.WriteLine("\n[!] Invalid technique ID.");
-                    Console.WriteLine();
                 }
             }
             else if (options.GetValue("command") != null)
@@ -100,9 +96,7 @@ namespace TrustExec.Handler
                         options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
-                        Console.WriteLine();
                         Console.WriteLine("[>] Exit.");
-                        Console.WriteLine();
                     }
                 }
                 else if (techId == 1)
@@ -115,7 +109,6 @@ namespace TrustExec.Handler
                         options.GetValue("extra"),
                         options.GetFlag("full")))
                     {
-                        Console.WriteLine();
                         Console.WriteLine("[>] Exit.");
                     }
 
@@ -127,7 +120,6 @@ namespace TrustExec.Handler
                     Console.WriteLine("    |-> To remove added virtual domain SID : {0} -m sid -r -d {1}",
                         AppDomain.CurrentDomain.FriendlyName,
                         options.GetValue("domain"));
-                    Console.WriteLine();
                 }
                 else
                 {
@@ -136,7 +128,6 @@ namespace TrustExec.Handler
                     Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
                     Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
                     Console.WriteLine("\n[!] Invalid technique ID.");
-                    Console.WriteLine();
                 }
             }
             else
@@ -145,8 +136,9 @@ namespace TrustExec.Handler
                 Console.WriteLine("Available Technique IDs:\n");
                 Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
                 Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
-                Console.WriteLine();
             }
+
+            Console.WriteLine();
         }
 
         public static void SidCommand(CommandLineParser options)
@@ -167,9 +159,10 @@ namespace TrustExec.Handler
             catch
             {
                 Console.WriteLine("\n[-] Failed to parse RID for virtual domain.\n");
-
                 return;
             }
+
+            Console.WriteLine();
 
             if (options.GetFlag("lookup"))
             {
@@ -207,6 +200,8 @@ namespace TrustExec.Handler
             {
                 options.GetHelp();
             }
+
+            Console.WriteLine();
         }
     }
 }

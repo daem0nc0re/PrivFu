@@ -11,10 +11,7 @@ namespace TrustExec.Library
 
     internal class Utilities
     {
-        public static bool AddVirtualAccount(
-            string domain,
-            string username,
-            int domainRid)
+        public static bool AddVirtualAccount(string domain, string username, int domainRid)
         {
             int error;
             int ntstatus;
@@ -24,15 +21,6 @@ namespace TrustExec.Library
             if (string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(username))
             {
                 Console.WriteLine("[!] Domain name and username are required.");
-                return false;
-            }
-
-            if ((domainRid >= 0 && domainRid < 21) || domainRid == 32 ||
-                domainRid == 64 || domainRid == 80 || domainRid == 83 ||
-                domainRid == 113 || domainRid == 114)
-            {
-                Console.WriteLine("[!] {0} is reserved.", domainSid);
-
                 return false;
             }
 
@@ -159,12 +147,9 @@ namespace TrustExec.Library
             string[] extraSidsArray,
             bool full)
         {
-            int error;
-            int ntstatus;
+            NTSTATUS ntstatus;
             LUID authId = Win32Consts.SYSTEM_LUID;
             var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
-            tokenSource.SourceIdentifier.HighPart = 0;
-            tokenSource.SourceIdentifier.LowPart = 0;
             string[] privs;
 
             if (full)
@@ -220,16 +205,9 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to create an elevated {0} token.",
                 tokenType == TOKEN_TYPE.TokenPrimary ? "primary" : "impersonation");
 
-            if (!NativeMethods.ConvertStringSidToSid(
+            NativeMethods.ConvertStringSidToSid(
                 Win32Consts.TRUSTED_INSTALLER_RID,
-                out IntPtr pTrustedInstaller))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to get SID for TrustedInstaller.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
+                out IntPtr pTrustedInstaller);
 
             if (!CreateTokenPrivileges(
                 privs,

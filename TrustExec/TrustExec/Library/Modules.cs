@@ -12,12 +12,11 @@ namespace TrustExec.Library
         {
             if (string.IsNullOrEmpty(domain))
             {
-                Console.WriteLine("[!] Domain name is not specified.\n");
+                Console.WriteLine("[!] Domain name is not specified.");
 
                 return false;
             }
 
-            Console.WriteLine();
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
@@ -61,7 +60,7 @@ namespace TrustExec.Library
             if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
                 !string.IsNullOrEmpty(sid))
             {
-                Console.WriteLine("\n[!] Username or domain name should not be specified with SID at a time.\n");
+                Console.WriteLine("[!] Username or domain name should not be specified with SID at a time.");
             }
             else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
             {
@@ -73,7 +72,7 @@ namespace TrustExec.Library
             }
             else
             {
-                Console.WriteLine("\n[!] SID, domain name or username to lookup is required.\n");
+                Console.WriteLine("[!] SID, domain name or username to lookup is required.");
             }
 
             if (status)
@@ -89,16 +88,14 @@ namespace TrustExec.Library
                 else
                     accountName = "N/A";
 
-                Console.WriteLine();
                 Console.WriteLine("[*] Result:");
                 Console.WriteLine("    [*] Account Name : {0}", accountName);
                 Console.WriteLine("    [*] SID          : {0}", string.IsNullOrEmpty(sid) ? "N/A" : sid);
                 Console.WriteLine("    [*] Account Type : {0}", peUse.ToString());
-                Console.WriteLine();
             }
             else
             {
-                Console.WriteLine("\n[*] No result.\n");
+                Console.WriteLine("[*] No result.");
             }
 
             return status;
@@ -109,12 +106,10 @@ namespace TrustExec.Library
         {
             if (string.IsNullOrEmpty(domain))
             {
-                Console.WriteLine("[!] Domain name is not specified.\n");
-
+                Console.WriteLine("[!] Domain name is not specified.");
                 return false;
             }
 
-            Console.WriteLine();
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
@@ -251,15 +246,14 @@ namespace TrustExec.Library
 
             if (string.IsNullOrEmpty(domain))
             {
-                Console.WriteLine("[!] Domain name is not specified.\n");
+                Console.WriteLine("[!] Domain name is not specified.");
 
                 return false;
             }
 
             if (string.IsNullOrEmpty(username))
             {
-                Console.WriteLine("[!] Username is not specified.\n");
-
+                Console.WriteLine("[!] Username is not specified.");
                 return false;
             }
 

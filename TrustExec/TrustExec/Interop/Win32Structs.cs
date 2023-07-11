@@ -284,20 +284,21 @@ namespace TrustExec.Interop
         }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_SOURCE
     {
-        public TOKEN_SOURCE(string name)
-        {
-            SourceName = new byte[8];
-            Encoding.GetEncoding(1252).GetBytes(name, 0, name.Length, SourceName, 0);
-            if (!NativeMethods.AllocateLocallyUniqueId(out SourceIdentifier))
-                throw new System.ComponentModel.Win32Exception();
-        }
-
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public byte[] SourceName;
         public LUID SourceIdentifier;
+
+        public TOKEN_SOURCE(string sourceName)
+        {
+            var soureNameBytes = Encoding.ASCII.GetBytes(sourceName);
+            int nSourceNameLength = (soureNameBytes.Length > 8) ? 8 : soureNameBytes.Length;
+            SourceName = new byte[8];
+            SourceIdentifier = new LUID();
+
+            Buffer.BlockCopy(soureNameBytes, 0, SourceName, 0, nSourceNameLength);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
