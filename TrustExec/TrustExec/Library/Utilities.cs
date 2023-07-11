@@ -85,17 +85,12 @@ namespace TrustExec.Library
         }
 
 
-        public static bool CreateTokenAssignedProcess(
-            IntPtr hToken,
-            string command)
+        public static bool CreateTokenAssignedProcess(IntPtr hToken, string command)
         {
-            int error;
-            var startupInfo = new STARTUPINFO();
-            startupInfo.cb = Marshal.SizeOf(startupInfo);
-            startupInfo.lpDesktop = @"Winsta0\Default";
-
-            Console.WriteLine("[>] Trying to create a token assigned process.\n");
-
+            var startupInfo = new STARTUPINFO {
+                cb = Marshal.SizeOf(typeof(STARTUPINFO)),
+                lpDesktop = @"Winsta0\Default"
+            };
             bool status = NativeMethods.CreateProcessAsUser(
                 hToken,
                 null,
@@ -106,23 +101,17 @@ namespace TrustExec.Library
                 0,
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
-                ref startupInfo,
+                in startupInfo,
                 out PROCESS_INFORMATION processInformation);
 
-            if (!status)
+            if (status)
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create new process.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                
-                return false;
+                NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
+                NativeMethods.CloseHandle(processInformation.hThread);
+                NativeMethods.CloseHandle(processInformation.hProcess);
             }
 
-            NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-            NativeMethods.CloseHandle(processInformation.hThread);
-            NativeMethods.CloseHandle(processInformation.hProcess);
-
-            return true;
+            return status;
         }
 
 

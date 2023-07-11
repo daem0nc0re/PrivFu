@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using TrustExec.Interop;
 
@@ -252,8 +253,17 @@ namespace TrustExec.Library
                 if (hToken == IntPtr.Zero)
                     break;
 
+                Console.WriteLine("[>] Trying to create token assigned process.");
+
                 status = Utilities.CreateTokenAssignedProcess(hToken, execute);
                 NativeMethods.CloseHandle(hToken);
+
+                if (!status)
+                {
+                    var error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create token assigned process.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                }
             } while (false);
 
             if (isImpersonated)
@@ -271,6 +281,7 @@ namespace TrustExec.Library
             string extraSidsString,
             bool fullPrivilege)
         {
+            bool status;
             string execute;
             string[] extraSidsArray;
 
@@ -340,8 +351,18 @@ namespace TrustExec.Library
             if (fullPrivilege)
                 Utilities.EnableAllTokenPrivileges(hToken, out Dictionary<string, bool> _);
 
-            bool status = Utilities.CreateTokenAssignedProcess(hToken, execute);
+            Console.WriteLine("[>] Trying to create token assigned process.");
+
+            status = Utilities.CreateTokenAssignedProcess(hToken, execute);
             NativeMethods.CloseHandle(hToken);
+
+            if (!status)
+            {
+                var error = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to create token assigned process.");
+                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+            }
+
             NativeMethods.RevertToSelf();
 
             return status;
