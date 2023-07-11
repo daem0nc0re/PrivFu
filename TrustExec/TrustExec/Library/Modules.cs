@@ -8,10 +8,7 @@ namespace TrustExec.Library
 {
     internal class Modules
     {
-        public static bool AddVirtualAccount(
-            string domain,
-            string username,
-            int domainRid)
+        public static bool AddVirtualAccount(string domain, string username, int domainRid)
         {
             if (string.IsNullOrEmpty(domain))
             {
@@ -56,88 +53,55 @@ namespace TrustExec.Library
         }
 
 
-        public static bool LookupSid(
-            string domain,
-            string username,
-            string sid)
+        public static bool LookupSid(string domain, string username, string sid)
         {
-            string result;
-            string accountName;
+            var status = false;
+            var peUse = SID_NAME_USE.SidTypeUnknown;
 
             if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
                 !string.IsNullOrEmpty(sid))
             {
                 Console.WriteLine("\n[!] Username or domain name should not be specified with SID at a time.\n");
-
-                return false;
             }
             else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
             {
-                if (!string.IsNullOrEmpty(domain) && domain.Trim() == ".")
-                    domain = Environment.MachineName;
-
-                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format(@"{0}\{1}", domain, username);
-                else if (!string.IsNullOrEmpty(domain))
-                    accountName = domain;
-                else if (!string.IsNullOrEmpty(username))
-                    accountName = username;
-                else
-                    return false;
-
-                result = Helpers.ConvertAccountNameToSidString(
-                    ref accountName,
-                    out SID_NAME_USE peUse);
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", accountName);
-                    Console.WriteLine("    |-> SID          : {0}", result);
-                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
-                    Console.WriteLine();
-
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("\n[*] No result.\n");
-
-                    return false;
-                }
+                status = Helpers.ConvertAccountNameToSidString(ref username, ref domain, out sid, out peUse);
             }
             else if (!string.IsNullOrEmpty(sid))
             {
-                sid = sid.ToUpper();
-                result = Helpers.ConvertSidStringToAccountName(
-                    ref sid,
-                    out SID_NAME_USE peUse);
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", result);
-                    Console.WriteLine("    |-> SID          : {0}", sid);
-                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
-                    Console.WriteLine();
-
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("\n[*] No result.\n");
-
-                    return false;
-                }
+                status = Helpers.ConvertSidStringToAccountName(ref sid, out username, out domain, out peUse);
             }
             else
             {
                 Console.WriteLine("\n[!] SID, domain name or username to lookup is required.\n");
-
-                return false;
             }
+
+            if (status)
+            {
+                string accountName;
+
+                if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
+                    accountName = string.Format(@"{0}\{1}", domain, username);
+                else if (!string.IsNullOrEmpty(username))
+                    accountName = username;
+                else if (!string.IsNullOrEmpty(domain))
+                    accountName = domain;
+                else
+                    accountName = "N/A";
+
+                Console.WriteLine();
+                Console.WriteLine("[*] Result:");
+                Console.WriteLine("    [*] Account Name : {0}", accountName);
+                Console.WriteLine("    [*] SID          : {0}", string.IsNullOrEmpty(sid) ? "N/A" : sid);
+                Console.WriteLine("    [*] Account Type : {0}", peUse.ToString());
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("\n[*] No result.\n");
+            }
+
+            return status;
         }
 
 

@@ -707,20 +707,15 @@ namespace TrustExec.Library
             if (!string.IsNullOrEmpty(username))
                 Console.WriteLine("    |-> Username : {0}", username.ToLower());
 
-            string accountName;
-
-            if (string.IsNullOrEmpty(username))
-                accountName = domain;
-            else
-                accountName = string.Format(@"{0}\{1}", domain.ToLower(), username.ToLower());
-
-            string sid = Helpers.ConvertAccountNameToSidString(
-                ref accountName,
+            bool status = Helpers.ConvertAccountNameToSidString(
+                ref username,
+                ref domain,
+                out string sid,
                 out SID_NAME_USE _);
 
-            if (string.IsNullOrEmpty(sid))
+            if (string.IsNullOrEmpty(sid) || !status)
             {
-                Console.WriteLine("[-] Failed to lookup {0}.", accountName);
+                Console.WriteLine("[-] Failed to lookup.");
                 return false;
             }
             else
