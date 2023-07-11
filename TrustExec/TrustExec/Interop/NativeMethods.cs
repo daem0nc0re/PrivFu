@@ -116,18 +116,12 @@ namespace TrustExec.Interop
             int TokenInformationLength);
 
         [DllImport("advapi32.dll")]
-        public static extern int LsaFreeMemory(IntPtr Buffer);
+        public static extern NTSTATUS LsaFreeMemory(IntPtr Buffer);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern int LsaManageSidNameMapping(
+        public static extern NTSTATUS LsaManageSidNameMapping(
             LSA_SID_NAME_MAPPING_OPERATION_TYPE OperationType,
-            LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT OperationInput,
-            out IntPtr OperationOutput);
-
-        [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-        public static extern int LsaManageSidNameMapping(
-            LSA_SID_NAME_MAPPING_OPERATION_TYPE OperationType,
-            LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT OperationInput,
+            IntPtr OperationInput,
             out IntPtr OperationOutput);
 
         /*

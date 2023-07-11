@@ -153,20 +153,20 @@ namespace TrustExec.Interop
 
     internal enum LSA_SID_NAME_MAPPING_OPERATION_ERROR
     {
-        LsaSidNameMappingOperation_Success,
-        LsaSidNameMappingOperation_NonMappingError,
-        LsaSidNameMappingOperation_NameCollision,
-        LsaSidNameMappingOperation_SidCollision,
-        LsaSidNameMappingOperation_DomainNotFound,
-        LsaSidNameMappingOperation_DomainSidPrefixMismatch,
-        LsaSidNameMappingOperation_MappingNotFound
+        Success,
+        NonMappingError,
+        NameCollision,
+        SidCollision,
+        DomainNotFound,
+        DomainSidPrefixMismatch,
+        MappingNotFound
     }
 
     internal enum LSA_SID_NAME_MAPPING_OPERATION_TYPE
     {
-        LsaSidNameMappingOperation_Add,
-        LsaSidNameMappingOperation_Remove,
-        LsaSidNameMappingOperation_AddMultiple
+        Add,
+        Remove,
+        AddMultiple
     }
 
     [Flags]

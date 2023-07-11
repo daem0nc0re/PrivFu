@@ -17,6 +17,7 @@ namespace TrustExec.Library
         {
             NTSTATUS ntstatus;
             var input = new LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT { Sid = pSid };
+            IntPtr pInputBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(input));
 
             if (!string.IsNullOrEmpty(domain))
                 input.DomainName = new UNICODE_STRING(domain);
@@ -24,12 +25,14 @@ namespace TrustExec.Library
             if (!string.IsNullOrEmpty(username))
                 input.AccountName = new UNICODE_STRING(username);
 
+            Marshal.StructureToPtr(input, pInputBuffer, false);
             ntstatus = NativeMethods.LsaManageSidNameMapping(
-                LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Add,
-                input,
+                LSA_SID_NAME_MAPPING_OPERATION_TYPE.Add,
+                pInputBuffer,
                 out IntPtr pOutputBuffer);
+            Marshal.FreeHGlobal(pInputBuffer);
 
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            if (pOutputBuffer != IntPtr.Zero)
                 NativeMethods.LsaFreeMemory(pOutputBuffer);
 
             return ntstatus;
@@ -351,20 +354,23 @@ namespace TrustExec.Library
         {
             NTSTATUS ntstatus;
             var input = new LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
+            IntPtr pInputBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(input));
 
-            if (string.IsNullOrEmpty(domain))
+            if (!string.IsNullOrEmpty(domain))
                 input.DomainName = new UNICODE_STRING(domain);
 
-            if (string.IsNullOrEmpty(username))
+            if (!string.IsNullOrEmpty(username))
                 input.AccountName = new UNICODE_STRING(username);
 
+            Marshal.StructureToPtr(input, pInputBuffer, false);
             ntstatus = NativeMethods.LsaManageSidNameMapping(
-                LSA_SID_NAME_MAPPING_OPERATION_TYPE.LsaSidNameMappingOperation_Remove,
-                input,
-                out IntPtr pOutputBuffer);
+                LSA_SID_NAME_MAPPING_OPERATION_TYPE.Remove,
+                pInputBuffer,
+                out IntPtr output);
+            Marshal.FreeHGlobal(pInputBuffer);
 
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                NativeMethods.LsaFreeMemory(pOutputBuffer);
+            if (output != IntPtr.Zero)
+                NativeMethods.LsaFreeMemory(output);
 
             return ntstatus;
         }
