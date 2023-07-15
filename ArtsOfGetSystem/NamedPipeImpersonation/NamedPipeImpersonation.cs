@@ -1,5 +1,10 @@
 ﻿using System;
+using System.ComponentModel.Design;
+using System.Xml.Linq;
+using System.Runtime.InteropServices;
 using NamedPipeImpersonation.Handler;
+using NamedPipeImpersonation.Interop;
+using NamedPipeImpersonation.Library;
 
 namespace NamedPipeImpersonation
 {

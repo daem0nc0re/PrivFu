@@ -6,6 +6,42 @@ namespace NamedPipeImpersonation.Interop
 {
     using SIZE_T = UIntPtr;
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct IO_COUNTERS
+    {
+        public ulong ReadOperationCount;
+        public ulong WriteOperationCount;
+        public ulong OtherOperationCount;
+        public ulong ReadTransferCount;
+        public ulong WriteTransferCount;
+        public ulong OtherTransferCount;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct JOBOBJECT_BASIC_LIMIT_INFORMATION
+    {
+        public LARGE_INTEGER PerProcessUserTimeLimit;
+        public LARGE_INTEGER PerJobUserTimeLimit;
+        public JOB_OBJECT_LIMIT LimitFlags;
+        public SIZE_T MinimumWorkingSetSize;
+        public SIZE_T MaximumWorkingSetSize;
+        public int ActiveProcessLimit;
+        public UIntPtr Affinity;
+        public int PriorityClass;
+        public int SchedulingClass;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+    {
+        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
+        public IO_COUNTERS IoInfo;
+        public SIZE_T ProcessMemoryLimit;
+        public SIZE_T JobMemoryLimit;
+        public SIZE_T PeakProcessMemoryUsed;
+        public SIZE_T PeakJobMemoryUsed;
+    }
+
     [StructLayout(LayoutKind.Explicit)]
     internal struct LARGE_INTEGER
     {
@@ -175,6 +211,59 @@ namespace NamedPipeImpersonation.Interop
         {
             if (Buffer != IntPtr.Zero)
                 Marshal.FreeHGlobal(Buffer);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct OBJECT_ATTRIBUTES : IDisposable
+    {
+        public int Length;
+        public IntPtr RootDirectory;
+        private IntPtr objectName;
+        public OBJECT_ATTRIBUTES_FLAGS Attributes;
+        public IntPtr SecurityDescriptor;
+        public IntPtr SecurityQualityOfService;
+
+        public OBJECT_ATTRIBUTES(
+            string name,
+            OBJECT_ATTRIBUTES_FLAGS attrs)
+        {
+            Length = 0;
+            RootDirectory = IntPtr.Zero;
+            objectName = IntPtr.Zero;
+            Attributes = attrs;
+            SecurityDescriptor = IntPtr.Zero;
+            SecurityQualityOfService = IntPtr.Zero;
+
+            Length = Marshal.SizeOf(this);
+            ObjectName = new UNICODE_STRING(name);
+        }
+
+        public UNICODE_STRING ObjectName
+        {
+            get
+            {
+                return (UNICODE_STRING)Marshal.PtrToStructure(
+                 objectName, typeof(UNICODE_STRING));
+            }
+
+            set
+            {
+                bool fDeleteOld = objectName != IntPtr.Zero;
+                if (!fDeleteOld)
+                    objectName = Marshal.AllocHGlobal(Marshal.SizeOf(value));
+                Marshal.StructureToPtr(value, objectName, fDeleteOld);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (objectName != IntPtr.Zero)
+            {
+                Marshal.DestroyStructure(objectName, typeof(UNICODE_STRING));
+                Marshal.FreeHGlobal(objectName);
+                objectName = IntPtr.Zero;
+            }
         }
     }
 

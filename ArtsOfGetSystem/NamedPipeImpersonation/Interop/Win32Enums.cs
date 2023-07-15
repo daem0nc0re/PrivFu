@@ -85,6 +85,14 @@ namespace NamedPipeImpersonation.Interop
         FILE_GENERIC_WRITE = 0x00100116,
         FILE_GENERIC_EXECUTE = 0x001000A0,
 
+        // Job
+        JOB_ASSIGN_PROCESS = 0x00000001,
+        JOB_SET_ATTRIBUTES = 0x00000002,
+        JOB_QUERY = 0x00000004,
+        JOB_TERMINATE = 0x00000008,
+        JOB_SET_SECURITY_ATTRIBUTES = 0x00000010,
+        JOB_IMPERSONATE = 0x00000020,
+
         // Service Control Manager
         SC_MANAGER_CONNECT = 0x00000001,
         SC_MANAGER_CREATE_SERVICE = 0x00000002,
@@ -186,6 +194,86 @@ namespace NamedPipeImpersonation.Interop
         FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
     }
 
+    [Flags]
+    internal enum JOB_OBJECT_LIMIT : uint
+    {
+        WORKINGSET = 0x00000001,
+        PROCESS_TIME = 0x00000002,
+        JOB_TIME = 0x00000004,
+        ACTIVE_PROCESS = 0x00000008,
+        AFFINITY = 0x00000010,
+        PRIORITY_CLASS = 0x00000020,
+        PRESERVE_JOB_TIME = 0x00000040,
+        SCHEDULING_CLASS = 0x00000080,
+        PROCESS_MEMORY = 0x00000100,
+        JOB_MEMORY = 0x00000200,
+        DIE_ON_UNHANDLED_EXCEPTION = 0x00000400,
+        BREAKAWAY_OK = 0x00000800,
+        SILENT_BREAKAWAY_OK = 0x00001000,
+        KILL_ON_JOB_CLOSE = 0x00002000,
+        SUBSET_AFFINITY = 0x00004000,
+        JOB_MEMORY_LOW = 0x00008000,
+        JOB_READ_BYTES = 0x00010000,
+        JOB_WRITE_BYTES = 0x00020000,
+        RATE_CONTROL = 0x00040000,
+        IO_RATE_CONTROL = 0x00080000,
+        NET_RATE_CONTROL = 0x00100000
+    }
+
+    internal enum JOBOBJECTINFOCLASS
+    {
+        JobObjectBasicAccountingInformation = 1, // JOBOBJECT_BASIC_ACCOUNTING_INFORMATION
+        JobObjectBasicLimitInformation = 2, // JOBOBJECT_BASIC_LIMIT_INFORMATION
+        JobObjectBasicProcessIdList = 3, // JOBOBJECT_BASIC_PROCESS_ID_LIST
+        JobObjectBasicUIRestrictions = 4, // JOBOBJECT_BASIC_UI_RESTRICTIONS
+        JobObjectSecurityLimitInformation = 5, // JOBOBJECT_SECURITY_LIMIT_INFORMATION
+        JobObjectEndOfJobTimeInformation = 6, // JOBOBJECT_END_OF_JOB_TIME_INFORMATION
+        JobObjectAssociateCompletionPortInformation = 7, // JOBOBJECT_ASSOCIATE_COMPLETION_PORT
+        JobObjectBasicAndIoAccountingInformation = 8, // JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION
+        JobObjectExtendedLimitInformation = 9, // JOBOBJECT_EXTENDED_LIMIT_INFORMATION
+        JobObjectJobSetInformation = 10, // JOBOBJECT_JOBSET_INFORMATION
+        JobObjectGroupInformation = 11, // USHORT
+        JobObjectNotificationLimitInformation = 12, // JOBOBJECT_NOTIFICATION_LIMIT_INFORMATION
+        JobObjectLimitViolationInformation = 13, // JOBOBJECT_LIMIT_VIOLATION_INFORMATION
+        JobObjectGroupInformationEx = 14, // GROUP_AFFINITY (ARRAY)
+        JobObjectCpuRateControlInformation = 15, // JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
+        JobObjectCompletionFilter = 16,
+        JobObjectCompletionCounter = 17,
+        JobObjectFreezeInformation = 18, // JOBOBJECT_FREEZE_INFORMATION
+        JobObjectExtendedAccountingInformation = 19, // JOBOBJECT_EXTENDED_ACCOUNTING_INFORMATION
+        JobObjectWakeInformation = 20, // JOBOBJECT_WAKE_INFORMATION
+        JobObjectBackgroundInformation = 21,
+        JobObjectSchedulingRankBiasInformation = 22,
+        JobObjectTimerVirtualizationInformation = 23,
+        JobObjectCycleTimeNotification = 24,
+        JobObjectClearEvent = 25,
+        JobObjectInterferenceInformation = 26, // JOBOBJECT_INTERFERENCE_INFORMATION
+        JobObjectClearPeakJobMemoryUsed = 27,
+        JobObjectMemoryUsageInformation = 28, // JOBOBJECT_MEMORY_USAGE_INFORMATION // JOBOBJECT_MEMORY_USAGE_INFORMATION_V2
+        JobObjectSharedCommit = 29,
+        JobObjectContainerId = 30,
+        JobObjectIoRateControlInformation = 31,
+        JobObjectNetRateControlInformation = 32, // JOBOBJECT_NET_RATE_CONTROL_INFORMATION
+        JobObjectNotificationLimitInformation2 = 33, // JOBOBJECT_NOTIFICATION_LIMIT_INFORMATION_2
+        JobObjectLimitViolationInformation2 = 34, // JOBOBJECT_LIMIT_VIOLATION_INFORMATION_2
+        JobObjectCreateSilo = 35,
+        JobObjectSiloBasicInformation = 36, // SILOOBJECT_BASIC_INFORMATION
+        JobObjectSiloRootDirectory = 37, // SILOOBJECT_ROOT_DIRECTORY
+        JobObjectServerSiloBasicInformation = 38, // SERVERSILO_BASIC_INFORMATION
+        JobObjectServerSiloUserSharedData = 39, // SILO_USER_SHARED_DATA
+        JobObjectServerSiloInitialize = 40,
+        JobObjectServerSiloRunningState = 41,
+        JobObjectIoAttribution = 42,
+        JobObjectMemoryPartitionInformation = 43,
+        JobObjectContainerTelemetryId = 44,
+        JobObjectSiloSystemRoot = 45,
+        JobObjectEnergyTrackingState = 46, // JOBOBJECT_ENERGY_TRACKING_STATE
+        JobObjectThreadImpersonationInformation = 47,
+        JobObjectIoPriorityLimit = 48,
+        JobObjectPagePriorityLimit = 49,
+        MaxJobObjectInfoClass = 50
+    }
+
     internal enum MSV1_0_LOGON_SUBMIT_TYPE
     {
         MsV1_0InteractiveLogon = 2,
@@ -197,6 +285,20 @@ namespace NamedPipeImpersonation.Interop
         MsV1_0VirtualLogon = 82,
         MsV1_0NoElevationLogon = 83,
         MsV1_0LuidLogon = 84
+    }
+
+    [Flags]
+    internal enum OBJECT_ATTRIBUTES_FLAGS : uint
+    {
+        OBJ_INHERIT = 0x00000002,
+        OBJ_PERMANENT = 0x00000010,
+        OBJ_EXCLUSIVE = 0x00000020,
+        OBJ_CASE_INSENSITIVE = 0x00000040,
+        OBJ_OPENIF = 0x00000080,
+        OBJ_OPENLINK = 0x00000100,
+        OBJ_KERNEL_HANDLE = 0x00000200,
+        OBJ_FORCE_ACCESS_CHECK = 0x00000400,
+        OBJ_VALID_ATTRIBUTES = 0x000007f2
     }
 
     [Flags]

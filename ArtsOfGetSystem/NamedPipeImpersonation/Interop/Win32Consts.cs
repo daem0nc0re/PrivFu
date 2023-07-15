@@ -11,6 +11,8 @@ namespace NamedPipeImpersonation.Interop
          */
         public const NTSTATUS STATUS_SUCCESS = 0;
         public const NTSTATUS STATUS_TIMEOUT = 0x00000102;
+        public const NTSTATUS STATUS_PROCESS_NOT_IN_JOB = 0x00000123;
+        public const NTSTATUS STATUS_PROCESS_IN_JOB = 0x00000124;
         public static NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         /*

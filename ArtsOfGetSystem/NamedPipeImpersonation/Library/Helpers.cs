@@ -184,7 +184,6 @@ namespace NamedPipeImpersonation.Library
         }
 
 
-
         public static bool GetTokenUserName(
             IntPtr hToken,
             out string user,
@@ -291,6 +290,13 @@ namespace NamedPipeImpersonation.Library
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             else
                 return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
+        }
+
+
+        public static bool IsCurrentProcessInJob()
+        {
+            NTSTATUS ntstatus = NativeMethods.NtIsProcessInJob(new IntPtr(-1), IntPtr.Zero);
+            return (ntstatus == Win32Consts.STATUS_PROCESS_IN_JOB);
         }
 
 

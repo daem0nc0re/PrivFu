@@ -151,6 +151,12 @@ namespace NamedPipeImpersonation.Interop
         public static extern IntPtr LocalFree(IntPtr hMem);
 
         [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr OpenJobObject(
+            ACCESS_MASK dwDesiredAccess,
+            bool bInheritHandle,
+            string lpName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool SetEvent(IntPtr hEvent);
 
         [DllImport("kernel32.dll")]
@@ -180,12 +186,39 @@ namespace NamedPipeImpersonation.Interop
         public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtIsProcessInJob(
+            IntPtr ProcessHandle,
+            IntPtr JobHandle);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenJobObject(
+            out IntPtr JobHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes
+    );
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationJobObject(
+            IntPtr JobHandle,
+            JOBOBJECTINFOCLASS JobObjectInformationClass,
+            IntPtr JobObjectInformation,
+            uint JobObjectInformationLength,
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtSetInformationJobObject(
+            IntPtr JobHandle,
+            JOBOBJECTINFOCLASS JobObjectInformationClass,
+            IntPtr JobObjectInformation,
+            uint JobObjectInformationLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtWaitForSingleObject(
