@@ -263,23 +263,15 @@ namespace TokenDump.Library
             if (!info.IsLinkedToken)
                 outputBuilder.AppendFormat("Has Linked Token    : {0}\n", info.HasLinkedToken.ToString());
 
-            try
-            {
-                if (string.IsNullOrEmpty(Encoding.ASCII.GetString(info.TokenSource.SourceName)))
-                {
-                    outputBuilder.AppendFormat("Token Source        : N/A\n");
-                    outputBuilder.AppendFormat("Token Source ID     : N/A\n");
-                }
-                else
-                {
-                    outputBuilder.AppendFormat("Token Source        : {0}\n", Encoding.ASCII.GetString(info.TokenSource.SourceName));
-                    outputBuilder.AppendFormat("Token Source ID     : 0x{0}\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
-                }
-            }
-            catch
+            if (BitConverter.ToInt64(info.TokenSource.SourceName, 0) == 0L)
             {
                 outputBuilder.AppendFormat("Token Source        : N/A\n");
                 outputBuilder.AppendFormat("Token Source ID     : N/A\n");
+            }
+            else
+            {
+                outputBuilder.AppendFormat("Token Source        : {0}\n", Encoding.ASCII.GetString(info.TokenSource.SourceName));
+                outputBuilder.AppendFormat("Token Source ID     : 0x{0}\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
             }
 
             outputBuilder.Append(ParseTokenPrivilegesTableToString(privs));

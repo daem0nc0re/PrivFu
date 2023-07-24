@@ -204,6 +204,12 @@ namespace TokenDump.Library
                     }
                 }
 
+                if (hToken == IntPtr.Zero)
+                {
+                    Console.WriteLine("[-] Failed to get the specifiled token handle.");
+                    break;
+                }
+
                 status = Utilities.GetVerboseTokenInformation(
                     hToken,
                     false,

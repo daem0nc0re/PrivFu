@@ -934,7 +934,12 @@ namespace TokenDump.Library
             }
             else
             {
-                tokenSource = new TOKEN_SOURCE();
+                for (var offset = 0; offset < (int)nInfoLength; offset++)
+                    Marshal.WriteByte(pInfoBuffer, offset, 0);
+
+                tokenSource = (TOKEN_SOURCE)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_SOURCE));
             }
 
             Marshal.FreeHGlobal(pInfoBuffer);
