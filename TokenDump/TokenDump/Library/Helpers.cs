@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using TokenDump.Interop;
@@ -217,7 +218,7 @@ namespace TokenDump.Library
         {
             NTSTATUS ntstatus;
             IntPtr pInfoBuffer;
-            string processName = null;
+            string imageFilePath = null;
             var nInfoLength = (uint)Marshal.SizeOf(typeof(UNICODE_STRING));
 
             do
@@ -239,16 +240,15 @@ namespace TokenDump.Library
                 var nameData = (UNICODE_STRING)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(UNICODE_STRING));
+                imageFilePath = string.Concat(nameData.ToString().Split(Path.GetInvalidPathChars()));
 
-                processName = nameData.ToString();
-
-                if (string.IsNullOrEmpty(processName))
-                    processName = null;
+                if (string.IsNullOrEmpty(imageFilePath))
+                    imageFilePath = null;
 
                 Marshal.FreeHGlobal(pInfoBuffer);
             }
 
-            return processName;
+            return imageFilePath;
         }
 
 
