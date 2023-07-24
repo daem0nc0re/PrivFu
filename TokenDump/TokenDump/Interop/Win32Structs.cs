@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Text;
 
 namespace TokenDump.Interop
 {
-    using NTSTATUS = Int32;
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct ACCESS_ALLOWED_ACE
     {

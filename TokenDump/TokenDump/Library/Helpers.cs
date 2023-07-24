@@ -190,6 +190,7 @@ namespace TokenDump.Library
             do
             {
                 pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ZeroMemory(pInfoBuffer, (int)nInfoLength);
                 ntstatus = NativeMethods.NtQueryInformationProcess(
                     hProcess,
                     PROCESSINFOCLASS.ProcessCommandLineInformation,
@@ -224,6 +225,7 @@ namespace TokenDump.Library
             do
             {
                 pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ZeroMemory(pInfoBuffer, (int)nInfoLength);
                 ntstatus = NativeMethods.NtQueryInformationProcess(
                     hProcess,
                     PROCESSINFOCLASS.ProcessImageFileName,
@@ -934,9 +936,7 @@ namespace TokenDump.Library
             }
             else
             {
-                for (var offset = 0; offset < (int)nInfoLength; offset++)
-                    Marshal.WriteByte(pInfoBuffer, offset, 0);
-
+                ZeroMemory(pInfoBuffer, (int)nInfoLength);
                 tokenSource = (TOKEN_SOURCE)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(TOKEN_SOURCE));
@@ -1067,6 +1067,13 @@ namespace TokenDump.Library
             Marshal.FreeHGlobal(pInfoBuffer);
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static void ZeroMemory(IntPtr pBuffer, int nRange)
+        {
+            for (var offset = 0; offset < nRange; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
         }
     }
 }
