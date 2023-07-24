@@ -217,9 +217,7 @@ namespace TokenDump.Library
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
                     out List<AceInformation> acl);
-
-                if (hToken != IntPtr.Zero)
-                    NativeMethods.NtClose(hToken);
+                NativeMethods.NtClose(hToken);
 
                 if (status)
                 {
