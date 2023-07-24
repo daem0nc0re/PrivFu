@@ -144,8 +144,7 @@ namespace TokenDump.Library
 
                     break;
                 }
-                
-                if (info.Handle == IntPtr.Zero)
+                else
                 {
                     info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
                     info.CommandLine = Helpers.GetProcessCommandLine(hProcess);
@@ -157,7 +156,10 @@ namespace TokenDump.Library
 
                     if (string.IsNullOrEmpty(info.CommandLine))
                         info.CommandLine = "N/A";
-
+                }
+                
+                if (info.Handle == IntPtr.Zero)
+                {
                     status = NativeMethods.OpenProcessToken(
                         hProcess,
                         ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
