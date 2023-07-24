@@ -247,6 +247,9 @@ namespace TokenDump.Library
             if (hProcess != IntPtr.Zero)
                 NativeMethods.NtClose(hProcess);
 
+            if (!status)
+                Console.WriteLine("[-] Failed to dump token information.");
+
             Console.WriteLine("[*] Done.");
 
             return status;
