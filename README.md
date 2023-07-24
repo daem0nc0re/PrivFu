@@ -1557,9 +1557,9 @@ PS C:\Dev> .\TokenDump.exe -s -p 732 -v 0x8E0
 
 [>] Trying to dump token handle information.
 
-[Token Information for Handle 0x8E0 of  (PID: 732)]
+[Token Information for Handle 0x8E0 of lsass.exe (PID: 732)]
 
-CommandLine         :
+CommandLine         : C:\Windows\system32\lsass.exe
 Token User          : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
 Token Owner         : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
 Primary Group       : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
