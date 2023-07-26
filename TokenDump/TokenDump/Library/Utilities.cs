@@ -348,7 +348,9 @@ namespace TokenDump.Library
                 }
             }
 
-            outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
+            if ((info.ThreadId == 0) && (info.Handle == IntPtr.Zero) && !info.IsLinkedToken)
+                outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
+
             outputBuilder.AppendFormat("Token User          : {0} (SID: {1})\n", info.TokenUserName, info.TokenUserSid);
             outputBuilder.AppendFormat("Token Owner         : {0} (SID: {1})\n", info.TokenOwnerName, info.TokenOwnerSid);
             outputBuilder.AppendFormat("Primary Group       : {0} (SID: {1})\n", info.TokenPrimaryGroupName, info.TokenPrimaryGroupSid);
