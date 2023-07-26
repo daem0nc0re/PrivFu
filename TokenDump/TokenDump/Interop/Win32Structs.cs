@@ -4,6 +4,8 @@ using System.Text;
 
 namespace TokenDump.Interop
 {
+    using NTSTATUS = Int32;
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct ACCESS_ALLOWED_ACE
     {
@@ -96,6 +98,13 @@ namespace TokenDump.Interop
         public short AclSize;
         public short AceCount;
         public short Sbz2;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CLIENT_ID
+    {
+        public IntPtr UniqueProcess;
+        public IntPtr UniqueThread;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -466,6 +475,17 @@ namespace TokenDump.Interop
         public ACE_HEADER Header;
         public ACCESS_MASK Mask;
         public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct THREAD_BASIC_INFORMATION
+    {
+        public NTSTATUS ExitStatus;
+        public IntPtr TebBaseAddress;
+        public CLIENT_ID ClientId;
+        public UIntPtr /* KAFFINITY */ AffinityMask;
+        public int /* KPRIORITY */ Priority;
+        public int /* KPRIORITY */ BasePriority;
     }
 
     [StructLayout(LayoutKind.Sequential)]

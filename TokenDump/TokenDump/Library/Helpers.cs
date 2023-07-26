@@ -254,7 +254,8 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetSystemTokenHandles(
+        public static bool GetSystemHandles(
+            string typeName,
             out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles)
         {
             NTSTATUS ntstatus;
@@ -272,7 +273,7 @@ namespace TokenDump.Library
             {
                 foreach (var entry in typeTable)
                 {
-                    if (CompareIgnoreCase(entry.Value, "Token"))
+                    if (CompareIgnoreCase(entry.Value, typeName))
                     {
                         tokenIndex = (int)entry.Key;
                         break;

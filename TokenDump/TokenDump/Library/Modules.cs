@@ -60,7 +60,8 @@ namespace TokenDump.Library
 
             Console.WriteLine("[>] Trying to enumerate token handles.");
 
-            if (Helpers.GetSystemTokenHandles(
+            if (Helpers.GetSystemHandles(
+                "Token",
                 out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles))
             {
                 foreach (var handleInfo in handles)
