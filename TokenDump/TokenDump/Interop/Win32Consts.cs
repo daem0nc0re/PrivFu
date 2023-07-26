@@ -2,10 +2,16 @@
 
 namespace TokenDump.Interop
 {
+    using HRESULT = Int32;
     using NTSTATUS = Int32;
 
     internal class Win32Consts
     {
+        /*
+         * HRESULT
+         */
+        public const HRESULT S_OK = 0;
+
         /*
          * NTSTATUS
          */

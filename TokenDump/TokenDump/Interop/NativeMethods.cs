@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace TokenDump.Interop
 {
+    using HRESULT = Int32;
     using NTSTATUS = Int32;
 
     internal class NativeMethods
@@ -75,6 +74,17 @@ namespace TokenDump.Interop
             ACCESS_MASK dwDesiredAccess,
             bool bInheritHandle,
             int dwProcessId);
+
+        /*
+         * kernelbase.dll
+         */
+        [DllImport("kernelbase.dll", CharSet = CharSet.Unicode)]
+        public static extern HRESULT AppContainerLookupMoniker(
+            IntPtr /* PSID*/ Sid,
+            out IntPtr /* LPWSTR* */ Moniker);
+
+        [DllImport("kernelbase.dll", SetLastError = true)]
+        public static extern bool AppContainerFreeMemory(IntPtr Memory);
 
         /*
          * ntdll.dll

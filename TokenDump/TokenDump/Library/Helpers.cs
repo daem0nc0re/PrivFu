@@ -65,9 +65,20 @@ namespace TokenDump.Library
             }
             else
             {
+                var hresult = NativeMethods.AppContainerLookupMoniker(pSid, out IntPtr pMoniker);
                 name = null;
-                domain = null;
                 sidType = SID_NAME_USE.Unknown;
+
+                if (hresult == Win32Consts.S_OK)
+                {
+                    status = true;
+                    domain = Marshal.PtrToStringUni(pMoniker);
+                    NativeMethods.AppContainerFreeMemory(pMoniker);
+                }
+                else
+                {
+                    domain = null;
+                }
             }
 
             return status;
