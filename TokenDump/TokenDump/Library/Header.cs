@@ -18,6 +18,7 @@ namespace TokenDump.Library
     internal struct BriefTokenInformation
     {
         public int ProcessId;
+        public int ThreadId;
         public IntPtr Handle;
         public string Integrity;
         public string ProcessName;
@@ -33,6 +34,7 @@ namespace TokenDump.Library
     internal struct VerboseTokenInformation
     {
         public int ProcessId;
+        public int ThreadId;
         public int SessionId;
         public IntPtr Handle;
         public string ProcessName;

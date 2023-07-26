@@ -202,6 +202,105 @@ namespace TokenDump.Library
         }
 
 
+        public static void DumpBriefThreadInformation(
+            List<BriefTokenInformation> info,
+            string accountFilter,
+            out int nResultsCount)
+        {
+            string format;
+            var titles = new string[] {
+                "PID",
+                "TID",
+                "Process Name",
+                "Token User",
+                "Integrity",
+                "Impersonation Level"
+            };
+            var width = new int[titles.Length];
+            var outputBuilder = new StringBuilder();
+            var filteredInfo = new List<BriefTokenInformation>();
+            nResultsCount = 0;
+
+            for (var idx = 0; idx < titles.Length; idx++)
+                width[idx] = titles[idx].Length;
+
+            if (info.Count == 0)
+                return;
+
+            if (!string.IsNullOrEmpty(accountFilter))
+            {
+                var comparison = StringComparison.OrdinalIgnoreCase;
+
+                foreach (var entry in info)
+                {
+                    if (entry.TokenUserName.IndexOf(accountFilter, comparison) >= 0)
+                        filteredInfo.Add(entry);
+                }
+            }
+            else
+            {
+                filteredInfo.AddRange(info);
+            }
+
+            if (filteredInfo.Count == 0)
+                return;
+
+            nResultsCount = filteredInfo.Count;
+
+            foreach (var entry in filteredInfo)
+            {
+                if (entry.ProcessId.ToString().Length > width[0])
+                    width[0] = entry.ProcessId.ToString().Length;
+
+                if (entry.ThreadId.ToString().Length > width[1])
+                    width[1] = entry.ThreadId.ToString().Length;
+
+                if (entry.ProcessName.Length > width[2])
+                    width[2] = entry.ProcessName.Length;
+
+                if (entry.TokenUserName.Length > width[3])
+                    width[3] = entry.TokenUserName.Length;
+
+                if (entry.Integrity.ToString().Length > width[4])
+                    width[4] = entry.Integrity.ToString().Length;
+
+                if (entry.ImpersonationLevel.ToString().Length > width[5])
+                    width[5] = entry.ImpersonationLevel.ToString().Length;
+            }
+
+            format = string.Format(
+                "{{0,{0}}} {{1,{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}}\n",
+                width[0], width[1], width[2], width[3], width[4], width[5]);
+
+            outputBuilder.Append("\n");
+            outputBuilder.AppendFormat(
+                format,
+                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5]);
+            outputBuilder.AppendFormat(
+                format,
+                new string('=', width[0]),
+                new string('=', width[1]),
+                new string('=', width[2]),
+                new string('=', width[3]),
+                new string('=', width[4]),
+                new string('=', width[5]));
+
+            foreach (var entry in filteredInfo)
+            {
+                outputBuilder.AppendFormat(
+                    format,
+                    entry.ProcessId.ToString(),
+                    entry.ThreadId.ToString(),
+                    entry.ProcessName,
+                    entry.TokenUserName,
+                    entry.Integrity,
+                    entry.ImpersonationLevel.ToString());
+            }
+
+            Console.WriteLine(outputBuilder.ToString());
+        }
+
+
         public static void DumpVerboseTokenInformation(
             VerboseTokenInformation info,
             Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
@@ -282,6 +381,87 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetBriefThreadTokenInformation(
+            int pid,
+            List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> handles,
+            out List<BriefTokenInformation> info)
+        {
+            IntPtr hProcess = NativeMethods.OpenProcess(
+                ACCESS_MASK.PROCESS_DUP_HANDLE | ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                false,
+                pid);
+            info = new List<BriefTokenInformation>();
+
+            if (hProcess != IntPtr.Zero)
+            {
+                var uniqueThreads = new List<int>();
+
+                foreach (var entry in handles)
+                {
+                    var ntstatus = NativeMethods.NtDuplicateObject(
+                        hProcess,
+                        new IntPtr(entry.HandleValue),
+                        new IntPtr(-1),
+                        out IntPtr hDupObject,
+                        ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                        0,
+                        0);
+
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                    {
+                        var data = new BriefTokenInformation();
+                        bool status = Helpers.GetThreadBasicInformation(
+                            hDupObject,
+                            out THREAD_BASIC_INFORMATION tbi);
+                        data.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
+                        data.ProcessId = tbi.ClientId.UniqueProcess.ToInt32();
+                        data.ThreadId = tbi.ClientId.UniqueThread.ToInt32();
+
+                        if (string.IsNullOrEmpty(data.ImageFilePath))
+                        {
+                            NativeMethods.NtClose(hDupObject);
+                            continue;
+                        }
+                        else
+                        {
+                            data.ProcessName = Path.GetFileName(data.ImageFilePath);
+                        }
+
+                        if (status && !uniqueThreads.Contains(data.ThreadId) && (data.ProcessId == pid))
+                        {
+                            uniqueThreads.Add(data.ThreadId);
+
+                            status = NativeMethods.OpenThreadToken(
+                                hDupObject,
+                                ACCESS_MASK.TOKEN_QUERY,
+                                false,
+                                out IntPtr hToken);
+                            NativeMethods.NtClose(hDupObject);
+
+                            if (status)
+                            {
+                                var sid = Helpers.GetTokenUserSid(hToken);
+                                data.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
+                                Helpers.ConvertStringSidToAccountName(sid, out data.TokenUserName, out SID_NAME_USE _);
+                                Helpers.GetTokenStatistics(hToken, out TOKEN_STATISTICS stats);
+                                Helpers.IsTokenRestricted(hToken, out data.IsRestricted);
+                                Helpers.IsTokenAppContainer(hToken, out data.IsAppContainer);
+                                data.TokenType = stats.TokenType;
+                                data.ImpersonationLevel = stats.ImpersonationLevel;
+
+                                info.Add(data);
+                            }
+                        }
+                    }
+                }
+
+                NativeMethods.NtClose(hProcess);
+            }
+
+            return (info.Count > 0);
+        }
+
+
         public static bool GetBriefTokenInformationFromHandle(
             int pid,
             List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> handles,
@@ -310,16 +490,17 @@ namespace TokenDump.Library
                     {
                         var data = new BriefTokenInformation();
                         var sid = Helpers.GetTokenUserSid(hDupObject);
-
-                        if (string.IsNullOrEmpty(sid))
-                            continue;
-
                         data.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
 
-                        if (string.IsNullOrEmpty(data.ImageFilePath))
+                        if (string.IsNullOrEmpty(sid) || string.IsNullOrEmpty(data.ImageFilePath))
+                        {
+                            NativeMethods.NtClose(hDupObject);
                             continue;
+                        }
                         else
+                        {
                             data.ProcessName = Path.GetFileName(data.ImageFilePath);
+                        }
 
                         data.ProcessId = pid;
                         data.Handle = new IntPtr(entry.HandleValue);

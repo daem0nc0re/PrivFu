@@ -53,6 +53,63 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetThreadTokenInformation(string accountFilter)
+        {
+            int nEntryCount = 0;
+            var uniqueUsers = new List<string>();
+            var dumpedInfo = new List<BriefTokenInformation>();
+
+            Console.WriteLine("[>] Trying to enumerate thread tokens.");
+
+            if (Helpers.GetSystemHandles(
+                "Thread",
+                out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles))
+            {
+                foreach (var handleInfo in handles)
+                {
+                    var status = Utilities.GetBriefThreadTokenInformation(
+                        handleInfo.Key,
+                        handleInfo.Value,
+                        out List<BriefTokenInformation> info);
+
+                    if (status)
+                        dumpedInfo.AddRange(info);
+
+                    info.Clear();
+                }
+
+                foreach (var threadInfo in dumpedInfo)
+                {
+                    if (!uniqueUsers.Contains(threadInfo.TokenUserName))
+                        uniqueUsers.Add(threadInfo.TokenUserName);
+                }
+
+                Utilities.DumpBriefThreadInformation(dumpedInfo, accountFilter, out nEntryCount);
+            }
+
+            if (nEntryCount == 0)
+            {
+                Console.WriteLine("[-] No handles.");
+            }
+            else
+            {
+                Console.WriteLine("[+] Got {0} handle(s).", nEntryCount);
+
+                if (uniqueUsers.Count > 0)
+                {
+                    Console.WriteLine("[*] Found {0} account(s).", uniqueUsers.Count);
+
+                    foreach (var user in uniqueUsers)
+                        Console.WriteLine("    [*] {0}", user);
+                }
+            }
+
+            Console.WriteLine("[*] Done.");
+
+            return (nEntryCount > 0);
+        }
+
+
         public static bool GetTokenHandleInformation(string accountFilter)
         {
             int nEntryCount = 0;

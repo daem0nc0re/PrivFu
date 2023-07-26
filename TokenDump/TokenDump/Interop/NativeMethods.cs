@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace TokenDump.Interop
@@ -55,6 +57,13 @@ namespace TokenDump.Interop
             ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool OpenThreadToken(
+            IntPtr ThreadHandle,
+            ACCESS_MASK DesiredAccess,
+            bool OpenAsSelf,
+            out IntPtr TokenHandle);
+
         /*
          * kernel32.dll
          */
@@ -91,6 +100,14 @@ namespace TokenDump.Interop
             uint ProcessInformationLength,
             out uint ReturnLength);
 
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationThread(
+            IntPtr ThreadHandle,
+            THREADINFOCLASS ThreadInformationClass,
+            IntPtr ThreadInformation,
+            uint ThreadInformationLength,
+            out uint ReturnLength);
+        
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,

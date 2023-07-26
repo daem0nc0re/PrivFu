@@ -22,5 +22,6 @@ namespace TokenDump.Interop
          */
         public const int ERROR_ACCESS_DENIED = 5;
         public const int ERROR_INVALID_PARAMETER = 87;
+        public const int ERROR_NO_TOKEN = 1008;
     }
 }

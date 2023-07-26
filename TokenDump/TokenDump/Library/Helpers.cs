@@ -334,6 +334,34 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetThreadBasicInformation(
+            IntPtr hThread,
+            out THREAD_BASIC_INFORMATION tbi)
+        {
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(THREAD_BASIC_INFORMATION));
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationThread(
+                hThread,
+                THREADINFOCLASS.ThreadBasicInformation,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                tbi = (THREAD_BASIC_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(THREAD_BASIC_INFORMATION));
+            }
+            else
+            {
+                tbi = new THREAD_BASIC_INFORMATION();
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool GetTokenDefaultDacl(
             IntPtr hToken,
             out List<AceInformation> info)

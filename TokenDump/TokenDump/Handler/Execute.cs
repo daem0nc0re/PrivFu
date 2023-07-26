@@ -21,6 +21,8 @@ namespace TokenDump.Handler
                 {
                     if (options.GetFlag("handle"))
                         Modules.GetTokenHandleInformation(options.GetValue("account"));
+                    else if (options.GetFlag("thread"))
+                        Modules.GetThreadTokenInformation(options.GetValue("account"));
                     else
                         Modules.GetProcessTokenInformation(options.GetValue("account"));
                 }
