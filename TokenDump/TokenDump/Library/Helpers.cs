@@ -550,7 +550,7 @@ namespace TokenDump.Library
 
                     ConvertSidToAccountName(pSid, out string account, out SID_NAME_USE _);
                     NativeMethods.ConvertSidToStringSid(pSid, out string stringSid);
-                    entry.AccountName = account;
+                    entry.AccountName = string.IsNullOrEmpty(account) ? stringSid : account;
                     entry.AccountSid = stringSid;
                     entry.AccessMask = (ACCESS_MASK)accessMask;
                     entry.Flags = aceHeader.AceFlags;
