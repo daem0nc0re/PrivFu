@@ -253,7 +253,7 @@ namespace TokenDump.Library
                 var nameData = (UNICODE_STRING)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(UNICODE_STRING));
-                imageFilePath = string.Concat(nameData.ToString().Split(Path.GetInvalidPathChars()));
+                imageFilePath = nameData.ToString();
 
                 if (string.IsNullOrEmpty(imageFilePath))
                     imageFilePath = null;

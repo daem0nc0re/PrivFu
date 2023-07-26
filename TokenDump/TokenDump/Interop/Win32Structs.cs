@@ -515,7 +515,12 @@ namespace TokenDump.Interop
 
         public override string ToString()
         {
-            return Marshal.PtrToStringUni(buffer);
+            var unicodeBytes = new byte[Length];
+
+            for (var index = 0; index < Length; index++)
+                unicodeBytes[index] = Marshal.ReadByte(buffer, index);
+
+            return Encoding.Unicode.GetString(unicodeBytes);
         }
     }
 }
