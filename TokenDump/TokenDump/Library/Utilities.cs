@@ -319,6 +319,12 @@ namespace TokenDump.Library
                         "[Linked Token Information for {0} (PID: {1})]\n\n",
                         info.ProcessName, info.ProcessId);
                 }
+                else if (info.ThreadId != 0)
+                {
+                    outputBuilder.AppendFormat(
+                        "[Token Information for {0} (PID: {1}, TID: {0})]\n\n",
+                        info.ProcessName, info.ProcessId, info.ThreadId);
+                }
                 else
                 {
                     outputBuilder.AppendFormat(

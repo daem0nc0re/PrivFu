@@ -170,17 +170,20 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetVerboseTokenInformation(int pid, IntPtr hObject)
+        public static bool GetVerboseTokenInformation(int pid, int tid, IntPtr hObject)
         {
             IntPtr hProcess;
-            var info = new VerboseTokenInformation { ProcessId = pid, Handle = hObject };
+            var hThread = IntPtr.Zero;
+            var info = new VerboseTokenInformation { ProcessId = pid, ThreadId = tid, Handle = hObject };
             var status = false;
             var accessMask = ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION;
 
             if (hObject != IntPtr.Zero)
                 accessMask |= ACCESS_MASK.PROCESS_DUP_HANDLE;
 
-            if (info.Handle == IntPtr.Zero)
+            if (info.ThreadId != 0)
+                Console.WriteLine("[>] Trying to dump thread token information.");
+            else if (info.Handle == IntPtr.Zero)
                 Console.WriteLine("[>] Trying to dump process token information.");
             else
                 Console.WriteLine("[>] Trying to dump token handle information.");
@@ -188,7 +191,24 @@ namespace TokenDump.Library
             do
             {
                 IntPtr hToken;
-                hProcess = NativeMethods.OpenProcess(accessMask, false, info.ProcessId);
+
+                if (info.ThreadId == 0)
+                {
+                    hProcess = NativeMethods.OpenProcess(accessMask, false, info.ProcessId);
+                }
+                else
+                {
+                    status = Helpers.OpenRemoteThread(
+                        info.ProcessId,
+                        info.ThreadId,
+                        ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                        ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                        out hProcess,
+                        out hThread);
+
+                    if (!status)
+                        break;
+                }
 
                 if (hProcess == IntPtr.Zero)
                 {
@@ -196,8 +216,10 @@ namespace TokenDump.Library
                         Console.WriteLine("[-] Specified PID is not found.");
                     else if (Marshal.GetLastWin32Error() == Win32Consts.ERROR_ACCESS_DENIED)
                         Console.WriteLine("[-] Access is denied.");
-                    else
+                    else if (info.ThreadId == 0)
                         Console.WriteLine("[-] Failed to open the target process.");
+                    else
+                        Console.WriteLine("[-] Failed to open the target thread.");
 
                     break;
                 }
@@ -214,8 +236,28 @@ namespace TokenDump.Library
                     if (string.IsNullOrEmpty(info.CommandLine))
                         info.CommandLine = "N/A";
                 }
-                
-                if (info.Handle == IntPtr.Zero)
+
+                if (info.ThreadId != 0)
+                {
+                    status = NativeMethods.OpenThreadToken(
+                        hThread,
+                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
+                        false,
+                        out hToken);
+
+                    if (!status)
+                    {
+                        status = NativeMethods.OpenThreadToken(
+                            hThread,
+                            ACCESS_MASK.TOKEN_QUERY,
+                            false,
+                            out hToken);
+
+                        if (!status)
+                            hToken = IntPtr.Zero;
+                    }
+                }
+                else if (info.Handle == IntPtr.Zero)
                 {
                     status = NativeMethods.OpenProcessToken(
                         hProcess,

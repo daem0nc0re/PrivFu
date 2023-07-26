@@ -1099,6 +1099,73 @@ namespace TokenDump.Library
         }
 
 
+        public static bool OpenRemoteThread(
+            int pid,
+            int tid,
+            ACCESS_MASK processAccess,
+            ACCESS_MASK threadAccess,
+            out IntPtr hProcess,
+            out IntPtr hThread)
+        {
+            bool status = GetSystemHandles(
+                "Thread",
+                out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> threadHandles);
+            processAccess |= ACCESS_MASK.PROCESS_DUP_HANDLE;
+            hProcess = IntPtr.Zero;
+            hThread = IntPtr.Zero;
+
+            if (!status || !threadHandles.ContainsKey(pid))
+                return false;
+
+            hProcess = NativeMethods.OpenProcess(
+                processAccess,
+                false,
+                pid);
+
+            if (hProcess != IntPtr.Zero)
+            {
+                foreach (var thread in threadHandles[pid])
+                {
+                    var ntstatus = NativeMethods.NtDuplicateObject(
+                        hProcess,
+                        new IntPtr(thread.HandleValue),
+                        new IntPtr(-1),
+                        out IntPtr hDupObject,
+                        threadAccess,
+                        0,
+                        0);
+
+                    if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                        continue;
+
+                    status = GetThreadBasicInformation(
+                        hDupObject,
+                        out THREAD_BASIC_INFORMATION tbi);
+
+                    if (status && (tbi.ClientId.UniqueProcess.ToInt32() == pid))
+                    {
+                        if (tbi.ClientId.UniqueThread.ToInt32() == tid)
+                        {
+                            hThread = hDupObject;
+                            break;
+                        }
+                    }
+
+                    if (hThread == IntPtr.Zero)
+                        NativeMethods.NtClose(hDupObject);
+                }
+
+                if (hThread == IntPtr.Zero)
+                {
+                    NativeMethods.NtClose(hProcess);
+                    hProcess = IntPtr.Zero;
+                }
+            }
+
+            return ((hProcess != IntPtr.Zero) && (hThread != IntPtr.Zero));
+        }
+
+
         public static void ZeroMemory(IntPtr pBuffer, int nRange)
         {
             for (var offset = 0; offset < nRange; offset++)

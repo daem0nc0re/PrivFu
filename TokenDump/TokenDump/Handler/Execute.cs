@@ -28,7 +28,8 @@ namespace TokenDump.Handler
                 }
                 else if (options.GetFlag("scan"))
                 {
-                    int pid;
+                    int pid = 0;
+                    int tid = 0;
                     IntPtr hObject;
 
                     try
@@ -38,7 +39,7 @@ namespace TokenDump.Handler
                     catch
                     {
                         Console.WriteLine("[!] Failed to parse PID.");
-                        pid = 0;
+                        break;
                     }
 
                     if (pid > 0)
@@ -56,11 +57,28 @@ namespace TokenDump.Handler
                             catch
                             {
                                 Console.WriteLine("[!] Failed to parse handle value.");
-                                hObject = IntPtr.Zero;
+                                break;
                             }
                         }
 
-                        Modules.GetVerboseTokenInformation(pid, hObject);
+                        if (string.IsNullOrEmpty(options.GetValue("tid")))
+                        {
+                            tid = 0;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                tid = Convert.ToInt32(options.GetValue("tid"), 10);
+                            }
+                            catch
+                            {
+                                Console.WriteLine("[!] Failed to parse TID value.");
+                                break;
+                            }
+                        }
+
+                        Modules.GetVerboseTokenInformation(pid, tid, hObject);
                     }
                 }
                 else
