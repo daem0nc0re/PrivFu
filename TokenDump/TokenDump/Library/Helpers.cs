@@ -241,7 +241,7 @@ namespace TokenDump.Library
                 if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 {
                     var referencedPath = new UNICODE_STRING();
-                    nInfoLength = (uint)Marshal.SizeOf(typeof(UNICODE_STRING));
+                    nInfoLength = 512u;
 
                     do
                     {
@@ -263,6 +263,8 @@ namespace TokenDump.Library
                         Marshal.FreeHGlobal(pInfoBuffer);
                     }
                 }
+
+                NativeMethods.NtClose(hSymLink);
             }
 
             return status;
