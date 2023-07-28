@@ -184,6 +184,66 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct OBJECT_ATTRIBUTES : IDisposable
+    {
+        public int Length;
+        public IntPtr RootDirectory;
+        private IntPtr objectName;
+        public OBJECT_ATTRIBUTES_FLAGS Attributes;
+        public IntPtr SecurityDescriptor;
+        public IntPtr SecurityQualityOfService;
+
+        public OBJECT_ATTRIBUTES(
+            string name,
+            OBJECT_ATTRIBUTES_FLAGS attrs)
+        {
+            Length = 0;
+            RootDirectory = IntPtr.Zero;
+            objectName = IntPtr.Zero;
+            Attributes = attrs;
+            SecurityDescriptor = IntPtr.Zero;
+            SecurityQualityOfService = IntPtr.Zero;
+
+            Length = Marshal.SizeOf(this);
+            ObjectName = new UNICODE_STRING(name);
+        }
+
+        public UNICODE_STRING ObjectName
+        {
+            get
+            {
+                return (UNICODE_STRING)Marshal.PtrToStructure(
+                 objectName, typeof(UNICODE_STRING));
+            }
+
+            set
+            {
+                bool fDeleteOld = objectName != IntPtr.Zero;
+                if (!fDeleteOld)
+                    objectName = Marshal.AllocHGlobal(Marshal.SizeOf(value));
+                Marshal.StructureToPtr(value, objectName, fDeleteOld);
+            }
+        }
+
+        public void Dispose()
+        {
+            if (objectName != IntPtr.Zero)
+            {
+                Marshal.DestroyStructure(objectName, typeof(UNICODE_STRING));
+                Marshal.FreeHGlobal(objectName);
+                objectName = IntPtr.Zero;
+            }
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct OBJECT_DIRECTORY_INFORMATION
+    {
+        public UNICODE_STRING Name;
+        public UNICODE_STRING TypeName;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct OBJECT_TYPE_INFORMATION
     {
         public UNICODE_STRING TypeName;
@@ -227,6 +287,90 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_ACCESS_FILTER_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_ALARM_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_ALARM_CALLBACK_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_ALARM_CALLBACK_OBJECT_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public uint Flags;
+        public Guid ObjectType;
+        public Guid InheritedObjectType;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_ALARM_OBJECT_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public uint Flags;
+        public Guid ObjectType;
+        public Guid InheritedObjectType;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_AUDIT_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_AUDIT_CALLBACK_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_AUDIT_CALLBACK_OBJECT_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public uint Flags;
+        public Guid ObjectType;
+        public Guid InheritedObjectType;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_AUDIT_OBJECT_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public uint Flags;
+        public Guid ObjectType;
+        public Guid InheritedObjectType;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct SYSTEM_HANDLE_INFORMATION
     {
         public uint NumberOfHandles;
@@ -244,6 +388,38 @@ namespace TokenDump.Interop
         public ushort HandleValue;
         public IntPtr Object;
         public uint GrantedAccess;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_MANDATORY_LABEL_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_PROCESS_TRUST_LABEL_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_RESOURCE_ATTRIBUTE_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SYSTEM_SCOPED_POLICY_ID_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -359,122 +535,6 @@ namespace TokenDump.Interop
     internal struct TOKEN_MANDATORY_LABEL
     {
         public SID_AND_ATTRIBUTES Label;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_ACCESS_FILTER_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_ALARM_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_ALARM_CALLBACK_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_ALARM_CALLBACK_OBJECT_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public uint Flags;
-        public Guid ObjectType;
-        public Guid InheritedObjectType;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_ALARM_OBJECT_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public uint Flags;
-        public Guid ObjectType;
-        public Guid InheritedObjectType;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_AUDIT_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_AUDIT_CALLBACK_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_AUDIT_CALLBACK_OBJECT_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public uint Flags;
-        public Guid ObjectType;
-        public Guid InheritedObjectType;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_AUDIT_OBJECT_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public uint Flags;
-        public Guid ObjectType;
-        public Guid InheritedObjectType;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_MANDATORY_LABEL_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_PROCESS_TRUST_LABEL_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_RESOURCE_ATTRIBUTE_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SYSTEM_SCOPED_POLICY_ID_ACE
-    {
-        public ACE_HEADER Header;
-        public ACCESS_MASK Mask;
-        public int SidStart;
     }
 
     [StructLayout(LayoutKind.Sequential)]

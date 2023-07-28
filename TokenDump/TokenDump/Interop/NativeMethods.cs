@@ -103,6 +103,28 @@ namespace TokenDump.Interop
             DUPLICATE_OPTION_FLAGS Options);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenDirectoryObject(
+            out IntPtr DirectoryHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenSymbolicLinkObject(
+            out IntPtr LinkHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryDirectoryObject(
+            IntPtr DirectoryHandle,
+            IntPtr Buffer,
+            uint Length,
+            BOOLEAN ReturnSingleEntry,
+            BOOLEAN RestartScan,
+            ref uint Context,
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationProcess(
             IntPtr ProcessHandle,
             PROCESSINFOCLASS ProcessInformationClass,
@@ -133,6 +155,12 @@ namespace TokenDump.Interop
             IntPtr ObjectInformation,
             uint ObjectInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQuerySymbolicLinkObject(
+            IntPtr LinkHandle,
+            ref UNICODE_STRING LinkTarget,
+            out uint ReturnedLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQuerySystemInformation(

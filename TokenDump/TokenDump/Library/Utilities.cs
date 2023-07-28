@@ -349,7 +349,12 @@ namespace TokenDump.Library
             }
 
             if ((info.ThreadId == 0) && (info.Handle == IntPtr.Zero) && !info.IsLinkedToken)
+            {
+                var imageFilePath = Helpers.ConvertDevicePathToDriveLetter(info.ImageFilePath);
+
+                outputBuilder.AppendFormat("ImageFilePath       : {0}\n", string.IsNullOrEmpty(imageFilePath) ? "N/A" : imageFilePath);
                 outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
+            }
 
             outputBuilder.AppendFormat("Token User          : {0} (SID: {1})\n", info.TokenUserName, info.TokenUserSid);
             outputBuilder.AppendFormat("Token Owner         : {0} (SID: {1})\n", info.TokenOwnerName, info.TokenOwnerSid);
@@ -845,7 +850,7 @@ namespace TokenDump.Library
 
             if (tableData.Count == 0)
             {
-                tableBuilder.AppendFormat("{0}No groups.\n", indent);
+                tableBuilder.AppendFormat("{0}No privileges.\n", indent);
             }
             else
             {

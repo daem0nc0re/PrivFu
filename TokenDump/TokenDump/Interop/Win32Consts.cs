@@ -17,6 +17,7 @@ namespace TokenDump.Interop
          */
         public const NTSTATUS STATUS_SUCCESS = 0;
         public const NTSTATUS STATUS_TIMEOUT = 0x00000102;
+        public const NTSTATUS STATUS_MORE_ENTRIES = 0x00000105;
         public static readonly NTSTATUS STATUS_BUFFER_OVERFLOW = Convert.ToInt32("0x80000005", 16);
         public static readonly NTSTATUS STATUS_UNSUCCESSFUL = Convert.ToInt32("0xC0000001", 16);
         public static readonly NTSTATUS STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);

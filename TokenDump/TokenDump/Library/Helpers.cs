@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using TokenDump.Interop;
 
 namespace TokenDump.Library
@@ -14,6 +14,35 @@ namespace TokenDump.Library
         public static bool CompareIgnoreCase(string strA, string strB)
         {
             return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
+        public static string ConvertDevicePathToDriveLetter(string devicePath)
+        {
+            var convertedPath = devicePath;
+            var devicePathRegex = new Regex(@"\\Device\\[^\\]+", RegexOptions.IgnoreCase);
+            var driveLetterRegex = new Regex(@"\\GLOBAL\?\?\\[^:]+:", RegexOptions.IgnoreCase);
+
+            if (!devicePathRegex.IsMatch(devicePath))
+                return null;
+
+            if (GetObjectSymbolicLinkTable(out Dictionary<string, string> symlinkTable))
+            {
+                foreach (var linkMap in symlinkTable)
+                {
+                    var pattern = string.Format("^{0}", linkMap.Value).Replace("\\", "\\\\");
+                    var targetRegex = new Regex(pattern, RegexOptions.IgnoreCase);
+
+                    if (driveLetterRegex.IsMatch(linkMap.Key) && targetRegex.IsMatch(devicePath))
+                    {
+                        convertedPath = Regex.Replace(devicePath, pattern, linkMap.Key, RegexOptions.IgnoreCase);
+                        convertedPath = convertedPath.Replace(@"\GLOBAL??\", string.Empty);
+                        break;
+                    }
+                }
+            }
+
+            return convertedPath;
         }
 
 
@@ -84,6 +113,7 @@ namespace TokenDump.Library
             return status;
         }
 
+
         public static bool ConvertStringSidToAccountName(
             string stringSid,
             out string account,
@@ -128,6 +158,111 @@ namespace TokenDump.Library
                 name = null;
                 domain = null;
                 sidType= SID_NAME_USE.Unknown;
+            }
+
+            return status;
+        }
+
+
+        public static bool GetObjectSymbolicLinkTable(out Dictionary<string, string> symlinkTable)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            bool status;
+            string rootPath = @"\GLOBAL??";
+            var objectFlags = OBJECT_ATTRIBUTES_FLAGS.OBJ_CASE_INSENSITIVE;
+            var nInfoLength = 0x800u;
+            var objectAttributes = new OBJECT_ATTRIBUTES(rootPath, objectFlags);
+            var symLinks = new List<string>();
+            symlinkTable = new Dictionary<string, string>();
+
+            ntstatus = NativeMethods.NtOpenDirectoryObject(
+                out IntPtr hDirectory,
+                ACCESS_MASK.DIRECTORY_QUERY,
+                in objectAttributes);
+
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                return false;
+
+            do
+            {
+                var context = 0u;
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryDirectoryObject(
+                    hDirectory,
+                    pInfoBuffer,
+                    nInfoLength,
+                    BOOLEAN.FALSE,
+                    BOOLEAN.TRUE,
+                    ref context,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                {
+                    Marshal.FreeHGlobal(pInfoBuffer);
+                    nInfoLength *= 2;
+                }
+            } while (ntstatus == Win32Consts.STATUS_MORE_ENTRIES);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var pUnicodeString = pInfoBuffer;
+                var nUnitSIze = Marshal.SizeOf(typeof(OBJECT_DIRECTORY_INFORMATION));
+
+                while (Marshal.ReadIntPtr(pUnicodeString, IntPtr.Size) != IntPtr.Zero)
+                {
+                    var info = (OBJECT_DIRECTORY_INFORMATION)Marshal.PtrToStructure(
+                        pUnicodeString,
+                        typeof(OBJECT_DIRECTORY_INFORMATION));
+
+                    if (CompareIgnoreCase(info.TypeName.ToString(), "SymbolicLink"))
+                        symLinks.Add(string.Format(@"{0}\{1}", rootPath, info.Name.ToString()));
+
+                    if (Environment.Is64BitProcess)
+                        pUnicodeString = new IntPtr(pUnicodeString.ToInt64() + nUnitSIze);
+                    else
+                        pUnicodeString = new IntPtr(pUnicodeString.ToInt32() + nUnitSIze);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            NativeMethods.NtClose(hDirectory);
+            status = (symLinks.Count > 0);
+
+            foreach (var link in symLinks)
+            {
+                objectAttributes = new OBJECT_ATTRIBUTES(link, objectFlags);
+                ntstatus = NativeMethods.NtOpenSymbolicLinkObject(
+                    out IntPtr hSymLink,
+                    ACCESS_MASK.SYMBOLIC_LINK_QUERY,
+                    in objectAttributes);
+
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                {
+                    var referencedPath = new UNICODE_STRING();
+                    nInfoLength = (uint)Marshal.SizeOf(typeof(UNICODE_STRING));
+
+                    do
+                    {
+                        pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                        referencedPath.MaximumLength = (ushort)(nInfoLength & 0xFFFF);
+                        referencedPath.SetBuffer(pInfoBuffer);
+                        ntstatus = NativeMethods.NtQuerySymbolicLinkObject(
+                            hSymLink,
+                            ref referencedPath,
+                            out nInfoLength);
+
+                        if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                            Marshal.FreeHGlobal(pInfoBuffer);
+                    } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                    {
+                        symlinkTable.Add(link, referencedPath.ToString());
+                        Marshal.FreeHGlobal(pInfoBuffer);
+                    }
+                }
             }
 
             return status;
