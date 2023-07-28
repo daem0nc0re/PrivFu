@@ -516,9 +516,7 @@ namespace TokenDump.Interop
         public override string ToString()
         {
             var unicodeBytes = new byte[Length];
-
-            for (var index = 0; index < Length; index++)
-                unicodeBytes[index] = Marshal.ReadByte(buffer, index);
+            Marshal.Copy(buffer, unicodeBytes, 0, Length);
 
             return Encoding.Unicode.GetString(unicodeBytes);
         }

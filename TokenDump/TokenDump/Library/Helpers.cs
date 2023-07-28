@@ -201,7 +201,6 @@ namespace TokenDump.Library
             do
             {
                 pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-                ZeroMemory(pInfoBuffer, (int)nInfoLength);
                 ntstatus = NativeMethods.NtQueryInformationProcess(
                     hProcess,
                     PROCESSINFOCLASS.ProcessCommandLineInformation,
@@ -236,7 +235,6 @@ namespace TokenDump.Library
             do
             {
                 pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-                ZeroMemory(pInfoBuffer, (int)nInfoLength);
                 ntstatus = NativeMethods.NtQueryInformationProcess(
                     hProcess,
                     PROCESSINFOCLASS.ProcessImageFileName,
