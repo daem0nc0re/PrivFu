@@ -47,6 +47,8 @@ namespace TokenDump.Library
         public string TokenOwnerSid;
         public string TokenPrimaryGroupName;
         public string TokenPrimaryGroupSid;
+        public string AppContainerName;
+        public string AppContainerSid;
         public TOKEN_ELEVATION_TYPE ElevationType;
         public TOKEN_ORIGIN TokenOrigin;
         public TOKEN_SOURCE TokenSource;

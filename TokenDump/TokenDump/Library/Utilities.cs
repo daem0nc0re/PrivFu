@@ -372,6 +372,16 @@ namespace TokenDump.Library
             outputBuilder.AppendFormat("Restricted          : {0}\n", info.IsRestricted.ToString());
             outputBuilder.AppendFormat("AppContainer        : {0}\n", info.IsAppContainer.ToString());
 
+            if (info.IsAppContainer)
+            {
+                outputBuilder.AppendFormat(
+                    "AppContainer Name   : {0}\n",
+                    string.IsNullOrEmpty(info.AppContainerName) ? "N/A" : info.AppContainerName);
+                outputBuilder.AppendFormat(
+                    "AppContainer SID    : {0}\n",
+                    string.IsNullOrEmpty(info.AppContainerSid) ? "N/A" : info.AppContainerSid);
+            }
+
             if (!info.IsLinkedToken)
                 outputBuilder.AppendFormat("Has Linked Token    : {0}\n", info.HasLinkedToken.ToString());
 
@@ -675,6 +685,11 @@ namespace TokenDump.Library
 
                 if (!Helpers.IsTokenRestricted(hToken, out info.IsRestricted))
                     break;
+
+                if (info.IsAppContainer)
+                {
+                    Helpers.GetTokenAppContainerSid(hToken, out info.AppContainerSid, out info.AppContainerName);
+                }
 
                 if (isLinkedToken)
                 {

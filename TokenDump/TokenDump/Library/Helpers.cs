@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using TokenDump.Interop;
@@ -713,6 +714,50 @@ namespace TokenDump.Library
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static bool GetTokenAppContainerSid(IntPtr hToken, out string stringSid, out string accountName)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var status = false;
+            var nInfoLength = (uint)(Marshal.SizeOf(typeof(TOKEN_APPCONTAINER_INFORMATION)) + 0x100);
+            stringSid = null;
+            accountName = null;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenAppContainerSid,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (TOKEN_APPCONTAINER_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_APPCONTAINER_INFORMATION));
+                IntPtr pSid = info.TokenAppContainer;
+                status = NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
+                SID_NAME_USE sidType = 0;
+
+                if (status)
+                    ConvertSidToAccountName(pSid, out accountName, out sidType);
+                else
+                    stringSid = null;
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return status;
         }
 
 

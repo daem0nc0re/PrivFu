@@ -423,6 +423,12 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_APPCONTAINER_INFORMATION
+    {
+        public IntPtr /* PSID */ TokenAppContainer;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_DEFAULT_DACL
     {
         public IntPtr /* PACL */ DefaultDacl;
