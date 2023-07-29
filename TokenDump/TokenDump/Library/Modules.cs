@@ -316,12 +316,13 @@ namespace TokenDump.Library
                     ref info,
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+                    out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
                     out List<AceInformation> acl);
                 NativeMethods.NtClose(hToken);
 
                 if (status)
                 {
-                    Utilities.DumpVerboseTokenInformation(info, privs, groups, acl);
+                    Utilities.DumpVerboseTokenInformation(info, privs, groups, capabilities, acl);
 
                     if (hLinkedToken != IntPtr.Zero)
                     {
@@ -333,10 +334,11 @@ namespace TokenDump.Library
                             ref info,
                             out privs,
                             out groups,
+                            out capabilities,
                             out acl);
 
                         if (status)
-                            Utilities.DumpVerboseTokenInformation(info, privs, groups, acl);
+                            Utilities.DumpVerboseTokenInformation(info, privs, groups, capabilities, acl);
 
                         NativeMethods.NtClose(hLinkedToken);
                     }

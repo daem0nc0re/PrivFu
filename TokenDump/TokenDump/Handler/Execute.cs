@@ -28,8 +28,8 @@ namespace TokenDump.Handler
                 }
                 else if (options.GetFlag("scan"))
                 {
-                    int pid = 0;
-                    int tid = 0;
+                    int pid;
+                    int tid;
                     IntPtr hObject;
 
                     try

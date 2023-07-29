@@ -305,6 +305,7 @@ namespace TokenDump.Library
             VerboseTokenInformation info,
             Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
             Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+            Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
             List<AceInformation> acl)
         {
             var outputBuilder = new StringBuilder();
@@ -398,6 +399,10 @@ namespace TokenDump.Library
 
             outputBuilder.Append(ParseTokenPrivilegesTableToString(privs));
             outputBuilder.Append(ParseTokenGroupsTableToString(groups));
+
+            if (info.IsAppContainer)
+                outputBuilder.Append(ParseTokenCapabilitiesTableToString(capabilities));
+
             outputBuilder.Append(ParseTokenDaclTableToString(acl));
 
             Console.WriteLine(outputBuilder.ToString());
@@ -607,10 +612,12 @@ namespace TokenDump.Library
             ref VerboseTokenInformation info,
             out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+            out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
             out List<AceInformation> acl)
         {
             var status = false;
             hLinkedToken = IntPtr.Zero;
+            capabilities = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
 
             do
             {
@@ -689,6 +696,18 @@ namespace TokenDump.Library
                 if (info.IsAppContainer)
                 {
                     Helpers.GetTokenAppContainerSid(hToken, out info.AppContainerSid, out info.AppContainerName);
+
+                    if (string.IsNullOrEmpty(info.AppContainerName) && string.IsNullOrEmpty(info.AppContainerSid))
+                    {
+                        info.AppContainerName = "N/A";
+                        info.AppContainerSid = "N/A";
+                    }
+                    if (string.IsNullOrEmpty(info.AppContainerName))
+                    {
+                        info.AppContainerName = info.AppContainerSid;
+                    }
+
+                    capabilities = Helpers.GetTokenCapabilities(hToken);
                 }
 
                 if (isLinkedToken)
@@ -708,6 +727,68 @@ namespace TokenDump.Library
                 info = new VerboseTokenInformation();
 
             return status;
+        }
+
+
+        private static string ParseTokenCapabilitiesTableToString(
+            Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities)
+        {
+            var titles = new string[] { "Capability Name", "Flags" };
+            var width = new int[titles.Length];
+            var accountTable = new Dictionary<string, string>();
+            var tableBuilder = new StringBuilder();
+            var indent = new string(' ', 4);
+
+            for (var idx = 0; idx < titles.Length; idx++)
+                width[idx] = titles[idx].Length;
+
+            foreach (var entry in capabilities)
+            {
+                var status = Helpers.ConvertStringSidToAccountName(
+                    entry.Key,
+                    out string accountName,
+                    out SID_NAME_USE _);
+
+                if (!status)
+                    accountName = entry.Key;
+
+                accountTable.Add(entry.Key, accountName);
+
+                if (accountName.Length > width[0])
+                    width[0] = accountName.Length;
+
+                if (entry.Value.ToString().Length > width[1])
+                    width[1] = entry.Value.ToString().Length;
+            }
+
+            tableBuilder.Append("\n");
+            tableBuilder.AppendFormat("{0}CAPABILITIES INFORMATION\n", indent);
+            tableBuilder.AppendFormat("{0}------------------------\n\n", indent);
+
+            if (capabilities.Count == 0)
+            {
+                tableBuilder.AppendFormat("{0}No entries.\n", indent);
+            }
+            else
+            {
+                var lineFormat = string.Format("{{0}}{{1,-{0}}} {{2,-{1}}}\n", width[0], width[1]);
+
+                tableBuilder.AppendFormat(lineFormat, indent, titles[0], titles[1]);
+                tableBuilder.AppendFormat(
+                    lineFormat,
+                    indent, new string('=', width[0]), new string('=', width[1]));
+
+                foreach (var entry in capabilities)
+                {
+                    tableBuilder.AppendFormat(
+                        lineFormat,
+                        indent, accountTable[entry.Key], entry.Value.ToString());
+                }
+            }
+
+            tableBuilder.Append("\n");
+
+            return tableBuilder.ToString();
         }
 
 

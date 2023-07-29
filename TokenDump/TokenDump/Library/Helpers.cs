@@ -509,6 +509,55 @@ namespace TokenDump.Library
         }
 
 
+        public static Dictionary<string, SE_GROUP_ATTRIBUTES> GetTokenCapabilities(IntPtr hToken)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
+            var capabilities = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenCapabilities,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                IntPtr pEntry;
+                int nOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                int nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                int nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+
+                for (var idx = 0; idx < nEntryCount; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pInfoBuffer.ToInt64() + nOffset + (idx * nUnitSize));
+                    else
+                        pEntry = new IntPtr(pInfoBuffer.ToInt32() + nOffset + (idx * nUnitSize));
+
+                    var entry = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                        pEntry,
+                        typeof(SID_AND_ATTRIBUTES));
+                    NativeMethods.ConvertSidToStringSid(entry.Sid, out string stringSid);
+                    capabilities.Add(stringSid, (SE_GROUP_ATTRIBUTES)entry.Attributes);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return capabilities;
+        }
+
+
         public static bool GetTokenDefaultDacl(
             IntPtr hToken,
             out List<AceInformation> info)
@@ -747,10 +796,9 @@ namespace TokenDump.Library
                     typeof(TOKEN_APPCONTAINER_INFORMATION));
                 IntPtr pSid = info.TokenAppContainer;
                 status = NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
-                SID_NAME_USE sidType = 0;
 
                 if (status)
-                    ConvertSidToAccountName(pSid, out accountName, out sidType);
+                    ConvertSidToAccountName(pSid, out accountName, out SID_NAME_USE _);
                 else
                     stringSid = null;
 
