@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using TokenDump.Interop;
 
 namespace TokenDump.Library
 {
+    using HRESULT = Int32;
     using NTSTATUS = Int32;
 
     internal class Helpers
@@ -75,38 +75,63 @@ namespace TokenDump.Library
             out string domain,
             out SID_NAME_USE sidType)
         {
-            int nNameLength = 255;
-            int nDomainNameLength = 255;
-            var nameBuilder = new StringBuilder(nNameLength);
-            var domainNameBuilder = new StringBuilder(nDomainNameLength);
-            bool status = NativeMethods.LookupAccountSid(
-                null,
-                pSid,
-                nameBuilder,
-                ref nNameLength,
-                domainNameBuilder,
-                ref nDomainNameLength,
-                out sidType);
+            var authority = (Marshal.ReadInt64(pSid) >> 16);
+            var subAuthority = Marshal.ReadInt32(pSid, 8);
+            var status = false;
 
-            if (status)
+            if ((authority == 0x00000F00_00000000L) &&
+                ((subAuthority == 2) || (subAuthority == 3)))
             {
-                name = nameBuilder.ToString();
-                domain = domainNameBuilder.ToString();
-            }
-            else
-            {
-                var hresult = NativeMethods.AppContainerLookupMoniker(pSid, out IntPtr pMoniker);
-                name = null;
+                HRESULT hresult;
+
+                if (subAuthority == 3)
+                {
+                    domain = "PACKAGE CAPABILITY";
+                    Marshal.WriteInt32(pSid, 8, 2);
+                }
+                else
+                {
+                    domain = null;
+                }
+
+                hresult = NativeMethods.AppContainerLookupMoniker(pSid, out IntPtr pMoniker);
                 sidType = SID_NAME_USE.Unknown;
 
                 if (hresult == Win32Consts.S_OK)
                 {
                     status = true;
-                    domain = Marshal.PtrToStringUni(pMoniker);
+                    name = Marshal.PtrToStringUni(pMoniker);
                     NativeMethods.AppContainerFreeMemory(pMoniker);
                 }
                 else
                 {
+                    name = null;
+                    domain = null;
+                }
+            }
+            else
+            {
+                int nNameLength = 255;
+                int nDomainNameLength = 255;
+                var nameBuilder = new StringBuilder(nNameLength);
+                var domainNameBuilder = new StringBuilder(nDomainNameLength);
+                status = NativeMethods.LookupAccountSid(
+                    null,
+                    pSid,
+                    nameBuilder,
+                    ref nNameLength,
+                    domainNameBuilder,
+                    ref nDomainNameLength,
+                    out sidType);
+
+                if (status)
+                {
+                    name = nameBuilder.ToString();
+                    domain = domainNameBuilder.ToString();
+                }
+                else
+                {
+                    name = null;
                     domain = null;
                 }
             }

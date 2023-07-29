@@ -80,7 +80,7 @@ namespace TokenDump.Interop
          */
         [DllImport("kernelbase.dll", CharSet = CharSet.Unicode)]
         public static extern HRESULT AppContainerLookupMoniker(
-            IntPtr /* PSID*/ Sid,
+            IntPtr /* PSID */ Sid,
             out IntPtr /* LPWSTR* */ Moniker);
 
         [DllImport("kernelbase.dll", SetLastError = true)]

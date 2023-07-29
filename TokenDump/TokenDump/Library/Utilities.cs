@@ -762,12 +762,12 @@ namespace TokenDump.Library
             }
 
             tableBuilder.Append("\n");
-            tableBuilder.AppendFormat("{0}CAPABILITIES INFORMATION\n", indent);
-            tableBuilder.AppendFormat("{0}------------------------\n\n", indent);
+            tableBuilder.AppendFormat("{0}APPCONTAINER CAPABILITIES\n", indent);
+            tableBuilder.AppendFormat("{0}-------------------------\n\n", indent);
 
             if (capabilities.Count == 0)
             {
-                tableBuilder.AppendFormat("{0}No entries.\n", indent);
+                tableBuilder.AppendFormat("{0}No capabilities.\n", indent);
             }
             else
             {
