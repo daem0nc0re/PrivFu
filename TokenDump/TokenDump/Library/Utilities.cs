@@ -738,19 +738,29 @@ namespace TokenDump.Library
             var accountTable = new Dictionary<string, string>();
             var tableBuilder = new StringBuilder();
             var indent = new string(' ', 4);
+            Helpers.GetKnownCapabilitySids(out Dictionary<string, string> capabilitySids);
 
             for (var idx = 0; idx < titles.Length; idx++)
                 width[idx] = titles[idx].Length;
 
             foreach (var entry in capabilities)
             {
-                var status = Helpers.ConvertStringSidToAccountName(
-                    entry.Key,
-                    out string accountName,
-                    out SID_NAME_USE _);
+                string accountName;
 
-                if (!status)
-                    accountName = entry.Key;
+                if (capabilitySids.ContainsKey(entry.Key))
+                {
+                    accountName = capabilitySids[entry.Key];
+                }
+                else
+                {
+                    var status = Helpers.ConvertStringSidToAccountName(
+                        entry.Key,
+                        out accountName,
+                        out SID_NAME_USE _);
+
+                    if (!status)
+                        accountName = entry.Key;
+                }
 
                 accountTable.Add(entry.Key, accountName);
 

@@ -14,6 +14,20 @@ namespace TokenDump.Interop
         DIRECTORY_CREATE_SUBDIRECTORY = 0x00000008,
         DIRECTORY_ALL_ACCESS = 0x000F000F,
 
+        // For Registry Keys
+        KEY_QUERY_VALUE = 0x00000001,
+        KEY_SET_VALUE = 0x00000002,
+        KEY_CREATE_SUB_KEY = 0x00000004,
+        KEY_ENUMERATE_SUB_KEYS = 0x00000008,
+        KEY_NOTIFY = 0x00000010,
+        KEY_CREATE_LINK = 0x00000020,
+        KEY_WOW64_32KEY = 0x00000200,
+        KEY_WOW64_64KEY = 0x00000100,
+        KEY_WOW64_RES = 0x00000300,
+        KEY_READ = 0x00020019,
+        KEY_WRITE = 0x00020006,
+        KEY_ALL_ACCESS = 0x000F003F,
+
         // For Process
         PROCESS_TERMINATE = 0x00000001,
         PROCESS_CREATE_THREAD = 0x00000002,
@@ -209,6 +223,21 @@ namespace TokenDump.Interop
         CLOSE_SOURCE = 0x00000001,
         SAME_ACCESS = 0x00000002,
         SAME_ATTRIBUTES = 0x00000004
+    }
+
+    internal enum KEY_INFORMATION_CLASS
+    {
+        KeyBasicInformation, // KEY_BASIC_INFORMATION
+        KeyNodeInformation, // KEY_NODE_INFORMATION
+        KeyFullInformation, // KEY_FULL_INFORMATION
+        KeyNameInformation, // KEY_NAME_INFORMATION
+        KeyCachedInformation, // KEY_CACHED_INFORMATION
+        KeyFlagsInformation, // KEY_FLAGS_INFORMATION
+        KeyVirtualizationInformation, // KEY_VIRTUALIZATION_INFORMATION
+        KeyHandleTagsInformation, // KEY_HANDLE_TAGS_INFORMATION
+        KeyTrustInformation, // KEY_TRUST_INFORMATION
+        KeyLayerInformation, // KEY_LAYER_INFORMATION
+        MaxKeyInfoClass
     }
 
     [Flags]

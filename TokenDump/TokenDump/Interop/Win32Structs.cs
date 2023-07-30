@@ -116,6 +116,43 @@ namespace TokenDump.Interop
         public ACCESS_MASK GenericAll;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct KEY_NAME_INFORMATION
+    {
+        public uint NameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public ushort[] /* WCHAR[] */ Name;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct KEY_NODE_INFORMATION
+    {
+        public LARGE_INTEGER LastWriteTime;
+        public uint TitleIndex;
+        public uint ClassOffset;
+        public uint ClassLength;
+        public uint NameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public ushort[] /* WCHAR[] */ Name;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct KEY_FULL_INFORMATION
+    {
+        public LARGE_INTEGER LastWriteTime;
+        public uint TitleIndex;
+        public uint ClassOffset;
+        public uint ClassLength;
+        public uint SubKeys;
+        public uint MaxNameLen;
+        public uint MaxClassLen;
+        public uint Values;
+        public uint MaxValueNameLen;
+        public uint MaxValueDataLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public ushort[] /* WCHAR[] */ Class;
+    }
+
     [StructLayout(LayoutKind.Explicit, Size = 8)]
     internal struct LARGE_INTEGER
     {

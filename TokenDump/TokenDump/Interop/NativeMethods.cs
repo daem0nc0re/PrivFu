@@ -86,6 +86,14 @@ namespace TokenDump.Interop
         [DllImport("kernelbase.dll", SetLastError = true)]
         public static extern bool AppContainerFreeMemory(IntPtr Memory);
 
+        [DllImport("kernelbase.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool DeriveCapabilitySidsFromName(
+            string CapName,
+            out IntPtr /* PSID** */ CapabilityGroupSids,
+            out int CapabilityGroupSidCount,
+            out IntPtr /* PSID** */ CapabilitySids,
+            out int CapabilitySidCount);
+
         /*
          * ntdll.dll
          */
@@ -103,8 +111,23 @@ namespace TokenDump.Interop
             DUPLICATE_OPTION_FLAGS Options);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtEnumerateKey(
+            IntPtr KeyHandle,
+            uint Index,
+            KEY_INFORMATION_CLASS KeyInformationClass,
+            IntPtr KeyInformation,
+            uint Length,
+            out uint ResultLength);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenDirectoryObject(
             out IntPtr DirectoryHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenKey(
+            out IntPtr KeyHandle,
             ACCESS_MASK DesiredAccess,
             in OBJECT_ATTRIBUTES ObjectAttributes);
 
@@ -147,6 +170,14 @@ namespace TokenDump.Interop
             IntPtr TokenInformation,
             uint TokenInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryKey(
+            IntPtr KeyHandle,
+            KEY_INFORMATION_CLASS KeyInformationClass,
+            IntPtr KeyInformation,
+            uint Length,
+            out uint ResultLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryObject(

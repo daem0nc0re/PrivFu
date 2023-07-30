@@ -190,6 +190,218 @@ namespace TokenDump.Library
         }
 
 
+        public static bool EnumerateSubKeys(ref string rootKey, out List<string> subKeys)
+        {
+            var status = false;
+            var objectAttributes = new OBJECT_ATTRIBUTES(
+                rootKey,
+                OBJECT_ATTRIBUTES_FLAGS.OBJ_CASE_INSENSITIVE);
+            NTSTATUS ntstatus = NativeMethods.NtOpenKey(
+                out IntPtr hKey,
+                ACCESS_MASK.KEY_READ,
+                in objectAttributes);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                status = EnumerateSubKeys(hKey, out rootKey, out subKeys);
+                NativeMethods.NtClose(hKey);
+            }
+            else
+            {
+                subKeys = new List<string>();
+            }
+
+            return status;
+        }
+
+
+        public static bool EnumerateSubKeys(
+            IntPtr hKey,
+            out string rootKey,
+            out List<string> subKeys)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            IntPtr pNameBuffer;
+            var nInfoLength = 0x800u;
+            var nSubKeyCount = 0u;
+            var status = false;
+            subKeys = new List<string>();
+            pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            rootKey = null;
+
+            do
+            {
+                ntstatus = NativeMethods.NtQueryKey(
+                    hKey,
+                    KEY_INFORMATION_CLASS.KeyNameInformation,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out uint _);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                {
+                    break;
+                }
+                else
+                {
+                    var nameInfo = (KEY_NAME_INFORMATION)Marshal.PtrToStructure(
+                        pInfoBuffer,
+                        typeof(KEY_NAME_INFORMATION));
+                    var nameBytes = new byte[(int)nameInfo.NameLength];
+                    int nBufferOffset = Marshal.OffsetOf(typeof(KEY_NAME_INFORMATION), "Name").ToInt32();
+
+                    if (Environment.Is64BitProcess)
+                        pNameBuffer = new IntPtr(pInfoBuffer.ToInt64() + nBufferOffset);
+                    else
+                        pNameBuffer = new IntPtr(pInfoBuffer.ToInt32() + nBufferOffset);
+
+                    Marshal.Copy(pNameBuffer, nameBytes, 0, (int)nameBytes.Length);
+                    rootKey = Encoding.Unicode.GetString(nameBytes);
+                }
+
+                ntstatus = NativeMethods.NtQueryKey(
+                    hKey,
+                    KEY_INFORMATION_CLASS.KeyFullInformation,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out uint _);
+                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+                if (status)
+                {
+                    var info = (KEY_FULL_INFORMATION)Marshal.PtrToStructure(
+                        pInfoBuffer,
+                        typeof(KEY_FULL_INFORMATION));
+                    nSubKeyCount = info.SubKeys;
+                }
+            } while (false);
+
+            if (!string.IsNullOrEmpty(rootKey) && nSubKeyCount > 0)
+            {
+                for (var idx = 0u; idx < nSubKeyCount; idx++)
+                {
+                    ntstatus = NativeMethods.NtEnumerateKey(
+                        hKey,
+                        idx,
+                        KEY_INFORMATION_CLASS.KeyNodeInformation,
+                        pInfoBuffer,
+                        nInfoLength,
+                        out uint _);
+
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                    {
+                        var nodeInfo = (KEY_NODE_INFORMATION)Marshal.PtrToStructure(
+                            pInfoBuffer,
+                            typeof(KEY_NODE_INFORMATION));
+                        var nNameLength = nodeInfo.NameLength;
+                        var nameBytes = new byte[(int)nNameLength];
+                        var nBufferOffset = Marshal.OffsetOf(typeof(KEY_NODE_INFORMATION), "Name").ToInt32();
+
+                        if (Environment.Is64BitProcess)
+                            pNameBuffer = new IntPtr(pInfoBuffer.ToInt64() + nBufferOffset);
+                        else
+                            pNameBuffer = new IntPtr(pInfoBuffer.ToInt32() + nBufferOffset);
+
+                        Marshal.Copy(pNameBuffer, nameBytes, 0, nameBytes.Length);
+                        subKeys.Add(Encoding.Unicode.GetString(nameBytes));
+                    }
+                }
+            }
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return status;
+        }
+
+
+        public static bool GetKnownCapabilitySids(out Dictionary<string, string> capabilitySids)
+        {
+            string rootKey = @"\REGISTRY\MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\DeviceAccess\CapabilityMappings";
+            bool status = EnumerateSubKeys(ref rootKey, out List<string> capabilities);
+            capabilitySids = new Dictionary<string, string>();
+
+            if (status)
+            {
+                foreach (string capName in capabilities)
+                {
+                    var regPath = string.Format(@"{0}\{1}", rootKey, capName);
+                    status = EnumerateSubKeys(ref regPath, out List<string> subKeys);
+
+                    foreach (var entry in subKeys)
+                    {
+                        if (Guid.TryParse(entry, out Guid capGuid))
+                        {
+                            byte[] capGuidBytes = capGuid.ToByteArray();
+                            var stringSid = new StringBuilder(@"S-1-15-3");
+
+                            for (var idx = 0; idx < 4; idx++)
+                            {
+                                stringSid.AppendFormat("-{0}", BitConverter.ToUInt32(capGuidBytes, idx * 4));
+                            }
+
+                            if (!capabilitySids.ContainsKey(stringSid.ToString()))
+                            {
+                                capabilitySids.Add(
+                                    stringSid.ToString(),
+                                    string.Format(@"NAMED CAPABILITIES\{0}", capName));
+                            }
+                        }
+                    }
+                }
+
+                capabilitySids.Add("S-1-15-3-1", @"APPLICATION PACKAGE AUTHORITY\Your Internet connection");
+                capabilitySids.Add("S-1-15-3-2", @"APPLICATION PACKAGE AUTHORITY\Your Internet connection, including incoming connections from the Internet");
+                capabilitySids.Add("S-1-15-3-3", @"APPLICATION PACKAGE AUTHORITY\Your home or work networks");
+                capabilitySids.Add("S-1-15-3-4", @"APPLICATION PACKAGE AUTHORITY\Your pictures library");
+                capabilitySids.Add("S-1-15-3-5", @"APPLICATION PACKAGE AUTHORITY\Your videos library");
+                capabilitySids.Add("S-1-15-3-6", @"APPLICATION PACKAGE AUTHORITY\Your music libraryy");
+                capabilitySids.Add("S-1-15-3-7", @"APPLICATION PACKAGE AUTHORITY\Your documents library");
+                capabilitySids.Add("S-1-15-3-8", @"APPLICATION PACKAGE AUTHORITY\Your Windows credentials");
+                capabilitySids.Add("S-1-15-3-9", @"APPLICATION PACKAGE AUTHORITY\Software and hardware certificates or a smart card");
+                capabilitySids.Add("S-1-15-3-10", @"APPLICATION PACKAGE AUTHORITY\Removable storage");
+                capabilitySids.Add("S-1-15-3-11", @"APPLICATION PACKAGE AUTHORITY\Your Appointments");
+                capabilitySids.Add("S-1-15-3-12", @"APPLICATION PACKAGE AUTHORITY\Your Contacts");
+                capabilitySids.Add("S-1-15-3-4096", @"APPLICATION PACKAGE AUTHORITY\Internet Explorer");
+
+                for (var idx = 0; idx < Capabilities.KnownCapabilityNames.Length; idx++)
+                {
+                    var knownName = Capabilities.KnownCapabilityNames[idx];
+                    status = NativeMethods.DeriveCapabilitySidsFromName(
+                        knownName,
+                        out IntPtr pGroupSids,
+                        out int nGroupCount,
+                        out IntPtr pCapabilitySids,
+                        out int nCapabilityCount);
+
+                    for (var num = 0; num < nGroupCount; num++)
+                    {
+                        var pSid = Marshal.ReadIntPtr(pGroupSids, num * IntPtr.Size);
+                        NativeMethods.ConvertSidToStringSid(pSid, out string stringSid);
+
+                        if (!capabilitySids.ContainsKey(stringSid))
+                            capabilitySids.Add(stringSid, string.Format(@"CAPABILITY GROUP\{0}", knownName));
+
+                        NativeMethods.LocalFree(pSid);
+                    }
+
+                    for (var num = 0; num < nCapabilityCount; num++)
+                    {
+                        var pSid = Marshal.ReadIntPtr(pCapabilitySids, num * IntPtr.Size);
+                        NativeMethods.ConvertSidToStringSid(pSid, out string stringSid);
+
+                        if (!capabilitySids.ContainsKey(stringSid))
+                            capabilitySids.Add(stringSid, string.Format(@"NAMED CAPABILITIES\{0}", knownName));
+
+                        NativeMethods.LocalFree(pSid);
+                    }
+                }
+            }
+
+            return status;
+        }
+
+
         public static bool GetObjectSymbolicLinkTable(out Dictionary<string, string> symlinkTable)
         {
             NTSTATUS ntstatus;

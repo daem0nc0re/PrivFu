@@ -47,6 +47,7 @@
   <ItemGroup>
     <Compile Include="Handler\CommandLineParser.cs" />
     <Compile Include="Handler\Execute.cs" />
+    <Compile Include="Interop\Capabilities.cs" />
     <Compile Include="Interop\NativeMethods.cs" />
     <Compile Include="Interop\Win32Consts.cs" />
     <Compile Include="Interop\Win32Enums.cs" />
