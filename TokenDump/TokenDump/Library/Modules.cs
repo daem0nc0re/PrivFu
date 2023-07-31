@@ -93,7 +93,7 @@ namespace TokenDump.Library
                 }
             }
 
-            Console.WriteLine("[>] Trying to enumerate thread tokens.");
+            Console.WriteLine("[>] Trying to enumerate impersonated threads.");
 
             if (Helpers.GetSystemHandles(
                 "Thread",
@@ -123,11 +123,11 @@ namespace TokenDump.Library
 
             if (nEntryCount == 0)
             {
-                Console.WriteLine("[-] No handles.");
+                Console.WriteLine("[-] No threads.");
             }
             else
             {
-                Console.WriteLine("[+] Got {0} handle(s).", nEntryCount);
+                Console.WriteLine("[+] Got {0} thread(s).", nEntryCount);
 
                 if (uniqueUsers.Count > 0)
                 {
