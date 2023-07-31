@@ -325,7 +325,7 @@ namespace TokenDump.Library
                 else if (info.ThreadId != 0)
                 {
                     outputBuilder.AppendFormat(
-                        "[Token Information for {0} (PID: {1}, TID: {0})]\n\n",
+                        "[Token Information for {0} (PID: {1}, TID: {2})]\n\n",
                         info.ProcessName, info.ProcessId, info.ThreadId);
                 }
                 else
@@ -337,7 +337,13 @@ namespace TokenDump.Library
             }
             else
             {
-                if (info.IsLinkedToken)
+                if (info.IsLinkedToken && (info.ThreadId != 0))
+                {
+                    outputBuilder.AppendFormat(
+                        "[Linked Token Information for Handle 0x{0} of {1} (PID: {2}, TID: {3})]\n\n",
+                        info.Handle.ToString("X"), info.ProcessName, info.ProcessId, info.ThreadId);
+                }
+                else if (info.IsLinkedToken)
                 {
                     outputBuilder.AppendFormat(
                         "[Linked Token Information for Handle 0x{0} of {1} (PID: {2})]\n\n",
