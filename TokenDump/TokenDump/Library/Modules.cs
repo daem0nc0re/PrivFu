@@ -11,10 +11,27 @@ namespace TokenDump.Library
 
     internal class Modules
     {
-        public static bool GetProcessTokenInformation(string accountFilter)
+        public static bool GetProcessTokenInformation(string accountFilter, bool debug)
         {
             var uniqueUsers = new List<string>();
             var info = new List<BriefTokenInformation>();
+
+            if (debug)
+            {
+                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+
+                if (Utilities.EnableTokenPrivileges(
+                    new List<string> { Win32Consts.SE_DEBUG_NAME },
+                    out Dictionary<string, bool> _))
+                {
+                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                }
+                else
+                {
+                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    return false;
+                }
+            }
 
             Console.WriteLine("[>] Trying to enumerate process token.");
 
@@ -53,11 +70,28 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetThreadTokenInformation(string accountFilter)
+        public static bool GetThreadTokenInformation(string accountFilter, bool debug)
         {
             int nEntryCount = 0;
             var uniqueUsers = new List<string>();
             var dumpedInfo = new List<BriefTokenInformation>();
+
+            if (debug)
+            {
+                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+
+                if (Utilities.EnableTokenPrivileges(
+                    new List<string> { Win32Consts.SE_DEBUG_NAME },
+                    out Dictionary<string, bool> _))
+                {
+                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                }
+                else
+                {
+                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    return false;
+                }
+            }
 
             Console.WriteLine("[>] Trying to enumerate thread tokens.");
 
@@ -110,10 +144,27 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetTokenHandleInformation(string accountFilter)
+        public static bool GetTokenHandleInformation(string accountFilter, bool debug)
         {
             int nEntryCount = 0;
             var uniqueUsers = new List<string>();
+
+            if (debug)
+            {
+                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+
+                if (Utilities.EnableTokenPrivileges(
+                    new List<string> { Win32Consts.SE_DEBUG_NAME },
+                    out Dictionary<string, bool> _))
+                {
+                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                }
+                else
+                {
+                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    return false;
+                }
+            }
 
             Console.WriteLine("[>] Trying to enumerate token handles.");
 
@@ -170,7 +221,7 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetVerboseTokenInformation(int pid, int tid, IntPtr hObject)
+        public static bool GetVerboseTokenInformation(int pid, int tid, IntPtr hObject, bool debug)
         {
             IntPtr hProcess;
             var hThread = IntPtr.Zero;
@@ -180,6 +231,23 @@ namespace TokenDump.Library
 
             if (hObject != IntPtr.Zero)
                 accessMask |= ACCESS_MASK.PROCESS_DUP_HANDLE;
+
+            if (debug)
+            {
+                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+
+                if (Utilities.EnableTokenPrivileges(
+                    new List<string> { Win32Consts.SE_DEBUG_NAME },
+                    out Dictionary<string, bool> _))
+                {
+                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                }
+                else
+                {
+                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    return false;
+                }
+            }
 
             if (info.ThreadId != 0)
                 Console.WriteLine("[>] Trying to dump thread token information.");

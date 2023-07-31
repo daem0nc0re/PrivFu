@@ -13,6 +13,7 @@ namespace TokenDump
             {
                 options.SetTitle("TokenDump - Tool to dump processs token information.");
                 options.AddFlag(false, "h", "help", "Displays this help message.");
+                options.AddFlag(false, "d", "debug", "Flag to enable SeDebugPrivilege.");
                 options.AddFlag(false, "e", "enum", "Flag to enumerate brief information tokens for processes or handles.");
                 options.AddFlag(false, "T", "thread", "Flag to scan thead tokens. Use with -e option.");
                 options.AddFlag(false, "H", "handle", "Flag to scan token handles. Use with -e option.");

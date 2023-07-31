@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using TokenDump.Interop;
 
@@ -406,6 +408,88 @@ namespace TokenDump.Library
             outputBuilder.Append(ParseTokenDaclTableToString(acl));
 
             Console.WriteLine(outputBuilder.ToString());
+        }
+
+
+        public static bool EnableTokenPrivileges(
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> adjustedPrivs)
+        {
+            return EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                requiredPrivs,
+                out adjustedPrivs);
+        }
+
+
+        public static bool EnableTokenPrivileges(
+            IntPtr hToken,
+            List<string> requiredPrivs,
+            out Dictionary<string, bool> adjustedPrivs)
+        {
+            var allEnabled = true;
+            adjustedPrivs = new Dictionary<string, bool>();
+
+            do
+            {
+                if (requiredPrivs.Count == 0)
+                    break;
+
+                allEnabled = Helpers.GetTokenPrivileges(
+                    hToken,
+                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                if (!allEnabled)
+                    break;
+
+                foreach (var priv in requiredPrivs)
+                {
+                    adjustedPrivs.Add(priv, false);
+
+                    foreach (var available in availablePrivs)
+                    {
+                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        {
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
+                            {
+                                adjustedPrivs[priv] = true;
+                            }
+                            else
+                            {
+                                IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
+                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+
+                                if (NativeMethods.LookupPrivilegeValue(
+                                    null,
+                                    priv,
+                                    out tokenPrivileges.Privileges[0].Luid))
+                                {
+                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
+                                    Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
+
+                                    adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
+                                        hToken,
+                                        false,
+                                        pTokenPrivileges,
+                                        Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
+                                        IntPtr.Zero,
+                                        out int _);
+                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
+                                }
+
+                                Marshal.FreeHGlobal(pTokenPrivileges);
+                            }
+
+                            break;
+                        }
+                    }
+
+                    if (!adjustedPrivs[priv])
+                        allEnabled = false;
+                }
+            } while (false);
+
+            return allEnabled;
         }
 
 

@@ -7,6 +7,9 @@ namespace TokenDump.Handler
     {
         public static void Run(CommandLineParser options)
         {
+            string account = options.GetValue("account");
+            bool debug = options.GetFlag("debug");
+
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
@@ -20,11 +23,11 @@ namespace TokenDump.Handler
                 if (options.GetFlag("enum"))
                 {
                     if (options.GetFlag("handle"))
-                        Modules.GetTokenHandleInformation(options.GetValue("account"));
+                        Modules.GetTokenHandleInformation(account, debug);
                     else if (options.GetFlag("thread"))
-                        Modules.GetThreadTokenInformation(options.GetValue("account"));
+                        Modules.GetThreadTokenInformation(account, debug);
                     else
-                        Modules.GetProcessTokenInformation(options.GetValue("account"));
+                        Modules.GetProcessTokenInformation(account, debug);
                 }
                 else if (options.GetFlag("scan"))
                 {
@@ -78,7 +81,7 @@ namespace TokenDump.Handler
                             }
                         }
 
-                        Modules.GetVerboseTokenInformation(pid, tid, hObject);
+                        Modules.GetVerboseTokenInformation(pid, tid, hObject, debug);
                     }
                 }
                 else
