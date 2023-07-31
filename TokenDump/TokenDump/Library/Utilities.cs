@@ -383,6 +383,9 @@ namespace TokenDump.Library
                 outputBuilder.AppendFormat(
                     "AppContainer SID    : {0}\n",
                     string.IsNullOrEmpty(info.AppContainerSid) ? "N/A" : info.AppContainerSid);
+                outputBuilder.AppendFormat(
+                    "AppContainer Number : {0}\n",
+                    (info.AppContainerNumber == uint.MaxValue) ? "N/A" : info.AppContainerNumber.ToString());
             }
 
             if (!info.IsLinkedToken)
@@ -786,10 +789,13 @@ namespace TokenDump.Library
                         info.AppContainerName = "N/A";
                         info.AppContainerSid = "N/A";
                     }
+
                     if (string.IsNullOrEmpty(info.AppContainerName))
                     {
                         info.AppContainerName = info.AppContainerSid;
                     }
+
+                    Helpers.GetTokenAppContainerNumber(hToken, out info.AppContainerNumber);
 
                     capabilities = Helpers.GetTokenCapabilities(hToken);
                 }

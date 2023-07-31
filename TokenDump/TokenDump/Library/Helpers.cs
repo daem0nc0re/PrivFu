@@ -1003,6 +1003,27 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenAppContainerNumber(IntPtr hToken, out uint nAppContainers)
+        {
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenAppContainerNumber,
+                pInfoBuffer,
+                4u,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                nAppContainers = (uint)Marshal.ReadInt32(pInfoBuffer);
+            else
+                nAppContainers = uint.MaxValue;
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool GetTokenAppContainerSid(IntPtr hToken, out string stringSid, out string accountName)
         {
             NTSTATUS ntstatus;
