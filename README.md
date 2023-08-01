@@ -862,6 +862,7 @@ Usage: SwitchPriv.exe [Options]
         -e, --enable    : Specifies token privilege to enable. Case insensitive.
         -d, --disable   : Specifies token privilege to disable. Case insensitive.
         -r, --remove    : Specifies token privilege to remove. Case insensitive.
+        -f, --find      : Specifies token privilege to find.
         -p, --pid       : Specifies the target PID. Default specifies PPID.
         -i, --integrity : Specifies integrity level to set.
         -g, --get       : Flag to get available privileges for the target process.
@@ -902,109 +903,122 @@ If you want to control privilege for a remote process, specify the target PID as
 For example, to enable SeUndockPrivilege for PID 7584, execute with `--enable` option as follows:
 
 ```
-C:\dev>SwitchPriv.exe -p 7584 -e undock
+C:\dev>SwitchPriv.exe -p 6968 -e undock
 
 [>] Trying to enable SeUndockPrivilege.
-    |-> Target PID   : 7584
-    |-> Process Name : notepad
+    [*] Target PID   : 6968
+    [*] Process Name : Notepad
 [+] SeUndockPrivilege is enabled successfully.
+[*] Done.
 ```
 
 To list current token privileges for the target process, execute with `--get` flag as follws:
 
 ```
-C:\dev>SwitchPriv.exe -p 7584 -g
+C:\dev>SwitchPriv.exe -p 6968 -g
 
 [>] Trying to get available token privilege(s) for the target process.
-    |-> Target PID   : 7584
-    |-> Process Name : notepad
+    [*] Target PID   : 6968
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
 
-Privilege Name                             State
-========================================== ========
-SeShutdownPrivilege                        Disabled
-SeChangeNotifyPrivilege                    Enabled
-SeUndockPrivilege                          Enabled
-SeIncreaseWorkingSetPrivilege              Disabled
-SeTimeZonePrivilege                        Disabled
+PRIVILEGES INFORMATION
+----------------------
 
-[*] Integrity Level : MEDIUM_MANDATORY_LEVEL
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
 ```
 
 To perform any actions as SYSTEM, set `--system` flag as follows:
 
 ```
-C:\dev>SwitchPriv.exe -p 1400 -g -s
+C:\dev>SwitchPriv.exe -p 1140 -g -s
 
 [>] Trying to get available token privilege(s) for the target process.
-    |-> Target PID   : 1400
-    |-> Process Name : svchost
+    [*] Target PID   : 1140
+    [*] Process Name : svchost
 [>] Trying to get SYSTEM.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 4572
-[>] Trying to impersonate as smss.exe.
-[+] Impersonation is successful.
+[+] Got SYSTEM privilege.
+[+] Got 28 token privilege(s).
 
+PRIVILEGES INFORMATION
+----------------------
 
-Privilege Name                             State
-========================================== ========
-SeAssignPrimaryTokenPrivilege              Disabled
-SeLockMemoryPrivilege                      Enabled
-SeIncreaseQuotaPrivilege                   Disabled
-SeTcbPrivilege                             Enabled
-SeSecurityPrivilege                        Disabled
-SeTakeOwnershipPrivilege                   Disabled
-SeLoadDriverPrivilege                      Disabled
-SeSystemProfilePrivilege                   Enabled
-SeSystemtimePrivilege                      Disabled
-SeProfileSingleProcessPrivilege            Enabled
-SeIncreaseBasePriorityPrivilege            Enabled
-SeCreatePagefilePrivilege                  Enabled
-SeCreatePermanentPrivilege                 Enabled
-SeBackupPrivilege                          Disabled
-SeRestorePrivilege                         Disabled
-SeShutdownPrivilege                        Disabled
-SeDebugPrivilege                           Enabled
-SeAuditPrivilege                           Enabled
-SeSystemEnvironmentPrivilege               Disabled
-SeChangeNotifyPrivilege                    Enabled
-SeUndockPrivilege                          Disabled
-SeManageVolumePrivilege                    Disabled
-SeImpersonatePrivilege                     Enabled
-SeCreateGlobalPrivilege                    Enabled
-SeIncreaseWorkingSetPrivilege              Enabled
-SeTimeZonePrivilege                        Enabled
-SeCreateSymbolicLinkPrivilege              Enabled
-SeDelegateSessionUserImpersonatePrivilege  Enabled
+Privilege Name                            State
+========================================= =========================
+SeAssignPrimaryTokenPrivilege             Disabled
+SeLockMemoryPrivilege                     EnabledByDefault, Enabled
+SeIncreaseQuotaPrivilege                  Disabled
+SeTcbPrivilege                            EnabledByDefault, Enabled
+SeSecurityPrivilege                       Disabled
+SeTakeOwnershipPrivilege                  Disabled
+SeLoadDriverPrivilege                     Disabled
+SeSystemProfilePrivilege                  EnabledByDefault, Enabled
+SeSystemtimePrivilege                     Disabled
+SeProfileSingleProcessPrivilege           EnabledByDefault, Enabled
+SeIncreaseBasePriorityPrivilege           EnabledByDefault, Enabled
+SeCreatePagefilePrivilege                 EnabledByDefault, Enabled
+SeCreatePermanentPrivilege                EnabledByDefault, Enabled
+SeBackupPrivilege                         Disabled
+SeRestorePrivilege                        Disabled
+SeShutdownPrivilege                       Disabled
+SeDebugPrivilege                          EnabledByDefault, Enabled
+SeAuditPrivilege                          EnabledByDefault, Enabled
+SeSystemEnvironmentPrivilege              Disabled
+SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
+SeUndockPrivilege                         Disabled
+SeManageVolumePrivilege                   Disabled
+SeImpersonatePrivilege                    EnabledByDefault, Enabled
+SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
+SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
+SeTimeZonePrivilege                       EnabledByDefault, Enabled
+SeCreateSymbolicLinkPrivilege             EnabledByDefault, Enabled
+SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
 
-[*] Integrity Level : SYSTEM_MANDATORY_LEVEL
+[*] Integrity Level : System Mandatory Level
+[*] Done.
 ```
 
-To enable SeChangeNotifyPrivilege, execute with `--disable` option as follows:
+For example, to enable SeChangeNotifyPrivilege, execute with `--disable` option as follows:
 
 ```
-C:\dev>SwitchPriv.exe -p 7584 -d changenotify
+C:\dev>SwitchPriv.exe -p 8520 -d changenotify
 
 [>] Trying to disable SeChangeNotifyPrivilege.
-    |-> Target PID   : 7584
-    |-> Process Name : notepad
+    [*] Target PID   : 8520
+    [*] Process Name : Notepad
 [+] SeChangeNotifyPrivilege is disabled successfully.
+[*] Done.
 
 
-C:\dev>SwitchPriv.exe -p 7584 -g
+C:\dev>SwitchPriv.exe -p 8520 -g
 
 [>] Trying to get available token privilege(s) for the target process.
-    |-> Target PID   : 7584
-    |-> Process Name : notepad
+    [*] Target PID   : 8520
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
 
-Privilege Name                             State
-========================================== ========
-SeShutdownPrivilege                        Disabled
-SeChangeNotifyPrivilege                    Disabled
-SeUndockPrivilege                          Enabled
-SeIncreaseWorkingSetPrivilege              Disabled
-SeTimeZonePrivilege                        Disabled
+PRIVILEGES INFORMATION
+----------------------
 
-[*] Integrity Level : MEDIUM_MANDATORY_LEVEL
+Privilege Name                State
+============================= ================
+SeShutdownPrivilege           Enabled
+SeChangeNotifyPrivilege       EnabledByDefault
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Enabled
+SeTimeZonePrivilege           Enabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
 ```
 
 If you don't specify `--pid` option, targets parent process of this tool as follows:
@@ -1026,9 +1040,10 @@ SeTimeZonePrivilege           Change the time zone                 Disabled
 C:\dev>SwitchPriv.exe -e timezone
 
 [>] Trying to enable SeTimeZonePrivilege.
-    |-> Target PID   : 4464
-    |-> Process Name : cmd
+    [*] Target PID   : 9468
+    [*] Process Name : cmd
 [+] SeTimeZonePrivilege is enabled successfully.
+[*] Done.
 
 
 C:\dev>whoami /priv
@@ -1047,18 +1062,23 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 C:\dev>SwitchPriv.exe -g
 
 [>] Trying to get available token privilege(s) for the target process.
-    |-> Target PID   : 4464
-    |-> Process Name : cmd
+    [*] Target PID   : 9468
+    [*] Process Name : cmd
+[+] Got 5 token privilege(s).
 
-Privilege Name                             State
-========================================== ========
-SeShutdownPrivilege                        Disabled
-SeChangeNotifyPrivilege                    Enabled
-SeUndockPrivilege                          Disabled
-SeIncreaseWorkingSetPrivilege              Disabled
-SeTimeZonePrivilege                        Enabled
+PRIVILEGES INFORMATION
+----------------------
 
-[*] Integrity Level : MEDIUM_MANDATORY_LEVEL
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Disabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
 ```
 
 To remove privilege, use `--remove` option as follows:
@@ -1079,10 +1099,11 @@ SeTimeZonePrivilege           Change the time zone                 Enabled
 
 C:\dev>SwitchPriv.exe -r timezone
 
-[>] Trying to enable SeTimeZonePrivilege.
-    |-> Target PID   : 4464
-    |-> Process Name : cmd
+[>] Trying to remove SeTimeZonePrivilege.
+    [*] Target PID   : 9788
+    [*] Process Name : cmd
 [+] SeTimeZonePrivilege is removed successfully.
+[*] Done.
 
 
 C:\dev>whoami /priv
@@ -1116,11 +1137,12 @@ SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
 C:\dev>SwitchPriv.exe -e all
 
 [>] Trying to enable all token privileges.
-    |-> Target PID   : 15240
-    |-> Process Name : cmd
+    [*] Target PID   : 9788
+    [*] Process Name : cmd
 [+] SeShutdownPrivilege is enabled successfully.
 [+] SeUndockPrivilege is enabled successfully.
 [+] SeIncreaseWorkingSetPrivilege is enabled successfully.
+[+] SeTimeZonePrivilege is enabled successfully.
 [*] Done.
 
 
@@ -1142,59 +1164,64 @@ To find process have a specific privilege, use `--find` option as follows:
 ```
 C:\dev>SwitchPriv.exe -f createtoken
 
-[>] Searching process have SeCreateTokenPrivilege.
-[+] Following Processes have SeCreateTokenPrivilege.
-    |-> smss (PID : 340)
-    |-> csrss (PID : 532)
-    |-> lsass (PID : 700)
-    |-> csrss (PID : 464)
-    |-> Memory Compression (PID : 1828)
-[+] 5 process have SeCreateTokenPrivilege.
-[*] Access is denied by following 2 process.
-    |-> System (PID : 4)
-    |-> Idle (PID : 0)
+[>] Searching processes have SeCreateTokenPrivilege.
+[+] Got 5 process(es).
+    [*] csrss (PID : 800)
+    [*] smss (PID : 660)
+    [*] lsass (PID : 1088)
+    [*] Memory Compression (PID : 3600)
+    [*] csrss (PID : 868)
+[*] Access is denied by following 2 process(es).
+    [*] System (PID : 4)
+    [*] Idle (PID : 0)
+[*] Done.
 
 
-C:\dev>SwitchPriv.exe -g -p 464
+C:\dev>SwitchPriv.exe -g -p 800
 
 [>] Trying to get available token privilege(s) for the target process.
-    |-> Target PID   : 464
-    |-> Process Name : csrss
+    [*] Target PID   : 800
+    [*] Process Name : csrss
+[+] Got 30 token privilege(s).
 
-Privilege Name                             State
-========================================== ========
-SeCreateTokenPrivilege                     Disabled
-SeAssignPrimaryTokenPrivilege              Disabled
-SeLockMemoryPrivilege                      Enabled
-SeIncreaseQuotaPrivilege                   Disabled
-SeTcbPrivilege                             Enabled
-SeSecurityPrivilege                        Disabled
-SeTakeOwnershipPrivilege                   Disabled
-SeLoadDriverPrivilege                      Disabled
-SeSystemProfilePrivilege                   Enabled
-SeSystemtimePrivilege                      Disabled
-SeProfileSingleProcessPrivilege            Enabled
-SeIncreaseBasePriorityPrivilege            Enabled
-SeCreatePagefilePrivilege                  Enabled
-SeCreatePermanentPrivilege                 Enabled
-SeBackupPrivilege                          Disabled
-SeRestorePrivilege                         Disabled
-SeShutdownPrivilege                        Disabled
-SeDebugPrivilege                           Enabled
-SeAuditPrivilege                           Enabled
-SeSystemEnvironmentPrivilege               Disabled
-SeChangeNotifyPrivilege                    Enabled
-SeUndockPrivilege                          Disabled
-SeManageVolumePrivilege                    Disabled
-SeImpersonatePrivilege                     Enabled
-SeCreateGlobalPrivilege                    Enabled
-SeRelabelPrivilege                         Disabled
-SeIncreaseWorkingSetPrivilege              Enabled
-SeTimeZonePrivilege                        Enabled
-SeCreateSymbolicLinkPrivilege              Enabled
-SeDelegateSessionUserImpersonatePrivilege  Enabled
+PRIVILEGES INFORMATION
+----------------------
 
-[*] Integrity Level : SYSTEM_MANDATORY_LEVEL
+Privilege Name                            State
+========================================= =========================
+SeCreateTokenPrivilege                    Disabled
+SeAssignPrimaryTokenPrivilege             Disabled
+SeLockMemoryPrivilege                     EnabledByDefault, Enabled
+SeIncreaseQuotaPrivilege                  Disabled
+SeTcbPrivilege                            EnabledByDefault, Enabled
+SeSecurityPrivilege                       Disabled
+SeTakeOwnershipPrivilege                  Disabled
+SeLoadDriverPrivilege                     Disabled
+SeSystemProfilePrivilege                  EnabledByDefault, Enabled
+SeSystemtimePrivilege                     Disabled
+SeProfileSingleProcessPrivilege           EnabledByDefault, Enabled
+SeIncreaseBasePriorityPrivilege           EnabledByDefault, Enabled
+SeCreatePagefilePrivilege                 EnabledByDefault, Enabled
+SeCreatePermanentPrivilege                EnabledByDefault, Enabled
+SeBackupPrivilege                         Disabled
+SeRestorePrivilege                        Disabled
+SeShutdownPrivilege                       Disabled
+SeDebugPrivilege                          EnabledByDefault, Enabled
+SeAuditPrivilege                          EnabledByDefault, Enabled
+SeSystemEnvironmentPrivilege              Disabled
+SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
+SeUndockPrivilege                         Disabled
+SeManageVolumePrivilege                   Disabled
+SeImpersonatePrivilege                    EnabledByDefault, Enabled
+SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
+SeRelabelPrivilege                        Disabled
+SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
+SeTimeZonePrivilege                       EnabledByDefault, Enabled
+SeCreateSymbolicLinkPrivilege             EnabledByDefault, Enabled
+SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
+
+[*] Integrity Level : System Mandatory Level
+[*] Done.
 ```
 
 
