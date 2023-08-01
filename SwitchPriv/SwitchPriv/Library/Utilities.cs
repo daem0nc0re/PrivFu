@@ -39,7 +39,7 @@ namespace SwitchPriv.Library
                     {
                         if (Helpers.CompareIgnoreCase(available.Key, priv))
                         {
-                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) == 0)
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                             {
                                 adjustedPrivs[priv] = false;
                             }
@@ -121,7 +121,7 @@ namespace SwitchPriv.Library
                     {
                         if (Helpers.CompareIgnoreCase(available.Key, priv))
                         {
-                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
+                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                             {
                                 adjustedPrivs[priv] = true;
                             }
@@ -135,7 +135,7 @@ namespace SwitchPriv.Library
                                     priv,
                                     out tokenPrivileges.Privileges[0].Luid))
                                 {
-                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
+                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
                                     Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
 
                                     adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
@@ -294,7 +294,7 @@ namespace SwitchPriv.Library
                                 priv,
                                 out tokenPrivileges.Privileges[0].Luid))
                             {
-                                tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.REMOVED;
+                                tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Removed;
                                 Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
 
                                 operationStatus[priv] = NativeMethods.AdjustTokenPrivileges(
@@ -359,7 +359,7 @@ namespace SwitchPriv.Library
                     Label = new SID_AND_ATTRIBUTES
                     {
                         Sid = pSid,
-                        Attributes = (uint)(SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY),
+                        Attributes = (uint)(SE_GROUP_ATTRIBUTES.Integrity),
                     }
                 };
                 Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);

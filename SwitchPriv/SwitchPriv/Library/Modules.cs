@@ -69,7 +69,7 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
+                    if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                         privsToDisable.Add(priv.Key);
                 }
 
@@ -178,7 +178,7 @@ namespace SwitchPriv.Library
                 }
                 else
                 {
-                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.ENABLED) == 0)
+                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                     {
                         Console.WriteLine("[*] {0} is already disabled.", privilegeName);
                         break;
@@ -269,7 +269,7 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) == 0)
+                    if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                         privsToEnable.Add(priv.Key);
                 }
 
@@ -378,7 +378,7 @@ namespace SwitchPriv.Library
                 }
                 else
                 {
-                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
+                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                     {
                         Console.WriteLine("[*] {0} is already enabled.", privilegeName);
                         break;
@@ -509,7 +509,6 @@ namespace SwitchPriv.Library
             {
                 int error;
                 IntPtr hProcess;
-                bool isEnabled;
                 var resultsBuilder = new StringBuilder();
 
                 Console.WriteLine("[>] Trying to get available token privilege(s) for the target process.");
@@ -555,37 +554,31 @@ namespace SwitchPriv.Library
 
                 if (availablePrivs.Count > 0)
                 {
-                    var nameHeader = "Privilege Name";
-                    var stateHeader = "State";
-                    var nNameLength = nameHeader.Length;
-                    var nStateLength = stateHeader.Length;
+                    var titles = new string[] { "Privilege Name", "State" };
+                    var widths = new int[titles.Length];
+
+                    for (var idx = 0; idx < titles.Length; idx++)
+                        widths[idx] = titles[idx].Length;
 
                     foreach (var priv in availablePrivs)
                     {
-                        isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
+                        if (priv.Key.Length > widths[0])
+                            widths[0] = priv.Key.Length;
 
-                        if (priv.Key.Length > nNameLength)
-                            nNameLength = priv.Key.Length;
-
-                        if (isEnabled && ("Enabled".Length > nStateLength))
-                            nStateLength = "Enabled".Length;
-                        else if (!isEnabled && ("Disabled".Length > nStateLength))
-                            nStateLength = "Disabled".Length;
+                        if (priv.Value.ToString().Length > widths[1])
+                            widths[1] = priv.Value.ToString().Length;
                     }
 
-                    var lineFormat = string.Format("{{0,-{0}}} {{1,-{1}}}\n", nNameLength, nStateLength);
+                    var lineFormat = string.Format("{{0,-{0}}} {{1,-{1}}}\n", widths[0], widths[1]);
 
-                    resultsBuilder.Append(string.Format("[+] Got {0} token privilege(s).\n\n", availablePrivs.Count));
+                    resultsBuilder.AppendFormat("[+] Got {0} token privilege(s).\n\n", availablePrivs.Count);
                     resultsBuilder.Append("PRIVILEGES INFORMATION\n");
                     resultsBuilder.Append("----------------------\n\n");
-                    resultsBuilder.Append(string.Format(lineFormat, nameHeader, stateHeader));
-                    resultsBuilder.Append(string.Format(lineFormat, new string('=', nNameLength), new string('=', nStateLength)));
+                    resultsBuilder.AppendFormat(lineFormat, titles[0], titles[1]);
+                    resultsBuilder.AppendFormat(lineFormat, new string('=', widths[0]), new string('=', widths[1]));
 
                     foreach (var priv in availablePrivs)
-                    {
-                        isEnabled = ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0);
-                        resultsBuilder.Append(string.Format(lineFormat, priv.Key, isEnabled ? "Enabled" : "Disabled"));
-                    }
+                        resultsBuilder.AppendFormat(lineFormat, priv.Key, priv.Value.ToString());
 
                     resultsBuilder.Append("\n");
                 }
@@ -594,7 +587,7 @@ namespace SwitchPriv.Library
                     resultsBuilder.Append("[*] No available token privileges.\n");
                 }
 
-                resultsBuilder.Append(string.Format("[*] Integrity Level : {0}", Helpers.GetTokenIntegrityLevelString(hToken)));
+                resultsBuilder.AppendFormat("[*] Integrity Level : {0}", Helpers.GetTokenIntegrityLevelString(hToken));
                 NativeMethods.CloseHandle(hProcess);
 
                 Console.WriteLine(resultsBuilder.ToString());
