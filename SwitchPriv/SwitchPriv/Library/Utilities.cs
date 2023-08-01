@@ -207,7 +207,7 @@ namespace SwitchPriv.Library
                     hToken,
                     TokenAccessFlags.MAXIMUM_ALLOWED,
                     IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation,
+                    SECURITY_IMPERSONATION_LEVEL.Impersonation,
                     TOKEN_TYPE.TokenImpersonation,
                     out IntPtr hDupToken);
                 NativeMethods.CloseHandle(hToken);
@@ -241,14 +241,8 @@ namespace SwitchPriv.Library
 
                 if (status)
                 {
-                    var level = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pImpersonationLevel);
-
-                    if (level == SECURITY_IMPERSONATION_LEVEL.SecurityImpersonation)
-                        status = true;
-                    else if (level == SECURITY_IMPERSONATION_LEVEL.SecurityDelegation)
-                        status = true;
-                    else
-                        status = false;
+                    var level = Marshal.ReadInt32(pImpersonationLevel);
+                    status = (level >= (int)SECURITY_IMPERSONATION_LEVEL.Impersonation);
                 }
             }
 

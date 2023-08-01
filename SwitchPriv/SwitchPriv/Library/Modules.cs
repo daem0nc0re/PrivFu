@@ -830,14 +830,44 @@ namespace SwitchPriv.Library
 
         public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool asSystem)
         {
-            string mandatoryLevelSid = Helpers.ConvertIndexToMandatoryLevelSid(integrityLevelIndex);
+            string mandatoryLevelSid;
             var status = false;
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
+            }
+
+            switch (integrityLevelIndex)
+            {
+                case 0:
+                    mandatoryLevelSid = "S-1-16-0"; // Untrusted
+                    break;
+                case 1:
+                    mandatoryLevelSid = "S-1-16-4096"; // Low
+                    break;
+                case 2:
+                    mandatoryLevelSid = "S-1-16-8192"; // Medium
+                    break;
+                case 3:
+                    mandatoryLevelSid = "S-1-16-8448"; // Medium Plus
+                    break;
+                case 4:
+                    mandatoryLevelSid = "S-1-16-12288"; // High
+                    break;
+                case 5:
+                    mandatoryLevelSid = "S-1-16-16384"; // System
+                    break;
+                case 6:
+                    mandatoryLevelSid = "S-1-16-20480"; // Protected (should be invalid)
+                    break;
+                case 7:
+                    mandatoryLevelSid = "S-1-16-28672"; // Secure (should be invalid)
+                    break;
+                default:
+                    return false;
             }
 
             do

@@ -150,10 +150,10 @@ namespace SwitchPriv.Interop
 
     internal enum SECURITY_IMPERSONATION_LEVEL
     {
-        SecurityAnonymous,
-        SecurityIdentification,
-        SecurityImpersonation,
-        SecurityDelegation
+        Anonymous,
+        Identification,
+        Impersonation,
+        Delegation
     }
 
     [Flags]
@@ -178,6 +178,21 @@ namespace SwitchPriv.Interop
         Enabled = 0x00000002,
         Removed = 0x00000004,
         UsedForAccess = 0x80000000
+    }
+
+    internal enum SID_NAME_USE
+    {
+        User = 1,
+        Group,
+        Domain,
+        Alias,
+        WellKnownGroup,
+        DeletedAccount,
+        Invalid,
+        Unknown,
+        Computer,
+        Label,
+        LogonSession
     }
 
     [Flags]

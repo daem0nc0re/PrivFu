@@ -18,49 +18,31 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string ConvertIndexToMandatoryLevelSid(int index)
+        public static string ConvertIntegrityLeveSidToAccountName(IntPtr pSid)
         {
-            if (index == (int)MANDATORY_LEVEL_INDEX.UNTRUSTED_MANDATORY_LEVEL)
-                return Win32Consts.UNTRUSTED_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.LOW_MANDATORY_LEVEL)
-                return Win32Consts.LOW_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.MEDIUM_MANDATORY_LEVEL)
-                return Win32Consts.MEDIUM_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.MEDIUM_PLUS_MANDATORY_LEVEL)
-                return Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.HIGH_MANDATORY_LEVEL)
-                return Win32Consts.HIGH_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.SYSTEM_MANDATORY_LEVEL)
-                return Win32Consts.SYSTEM_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.PROTECTED_MANDATORY_LEVEL)
-                return Win32Consts.PROTECTED_MANDATORY_LEVEL;
-            else if (index == (int)MANDATORY_LEVEL_INDEX.SECURE_MANDATORY_LEVEL)
-                return Win32Consts.SECURE_MANDATORY_LEVEL;
-            else
-                return null;
-        }
+            string integrityLevel = "N/A";
 
+            // Verify SID = S-1-16-XXXX
+            if (Marshal.ReadInt64(pSid) == 0x10000000_00000101L)
+            {
+                int nNameLength = 255;
+                int nDomainNameLength = 255;
+                var nameBuilder = new StringBuilder(nNameLength);
+                var domainNameBuilder = new StringBuilder(nDomainNameLength);
+                var status = NativeMethods.LookupAccountSid(
+                    null,
+                    pSid,
+                    nameBuilder,
+                    ref nNameLength,
+                    domainNameBuilder,
+                    ref nDomainNameLength,
+                    out SID_NAME_USE _);
 
-        public static string ConvertStringSidToMandatoryLevelName(string stringSid)
-        {
-            if (CompareIgnoreCase(stringSid, Win32Consts.UNTRUSTED_MANDATORY_LEVEL))
-                return "UNTRUSTED_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.LOW_MANDATORY_LEVEL))
-                return "LOW_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.MEDIUM_MANDATORY_LEVEL))
-                return "MEDIUM_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.MEDIUM_PLUS_MANDATORY_LEVEL))
-                return "MEDIUM_PLUS_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.HIGH_MANDATORY_LEVEL))
-                return "HIGH_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.SYSTEM_MANDATORY_LEVEL))
-                return "SYSTEM_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.PROTECTED_MANDATORY_LEVEL))
-                return "PROTECTED_MANDATORY_LEVEL";
-            else if (CompareIgnoreCase(stringSid, Win32Consts.SECURE_MANDATORY_LEVEL))
-                return "SECURE_MANDATORY_LEVEL";
-            else
-                return null;
+                if (status)
+                    integrityLevel = nameBuilder.ToString();
+            }
+
+            return integrityLevel;
         }
 
 
@@ -204,9 +186,7 @@ namespace SwitchPriv.Library
                 var mandatoryLabel = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(TOKEN_MANDATORY_LABEL));
-
-                if (NativeMethods.ConvertSidToStringSid(mandatoryLabel.Label.Sid, out string strSid))
-                    integrityLevel = Helpers.ConvertStringSidToMandatoryLevelName(strSid);
+                integrityLevel = ConvertIntegrityLeveSidToAccountName(mandatoryLabel.Label.Sid);
 
                 Marshal.FreeHGlobal(pInfoBuffer);
             }

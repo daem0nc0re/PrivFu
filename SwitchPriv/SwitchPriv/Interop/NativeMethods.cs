@@ -22,7 +22,6 @@ namespace SwitchPriv.Interop
             IntPtr /* out TOKEN_PRIVILEGES */ PreviousState,
             out int ReturnLength);
 
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
@@ -45,6 +44,16 @@ namespace SwitchPriv.Interop
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool LookupAccountSid(
+            string strSystemName,
+            IntPtr pSid,
+            StringBuilder pName,
+            ref int cchName,
+            StringBuilder pReferencedDomainName,
+            ref int cchReferencedDomainName,
+            out SID_NAME_USE peUse);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(

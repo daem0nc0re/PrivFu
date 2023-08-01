@@ -16,16 +16,6 @@ namespace SwitchPriv.Interop
         public const int ERROR_BAD_LENGTH = 0x00000018;
         public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
 
-        // Mandatory Level SID
-        public const string UNTRUSTED_MANDATORY_LEVEL = "S-1-16-0";
-        public const string LOW_MANDATORY_LEVEL = "S-1-16-4096";
-        public const string MEDIUM_MANDATORY_LEVEL = "S-1-16-8192";
-        public const string MEDIUM_PLUS_MANDATORY_LEVEL = "S-1-16-8448";
-        public const string HIGH_MANDATORY_LEVEL = "S-1-16-12288";
-        public const string SYSTEM_MANDATORY_LEVEL = "S-1-16-16384";
-        public const string PROTECTED_MANDATORY_LEVEL = "S-1-16-20480";
-        public const string SECURE_MANDATORY_LEVEL = "S-1-16-28672";
-
         // Privilege Constants
         public const string SE_CREATE_TOKEN_NAME = "SeCreateTokenPrivilege";
         public const string SE_ASSIGNPRIMARYTOKEN_NAME = "SeAssignPrimaryTokenPrivilege";
