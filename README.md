@@ -1240,11 +1240,11 @@ Usage: TokenDump.exe [Options]
         -e, --enum    : Flag to enumerate brief information tokens for processes or handles.
         -T, --thread  : Flag to scan thead tokens. Use with -e option.
         -H, --handle  : Flag to scan token handles. Use with -e option.
-        -s, --scan    : Flag to get verbose information for a specific process or handle.
+        -s, --scan    : Flag to get verbose information for a specific process, thread or handle.
         -a, --account : Specifies account name filter string. Use with -e flag.
         -p, --pid     : Specifies a target PID in decimal format. Use with -s flag.
         -t, --tid     : Specifies a target TID in decimal format. Use with -s flag and -p option.
-        -v, --value   : Specifies a token handle value in hex format. Use with -s flag.
+        -v, --value   : Specifies a token handle value in hex format. Use with -s flag and -p option.
 ```
 
 To enumerate token for all processes, just set `-e` flag:
