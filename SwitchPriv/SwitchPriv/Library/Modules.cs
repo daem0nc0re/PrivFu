@@ -556,28 +556,36 @@ namespace SwitchPriv.Library
                 {
                     var titles = new string[] { "Privilege Name", "State" };
                     var widths = new int[titles.Length];
+                    var infoToPrint = new Dictionary<string, string>();
 
                     for (var idx = 0; idx < titles.Length; idx++)
                         widths[idx] = titles[idx].Length;
 
                     foreach (var priv in availablePrivs)
                     {
+                        var infoState = priv.Value.ToString();
+
+                        if (priv.Value == SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault)
+                            infoState = "EnabledByDefault, Disabled";
+
+                        infoToPrint.Add(priv.Key, infoState);
+
                         if (priv.Key.Length > widths[0])
                             widths[0] = priv.Key.Length;
 
-                        if (priv.Value.ToString().Length > widths[1])
-                            widths[1] = priv.Value.ToString().Length;
+                        if (infoState.Length > widths[1])
+                            widths[1] = infoState.Length;
                     }
 
                     var lineFormat = string.Format("{{0,-{0}}} {{1,-{1}}}\n", widths[0], widths[1]);
 
-                    resultsBuilder.AppendFormat("[+] Got {0} token privilege(s).\n\n", availablePrivs.Count);
+                    resultsBuilder.AppendFormat("[+] Got {0} token privilege(s).\n\n", infoToPrint.Count);
                     resultsBuilder.Append("PRIVILEGES INFORMATION\n");
                     resultsBuilder.Append("----------------------\n\n");
                     resultsBuilder.AppendFormat(lineFormat, titles[0], titles[1]);
                     resultsBuilder.AppendFormat(lineFormat, new string('=', widths[0]), new string('=', widths[1]));
 
-                    foreach (var priv in availablePrivs)
+                    foreach (var priv in infoToPrint)
                         resultsBuilder.AppendFormat(lineFormat, priv.Key, priv.Value.ToString());
 
                     resultsBuilder.Append("\n");
