@@ -21,8 +21,8 @@ namespace TokenDump.Library
         public static string ConvertDevicePathToDriveLetter(string devicePath)
         {
             var convertedPath = devicePath;
-            var devicePathRegex = new Regex(@"\\Device\\[^\\]+", RegexOptions.IgnoreCase);
-            var driveLetterRegex = new Regex(@"\\GLOBAL\?\?\\[^:]+:", RegexOptions.IgnoreCase);
+            var devicePathRegex = new Regex(@"^\\Device\\[^\\]+", RegexOptions.IgnoreCase);
+            var driveLetterRegex = new Regex(@"^\\GLOBAL\?\?\\[^:]+:", RegexOptions.IgnoreCase);
 
             if (!devicePathRegex.IsMatch(devicePath))
                 return null;
@@ -78,6 +78,8 @@ namespace TokenDump.Library
             var authority = (Marshal.ReadInt64(pSid) >> 16);
             var subAuthority = Marshal.ReadInt32(pSid, 8);
             var status = false;
+            name = null;
+            domain = null;
 
             if ((authority == 0x00000F00_00000000L) &&
                 ((subAuthority == 2) || (subAuthority == 3)))
@@ -89,10 +91,6 @@ namespace TokenDump.Library
                     domain = "PACKAGE CAPABILITY";
                     Marshal.WriteInt32(pSid, 8, 2);
                 }
-                else
-                {
-                    domain = null;
-                }
 
                 hresult = NativeMethods.AppContainerLookupMoniker(pSid, out IntPtr pMoniker);
                 sidType = SID_NAME_USE.Unknown;
@@ -102,11 +100,6 @@ namespace TokenDump.Library
                     status = true;
                     name = Marshal.PtrToStringUni(pMoniker);
                     NativeMethods.AppContainerFreeMemory(pMoniker);
-                }
-                else
-                {
-                    name = null;
-                    domain = null;
                 }
             }
             else
@@ -128,11 +121,6 @@ namespace TokenDump.Library
                 {
                     name = nameBuilder.ToString();
                     domain = domainNameBuilder.ToString();
-                }
-                else
-                {
-                    name = null;
-                    domain = null;
                 }
             }
 
@@ -277,7 +265,7 @@ namespace TokenDump.Library
                 }
             } while (false);
 
-            if (!string.IsNullOrEmpty(rootKey) && nSubKeyCount > 0)
+            if (!string.IsNullOrEmpty(rootKey) && (nSubKeyCount > 0))
             {
                 for (var idx = 0u; idx < nSubKeyCount; idx++)
                 {
