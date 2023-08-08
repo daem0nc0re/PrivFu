@@ -734,6 +734,70 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenAppContainerNumber(IntPtr hToken, out uint nAppContainers)
+        {
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenAppContainerNumber,
+                pInfoBuffer,
+                4u,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                nAppContainers = (uint)Marshal.ReadInt32(pInfoBuffer);
+            else
+                nAppContainers = uint.MaxValue;
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static bool GetTokenAppContainerSid(IntPtr hToken, out string stringSid, out string accountName)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var status = false;
+            var nInfoLength = (uint)(Marshal.SizeOf(typeof(TOKEN_APPCONTAINER_INFORMATION)) + 0x100);
+            stringSid = null;
+            accountName = null;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenAppContainerSid,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (TOKEN_APPCONTAINER_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_APPCONTAINER_INFORMATION));
+                IntPtr pSid = info.TokenAppContainer;
+                status = NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
+
+                if (status)
+                    ConvertSidToAccountName(pSid, out accountName, out SID_NAME_USE _);
+                else
+                    stringSid = null;
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return status;
+        }
+
+
         public static Dictionary<string, SE_GROUP_ATTRIBUTES> GetTokenCapabilities(IntPtr hToken)
         {
             NTSTATUS ntstatus;
@@ -988,70 +1052,6 @@ namespace TokenDump.Library
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
-        public static bool GetTokenAppContainerNumber(IntPtr hToken, out uint nAppContainers)
-        {
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenAppContainerNumber,
-                pInfoBuffer,
-                4u,
-                out uint _);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                nAppContainers = (uint)Marshal.ReadInt32(pInfoBuffer);
-            else
-                nAppContainers = uint.MaxValue;
-
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
-        public static bool GetTokenAppContainerSid(IntPtr hToken, out string stringSid, out string accountName)
-        {
-            NTSTATUS ntstatus;
-            IntPtr pInfoBuffer;
-            var status = false;
-            var nInfoLength = (uint)(Marshal.SizeOf(typeof(TOKEN_APPCONTAINER_INFORMATION)) + 0x100);
-            stringSid = null;
-            accountName = null;
-
-            do
-            {
-                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-                ntstatus = NativeMethods.NtQueryInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenAppContainerSid,
-                    pInfoBuffer,
-                    nInfoLength,
-                    out nInfoLength);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(pInfoBuffer);
-            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                var info = (TOKEN_APPCONTAINER_INFORMATION)Marshal.PtrToStructure(
-                    pInfoBuffer,
-                    typeof(TOKEN_APPCONTAINER_INFORMATION));
-                IntPtr pSid = info.TokenAppContainer;
-                status = NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
-
-                if (status)
-                    ConvertSidToAccountName(pSid, out accountName, out SID_NAME_USE _);
-                else
-                    stringSid = null;
-
-                Marshal.FreeHGlobal(pInfoBuffer);
-            }
-
-            return status;
         }
 
 
