@@ -343,7 +343,7 @@ namespace TokenDump.Library
                 capabilitySids.Add("S-1-15-3-3", @"APPLICATION PACKAGE AUTHORITY\Your home or work networks");
                 capabilitySids.Add("S-1-15-3-4", @"APPLICATION PACKAGE AUTHORITY\Your pictures library");
                 capabilitySids.Add("S-1-15-3-5", @"APPLICATION PACKAGE AUTHORITY\Your videos library");
-                capabilitySids.Add("S-1-15-3-6", @"APPLICATION PACKAGE AUTHORITY\Your music libraryy");
+                capabilitySids.Add("S-1-15-3-6", @"APPLICATION PACKAGE AUTHORITY\Your music library");
                 capabilitySids.Add("S-1-15-3-7", @"APPLICATION PACKAGE AUTHORITY\Your documents library");
                 capabilitySids.Add("S-1-15-3-8", @"APPLICATION PACKAGE AUTHORITY\Your Windows credentials");
                 capabilitySids.Add("S-1-15-3-9", @"APPLICATION PACKAGE AUTHORITY\Software and hardware certificates or a smart card");
