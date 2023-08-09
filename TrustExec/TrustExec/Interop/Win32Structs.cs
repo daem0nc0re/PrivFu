@@ -150,10 +150,10 @@ namespace TrustExec.Interop
     [StructLayout(LayoutKind.Sequential)]
     internal struct SECURITY_QUALITY_OF_SERVICE
     {
-        readonly int Length;
-        readonly SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-        readonly byte ContextTrackingMode;
-        readonly byte EffectiveOnly;
+        public int Length;
+        public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+        public byte ContextTrackingMode;
+        public byte EffectiveOnly;
 
         public SECURITY_QUALITY_OF_SERVICE(
             SECURITY_IMPERSONATION_LEVEL _impersonationLevel,
@@ -308,30 +308,36 @@ namespace TrustExec.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct UNICODE_STRING
+    internal struct UNICODE_STRING : IDisposable
     {
-        ushort Length;
-        ushort MaximumLength;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        string Buffer;
+        public ushort Length;
+        public ushort MaximumLength;
+        private IntPtr buffer;
 
-        public UNICODE_STRING(string str)
+        public UNICODE_STRING(string s)
         {
-            Length = 0;
-            MaximumLength = 0;
-            Buffer = null;
-            SetString(str);
+            Length = (ushort)(s.Length * 2);
+            MaximumLength = (ushort)(Length + 2);
+            buffer = Marshal.StringToHGlobalUni(s);
         }
 
-        public void SetString(string str)
+        public void Dispose()
         {
-            if (str.Length > ushort.MaxValue / 2)
-            {
-                throw new ArgumentException("String too long for UnicodeString");
-            }
-            Length = (ushort)(str.Length * 2);
-            MaximumLength = (ushort)((str.Length * 2) + 1);
-            Buffer = str;
+            Marshal.FreeHGlobal(buffer);
+            buffer = IntPtr.Zero;
+        }
+
+        public void SetBuffer(IntPtr pBuffer)
+        {
+            buffer = pBuffer;
+        }
+
+        public override string ToString()
+        {
+            var unicodeBytes = new byte[Length];
+            Marshal.Copy(buffer, unicodeBytes, 0, Length);
+
+            return Encoding.Unicode.GetString(unicodeBytes);
         }
     }
 }
