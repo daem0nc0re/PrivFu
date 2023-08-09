@@ -382,7 +382,7 @@ namespace NamedPipeImpersonation.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct UNICODE_STRING : IDisposable
+    internal struct UNICODE_STRING : IDisposable
     {
         public ushort Length;
         public ushort MaximumLength;
@@ -408,7 +408,10 @@ namespace NamedPipeImpersonation.Interop
 
         public override string ToString()
         {
-            return Marshal.PtrToStringUni(buffer);
+            var unicodeBytes = new byte[Length];
+            Marshal.Copy(buffer, unicodeBytes, 0, Length);
+
+            return Encoding.Unicode.GetString(unicodeBytes);
         }
     }
 

@@ -191,7 +191,7 @@ namespace NamedPipeImpersonation.Library
                 }
 
                 Console.WriteLine("[>] Trying to spawn token assigned shell.");
-                Console.WriteLine(creationFlags.ToString());
+
                 status = NativeMethods.CreateProcessAsUser(
                     hPrimaryToken,
                     null,
