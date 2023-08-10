@@ -796,6 +796,41 @@ namespace TokenDump.Interop
     }
 
     [Flags]
+    internal enum TOKEN_SECURITY_ATTRIBUTE_FLAGS : uint
+    {
+        NonInheritable = 0x00000001,
+        ValueCaseSensitive = 0x00000002,
+        UseForDenyOnly = 0x00000004,
+        DisableByDefault = 0x00000008,
+        Disabled = 0x00000010,
+        Mandatory = 0x00000020,
+        CompareIgnore = 0x00000040,
+        ValidFlags = 0x0000007F,
+        CustomFlags = 0xFFFF0000
+    }
+
+    internal enum TOKEN_SECURITY_ATTRIBUTE_OPERATION
+    {
+        None,
+        ReplaceAll,
+        Add,
+        Delete,
+        Replace
+    }
+
+    internal enum TOKEN_SECURITY_ATTRIBUTE_TYPE : ushort
+    {
+        Invalid = 0x00,
+        Int64 = 0x01,
+        UInt64 = 0x02,
+        String = 0x03,
+        Fqbn = 0x04,
+        Sid = 0x05,
+        Boolian = 0x06,
+        OctetString = 0x10
+    }
+
+    [Flags]
     internal enum TokenAccessFlags : uint
     {
         None = 0,

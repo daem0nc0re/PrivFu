@@ -1411,6 +1411,57 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenSecurityAttributes(
+            IntPtr hToken,
+            out List<TOKEN_SECURITY_ATTRIBUTE_V1> attributes)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_SECURITY_ATTRIBUTES_INFORMATION));
+            attributes = new List<TOKEN_SECURITY_ATTRIBUTE_V1>();
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenSecurityAttributes,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (TOKEN_SECURITY_ATTRIBUTES_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_SECURITY_ATTRIBUTES_INFORMATION));
+                var nUnitSize = Marshal.SizeOf(typeof(TOKEN_SECURITY_ATTRIBUTE_V1));
+                IntPtr pEntry = info.pAttributeV1;
+
+                for (var idx = 0; idx < (int)info.AttributeCount; idx++)
+                {
+                    var entry = (TOKEN_SECURITY_ATTRIBUTE_V1)Marshal.PtrToStructure(
+                        pEntry,
+                        typeof(TOKEN_SECURITY_ATTRIBUTE_V1));
+                    attributes.Add(entry);
+
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pEntry.ToInt64() + nUnitSize);
+                    else
+                        pEntry = new IntPtr(pEntry.ToInt32() + nUnitSize);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static int GetTokenSessionId(IntPtr hToken)
         {
             int sessionId = -1;
