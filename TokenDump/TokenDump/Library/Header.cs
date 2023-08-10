@@ -37,6 +37,7 @@ namespace TokenDump.Library
         public int ThreadId;
         public int SessionId;
         public IntPtr Handle;
+        public IntPtr SeccurityAttributesBuffer;
         public string ProcessName;
         public string ImageFilePath;
         public string CommandLine;
