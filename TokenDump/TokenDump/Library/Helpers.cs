@@ -1411,6 +1411,58 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenRestrictedSids(
+            IntPtr hToken,
+            out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedInfo)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
+            restrictedInfo = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenRestrictedSids,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                IntPtr pEntry;
+                var nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+                var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+
+                for (var idx = 0; idx < nEntryCount; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pInfoBuffer.ToInt64() + 8 + (idx * nUnitSize));
+                    else
+                        pEntry = new IntPtr(pInfoBuffer.ToInt32() + 4 + (idx * nUnitSize));
+
+                    Console.WriteLine(pEntry.ToString("X16"));
+                    var entry = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
+                        pEntry,
+                        typeof(SID_AND_ATTRIBUTES));
+
+                    NativeMethods.ConvertSidToStringSid(entry.Sid, out string stringSid);
+                    restrictedInfo.Add(stringSid, (SE_GROUP_ATTRIBUTES)entry.Attributes);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         // Returned buffer must be free with Marshal.FreeHGlobal
         public static IntPtr GetTokenSecurityAttributes(IntPtr hToken)
         {

@@ -512,12 +512,6 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_LINKED_TOKEN
-    {
-        public IntPtr LinkedToken;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_GROUPS
     {
         public int GroupCount;
@@ -529,6 +523,12 @@ namespace TokenDump.Interop
             GroupCount = nGroupCount;
             Groups = new SID_AND_ATTRIBUTES[1];
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_LINKED_TOKEN
+    {
+        public IntPtr LinkedToken;
     }
 
     [StructLayout(LayoutKind.Sequential)]
