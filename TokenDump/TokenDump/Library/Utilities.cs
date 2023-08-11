@@ -1101,7 +1101,7 @@ namespace TokenDump.Library
                             pEntry,
                             typeof(TOKEN_SECURITY_ATTRIBUTE_V1));
                         IntPtr pValue = entry.Value;
-                        tableBuilder.AppendFormat("{0}{1}\n", indent, entry.Name.ToString());
+                        tableBuilder.AppendFormat("{0}[*] {1}\n", indent, entry.Name.ToString());
                         tableBuilder.AppendFormat("{0}    Flags : {1}\n", indent, entry.Flags.ToString());
                         tableBuilder.AppendFormat("{0}    Type  : {1}\n", indent, entry.ValueType.ToString());
 
