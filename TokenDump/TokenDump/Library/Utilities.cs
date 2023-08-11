@@ -415,6 +415,7 @@ namespace TokenDump.Library
                 outputBuilder.Append(ParseTokenCapabilitiesTableToString(capabilities));
 
             outputBuilder.Append(ParseTokenDaclTableToString(acl));
+            outputBuilder.Append(ParseTokenSecurityAttributes(info.SeccurityAttributesBuffer));
 
             Console.WriteLine(outputBuilder.ToString());
         }
@@ -1065,6 +1066,113 @@ namespace TokenDump.Library
             }
 
             tableBuilder.Append("\n");
+
+            return tableBuilder.ToString();
+        }
+
+
+        public static string ParseTokenSecurityAttributes(IntPtr pInfoBuffer)
+        {
+            var tableBuilder = new StringBuilder();
+            var nIndentCount = 1;
+            var indent = new string((Char)0x20, nIndentCount * 4);
+
+            tableBuilder.Append("\n");
+            tableBuilder.AppendFormat("{0}SECURITY ATTRIBUTES INFORMATION\n", indent);
+            tableBuilder.AppendFormat("{0}-------------------------------\n\n", indent);
+
+            if (pInfoBuffer == IntPtr.Zero)
+            {
+                tableBuilder.AppendFormat("{0}No attribute(s).", indent);
+            }
+            else
+            {
+                var info = (TOKEN_SECURITY_ATTRIBUTES_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_SECURITY_ATTRIBUTES_INFORMATION));
+                var nUnitSize = Marshal.SizeOf(typeof(TOKEN_SECURITY_ATTRIBUTE_V1));
+                IntPtr pEntry = info.pAttributeV1;
+
+                if (info.AttributeCount > 0)
+                {
+                    for (var idx = 0; idx < (int)info.AttributeCount; idx++)
+                    {
+                        var entry = (TOKEN_SECURITY_ATTRIBUTE_V1)Marshal.PtrToStructure(
+                            pEntry,
+                            typeof(TOKEN_SECURITY_ATTRIBUTE_V1));
+                        IntPtr pValue = entry.Value;
+                        tableBuilder.AppendFormat("{0}{1}\n", indent, entry.Name.ToString());
+                        tableBuilder.AppendFormat("{0}    Flags : {1}\n", indent, entry.Flags.ToString());
+                        tableBuilder.AppendFormat("{0}    Type  : {1}\n", indent, entry.ValueType.ToString());
+
+                        if ((entry.ValueType == TOKEN_SECURITY_ATTRIBUTE_TYPE.Int64) ||
+                            (entry.ValueType == TOKEN_SECURITY_ATTRIBUTE_TYPE.UInt64))
+                        {
+                            for (var count = 0; count < entry.ValueCount; count++)
+                            {
+                                var value = Marshal.ReadInt64(pValue, count * 8);
+                                tableBuilder.AppendFormat(
+                                    "{0}        Value[0x{1}] : 0x{2}\n",
+                                    indent,
+                                    count.ToString("X2"),
+                                    value.ToString("X16"));
+                            }
+                        }
+                        else if (entry.ValueType == TOKEN_SECURITY_ATTRIBUTE_TYPE.String)
+                        {
+                            for (var count = 0; count < entry.ValueCount; count++)
+                            {
+                                var nNextOffset = Marshal.SizeOf(typeof(UNICODE_STRING));
+                                var unicodeString = (UNICODE_STRING)Marshal.PtrToStructure(
+                                    pValue,
+                                    typeof(UNICODE_STRING));
+                                tableBuilder.AppendFormat(
+                                    "{0}        Value[0x{1}] : {2}\n",
+                                    indent,
+                                    count.ToString("X2"),
+                                    unicodeString.ToString());
+
+                                if (Environment.Is64BitProcess)
+                                    pValue = new IntPtr(pValue.ToInt64() + nNextOffset);
+                                else
+                                    pValue = new IntPtr(pValue.ToInt32() + nNextOffset);
+                            }
+                        }
+                        else if (entry.ValueType == TOKEN_SECURITY_ATTRIBUTE_TYPE.Fqbn)
+                        {
+                            for (var count = 0; count < entry.ValueCount; count++)
+                            {
+                                var nNextOffset = Marshal.SizeOf(typeof(TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE));
+                                var fqbn = (TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE)Marshal.PtrToStructure(
+                                    pValue,
+                                    typeof(TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE));
+                                tableBuilder.AppendFormat(
+                                    "{0}        Value[0x{1}] : {2} (Version {3})\n",
+                                    indent,
+                                    count.ToString("X2"),
+                                    fqbn.Name.ToString(),
+                                    fqbn.Version);
+
+                                if (Environment.Is64BitProcess)
+                                    pValue = new IntPtr(pValue.ToInt64() + nNextOffset);
+                                else
+                                    pValue = new IntPtr(pValue.ToInt32() + nNextOffset);
+                            }
+                        }
+
+                        tableBuilder.Append("\n");
+
+                        if (Environment.Is64BitProcess)
+                            pEntry = new IntPtr(pEntry.ToInt64() + nUnitSize);
+                        else
+                            pEntry = new IntPtr(pEntry.ToInt32() + nUnitSize);
+                    }
+                }
+                else
+                {
+                    tableBuilder.AppendFormat("{0}No attribute(s).", indent);
+                }
+            }
 
             return tableBuilder.ToString();
         }

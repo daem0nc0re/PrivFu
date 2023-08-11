@@ -482,6 +482,13 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE
+    {
+        public ulong Version;
+        public UNICODE_STRING Name;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_SECURITY_ATTRIBUTE_V1
     {
         public UNICODE_STRING Name;

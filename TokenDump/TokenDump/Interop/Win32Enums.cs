@@ -798,6 +798,7 @@ namespace TokenDump.Interop
     [Flags]
     internal enum TOKEN_SECURITY_ATTRIBUTE_FLAGS : uint
     {
+        None = 0x00000000,
         NonInheritable = 0x00000001,
         ValueCaseSensitive = 0x00000002,
         UseForDenyOnly = 0x00000004,
@@ -826,7 +827,7 @@ namespace TokenDump.Interop
         String = 0x03,
         Fqbn = 0x04,
         Sid = 0x05,
-        Boolian = 0x06,
+        Boolean = 0x06,
         OctetString = 0x10
     }
 
