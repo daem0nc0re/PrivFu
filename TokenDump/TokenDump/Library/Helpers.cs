@@ -1268,6 +1268,26 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenMandatoryPolicy(IntPtr hToken, out TOKEN_MANDATORY_POLICY_FLAGS policy)
+        {
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_MANDATORY_POLICY));
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenMandatoryPolicy,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                policy = (TOKEN_MANDATORY_POLICY_FLAGS)Marshal.ReadInt32(pInfoBuffer);
+            else
+                policy = TOKEN_MANDATORY_POLICY_FLAGS.None;
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool GetTokenOrigin(IntPtr hToken, out TOKEN_ORIGIN tokenOrigin)
         {
             var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_ORIGIN));

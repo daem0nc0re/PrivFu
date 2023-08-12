@@ -52,6 +52,7 @@ namespace TokenDump.Library
         public string AppContainerSid;
         public uint AppContainerNumber;
         public TOKEN_ELEVATION_TYPE ElevationType;
+        public TOKEN_MANDATORY_POLICY_FLAGS MandatoryPolicy;
         public TOKEN_ORIGIN TokenOrigin;
         public TOKEN_SOURCE TokenSource;
         public TOKEN_STATISTICS TokenStatistics;

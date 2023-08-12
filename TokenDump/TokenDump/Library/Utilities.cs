@@ -378,6 +378,7 @@ namespace TokenDump.Library
             outputBuilder.AppendFormat("Integrity Level     : {0}\n", info.Integrity.ToString());
             outputBuilder.AppendFormat("Session ID          : {0}\n", info.SessionId);
             outputBuilder.AppendFormat("Elevation Type      : {0}\n", info.ElevationType.ToString());
+            outputBuilder.AppendFormat("Mandatory Policy    : {0}\n", info.MandatoryPolicy.ToString());
             outputBuilder.AppendFormat("Elevated            : {0}\n", info.IsElevated.ToString());
             outputBuilder.AppendFormat("Restricted          : {0}\n", info.IsRestricted.ToString());
             outputBuilder.AppendFormat("AppContainer        : {0}\n", info.IsAppContainer.ToString());
@@ -774,6 +775,9 @@ namespace TokenDump.Library
                     break;
 
                 if (!Helpers.GetTokenElevationType(hToken, out info.ElevationType))
+                    break;
+
+                if (!Helpers.GetTokenMandatoryPolicy(hToken, out info.MandatoryPolicy))
                     break;
 
                 if (!Helpers.GetTokenOrigin(hToken, out info.TokenOrigin))

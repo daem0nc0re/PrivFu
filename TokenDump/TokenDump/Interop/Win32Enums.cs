@@ -796,6 +796,14 @@ namespace TokenDump.Interop
     }
 
     [Flags]
+    internal enum TOKEN_MANDATORY_POLICY_FLAGS : uint
+    {
+        None = 0x00000000,
+        NoWriteUp = 0x00000001,
+        NewProcessMin = 0x00000002
+    }
+
+    [Flags]
     internal enum TOKEN_SECURITY_ATTRIBUTE_FLAGS : uint
     {
         None = 0x00000000,

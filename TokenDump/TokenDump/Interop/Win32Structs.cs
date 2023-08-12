@@ -498,6 +498,12 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_MANDATORY_POLICY
+    {
+        public TOKEN_MANDATORY_POLICY_FLAGS Policy;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_ORIGIN
     {
         public LUID OriginatingLogonSession;
