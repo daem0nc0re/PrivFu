@@ -392,7 +392,7 @@ namespace TokenDump.Library
 
                 if (status)
                 {
-                    Utilities.DumpVerboseTokenInformation(info, privs, groups, capabilities, acl);
+                    Utilities.DumpVerboseTokenInformation(info, privs, groups, restrictedGroups, capabilities, acl);
 
                     if (hLinkedToken != IntPtr.Zero)
                     {
@@ -409,7 +409,7 @@ namespace TokenDump.Library
                             out acl);
 
                         if (status)
-                            Utilities.DumpVerboseTokenInformation(info, privs, groups, capabilities, acl);
+                            Utilities.DumpVerboseTokenInformation(info, privs, groups, restrictedGroups, capabilities, acl);
 
                         NativeMethods.NtClose(hLinkedToken);
                     }

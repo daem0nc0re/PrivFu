@@ -307,6 +307,7 @@ namespace TokenDump.Library
             VerboseTokenInformation info,
             Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
             Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+            Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
             Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
             List<AceInformation> acl)
         {
@@ -410,6 +411,9 @@ namespace TokenDump.Library
 
             outputBuilder.Append(ParseTokenPrivilegesTableToString(privs));
             outputBuilder.Append(ParseTokenGroupsTableToString(groups));
+
+            if (info.IsRestricted)
+                outputBuilder.Append(ParseTokenRestrictedGroupsTableToString(restrictedGroups));
 
             if (info.IsAppContainer)
                 outputBuilder.Append(ParseTokenCapabilitiesTableToString(capabilities));
@@ -839,7 +843,7 @@ namespace TokenDump.Library
             var width = new int[titles.Length];
             var accountTable = new Dictionary<string, string>();
             var tableBuilder = new StringBuilder();
-            var indent = new string(' ', 4);
+            var indent = new string((Char)0x20, 4);
             Helpers.GetKnownCapabilitySids(out Dictionary<string, string> capabilitySids);
 
             for (var idx = 0; idx < titles.Length; idx++)
@@ -909,7 +913,7 @@ namespace TokenDump.Library
             var titles = new string[] { "Account Name", "Access", "Flags", "Type" };
             var width = new int[titles.Length];
             var tableBuilder = new StringBuilder();
-            var indent = new string(' ', 4);
+            var indent = new string((Char)0x20, 4);
 
             for (var idx = 0; idx < titles.Length; idx++)
                 width[idx] = titles[idx].Length;
@@ -977,7 +981,7 @@ namespace TokenDump.Library
             var width = new int[titles.Length];
             var tableBuilder = new StringBuilder();
             var tableData = new Dictionary<string, string>();
-            var indent = new string(' ', 4);
+            var indent = new string((Char)0x20, 4);
 
             for (var idx = 0; idx < titles.Length; idx++)
                 width[idx] = titles[idx].Length;
@@ -1029,7 +1033,7 @@ namespace TokenDump.Library
             var width = new int[titles.Length];
             var tableBuilder = new StringBuilder();
             var tableData = new Dictionary<string, string>();
-            var indent = new string(' ', 4);
+            var indent = new string((Char)0x20, 4);
 
             for (var idx = 0; idx < titles.Length; idx++)
                 width[idx] = titles[idx].Length;
@@ -1076,7 +1080,59 @@ namespace TokenDump.Library
         }
 
 
-        public static string ParseTokenSecurityAttributes(IntPtr pInfoBuffer)
+        private static string ParseTokenRestrictedGroupsTableToString(
+            Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups)
+        {
+            var titles = new string[] { "Group Name", "Attributes" };
+            var width = new int[titles.Length];
+            var tableBuilder = new StringBuilder();
+            var tableData = new Dictionary<string, string>();
+            var indent = new string((Char)0x20, 4);
+
+            for (var idx = 0; idx < titles.Length; idx++)
+                width[idx] = titles[idx].Length;
+
+            foreach (var entry in restrictedGroups)
+            {
+                Helpers.ConvertStringSidToAccountName(entry.Key, out string account, out SID_NAME_USE _);
+
+                if (string.IsNullOrEmpty(account))
+                    continue;
+
+                tableData.Add(account, entry.Value.ToString());
+
+                if (account.Length > width[0])
+                    width[0] = account.Length;
+
+                if (entry.Value.ToString().Length > width[1])
+                    width[1] = entry.Value.ToString().Length;
+            }
+
+            tableBuilder.Append("\n");
+            tableBuilder.AppendFormat("{0}RESTRICTED GROUP INFORMATION\n", indent);
+            tableBuilder.AppendFormat("{0}----------------------------\n\n", indent);
+
+            if (tableData.Count == 0)
+            {
+                tableBuilder.AppendFormat("{0}No groups.\n", indent);
+            }
+            else
+            {
+                var lineFormat = string.Format("{{0}}{{1,-{0}}} {{2,-{1}}}\n", width[0], width[1]);
+                tableBuilder.AppendFormat(lineFormat, indent, titles[0], titles[1]);
+                tableBuilder.AppendFormat(lineFormat, indent, new string('=', width[0]), new string('=', width[1]));
+
+                foreach (var entry in tableData)
+                    tableBuilder.AppendFormat(lineFormat, indent, entry.Key, entry.Value);
+            }
+
+            tableBuilder.Append("\n");
+
+            return tableBuilder.ToString();
+        }
+
+
+        private static string ParseTokenSecurityAttributes(IntPtr pInfoBuffer)
         {
             var tableBuilder = new StringBuilder();
             var nIndentCount = 1;
