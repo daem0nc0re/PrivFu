@@ -1413,12 +1413,12 @@ namespace TokenDump.Library
 
         public static bool GetTokenRestrictedSids(
             IntPtr hToken,
-            out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedInfo)
+            out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups)
         {
             NTSTATUS ntstatus;
             IntPtr pInfoBuffer;
             var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
-            restrictedInfo = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
+            restrictedGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
 
             do
             {
@@ -1453,7 +1453,7 @@ namespace TokenDump.Library
                         typeof(SID_AND_ATTRIBUTES));
 
                     NativeMethods.ConvertSidToStringSid(entry.Sid, out string stringSid);
-                    restrictedInfo.Add(stringSid, (SE_GROUP_ATTRIBUTES)entry.Attributes);
+                    restrictedGroups.Add(stringSid, (SE_GROUP_ATTRIBUTES)entry.Attributes);
                 }
 
                 Marshal.FreeHGlobal(pInfoBuffer);

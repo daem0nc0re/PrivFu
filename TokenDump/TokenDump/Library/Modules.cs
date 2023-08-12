@@ -384,6 +384,7 @@ namespace TokenDump.Library
                     ref info,
                     out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+                    out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
                     out List<AceInformation> acl);
                 info.SeccurityAttributesBuffer = Helpers.GetTokenSecurityAttributes(hToken);
@@ -403,6 +404,7 @@ namespace TokenDump.Library
                             ref info,
                             out privs,
                             out groups,
+                            out restrictedGroups,
                             out capabilities,
                             out acl);
 

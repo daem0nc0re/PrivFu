@@ -706,11 +706,13 @@ namespace TokenDump.Library
             ref VerboseTokenInformation info,
             out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
+            out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
             out List<AceInformation> acl)
         {
             var status = false;
             hLinkedToken = IntPtr.Zero;
+            restrictedGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
             capabilities = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
 
             do
@@ -818,6 +820,9 @@ namespace TokenDump.Library
                         out hLinkedToken,
                         out info.HasLinkedToken);
                 }
+
+                if (info.IsRestricted)
+                    status = Helpers.GetTokenRestrictedSids(hToken, out restrictedGroups);
             } while (false);
 
             if (!status)
