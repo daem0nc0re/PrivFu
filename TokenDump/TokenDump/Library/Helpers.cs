@@ -1447,7 +1447,6 @@ namespace TokenDump.Library
                     else
                         pEntry = new IntPtr(pInfoBuffer.ToInt32() + 4 + (idx * nUnitSize));
 
-                    Console.WriteLine(pEntry.ToString("X16"));
                     var entry = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
                         pEntry,
                         typeof(SID_AND_ATTRIBUTES));
