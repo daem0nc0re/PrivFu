@@ -831,6 +831,12 @@ namespace TokenDump.Interop
         OctetString = 0x10
     }
 
+    internal enum TOKEN_TYPE
+    {
+        Primary = 1,
+        Impersonation
+    }
+
     [Flags]
     internal enum TokenAccessFlags : uint
     {
@@ -859,11 +865,5 @@ namespace TokenDump.Interop
         GenericExecute = 0x20000000,
         GenericWrite = 0x40000000,
         GenericRead = 0x80000000
-    }
-
-    internal enum TOKEN_TYPE
-    {
-        Primary = 1,
-        Impersonation
     }
 }

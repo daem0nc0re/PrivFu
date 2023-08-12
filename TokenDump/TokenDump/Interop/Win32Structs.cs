@@ -466,40 +466,6 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_SECURITY_ATTRIBUTES_INFORMATION
-    {
-        public ushort Version;
-        public ushort Reserved;
-        public uint AttributeCount;
-        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTE_V1 */ pAttributeV1;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_SECURITY_ATTRIBUTES_AND_OPERATION_INFORMATION
-    {
-        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTES_INFORMATION */ Attributes;
-        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTE_OPERATION */ Operations;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE
-    {
-        public ulong Version;
-        public UNICODE_STRING Name;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_SECURITY_ATTRIBUTE_V1
-    {
-        public UNICODE_STRING Name;
-        public TOKEN_SECURITY_ATTRIBUTE_TYPE ValueType;
-        public ushort Reserved;
-        public TOKEN_SECURITY_ATTRIBUTE_FLAGS Flags;
-        public uint ValueCount;
-        public IntPtr Value;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_DEFAULT_DACL
     {
         public IntPtr /* PACL */ DefaultDacl;
@@ -563,6 +529,46 @@ namespace TokenDump.Interop
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_PROCESS_TRUST_LEVEL
+    {
+        public IntPtr TrustLevelSid;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_SECURITY_ATTRIBUTE_FQBN_VALUE
+    {
+        public ulong Version;
+        public UNICODE_STRING Name;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_SECURITY_ATTRIBUTE_V1
+    {
+        public UNICODE_STRING Name;
+        public TOKEN_SECURITY_ATTRIBUTE_TYPE ValueType;
+        public ushort Reserved;
+        public TOKEN_SECURITY_ATTRIBUTE_FLAGS Flags;
+        public uint ValueCount;
+        public IntPtr Value;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_SECURITY_ATTRIBUTES_AND_OPERATION_INFORMATION
+    {
+        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTES_INFORMATION */ Attributes;
+        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTE_OPERATION */ Operations;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_SECURITY_ATTRIBUTES_INFORMATION
+    {
+        public ushort Version;
+        public ushort Reserved;
+        public uint AttributeCount;
+        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTE_V1 */ pAttributeV1;
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     internal struct TOKEN_SOURCE
     {
@@ -594,12 +600,6 @@ namespace TokenDump.Interop
         public int GroupCount;
         public int PrivilegeCount;
         public LUID ModifiedId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_PROCESS_TRUST_LEVEL
-    {
-        public IntPtr TrustLevelSid;
     }
 
     [StructLayout(LayoutKind.Sequential)]
