@@ -63,5 +63,9 @@ namespace TokenDump.Library
         public bool IsRestricted;
         public bool IsLinkedToken;
         public bool HasLinkedToken;
+        public bool IsVirtualizationAllowed;
+        public bool IsVirtualizationEnabled;
+        public bool IsSandBoxInert;
+        public bool IsUiAccessToken;
     }
 }

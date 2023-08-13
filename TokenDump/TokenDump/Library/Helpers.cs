@@ -1752,6 +1752,90 @@ namespace TokenDump.Library
         }
 
 
+        public static bool IsTokenSandBoxInert(IntPtr hToken)
+        {
+            var allowed = false;
+            var nInfoLength = 4u;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenSandBoxInert,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return allowed;
+        }
+
+
+        public static bool IsTokenVirtulizationAllowed(IntPtr hToken)
+        {
+            var allowed = false;
+            var nInfoLength = 4u;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenVirtualizationAllowed,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return allowed;
+        }
+
+
+        public static bool IsTokenVirtulizationEnabled(IntPtr hToken)
+        {
+            var allowed = false;
+            var nInfoLength = 4u;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenVirtualizationEnabled,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return allowed;
+        }
+
+
+        public static bool IsUiAccessToken(IntPtr hToken)
+        {
+            var allowed = false;
+            var nInfoLength = 4u;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenUIAccess,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return allowed;
+        }
+
+
         public static bool OpenRemoteThread(
             int pid,
             int tid,
