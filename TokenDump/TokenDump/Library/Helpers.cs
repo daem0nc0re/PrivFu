@@ -1589,6 +1589,73 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenTrustLevel(
+            IntPtr hToken,
+            out string trustLabel,
+            out string stringSid)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_PROCESS_TRUST_LEVEL));
+            trustLabel = null;
+            stringSid = null;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenProcessTrustLevel,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var pSid = Marshal.ReadIntPtr(pInfoBuffer);
+
+                if (pSid != IntPtr.Zero)
+                {
+                    if (Marshal.ReadInt64(pSid) == 0x1300000000000201)
+                    {
+                        string protectionLevel = null;
+                        string signerLevel = null;
+                        var protectionRid = Marshal.ReadInt32(pSid, 0x8);
+                        var signerRid = Marshal.ReadInt32(pSid, 0xC);
+
+                        if (protectionRid == 512)
+                            protectionLevel = "ProtectedLight";
+                        else if (protectionRid == 1024)
+                            protectionLevel = "Protected";
+
+                        if (signerRid == 0x400)
+                            signerLevel = "Authenticode";
+                        else if (signerRid == 0x600)
+                            signerLevel = "AntiMalware";
+                        else if (signerRid == 0x800)
+                            signerLevel = "App";
+                        else if (signerRid == 0x1000)
+                            signerLevel = "Windows";
+                        else if (signerRid == 0x2000)
+                            signerLevel = "WinTcb";
+
+                        if (!string.IsNullOrEmpty(protectionLevel) && !string.IsNullOrEmpty(signerLevel))
+                        {
+                            trustLabel = string.Format(@"TRUST LEVEL\{0}-{1}", protectionLevel, signerLevel);
+                            NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
+                        }
+                    }
+                }
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static string GetTokenUserSid(IntPtr hToken)
         {
             NTSTATUS ntstatus;
