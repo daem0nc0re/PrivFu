@@ -345,20 +345,6 @@ namespace TokenDump.Library
                     }
                 }
 
-                capabilitySids.Add("S-1-15-3-1", @"APPLICATION PACKAGE AUTHORITY\Your Internet connection");
-                capabilitySids.Add("S-1-15-3-2", @"APPLICATION PACKAGE AUTHORITY\Your Internet connection, including incoming connections from the Internet");
-                capabilitySids.Add("S-1-15-3-3", @"APPLICATION PACKAGE AUTHORITY\Your home or work networks");
-                capabilitySids.Add("S-1-15-3-4", @"APPLICATION PACKAGE AUTHORITY\Your pictures library");
-                capabilitySids.Add("S-1-15-3-5", @"APPLICATION PACKAGE AUTHORITY\Your videos library");
-                capabilitySids.Add("S-1-15-3-6", @"APPLICATION PACKAGE AUTHORITY\Your music library");
-                capabilitySids.Add("S-1-15-3-7", @"APPLICATION PACKAGE AUTHORITY\Your documents library");
-                capabilitySids.Add("S-1-15-3-8", @"APPLICATION PACKAGE AUTHORITY\Your Windows credentials");
-                capabilitySids.Add("S-1-15-3-9", @"APPLICATION PACKAGE AUTHORITY\Software and hardware certificates or a smart card");
-                capabilitySids.Add("S-1-15-3-10", @"APPLICATION PACKAGE AUTHORITY\Removable storage");
-                capabilitySids.Add("S-1-15-3-11", @"APPLICATION PACKAGE AUTHORITY\Your Appointments");
-                capabilitySids.Add("S-1-15-3-12", @"APPLICATION PACKAGE AUTHORITY\Your Contacts");
-                capabilitySids.Add("S-1-15-3-4096", @"APPLICATION PACKAGE AUTHORITY\Internet Explorer");
-
                 for (var idx = 0; idx < Capabilities.KnownCapabilityNames.Length; idx++)
                 {
                     var knownName = Capabilities.KnownCapabilityNames[idx];
