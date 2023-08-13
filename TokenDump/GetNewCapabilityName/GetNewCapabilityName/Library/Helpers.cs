@@ -16,7 +16,7 @@ namespace GetNewCapabilityName.Library
         public static List<string> EnumerateFilesRecursive(string directoryPath, string pattern)
         {
             var results = new List<string>();
-            
+
             try
             {
                 var directories = Directory.GetDirectories(directoryPath);
@@ -31,6 +31,7 @@ namespace GetNewCapabilityName.Library
                 }
             }
             catch (System.UnauthorizedAccessException) { }
+            catch (PathTooLongException) { }
 
             return results;
         }

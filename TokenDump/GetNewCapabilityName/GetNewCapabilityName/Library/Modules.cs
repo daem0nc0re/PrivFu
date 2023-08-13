@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using GetNewCapabilityName.Interop;
 
 namespace GetNewCapabilityName.Library
@@ -18,7 +16,8 @@ namespace GetNewCapabilityName.Library
             var searchRoots = new List<string>
             {
                 Environment.GetEnvironmentVariable("LOCALAPPDATA"),
-                string.Format(@"{0}\SystemApps", Environment.GetEnvironmentVariable("WINDIR"))
+                string.Format(@"{0}\SystemApps", Environment.GetEnvironmentVariable("WINDIR")),
+                @"C:\Program Files\WindowsApps"
             };
 
             for (var idx = 0; idx < Capabilities.KnownCapabilityNames.Length; idx++)
