@@ -48,6 +48,8 @@ namespace TokenDump.Library
         public string TokenOwnerSid;
         public string TokenPrimaryGroupName;
         public string TokenPrimaryGroupSid;
+        public string TrustLabel;
+        public string TrustLabelSid;
         public string AppContainerName;
         public string AppContainerSid;
         public uint AppContainerNumber;

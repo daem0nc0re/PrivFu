@@ -362,7 +362,7 @@ namespace TokenDump.Library
             {
                 var imageFilePath = Helpers.ConvertDevicePathToDriveLetter(info.ImageFilePath);
 
-                outputBuilder.AppendFormat("ImageFilePath       : {0}\n", string.IsNullOrEmpty(imageFilePath) ? "N/A" : imageFilePath);
+                outputBuilder.AppendFormat("ImageFilePath       : {0}\n", imageFilePath ?? "N/A");
                 outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
             }
 
@@ -376,6 +376,7 @@ namespace TokenDump.Library
             outputBuilder.AppendFormat("Original ID         : 0x{0}\n", info.TokenOrigin.OriginatingLogonSession.ToInt64().ToString("X16"));
             outputBuilder.AppendFormat("Modified ID         : 0x{0}\n", info.TokenStatistics.ModifiedId.ToInt64().ToString("X16"));
             outputBuilder.AppendFormat("Integrity Level     : {0}\n", info.Integrity.ToString());
+            outputBuilder.AppendFormat("Protection Level    : {0}\n", info.TrustLabel ?? "N/A");
             outputBuilder.AppendFormat("Session ID          : {0}\n", info.SessionId);
             outputBuilder.AppendFormat("Elevation Type      : {0}\n", info.ElevationType.ToString());
             outputBuilder.AppendFormat("Mandatory Policy    : {0}\n", info.MandatoryPolicy.ToString());
@@ -385,12 +386,8 @@ namespace TokenDump.Library
 
             if (info.IsAppContainer)
             {
-                outputBuilder.AppendFormat(
-                    "AppContainer Name   : {0}\n",
-                    string.IsNullOrEmpty(info.AppContainerName) ? "N/A" : info.AppContainerName);
-                outputBuilder.AppendFormat(
-                    "AppContainer SID    : {0}\n",
-                    string.IsNullOrEmpty(info.AppContainerSid) ? "N/A" : info.AppContainerSid);
+                outputBuilder.AppendFormat("AppContainer Name   : {0}\n", info.AppContainerName ?? "N/A");
+                outputBuilder.AppendFormat("AppContainer SID    : {0}\n", info.AppContainerSid ?? "N/A");
                 outputBuilder.AppendFormat(
                     "AppContainer Number : {0}\n",
                     (info.AppContainerNumber == uint.MaxValue) ? "N/A" : info.AppContainerNumber.ToString());
@@ -725,6 +722,7 @@ namespace TokenDump.Library
                 Helpers.GetTokenPrivileges(hToken, out privs);
                 Helpers.GetTokenGroups(hToken, out groups);
                 Helpers.GetTokenDefaultDacl(hToken, out acl);
+                Helpers.GetTokenTrustLevel(hToken, out info.TrustLabel, out info.TrustLabelSid);
                 info.SessionId = Helpers.GetTokenSessionId(hToken);
 
                 if (info.SessionId == -1)
@@ -801,16 +799,8 @@ namespace TokenDump.Library
                 {
                     Helpers.GetTokenAppContainerSid(hToken, out info.AppContainerSid, out info.AppContainerName);
 
-                    if (string.IsNullOrEmpty(info.AppContainerName) && string.IsNullOrEmpty(info.AppContainerSid))
-                    {
-                        info.AppContainerName = "N/A";
-                        info.AppContainerSid = "N/A";
-                    }
-
                     if (string.IsNullOrEmpty(info.AppContainerName))
-                    {
                         info.AppContainerName = info.AppContainerSid;
-                    }
 
                     Helpers.GetTokenAppContainerNumber(hToken, out info.AppContainerNumber);
 

@@ -1620,7 +1620,7 @@ namespace TokenDump.Library
 
                 if (pSid != IntPtr.Zero)
                 {
-                    if (Marshal.ReadInt64(pSid) == 0x1300000000000201)
+                    if (Marshal.ReadInt64(pSid) == 0x1300000000000201L)
                     {
                         string protectionLevel = null;
                         string signerLevel = null;
@@ -1650,6 +1650,8 @@ namespace TokenDump.Library
                         }
                     }
                 }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
