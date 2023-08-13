@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using TokenDump.Interop;
 
 namespace TokenDump.Library
@@ -856,9 +857,13 @@ namespace TokenDump.Library
             {
                 string accountName;
 
-                if (capabilitySids.ContainsKey(entry.Key))
+                if (Regex.IsMatch(entry.Key, @"^S-1-15-3-1024(-\d+){8}$", RegexOptions.IgnoreCase) ||
+                    Regex.IsMatch(entry.Key, @"^S-1-15-3(-\d+){4}$", RegexOptions.IgnoreCase))
                 {
-                    accountName = capabilitySids[entry.Key];
+                    if (capabilitySids.ContainsKey(entry.Key))
+                        accountName = capabilitySids[entry.Key];
+                    else
+                        accountName = entry.Key;
                 }
                 else
                 {

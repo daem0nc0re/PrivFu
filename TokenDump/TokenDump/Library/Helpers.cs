@@ -81,8 +81,15 @@ namespace TokenDump.Library
             name = null;
             domain = null;
 
-            if ((authority == 0x00000F00_00000000L) &&
-                ((subAuthority == 2) || (subAuthority == 3)))
+            if ((Marshal.ReadInt64(pSid) == 0x0F000000_00000201L) &&
+                (Marshal.ReadInt64(pSid, 8) == 0x00001000_00000003L))
+            {
+                domain = "APPLICATION PACKAGE AUTHORITY";
+                name = "Internet Explorer";
+                sidType = SID_NAME_USE.WellKnownGroup;
+            }
+            else if ((Marshal.ReadInt64(pSid) == 0x0F000000_00000801L) &&
+                ((subAuthority == 0x00000002) || (subAuthority == 0x00000003)))
             {
                 HRESULT hresult;
 
