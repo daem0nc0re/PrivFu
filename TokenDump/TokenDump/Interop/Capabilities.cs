@@ -3,7 +3,7 @@
     internal class Capabilities
     {
         /*
-         * Reference:
+         * Based On:
          * https://github.com/googleprojectzero/sandbox-attacksurface-analysis-tools/blob/c7ca3db6c2fb59eec3bceb4d5a731821f84f663a/NtApiDotNet/SecurityCapabilities.cs
          */
         public static readonly string[] KnownCapabilityNames = {
@@ -701,6 +701,7 @@
             "Diagnostics",
             "DisplayDeviceSettings",
             "DocumentsLibrary",
+            "DolbyLabs.dolbyDAX3ApiService_rz1tebttyb220",
             "DualSimTiles",
             "Email",
             "EmailSystem",
@@ -719,6 +720,7 @@
             "FeedbackLogCollection",
             "FirstSignInSettings",
             "FlashPlayerSupport",
+            "Fortemedia.audioSettings_4pejv7q2gmsnr",
             "FullFileSystemAccess",
             "GameBarServices",
             "GameConfigStoreManagement",
@@ -744,6 +746,7 @@
             "InputObservation",
             "InputSettings",
             "InputSuppression",
+            "Intel.ThunderboltController_8j3eq9eme6ctt",
             "InternetClient",
             "InternetClientServer",
             "InteropServices",
@@ -758,6 +761,7 @@
             "LanguageAndRegionDeviceSettings",
             "LanguageSettings",
             "LiveIdService",
+            "LocalExperienceCumulativeInternal",
             "LocalExperienceInternal",
             "LocalSystemServices",
             "Location",
@@ -784,6 +788,9 @@
             "LpacSessionManagement",
             "LpacWebPlatform",
             "Microphone",
+            "Microsoft.classicAppCompat_8wekyb3d8bbwe",
+            "Microsoft.deployFullTrustOnHost_8wekyb3d8bbwe",
+            "Microsoft.uiAccessStandardUserInstall_8wekyb3d8bbwe",
             "MicrosoftEdgeRemoteDebugging",
             "MixedRealityEnvironmentInternal",
             "MmsTransportSystem",
@@ -837,6 +844,7 @@
             "ProtectedApp",
             "Proximity",
             "Radios",
+            "RealtekSemiconductorCorp.hdUSBAudio_dt26b99r8h8gj",
             "RecordedCallsFolder",
             "RegionSettings",
             "RegistryRead",
@@ -866,6 +874,7 @@
             "SmsSend",
             "SmsSystem",
             "SmsTransportSystem",
+            "SoundResearch.audioSettings_sassr7xhpkj7p",
             "SpatialPerception",
             "StartScreenManagement",
             "StoreAppInstall",
@@ -873,6 +882,7 @@
             "StoreConfiguration",
             "StoreLicenseManagement",
             "StoreOptionalPackageInstallManagement",
+            "Synaptics.audioControl_807d65c4rvak2",
             "SystemAllocWindowID",
             "SystemDialog",
             "SystemDialogEmergency",
@@ -927,6 +937,7 @@
             "XboxLiveAuthenticationProvider",
             "XboxSystemApplicationClipQuery",
             "XboxTrackingStream",
+            "Xperi.dtsAudioSettings_t5j2fzbtdg37r",
         };
     }
 }
