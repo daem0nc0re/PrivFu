@@ -75,9 +75,8 @@ namespace TokenDump.Library
             out string domain,
             out SID_NAME_USE sidType)
         {
-            var authority = (Marshal.ReadInt64(pSid) >> 16);
-            var subAuthority = Marshal.ReadInt32(pSid, 8);
             var status = false;
+            var subAuthority = Marshal.ReadInt32(pSid, 8);
             name = null;
             domain = null;
 
@@ -1613,7 +1612,7 @@ namespace TokenDump.Library
 
                 if (pSid != IntPtr.Zero)
                 {
-                    if (Marshal.ReadInt64(pSid) == 0x1300000000000201L)
+                    if (Marshal.ReadInt64(pSid) == 0x13000000_00000201L)
                     {
                         string protectionLevel = null;
                         string signerLevel = null;
