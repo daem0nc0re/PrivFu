@@ -419,7 +419,7 @@ namespace TokenDump.Library
                 outputBuilder.Append(ParseTokenCapabilitiesTableToString(capabilities));
 
             outputBuilder.Append(ParseTokenDaclTableToString(acl));
-            outputBuilder.Append(ParseTokenSecurityAttributes(info.SeccurityAttributesBuffer));
+            outputBuilder.Append(ParseTokenSecurityAttributes(info.SecurityAttributesBuffer));
 
             Console.WriteLine(outputBuilder.ToString());
         }
@@ -1140,7 +1140,7 @@ namespace TokenDump.Library
 
             if (pInfoBuffer == IntPtr.Zero)
             {
-                tableBuilder.AppendFormat("{0}No attribute(s).\n", indent);
+                tableBuilder.AppendFormat("{0}No attribute(s).\n\n", indent);
             }
             else
             {
@@ -1217,6 +1217,8 @@ namespace TokenDump.Library
                             }
                         }
 
+                        tableBuilder.Append("\n");
+
                         if (Environment.Is64BitProcess)
                             pEntry = new IntPtr(pEntry.ToInt64() + nUnitSize);
                         else
@@ -1225,11 +1227,9 @@ namespace TokenDump.Library
                 }
                 else
                 {
-                    tableBuilder.AppendFormat("{0}No attribute(s).\n", indent);
+                    tableBuilder.AppendFormat("{0}No attribute(s).\n\n", indent);
                 }
             }
-
-            tableBuilder.Append("\n");
 
             return tableBuilder.ToString();
         }

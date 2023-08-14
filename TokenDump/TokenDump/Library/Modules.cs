@@ -387,7 +387,7 @@ namespace TokenDump.Library
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
                     out List<AceInformation> acl);
-                info.SeccurityAttributesBuffer = Helpers.GetTokenSecurityAttributes(hToken);
+                info.SecurityAttributesBuffer = Helpers.GetTokenSecurityAttributes(hToken);
                 NativeMethods.NtClose(hToken);
 
                 if (status)
@@ -419,8 +419,8 @@ namespace TokenDump.Library
                     Console.WriteLine("[-] Failed to get access.");
                 }
 
-                if (info.SeccurityAttributesBuffer != IntPtr.Zero)
-                    Marshal.FreeHGlobal(info.SeccurityAttributesBuffer);
+                if (info.SecurityAttributesBuffer != IntPtr.Zero)
+                    Marshal.FreeHGlobal(info.SecurityAttributesBuffer);
             } while (false);
 
             if (hProcess != IntPtr.Zero)
