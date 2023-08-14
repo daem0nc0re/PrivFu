@@ -878,6 +878,7 @@ namespace TokenDump.Interop
     [Flags]
     internal enum TokenFlags : uint
     {
+        None = 0x00000000,
         HasTraversePrivilege = 0x00000001,
         HasBackupPrivilege = 0x00000002,
         HasRestorePrivilege = 0x00000004,

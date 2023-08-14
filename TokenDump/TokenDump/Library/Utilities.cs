@@ -363,60 +363,56 @@ namespace TokenDump.Library
             {
                 var imageFilePath = Helpers.ConvertDevicePathToDriveLetter(info.ImageFilePath);
 
-                outputBuilder.AppendFormat("ImageFilePath          : {0}\n", imageFilePath ?? "N/A");
-                outputBuilder.AppendFormat("CommandLine            : {0}\n", info.CommandLine);
+                outputBuilder.AppendFormat("ImageFilePath       : {0}\n", imageFilePath ?? "N/A");
+                outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
             }
 
-            outputBuilder.AppendFormat("Token User             : {0} (SID: {1})\n", info.TokenUserName, info.TokenUserSid);
-            outputBuilder.AppendFormat("Token Owner            : {0} (SID: {1})\n", info.TokenOwnerName, info.TokenOwnerSid);
-            outputBuilder.AppendFormat("Primary Group          : {0} (SID: {1})\n", info.TokenPrimaryGroupName, info.TokenPrimaryGroupSid);
-            outputBuilder.AppendFormat("Token Type             : {0}\n", info.TokenStatistics.TokenType.ToString());
-            outputBuilder.AppendFormat("Impersonation Level    : {0}\n", info.TokenStatistics.ImpersonationLevel.ToString());
-            outputBuilder.AppendFormat("Token ID               : 0x{0}\n", info.TokenStatistics.TokenId.ToInt64().ToString("X16"));
-            outputBuilder.AppendFormat("Authentication ID      : 0x{0}\n", info.TokenStatistics.AuthenticationId.ToInt64().ToString("X16"));
-            outputBuilder.AppendFormat("Original ID            : 0x{0}\n", info.TokenOrigin.OriginatingLogonSession.ToInt64().ToString("X16"));
-            outputBuilder.AppendFormat("Modified ID            : 0x{0}\n", info.TokenStatistics.ModifiedId.ToInt64().ToString("X16"));
-            outputBuilder.AppendFormat("Integrity Level        : {0}\n", info.Integrity.ToString());
-            outputBuilder.AppendFormat("Protection Level       : {0}\n", info.TrustLabel ?? "N/A");
-            outputBuilder.AppendFormat("Session ID             : {0}\n", info.SessionId);
-            outputBuilder.AppendFormat("Elevation Type         : {0}\n", info.ElevationType.ToString());
-            outputBuilder.AppendFormat("Mandatory Policy       : {0}\n", info.MandatoryPolicy.ToString());
-            outputBuilder.AppendFormat("Elevated               : {0}\n", info.IsElevated.ToString());
-            outputBuilder.AppendFormat("Restricted             : {0}\n", info.IsRestricted.ToString());
-            outputBuilder.AppendFormat("AppContainer           : {0}\n", info.IsAppContainer.ToString());
-            outputBuilder.AppendFormat("Virtualization Allowed : {0}\n", info.IsVirtualizationAllowed.ToString());
-            outputBuilder.AppendFormat("Virtualization Enabled : {0}\n", info.IsVirtualizationEnabled.ToString());
-            outputBuilder.AppendFormat("SandBox Inert          : {0}\n", info.IsSandBoxInert.ToString());
-            outputBuilder.AppendFormat("UI Access              : {0}\n", info.IsUiAccessToken.ToString());
-
+            outputBuilder.AppendFormat("Token User          : {0} (SID: {1})\n", info.TokenUserName, info.TokenUserSid);
+            outputBuilder.AppendFormat("Token Owner         : {0} (SID: {1})\n", info.TokenOwnerName, info.TokenOwnerSid);
+            outputBuilder.AppendFormat("Primary Group       : {0} (SID: {1})\n", info.TokenPrimaryGroupName, info.TokenPrimaryGroupSid);
+            outputBuilder.AppendFormat("Token Type          : {0}\n", info.TokenStatistics.TokenType.ToString());
+            outputBuilder.AppendFormat("Impersonation Level : {0}\n", info.TokenStatistics.ImpersonationLevel.ToString());
+            outputBuilder.AppendFormat("Token ID            : 0x{0}\n", info.TokenStatistics.TokenId.ToInt64().ToString("X16"));
+            outputBuilder.AppendFormat("Authentication ID   : 0x{0}\n", info.TokenStatistics.AuthenticationId.ToInt64().ToString("X16"));
+            outputBuilder.AppendFormat("Original ID         : 0x{0}\n", info.TokenOrigin.OriginatingLogonSession.ToInt64().ToString("X16"));
+            outputBuilder.AppendFormat("Modified ID         : 0x{0}\n", info.TokenStatistics.ModifiedId.ToInt64().ToString("X16"));
+            outputBuilder.AppendFormat("Integrity Level     : {0}\n", info.Integrity.ToString());
+            outputBuilder.AppendFormat("Protection Level    : {0}\n", info.TrustLabel ?? "N/A");
+            outputBuilder.AppendFormat("Session ID          : {0}\n", info.SessionId);
+            outputBuilder.AppendFormat("Elevation Type      : {0}\n", info.ElevationType.ToString());
+            outputBuilder.AppendFormat("Mandatory Policy    : {0}\n", info.MandatoryPolicy.ToString());
+            outputBuilder.AppendFormat("Elevated            : {0}\n", info.IsElevated.ToString());
+            outputBuilder.AppendFormat("AppContainer        : {0}\n", info.IsAppContainer.ToString());
+            outputBuilder.AppendFormat("TokenFlags          : {0}\n", info.TokenFlags.ToString());
 
             if (info.IsAppContainer)
             {
-                outputBuilder.AppendFormat("AppContainer Name      : {0}\n", info.AppContainerName ?? "N/A");
-                outputBuilder.AppendFormat("AppContainer SID       : {0}\n", info.AppContainerSid ?? "N/A");
+                outputBuilder.AppendFormat("AppContainer Name   : {0}\n", info.AppContainerName ?? "N/A");
+                outputBuilder.AppendFormat("AppContainer SID    : {0}\n", info.AppContainerSid ?? "N/A");
                 outputBuilder.AppendFormat(
                     "AppContainer Number    : {0}\n",
                     (info.AppContainerNumber == uint.MaxValue) ? "N/A" : info.AppContainerNumber.ToString());
             }
 
             if (!info.IsLinkedToken)
-                outputBuilder.AppendFormat("Has Linked Token       : {0}\n", info.HasLinkedToken.ToString());
+                outputBuilder.AppendFormat("Has Linked Token    : {0}\n", info.HasLinkedToken.ToString());
 
             if (BitConverter.ToInt64(info.TokenSource.SourceName, 0) == 0L)
             {
-                outputBuilder.AppendFormat("Token Source           : N/A\n");
-                outputBuilder.AppendFormat("Token Source ID        : N/A\n");
+                outputBuilder.AppendFormat("Token Source        : N/A\n");
+                outputBuilder.AppendFormat("Token Source ID     : N/A\n");
             }
             else
             {
-                outputBuilder.AppendFormat("Token Source           : {0}\n", Encoding.ASCII.GetString(info.TokenSource.SourceName));
-                outputBuilder.AppendFormat("Token Source ID        : 0x{0}\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
+                outputBuilder.AppendFormat("Token Source        : {0}\n", Encoding.ASCII.GetString(info.TokenSource.SourceName));
+                outputBuilder.AppendFormat("Token Source ID     : 0x{0}\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
             }
 
+            outputBuilder.Append("\n");
             outputBuilder.Append(ParseTokenPrivilegesTableToString(privs));
             outputBuilder.Append(ParseTokenGroupsTableToString(groups));
 
-            if (info.IsRestricted)
+            if ((info.TokenFlags & TokenFlags.IsRestricted) != 0)
                 outputBuilder.Append(ParseTokenRestrictedGroupsTableToString(restrictedGroups));
 
             if (info.IsAppContainer)
@@ -572,9 +568,9 @@ namespace TokenDump.Library
                             {
                                 var sid = Helpers.GetTokenUserSid(hToken);
                                 data.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
+                                data.IsRestricted = Helpers.IsTokenRestricted(hToken);
                                 Helpers.ConvertStringSidToAccountName(sid, out data.TokenUserName, out SID_NAME_USE _);
                                 Helpers.GetTokenStatistics(hToken, out TOKEN_STATISTICS stats);
-                                Helpers.IsTokenRestricted(hToken, out data.IsRestricted);
                                 Helpers.IsTokenAppContainer(hToken, out data.IsAppContainer);
                                 data.TokenType = stats.TokenType;
                                 data.ImpersonationLevel = stats.ImpersonationLevel;
@@ -635,9 +631,9 @@ namespace TokenDump.Library
                         data.ProcessId = pid;
                         data.Handle = new IntPtr(entry.HandleValue);
                         data.Integrity = Helpers.GetTokenIntegrityLevel(hDupObject);
+                        data.IsRestricted = Helpers.IsTokenRestricted(hDupObject);
                         Helpers.ConvertStringSidToAccountName(sid, out data.TokenUserName, out SID_NAME_USE _);
                         Helpers.GetTokenStatistics(hDupObject, out TOKEN_STATISTICS stats);
-                        Helpers.IsTokenRestricted(hDupObject, out data.IsRestricted);
                         Helpers.IsTokenAppContainer(hDupObject, out data.IsAppContainer);
                         data.TokenType = stats.TokenType;
                         data.ImpersonationLevel = stats.ImpersonationLevel;
@@ -684,7 +680,7 @@ namespace TokenDump.Library
 
                     info.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
                     info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
-                    Helpers.IsTokenRestricted(hToken, out info.IsRestricted);
+                    info.IsRestricted = Helpers.IsTokenRestricted(hToken);
                     Helpers.IsTokenAppContainer(hToken, out info.IsAppContainer);
 
                     if (string.IsNullOrEmpty(info.ImageFilePath))
@@ -730,10 +726,21 @@ namespace TokenDump.Library
                 Helpers.GetTokenDefaultDacl(hToken, out acl);
                 Helpers.GetTokenTrustLevel(hToken, out info.TrustLabel, out info.TrustLabelSid);
                 info.SessionId = Helpers.GetTokenSessionId(hToken);
-                info.IsVirtualizationAllowed = Helpers.IsTokenVirtulizationAllowed(hToken);
-                info.IsVirtualizationEnabled = Helpers.IsTokenVirtulizationEnabled(hToken);
-                info.IsSandBoxInert = Helpers.IsTokenSandBoxInert(hToken);
-                info.IsUiAccessToken = Helpers.IsUiAccessToken(hToken);
+
+                if (Helpers.IsTokenRestricted(hToken))
+                    info.TokenFlags |= TokenFlags.IsRestricted;
+
+                if (Helpers.IsTokenSandBoxInert(hToken))
+                    info.TokenFlags |= TokenFlags.SandBoxInert;
+
+                if (Helpers.IsTokenVirtulizationAllowed(hToken))
+                    info.TokenFlags |= TokenFlags.VirtualizeAllowed;
+
+                if (Helpers.IsTokenVirtulizationEnabled(hToken))
+                    info.TokenFlags |= TokenFlags.VirtualizeEnabled;
+
+                if (Helpers.IsUiAccessToken(hToken))
+                    info.TokenFlags |= TokenFlags.UiAccess;
 
                 if (info.SessionId == -1)
                     break;
@@ -802,9 +809,6 @@ namespace TokenDump.Library
                 if (!Helpers.IsTokenElevated(hToken, out info.IsElevated))
                     break;
 
-                if (!Helpers.IsTokenRestricted(hToken, out info.IsRestricted))
-                    break;
-
                 if (info.IsAppContainer)
                 {
                     Helpers.GetTokenAppContainerSid(hToken, out info.AppContainerSid, out info.AppContainerName);
@@ -829,7 +833,7 @@ namespace TokenDump.Library
                         out info.HasLinkedToken);
                 }
 
-                if (info.IsRestricted)
+                if ((info.TokenFlags & TokenFlags.IsRestricted) != 0)
                     status = Helpers.GetTokenRestrictedSids(hToken, out restrictedGroups);
             } while (false);
 

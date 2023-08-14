@@ -1723,8 +1723,9 @@ namespace TokenDump.Library
         }
 
 
-        public static bool IsTokenRestricted(IntPtr hToken, out bool isRestricted)
+        public static bool IsTokenRestricted(IntPtr hToken)
         {
+            var isRestricted = false;
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
             NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
                 hToken,
@@ -1735,12 +1736,10 @@ namespace TokenDump.Library
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 isRestricted = (Marshal.ReadInt32(pInfoBuffer) != 0);
-            else
-                isRestricted = false;
 
             Marshal.FreeHGlobal(pInfoBuffer);
 
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+            return isRestricted;
         }
 
 

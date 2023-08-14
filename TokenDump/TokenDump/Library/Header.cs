@@ -58,14 +58,10 @@ namespace TokenDump.Library
         public TOKEN_ORIGIN TokenOrigin;
         public TOKEN_SOURCE TokenSource;
         public TOKEN_STATISTICS TokenStatistics;
+        public TokenFlags TokenFlags;
         public bool IsAppContainer;
         public bool IsElevated;
-        public bool IsRestricted;
         public bool IsLinkedToken;
         public bool HasLinkedToken;
-        public bool IsVirtualizationAllowed;
-        public bool IsVirtualizationEnabled;
-        public bool IsSandBoxInert;
-        public bool IsUiAccessToken;
     }
 }
