@@ -240,10 +240,10 @@ namespace SeCreateTokenPrivilegePoC
         [StructLayout(LayoutKind.Sequential)]
         struct SECURITY_QUALITY_OF_SERVICE
         {
-            readonly int Length;
-            readonly SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-            readonly byte ContextTrackingMode;
-            readonly byte EffectiveOnly;
+            public int Length;
+            public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+            public byte ContextTrackingMode;
+            public byte EffectiveOnly;
 
             public SECURITY_QUALITY_OF_SERVICE(
                 SECURITY_IMPERSONATION_LEVEL _impersonationLevel,
@@ -397,7 +397,7 @@ namespace SeCreateTokenPrivilegePoC
 
             public override string ToString()
             {
-                return Marshal.PtrToStringUni(buffer);
+                return Marshal.PtrToStringUni(buffer, Length / 2);
             }
         }
 

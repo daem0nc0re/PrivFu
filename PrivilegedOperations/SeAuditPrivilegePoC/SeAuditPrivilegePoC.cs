@@ -78,11 +78,11 @@ namespace SeAuditPrivilegePoC
             public int dwObjectTypeNameCount;
 
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-            AUTHZ_REGISTRATION_OBJECT_TYPE_NAME_OFFSET[] ObjectTypeNames;
+            public AUTHZ_REGISTRATION_OBJECT_TYPE_NAME_OFFSET[] ObjectTypeNames;
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SID
+        struct SID
         {
             public byte Revision;
             public byte SubAuthorityCount;
