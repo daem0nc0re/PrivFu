@@ -874,4 +874,34 @@ namespace TokenDump.Interop
         GenericWrite = 0x40000000,
         GenericRead = 0x80000000
     }
+
+    [Flags]
+    internal enum TokenFlags : uint
+    {
+        HasTraversePrivilege = 0x00000001,
+        HasBackupPrivilege = 0x00000002,
+        HasRestorePrivilege = 0x00000004,
+        WriteRestricted = 0x00000008,
+        IsRestricted = 0x00000010,
+        SessionNotReferenced = 0x00000020,
+        SandBoxInert = 0x00000040,
+        HasImpersonatePrivilege = 0x00000080,
+        BackupPrivilegesChecked = 0x00000100,
+        VirtualizeAllowed = 0x00000200,
+        VirtualizeEnabled = 0x00000400,
+        IsFiltered = 0x00000800,
+        UiAccess = 0x00001000,
+        NotLow = 0x00002000,
+        LowBox = 0x00004000,
+        HasOwnClaimAttributes = 0x00008000,
+        PrivateNamespace = 0x00010000,
+        DoNotUseGlobalAttributesForQuery = 0x00020000,
+        SpecialEncryptedOpen = 0x00040000,
+        NoChildProcess = 0x00080000,
+        NoChildProcessUnlessSecure = 0x00100000,
+        AuditNoChildProcess = 0x00200000,
+        PermissiveLearningMode = 0x00400000,
+        EnforceRedirectionTrust = 0x00800000,
+        AuditRedirectionTrust = 0x01000000
+    }
 }
