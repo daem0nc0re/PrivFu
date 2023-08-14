@@ -408,10 +408,7 @@ namespace NamedPipeImpersonation.Interop
 
         public override string ToString()
         {
-            var unicodeBytes = new byte[Length];
-            Marshal.Copy(buffer, unicodeBytes, 0, Length);
-
-            return Encoding.Unicode.GetString(unicodeBytes);
+            return Marshal.PtrToStringUni(buffer, Length / 2);
         }
     }
 
