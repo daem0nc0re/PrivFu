@@ -390,7 +390,7 @@ namespace TokenDump.Library
                 outputBuilder.AppendFormat("AppContainer Name   : {0}\n", info.AppContainerName ?? "N/A");
                 outputBuilder.AppendFormat("AppContainer SID    : {0}\n", info.AppContainerSid ?? "N/A");
                 outputBuilder.AppendFormat(
-                    "AppContainer Number    : {0}\n",
+                    "AppContainer Number : {0}\n",
                     (info.AppContainerNumber == uint.MaxValue) ? "N/A" : info.AppContainerNumber.ToString());
             }
 
@@ -568,10 +568,10 @@ namespace TokenDump.Library
                             {
                                 var sid = Helpers.GetTokenUserSid(hToken);
                                 data.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
+                                data.IsAppContainer = Helpers.IsTokenAppContainer(hToken);
                                 data.IsRestricted = Helpers.IsTokenRestricted(hToken);
                                 Helpers.ConvertStringSidToAccountName(sid, out data.TokenUserName, out SID_NAME_USE _);
                                 Helpers.GetTokenStatistics(hToken, out TOKEN_STATISTICS stats);
-                                Helpers.IsTokenAppContainer(hToken, out data.IsAppContainer);
                                 data.TokenType = stats.TokenType;
                                 data.ImpersonationLevel = stats.ImpersonationLevel;
 
@@ -634,7 +634,7 @@ namespace TokenDump.Library
                         data.IsRestricted = Helpers.IsTokenRestricted(hDupObject);
                         Helpers.ConvertStringSidToAccountName(sid, out data.TokenUserName, out SID_NAME_USE _);
                         Helpers.GetTokenStatistics(hDupObject, out TOKEN_STATISTICS stats);
-                        Helpers.IsTokenAppContainer(hDupObject, out data.IsAppContainer);
+                        data.IsAppContainer = Helpers.IsTokenAppContainer(hDupObject);
                         data.TokenType = stats.TokenType;
                         data.ImpersonationLevel = stats.ImpersonationLevel;
 
@@ -681,7 +681,7 @@ namespace TokenDump.Library
                     info.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
                     info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
                     info.IsRestricted = Helpers.IsTokenRestricted(hToken);
-                    Helpers.IsTokenAppContainer(hToken, out info.IsAppContainer);
+                    info.IsAppContainer = Helpers.IsTokenAppContainer(hToken);
 
                     if (string.IsNullOrEmpty(info.ImageFilePath))
                     {
@@ -726,21 +726,8 @@ namespace TokenDump.Library
                 Helpers.GetTokenDefaultDacl(hToken, out acl);
                 Helpers.GetTokenTrustLevel(hToken, out info.TrustLabel, out info.TrustLabelSid);
                 info.SessionId = Helpers.GetTokenSessionId(hToken);
-
-                if (Helpers.IsTokenRestricted(hToken))
-                    info.TokenFlags |= TokenFlags.IsRestricted;
-
-                if (Helpers.IsTokenSandBoxInert(hToken))
-                    info.TokenFlags |= TokenFlags.SandBoxInert;
-
-                if (Helpers.IsTokenVirtulizationAllowed(hToken))
-                    info.TokenFlags |= TokenFlags.VirtualizeAllowed;
-
-                if (Helpers.IsTokenVirtulizationEnabled(hToken))
-                    info.TokenFlags |= TokenFlags.VirtualizeEnabled;
-
-                if (Helpers.IsUiAccessToken(hToken))
-                    info.TokenFlags |= TokenFlags.UiAccess;
+                info.IsAppContainer = Helpers.IsTokenAppContainer(hToken);
+                Helpers.GetTokenAccessFlags(hToken, out info.TokenFlags);
 
                 if (info.SessionId == -1)
                     break;
@@ -801,9 +788,6 @@ namespace TokenDump.Library
                 Helpers.GetTokenSource(hToken, out info.TokenSource);
 
                 if (!Helpers.GetTokenStatistics(hToken, out info.TokenStatistics))
-                    break;
-
-                if (!Helpers.IsTokenAppContainer(hToken, out info.IsAppContainer))
                     break;
 
                 if (!Helpers.IsTokenElevated(hToken, out info.IsElevated))
@@ -1095,7 +1079,7 @@ namespace TokenDump.Library
         private static string ParseTokenRestrictedGroupsTableToString(
             Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups)
         {
-            var titles = new string[] { "Group Name", "Attributes" };
+            var titles = new string[] { "Name", "Attributes" };
             var width = new int[titles.Length];
             var tableBuilder = new StringBuilder();
             var tableData = new Dictionary<string, string>();

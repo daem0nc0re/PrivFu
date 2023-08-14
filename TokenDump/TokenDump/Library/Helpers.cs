@@ -726,6 +726,41 @@ namespace TokenDump.Library
         }
 
 
+        public static bool GetTokenAccessFlags(IntPtr hToken, out TokenFlags flags)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_ACCESS_INFORMATION));
+            flags = 0;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenAccessInformation,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (TOKEN_ACCESS_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_ACCESS_INFORMATION));
+                flags = info.Flags;
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool GetTokenAppContainerNumber(IntPtr hToken, out uint nAppContainers)
         {
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
@@ -1681,8 +1716,9 @@ namespace TokenDump.Library
         }
 
 
-        public static bool IsTokenAppContainer(IntPtr hToken, out bool isAppContainer)
+        public static bool IsTokenAppContainer(IntPtr hToken)
         {
+            var isAppContainer = false;
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
             NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
                 hToken,
@@ -1693,12 +1729,10 @@ namespace TokenDump.Library
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 isAppContainer = (Marshal.ReadInt32(pInfoBuffer) != 0);
-            else
-                isAppContainer = false;
 
             Marshal.FreeHGlobal(pInfoBuffer);
 
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+            return isAppContainer;
         }
 
 
@@ -1740,90 +1774,6 @@ namespace TokenDump.Library
             Marshal.FreeHGlobal(pInfoBuffer);
 
             return isRestricted;
-        }
-
-
-        public static bool IsTokenSandBoxInert(IntPtr hToken)
-        {
-            var allowed = false;
-            var nInfoLength = 4u;
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenSandBoxInert,
-                pInfoBuffer,
-                nInfoLength,
-                out uint _);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
-
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return allowed;
-        }
-
-
-        public static bool IsTokenVirtulizationAllowed(IntPtr hToken)
-        {
-            var allowed = false;
-            var nInfoLength = 4u;
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenVirtualizationAllowed,
-                pInfoBuffer,
-                nInfoLength,
-                out uint _);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
-
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return allowed;
-        }
-
-
-        public static bool IsTokenVirtulizationEnabled(IntPtr hToken)
-        {
-            var allowed = false;
-            var nInfoLength = 4u;
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenVirtualizationEnabled,
-                pInfoBuffer,
-                nInfoLength,
-                out uint _);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
-
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return allowed;
-        }
-
-
-        public static bool IsUiAccessToken(IntPtr hToken)
-        {
-            var allowed = false;
-            var nInfoLength = 4u;
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenUIAccess,
-                pInfoBuffer,
-                nInfoLength,
-                out uint _);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                allowed = (Marshal.ReadInt32(pInfoBuffer) != 0);
-
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return allowed;
         }
 
 

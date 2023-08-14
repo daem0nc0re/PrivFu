@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -457,6 +458,24 @@ namespace TokenDump.Interop
         public ACE_HEADER Header;
         public ACCESS_MASK Mask;
         public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_ACCESS_INFORMATION
+    {
+        public IntPtr /* PSID_AND_ATTRIBUTES_HASH */ SidHash;
+        public IntPtr /* PSID_AND_ATTRIBUTES_HASH */ RestrictedSidHash;
+        public IntPtr /* PTOKEN_PRIVILEGES */ Privileges;
+        public LUID AuthenticationId;
+        public TOKEN_TYPE TokenType;
+        public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+        public TOKEN_MANDATORY_POLICY MandatoryPolicy;
+        public TokenFlags Flags;
+        public uint AppContainerNumber;
+        public IntPtr /* PSID */ PackageSid;
+        public IntPtr /* PSID_AND_ATTRIBUTES_HASH */ CapabilitiesHash;
+        public IntPtr /* PSID */ TrustLevelSid;
+        public IntPtr /* PSECURITY_ATTRIBUTES_OPAQUE */ SecurityAttributes;
     }
 
     [StructLayout(LayoutKind.Sequential)]
