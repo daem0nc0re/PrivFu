@@ -199,5 +199,21 @@ namespace TokenDump.Interop
             IntPtr SystemInformation,
             uint SystemInformationLength,
             out uint ReturnLength);
+
+        /*
+         * secur32.dll
+         */
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaEnumerateLogonSessions(
+            out uint LogonSessionCount,
+            out IntPtr /* PLUID* */ LogonSessionList);
+
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaGetLogonSessionData(
+            in LUID LogonId, // in LUID
+            out IntPtr /* PSECURITY_LOGON_SESSION_DATA* */ ppLogonSessionData);
+
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr Buffer);
     }
 }

@@ -184,6 +184,23 @@ namespace TokenDump.Library
         }
 
 
+        public static bool EnumerateSessionLuids(out List<LUID> sessionLuids)
+        {
+            NTSTATUS ntstatus = NativeMethods.LsaEnumerateLogonSessions(
+                out uint nLogonSessionCount,
+                out IntPtr pLogonSessionList);
+            sessionLuids = new List<LUID>();
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                for (var idx = 0; idx < (int)nLogonSessionCount; idx++)
+                    sessionLuids.Add(LUID.FromInt64(Marshal.ReadInt64(pLogonSessionList, idx * 8)));
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool EnumerateSubKeys(ref string rootKey, out List<string> subKeys)
         {
             var status = false;
