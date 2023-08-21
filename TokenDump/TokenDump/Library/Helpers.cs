@@ -717,23 +717,22 @@ namespace TokenDump.Library
 
         public static bool GetSessionBasicInformation(
             in LUID sessionLuid,
-            out LUID logonId,
             out string accountName,
-            out string accountSid)
+            out string accountSid,
+            out string authPackage)
         {
             NTSTATUS ntstatus = NativeMethods.LsaGetLogonSessionData(
                 in sessionLuid,
                 out IntPtr pInfoBuffer);
             accountName = null;
             accountSid = null;
+            authPackage = null;
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 var info = (SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(SECURITY_LOGON_SESSION_DATA));
-
-                logonId = info.LogonId;
 
                 if ((info.UserName.Length > 0) && (info.LogonDomain.Length > 0))
                     accountName = string.Format(@"{0}\{1}", info.LogonDomain.ToString(), info.UserName.ToString());
@@ -745,11 +744,10 @@ namespace TokenDump.Library
                 if (info.Sid != IntPtr.Zero)
                     NativeMethods.ConvertSidToStringSid(info.Sid, out accountSid);
 
+                if (info.AuthenticationPackage.Length > 0)
+                    authPackage = info.AuthenticationPackage.ToString();
+
                 NativeMethods.LsaFreeReturnBuffer(pInfoBuffer);
-            }
-            else
-            {
-                logonId = new LUID();
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
