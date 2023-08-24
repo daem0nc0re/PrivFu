@@ -63,9 +63,6 @@ namespace TokenDump.Library
                 if (entry.Handle.ToString("X").Length + 2 > width[0])
                     width[0] = entry.Handle.ToString("X").Length + 2;
 
-                if (entry.SessionId.ToString().Length > width[1])
-                    width[1] = entry.SessionId.ToString().Length;
-
                 if (entry.TokenUserName.Length > width[2])
                     width[2] = entry.TokenUserName.Length;
 
@@ -105,7 +102,7 @@ namespace TokenDump.Library
                 outputBuilder.AppendFormat(
                     format,
                     string.Format("0x{0}", entry.Handle.ToString("X")),
-                    entry.SessionId.ToString(),
+                    (entry.SessionId == -1) ? "N/A" : entry.SessionId.ToString(),
                     entry.TokenUserName,
                     entry.Integrity,
                     entry.IsRestricted.ToString(),
@@ -169,9 +166,6 @@ namespace TokenDump.Library
                 if (entry.ProcessId.ToString().Length > width[0])
                     width[0] = entry.ProcessId.ToString().Length;
 
-                if (entry.SessionId.ToString().Length > width[1])
-                    width[1] = entry.SessionId.ToString().Length;
-
                 if (entry.ProcessName.Length > width[2])
                     width[2] = entry.ProcessName.Length;
 
@@ -205,7 +199,7 @@ namespace TokenDump.Library
                 outputBuilder.AppendFormat(
                     format,
                     entry.ProcessId.ToString(),
-                    entry.SessionId.ToString(),
+                    (entry.SessionId == -1) ? "N/A" : entry.SessionId.ToString(),
                     entry.ProcessName,
                     entry.TokenUserName,
                     entry.Integrity,
@@ -271,9 +265,6 @@ namespace TokenDump.Library
                 if (entry.ThreadId.ToString().Length > width[1])
                     width[1] = entry.ThreadId.ToString().Length;
 
-                if (entry.ThreadId.ToString().Length > width[2])
-                    width[2] = entry.SessionId.ToString().Length;
-
                 if (entry.ProcessName.Length > width[3])
                     width[3] = entry.ProcessName.Length;
 
@@ -311,7 +302,7 @@ namespace TokenDump.Library
                     format,
                     entry.ProcessId.ToString(),
                     entry.ThreadId.ToString(),
-                    entry.SessionId.ToString(),
+                    (entry.SessionId == -1) ? "N/A" : entry.SessionId.ToString(),
                     entry.ProcessName,
                     entry.TokenUserName,
                     entry.Integrity,
@@ -396,7 +387,7 @@ namespace TokenDump.Library
             outputBuilder.AppendFormat("Modified ID         : 0x{0}\n", info.TokenStatistics.ModifiedId.ToInt64().ToString("X16"));
             outputBuilder.AppendFormat("Integrity Level     : {0}\n", info.Integrity.ToString());
             outputBuilder.AppendFormat("Protection Level    : {0}\n", info.TrustLabel ?? "N/A");
-            outputBuilder.AppendFormat("Session ID          : {0}\n", info.SessionId);
+            outputBuilder.AppendFormat("Session ID          : {0}\n", (info.SessionId == -1) ? "N/A" : info.SessionId.ToString());
             outputBuilder.AppendFormat("Elevation Type      : {0}\n", info.ElevationType.ToString());
             outputBuilder.AppendFormat("Mandatory Policy    : {0}\n", info.MandatoryPolicy.ToString());
             outputBuilder.AppendFormat("Elevated            : {0}\n", info.IsElevated.ToString());
