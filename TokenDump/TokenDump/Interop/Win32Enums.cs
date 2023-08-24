@@ -840,13 +840,14 @@ namespace TokenDump.Interop
     {
         None = 0x00000000,
         NonInheritable = 0x00000001,
-        ValueCaseSensitive = 0x00000002,
+        CaseSensitive = 0x00000002,
         UseForDenyOnly = 0x00000004,
         DisableByDefault = 0x00000008,
         Disabled = 0x00000010,
         Mandatory = 0x00000020,
-        CompareIgnore = 0x00000040,
-        ValidFlags = 0x0000007F,
+        Unique = 0x00000040,
+        InheritOnce = 0x0080,
+        ValidFlags = 0x000000FF,
         CustomFlags = 0xFFFF0000
     }
 
