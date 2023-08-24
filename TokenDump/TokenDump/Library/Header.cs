@@ -19,6 +19,7 @@ namespace TokenDump.Library
     {
         public int ProcessId;
         public int ThreadId;
+        public int SessionId;
         public IntPtr Handle;
         public string Integrity;
         public string ProcessName;

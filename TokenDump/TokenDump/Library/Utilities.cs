@@ -19,6 +19,7 @@ namespace TokenDump.Library
             string format;
             var titles = new string[] {
                 "Handle",
+                "Session",
                 "Token User",
                 "Integrity",
                 "Restricted",
@@ -62,29 +63,32 @@ namespace TokenDump.Library
                 if (entry.Handle.ToString("X").Length + 2 > width[0])
                     width[0] = entry.Handle.ToString("X").Length + 2;
 
-                if (entry.TokenUserName.Length > width[1])
-                    width[1] = entry.TokenUserName.Length;
+                if (entry.SessionId.ToString().Length > width[1])
+                    width[1] = entry.SessionId.ToString().Length;
 
-                if (entry.Integrity.Length > width[2])
-                    width[2] = entry.Integrity.Length;
+                if (entry.TokenUserName.Length > width[2])
+                    width[2] = entry.TokenUserName.Length;
 
-                if (entry.TokenType.ToString().Length > width[5])
-                    width[5] = entry.TokenType.ToString().Length;
+                if (entry.Integrity.Length > width[3])
+                    width[3] = entry.Integrity.Length;
 
-                if (entry.ImpersonationLevel.ToString().Length > width[6])
-                    width[6] = entry.ImpersonationLevel.ToString().Length;
+                if (entry.TokenType.ToString().Length > width[6])
+                    width[6] = entry.TokenType.ToString().Length;
+
+                if (entry.ImpersonationLevel.ToString().Length > width[7])
+                    width[7] = entry.ImpersonationLevel.ToString().Length;
             }
 
             format = string.Format(
-                "{{0,{0}}} {{1,-{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}} {{6,-{6}}}\n",
-                width[0], width[1], width[2], width[3], width[4], width[5], width[6]);
+                "{{0,{0}}} {{1,{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}} {{6,-{6}}} {{7,-{7}}}\n",
+                width[0], width[1], width[2], width[3], width[4], width[5], width[6], width[7]);
 
             outputBuilder.AppendFormat(
                 "\n[Token Handle(s) - {0} (PID: {1})]\n\n",
                 info[0].ProcessName, info[0].ProcessId);
             outputBuilder.AppendFormat(
                 format,
-                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5], titles[6]);
+                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5], titles[6], titles[7]);
             outputBuilder.AppendFormat(
                 format,
                 new string('=', width[0]),
@@ -93,13 +97,15 @@ namespace TokenDump.Library
                 new string('=', width[3]),
                 new string('=', width[4]),
                 new string('=', width[5]),
-                new string('=', width[6]));
+                new string('=', width[6]),
+                new string('=', width[7]));
 
             foreach (var entry in filteredInfo)
             {
                 outputBuilder.AppendFormat(
                     format,
                     string.Format("0x{0}", entry.Handle.ToString("X")),
+                    entry.SessionId.ToString(),
                     entry.TokenUserName,
                     entry.Integrity,
                     entry.IsRestricted.ToString(),
@@ -120,6 +126,7 @@ namespace TokenDump.Library
             string format;
             var titles = new string[] {
                 "PID",
+                "Session",
                 "Process Name",
                 "Token User",
                 "Integrity",
@@ -162,24 +169,27 @@ namespace TokenDump.Library
                 if (entry.ProcessId.ToString().Length > width[0])
                     width[0] = entry.ProcessId.ToString().Length;
 
-                if (entry.ProcessName.Length > width[1])
-                    width[1] = entry.ProcessName.Length;
+                if (entry.SessionId.ToString().Length > width[1])
+                    width[1] = entry.SessionId.ToString().Length;
 
-                if (entry.TokenUserName.Length > width[2])
-                    width[2] = entry.TokenUserName.Length;
+                if (entry.ProcessName.Length > width[2])
+                    width[2] = entry.ProcessName.Length;
 
-                if (entry.Integrity.Length > width[3])
-                    width[3] = entry.Integrity.Length;
+                if (entry.TokenUserName.Length > width[3])
+                    width[3] = entry.TokenUserName.Length;
+
+                if (entry.Integrity.Length > width[4])
+                    width[4] = entry.Integrity.Length;
             }
 
             format = string.Format(
-                "{{0,{0}}} {{1,-{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}}\n",
-                width[0], width[1], width[2], width[3], width[4], width[5]);
+                "{{0,{0}}} {{1,{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}} {{6,-{6}}}\n",
+                width[0], width[1], width[2], width[3], width[4], width[5], width[6]);
 
             outputBuilder.Append("\n");
             outputBuilder.AppendFormat(
                 format,
-                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5]);
+                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5], titles[6]);
             outputBuilder.AppendFormat(
                 format,
                 new string('=', width[0]),
@@ -187,13 +197,15 @@ namespace TokenDump.Library
                 new string('=', width[2]),
                 new string('=', width[3]),
                 new string('=', width[4]),
-                new string('=', width[5]));
+                new string('=', width[5]),
+                new string('=', width[6]));
 
             foreach (var entry in filteredInfo)
             {
                 outputBuilder.AppendFormat(
                     format,
                     entry.ProcessId.ToString(),
+                    entry.SessionId.ToString(),
                     entry.ProcessName,
                     entry.TokenUserName,
                     entry.Integrity,
@@ -214,6 +226,7 @@ namespace TokenDump.Library
             var titles = new string[] {
                 "PID",
                 "TID",
+                "Session",
                 "Process Name",
                 "Token User",
                 "Integrity",
@@ -258,27 +271,30 @@ namespace TokenDump.Library
                 if (entry.ThreadId.ToString().Length > width[1])
                     width[1] = entry.ThreadId.ToString().Length;
 
-                if (entry.ProcessName.Length > width[2])
-                    width[2] = entry.ProcessName.Length;
+                if (entry.ThreadId.ToString().Length > width[2])
+                    width[2] = entry.SessionId.ToString().Length;
 
-                if (entry.TokenUserName.Length > width[3])
-                    width[3] = entry.TokenUserName.Length;
+                if (entry.ProcessName.Length > width[3])
+                    width[3] = entry.ProcessName.Length;
 
-                if (entry.Integrity.ToString().Length > width[4])
-                    width[4] = entry.Integrity.ToString().Length;
+                if (entry.TokenUserName.Length > width[4])
+                    width[4] = entry.TokenUserName.Length;
 
-                if (entry.ImpersonationLevel.ToString().Length > width[5])
-                    width[5] = entry.ImpersonationLevel.ToString().Length;
+                if (entry.Integrity.ToString().Length > width[5])
+                    width[5] = entry.Integrity.ToString().Length;
+
+                if (entry.ImpersonationLevel.ToString().Length > width[6])
+                    width[6] = entry.ImpersonationLevel.ToString().Length;
             }
 
             format = string.Format(
-                "{{0,{0}}} {{1,{1}}} {{2,-{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}}\n",
-                width[0], width[1], width[2], width[3], width[4], width[5]);
+                "{{0,{0}}} {{1,{1}}} {{2,{2}}} {{3,-{3}}} {{4,-{4}}} {{5,-{5}}} {{6,-{6}}}\n",
+                width[0], width[1], width[2], width[3], width[4], width[5], width[6]);
 
             outputBuilder.Append("\n");
             outputBuilder.AppendFormat(
                 format,
-                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5]);
+                titles[0], titles[1], titles[2], titles[3], titles[4], titles[5], titles[6]);
             outputBuilder.AppendFormat(
                 format,
                 new string('=', width[0]),
@@ -286,7 +302,8 @@ namespace TokenDump.Library
                 new string('=', width[2]),
                 new string('=', width[3]),
                 new string('=', width[4]),
-                new string('=', width[5]));
+                new string('=', width[5]),
+                new string('=', width[6]));
 
             foreach (var entry in filteredInfo)
             {
@@ -294,6 +311,7 @@ namespace TokenDump.Library
                     format,
                     entry.ProcessId.ToString(),
                     entry.ThreadId.ToString(),
+                    entry.SessionId.ToString(),
                     entry.ProcessName,
                     entry.TokenUserName,
                     entry.Integrity,
@@ -567,6 +585,7 @@ namespace TokenDump.Library
                             if (status)
                             {
                                 var sid = Helpers.GetTokenUserSid(hToken);
+                                data.SessionId = Helpers.GetTokenSessionId(hToken);
                                 data.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
                                 data.IsAppContainer = Helpers.IsTokenAppContainer(hToken);
                                 data.IsRestricted = Helpers.IsTokenRestricted(hToken);
@@ -629,6 +648,7 @@ namespace TokenDump.Library
                         }
 
                         data.ProcessId = pid;
+                        data.SessionId = Helpers.GetTokenSessionId(hDupObject);
                         data.Handle = new IntPtr(entry.HandleValue);
                         data.Integrity = Helpers.GetTokenIntegrityLevel(hDupObject);
                         data.IsRestricted = Helpers.IsTokenRestricted(hDupObject);
@@ -678,6 +698,7 @@ namespace TokenDump.Library
                         info.TokenUserName = account;
                     }
 
+                    info.SessionId = Helpers.GetTokenSessionId(hToken);
                     info.Integrity = Helpers.GetTokenIntegrityLevel(hToken);
                     info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
                     info.IsRestricted = Helpers.IsTokenRestricted(hToken);
