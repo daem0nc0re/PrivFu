@@ -71,9 +71,17 @@ namespace SeCreatePagefilePrivilegePoC
                 buffer = IntPtr.Zero;
             }
 
+            public void SetBuffer(IntPtr _buffer)
+            {
+                buffer = _buffer;
+            }
+
             public override string ToString()
             {
-                return Marshal.PtrToStringUni(buffer, Length / 2);
+                if ((Length == 0) || (buffer == IntPtr.Zero))
+                    return null;
+                else
+                    return Marshal.PtrToStringUni(buffer, Length / 2);
             }
         }
 
