@@ -1,0 +1,490 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using WfpTokenDup.Interop;
+
+namespace WfpTokenDup.Library
+{
+    using NTSTATUS = Int32;
+
+    internal class Helpers
+    {
+        public static bool CompareIgnoreCase(string strA, string strB)
+        {
+            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
+        public static bool ConvertStringToSockAddr(string addressString, out SOCKADDR sockAddr)
+        {
+            bool status;
+            int nReturnCode;
+            var nInfoLength = Marshal.SizeOf(typeof(SOCKADDR));
+            var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+
+            nReturnCode = NativeMethods.WSAStringToAddressW(
+                addressString,
+                (int)ADDRESS_FAMILY.AF_INET,
+                IntPtr.Zero,
+                pInfoBuffer,
+                ref nInfoLength);
+            status = (nReturnCode == 0);
+
+            if (!status)
+            {
+                for (var offset = 0; offset < nInfoLength; offset++)
+                    Marshal.WriteByte(pInfoBuffer, offset, 0);
+            }
+
+            sockAddr = (SOCKADDR)Marshal.PtrToStructure(pInfoBuffer, typeof(SOCKADDR));
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return status;
+        }
+
+
+        public static bool EnumerateSessionLuids(out List<LUID> sessionLuids)
+        {
+            NTSTATUS ntstatus = NativeMethods.LsaEnumerateLogonSessions(
+                out uint nLogonSessionCount,
+                out IntPtr pLogonSessionList);
+            sessionLuids = new List<LUID>();
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                for (var idx = 0; idx < (int)nLogonSessionCount; idx++)
+                    sessionLuids.Add(LUID.FromInt64(Marshal.ReadInt64(pLogonSessionList, idx * 8)));
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static string GetObjectName(IntPtr hObject)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            string objectName = null;
+            var nInfoLength = (uint)0x400;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryObject(
+                    hObject,
+                    OBJECT_INFORMATION_CLASS.ObjectNameInformation,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_INFO_LENGTH_MISMATCH);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var nameInfo = (OBJECT_NAME_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(OBJECT_NAME_INFORMATION));
+                objectName = nameInfo.Name.ToString();
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return objectName;
+        }
+
+
+        public static int GetObjectTypeIndex(string typeName)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoSize = (uint)Marshal.SizeOf(typeof(OBJECT_TYPES_INFORMATION));
+            var typeIndex = -1;
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoSize);
+                ntstatus = NativeMethods.NtQueryObject(
+                    IntPtr.Zero,
+                    OBJECT_INFORMATION_CLASS.ObjectTypesInformation,
+                    pInfoBuffer,
+                    nInfoSize,
+                    out nInfoSize);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_INFO_LENGTH_MISMATCH);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                IntPtr pEntry;
+                var nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+
+                if (Environment.Is64BitProcess)
+                    pEntry = new IntPtr(pInfoBuffer.ToInt64() + IntPtr.Size);
+                else
+                    pEntry = new IntPtr(pInfoBuffer.ToInt32() + IntPtr.Size);
+
+                for (var idx = 0; idx < nEntryCount; idx++)
+                {
+                    var entry = (OBJECT_TYPE_INFORMATION)Marshal.PtrToStructure(
+                        pEntry,
+                        typeof(OBJECT_TYPE_INFORMATION));
+                    var nNextOffset = Marshal.SizeOf(typeof(OBJECT_TYPE_INFORMATION));
+                    nNextOffset += entry.TypeName.MaximumLength;
+
+                    if ((nNextOffset % IntPtr.Size) > 0)
+                        nNextOffset += (IntPtr.Size - (nNextOffset % IntPtr.Size));
+
+                    if (CompareIgnoreCase(entry.TypeName.ToString(), typeName))
+                    {
+                        typeIndex = (int)entry.TypeIndex;
+                        break;
+                    }
+
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pEntry.ToInt64() + nNextOffset);
+                    else
+                        pEntry = new IntPtr(pEntry.ToInt32() + nNextOffset);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return typeIndex;
+        }
+
+
+        public static bool GetProcessHandles(
+            int pid,
+            out List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> handles)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoSize = (uint)Marshal.SizeOf(typeof(SYSTEM_HANDLE_INFORMATION));
+            handles = new List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>();
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoSize);
+                ntstatus = NativeMethods.NtQuerySystemInformation(
+                    SYSTEM_INFORMATION_CLASS.SystemHandleInformation,
+                    pInfoBuffer,
+                    nInfoSize,
+                    out nInfoSize);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_INFO_LENGTH_MISMATCH);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                IntPtr pEntry;
+                var nEntrySize = Marshal.SizeOf(typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO));
+                var nEntryOffset = Marshal.OffsetOf(typeof(SYSTEM_HANDLE_INFORMATION), "Handles").ToInt32();
+                var nEntryCount = Marshal.ReadInt32(pInfoBuffer);
+
+                for (var idx = 0; idx < nEntryCount; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pInfoBuffer.ToInt64() + nEntryOffset + (nEntrySize * idx));
+                    else
+                        pEntry = new IntPtr(pInfoBuffer.ToInt32() + nEntryOffset + (nEntrySize * idx));
+
+                    var entry = (SYSTEM_HANDLE_TABLE_ENTRY_INFO)Marshal.PtrToStructure(
+                        pEntry,
+                        typeof(SYSTEM_HANDLE_TABLE_ENTRY_INFO));
+
+                    if ((int)entry.UniqueProcessId == pid)
+                        handles.Add(entry);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static int GetServicePid(string serviceName)
+        {
+            IntPtr hSCManager;
+            var hService = IntPtr.Zero;
+            int pid = -1;
+
+            do
+            {
+                IntPtr pInfoBuffer;
+                var nInfoLength = Marshal.SizeOf(typeof(SERVICE_STATUS_PROCESS));
+                hSCManager = NativeMethods.OpenSCManager(null, null, ACCESS_MASK.SC_MANAGER_CONNECT);
+
+                if (hSCManager == IntPtr.Zero)
+                    break;
+
+                hService = NativeMethods.OpenService(hSCManager, serviceName, ACCESS_MASK.SERVICE_QUERY_STATUS);
+
+                if (hSCManager == IntPtr.Zero)
+                    break;
+
+                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+
+                if (NativeMethods.QueryServiceStatusEx(
+                    hService,
+                    SC_STATUS_TYPE.PROCESS_INFO,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out int _))
+                {
+                    var info = (SERVICE_STATUS_PROCESS)Marshal.PtrToStructure(
+                        pInfoBuffer,
+                        typeof(SERVICE_STATUS_PROCESS));
+                    pid = info.dwProcessId;
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            } while (false);
+
+            if (hService != IntPtr.Zero)
+                NativeMethods.CloseServiceHandle(hService);
+
+            if (hSCManager != IntPtr.Zero)
+                NativeMethods.CloseServiceHandle(hSCManager);
+
+            return pid;
+        }
+
+
+        public static string GetSessionAccountName(int sessionId)
+        {
+            string accountName = null;
+
+            do
+            {
+                string domainName = null;
+                string userName = null;
+                var status = NativeMethods.WTSQuerySessionInformation(
+                    Win32Consts.WTS_CURRENT_SERVER_HANDLE,
+                    sessionId,
+                    WTS_INFO_CLASS.WTSDomainName,
+                    out IntPtr pDomainName,
+                    out int nDomainNameLength);
+
+                if (!status)
+                    break;
+
+                if (nDomainNameLength > 2)
+                    domainName = Marshal.PtrToStringUni(pDomainName, nDomainNameLength / 2);
+
+                if (nDomainNameLength > 0)
+                    NativeMethods.WTSFreeMemory(pDomainName);
+
+                status = NativeMethods.WTSQuerySessionInformation(
+                    Win32Consts.WTS_CURRENT_SERVER_HANDLE,
+                    sessionId,
+                    WTS_INFO_CLASS.WTSUserName,
+                    out IntPtr pUserName,
+                    out int nUserNameLength);
+
+                if (!status)
+                    break;
+
+                if (nUserNameLength > 2)
+                    userName = Marshal.PtrToStringUni(pUserName, nUserNameLength / 2);
+
+                if (nUserNameLength > 0)
+                    NativeMethods.WTSFreeMemory(pUserName);
+
+                if ((nDomainNameLength > 2) && (nUserNameLength > 2))
+                    accountName = string.Format(@"{0}\{1}", domainName, userName);
+                else if (nDomainNameLength > 2)
+                    accountName = domainName;
+                else if (nUserNameLength > 2)
+                    accountName = userName;
+            } while (false);
+
+            return accountName;
+        }
+
+
+        public static bool GetSessionBasicInformation(
+            in LUID sessionLuid,
+            out string accountName,
+            out string accountSid,
+            out string authPackage)
+        {
+            NTSTATUS ntstatus = NativeMethods.LsaGetLogonSessionData(
+                in sessionLuid,
+                out IntPtr pInfoBuffer);
+            accountName = null;
+            accountSid = null;
+            authPackage = null;
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(SECURITY_LOGON_SESSION_DATA));
+
+                if ((info.UserName.Length > 0) && (info.LogonDomain.Length > 0))
+                    accountName = string.Format(@"{0}\{1}", info.LogonDomain.ToString(), info.UserName.ToString());
+                else if (info.UserName.Length > 0)
+                    accountName = info.UserName.ToString();
+                else if (info.LogonDomain.Length > 0)
+                    accountName = info.LogonDomain.ToString();
+
+                if (info.Sid != IntPtr.Zero)
+                    NativeMethods.ConvertSidToStringSid(info.Sid, out accountSid);
+
+                if (info.AuthenticationPackage.Length > 0)
+                    authPackage = info.AuthenticationPackage.ToString();
+
+                NativeMethods.LsaFreeReturnBuffer(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static bool GetTokenPrivileges(
+            IntPtr hToken,
+            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInformationBuffer;
+            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
+
+            do
+            {
+                pInformationBuffer = Marshal.AllocHGlobal((int)nInformationLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    pInformationBuffer,
+                    nInformationLength,
+                    out nInformationLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInformationBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+                    pInformationBuffer,
+                    typeof(TOKEN_PRIVILEGES));
+                var nEntryOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+                var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+
+                for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
+                {
+                    int cchName = 128;
+                    var stringBuilder = new StringBuilder(cchName);
+                    var luid = LUID.FromInt64(Marshal.ReadInt64(pInformationBuffer, nEntryOffset + (nUnitSize * idx)));
+                    var nAttributesOffset = Marshal.OffsetOf(typeof(LUID_AND_ATTRIBUTES), "Attributes").ToInt32();
+                    var attributes = (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(
+                        pInformationBuffer,
+                        nEntryOffset + (nUnitSize * idx) + nAttributesOffset);
+
+                    NativeMethods.LookupPrivilegeName(null, in luid, stringBuilder, ref cchName);
+                    privileges.Add(stringBuilder.ToString(), attributes);
+                    stringBuilder.Clear();
+                }
+
+                Marshal.FreeHGlobal(pInformationBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static int GetTokenSessionId(IntPtr hToken)
+        {
+            int sessionId = -1;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenSessionId,
+                pInfoBuffer,
+                4u,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                sessionId = Marshal.ReadInt32(pInfoBuffer);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return sessionId;
+        }
+
+
+        public static bool SetTokenSessionId(IntPtr hToken, int sessionId)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
+            Marshal.WriteInt32(pInfoBuffer, sessionId);
+
+            ntstatus = NativeMethods.NtSetInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenSessionId,
+                pInfoBuffer,
+                4u);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static string GetTokenUserSid(IntPtr hToken)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            string stringSid = null;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_USER));
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenUser,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                NativeMethods.ConvertSidToStringSid(Marshal.ReadIntPtr(pInfoBuffer), out stringSid);
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return stringSid;
+        }
+
+
+        public static void WriteGuidToPointer(IntPtr pBuffer, in Guid guid)
+        {
+            WriteGuidToPointer(pBuffer, 0, in guid);
+        }
+
+
+        public static void WriteGuidToPointer(IntPtr pBuffer, int offset, in Guid guid)
+        {
+            var guidBytes = guid.ToByteArray();
+
+            for (var idx = 0; idx < guidBytes.Length; idx++)
+                Marshal.WriteByte(pBuffer, idx + offset, guidBytes[idx]);
+        }
+
+
+        public static void ZeroMemory(IntPtr pBuffer, int nLength)
+        {
+            for (var offset = 0; offset < nLength; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
+        }
+    }
+}
