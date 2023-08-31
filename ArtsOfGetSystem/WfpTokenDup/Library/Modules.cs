@@ -218,7 +218,7 @@ namespace WfpTokenDup.Library
                     Console.WriteLine("[+] Got a WfpAle handle (handle = 0x{0}).", hWfpAle.ToString("X"));
                 }
 
-                Console.WriteLine("[>] Trying to get WPF engine handle.");
+                Console.WriteLine("[>] Trying to get WFP engine handle.");
                 ntstatus = NativeMethods.FwpmEngineOpen0(
                     null,
                     RPC_C_AUTHN_TYPES.DEFAULT,
