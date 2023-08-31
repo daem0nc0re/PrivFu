@@ -1269,7 +1269,7 @@ Usage: TokenDump.exe [Options]
         -H, --handle  : Flag to scan token handles. Use with -e option.
         -s, --scan    : Flag to get verbose information for a specific process, thread or handle.
         -a, --account : Specifies account name filter string. Use with -e flag.
-        -p, --pid     : Specifies a target PID in decimal format. Use with -s flag.
+        -p, --pid     : Specifies a target PID in decimal format. Use with -s flag, or -e and -H flag.
         -t, --tid     : Specifies a target TID in decimal format. Use with -s flag and -p option.
         -v, --value   : Specifies a token handle value in hex format. Use with -s flag and -p option.
 ```
@@ -1281,26 +1281,24 @@ C:\Dev>.\TokenDump.exe -e
 
 [>] Trying to enumerate process token.
 
- PID Process Name                Token User                   Integrity Restricted AppContainer
-==== =========================== ============================ ========= ========== ============
-3016 sihost.exe                  X64DEV\user                  Medium    False      False
- 860 fontdrvhost.exe             Font Driver Host\UMFD-0      Low       False      True
- 428 msedgewebview2.exe          X64DEV\user                  Low       True       False
+ PID Session Process Name                Token User                   Integrity Restricted AppContainer
+==== ======= =========================== ============================ ========= ========== ============
+5004       0 svchost.exe                 NT AUTHORITY\SYSTEM          System    False      False
+3728       0 conhost.exe                 NT AUTHORITY\SYSTEM          System    False      False
 
 --snip--
 
-5612 Widgets.exe                 X64DEV\user                  Medium    False      False
-2588 svchost.exe                 NT AUTHORITY\LOCAL SERVICE   System    False      False
-9052 RuntimeBroker.exe           X64DEV\user                  Medium    False      False
+6712       0 svchost.exe                 NT AUTHORITY\LOCAL SERVICE   System    False      False
+1972       0 svchost.exe                 NT AUTHORITY\SYSTEM          System    False      False
 
-[+] Got 157 token information.
+[+] Got 129 token information.
 [*] Found 7 account(s).
-    [*] X64DEV\user
-    [*] Font Driver Host\UMFD-0
     [*] NT AUTHORITY\SYSTEM
+    [*] dev22h2\user
     [*] NT AUTHORITY\LOCAL SERVICE
-    [*] Font Driver Host\UMFD-1
     [*] NT AUTHORITY\NETWORK SERVICE
+    [*] Font Driver Host\UMFD-0
+    [*] Font Driver Host\UMFD-1
     [*] Window Manager\DWM-1
 [*] Done.
 ```
@@ -1314,14 +1312,11 @@ C:\Dev>.\TokenDump.exe -e -d
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to enumerate process token.
 
- PID Process Name                Token User                   Integrity Restricted AppContainer
-==== =========================== ============================ ========= ========== ============
-3544 svchost.exe                 NT AUTHORITY\SYSTEM          System    False      False
-6944 WmiPrvSE.exe                NT AUTHORITY\SYSTEM          System    False      False
-3188 SystemInformer.exe          X64DEV\user                  Medium    False      False
-7608 sppsvc.exe                  NT AUTHORITY\NETWORK SERVICE System    False      False
-6948 SecurityHealthSystray.exe   X64DEV\user                  Medium    False      False
-7228 svchost.exe                 X64DEV\user                  Medium    False      False
+ PID Session Process Name                Token User                   Integrity Restricted AppContainer
+==== ======= =========================== ============================ ========= ========== ============
+5004       0 svchost.exe                 NT AUTHORITY\SYSTEM          System    False      False
+3728       0 conhost.exe                 NT AUTHORITY\SYSTEM          System    False      False
+3740       0 vm3dservice.exe             NT AUTHORITY\SYSTEM          System    False      False
 
 --snip--
 ```
@@ -1329,56 +1324,87 @@ C:\Dev>.\TokenDump.exe -e -d
 When set `-H` flag with `-e` flag, TokenDump tries to enumerate Token handles information:
 
 ```
-C:\Dev>.\TokenDump.exe -e -H
+C:\Dev>.\TokenDump.exe -e -H -d
 
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
 [>] Trying to enumerate token handles.
 
-[Token Handle(s) - svchost.exe (PID: 2808)]
+[Token Handle(s) - winlogon.exe (PID: 704)]
 
-Handle Token User  Integrity Restricted AppContainer Token Type    Impersonation Level
-====== =========== ========= ========== ============ ============= ===================
- 0x4AC X64DEV\user Medium    False      False        Primary       Anonymous
- 0x50C X64DEV\user Medium    False      False        Primary       Anonymous
- 0x510 X64DEV\user Medium    False      False        Primary       Anonymous
- 0x514 X64DEV\user Medium    False      False        Primary       Anonymous
+Handle Session Token User          Integrity Restricted AppContainer Token Type    Impersonation Level
+====== ======= =================== ========= ========== ============ ============= ===================
+ 0x2B0       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+ 0x2B4       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+ 0x38C       1 dev22h2\user        Medium    False      False        Primary       Impersonation
 
 --snip--
 
-[Token Handle(s) - msedgewebview2.exe (PID: 9804)]
+[Token Handle(s) - svchost.exe (PID: 3272)]
 
-Handle Token User  Integrity Restricted AppContainer Token Type    Impersonation Level
-====== =========== ========= ========== ============ ============= ===================
- 0x7D4 X64DEV\user Low       True       False        Impersonation Impersonation
- 0x7D8 X64DEV\user Low       True       False        Primary       Anonymous
- 0xBCC X64DEV\user Low       True       False        Impersonation Impersonation
- 0xBDC X64DEV\user Low       True       False        Primary       Anonymous
- 0xCF8 X64DEV\user Low       True       False        Impersonation Impersonation
- 0xD00 X64DEV\user Low       True       False        Primary       Anonymous
+Handle Session Token User                 Integrity Restricted AppContainer Token Type Impersonation Level
+====== ======= ========================== ========= ========== ============ ========== ===================
+ 0x168       0 NT AUTHORITY\LOCAL SERVICE System    False      False        Primary    Anonymous
 
-[+] Got 910 handle(s).
-[*] Found 7 account(s).
+[+] Got 819 handle(s).
+[*] Found 8 account(s).
     [*] NT AUTHORITY\SYSTEM
-    [*] X64DEV\user
-    [*] NT AUTHORITY\LOCAL SERVICE
+    [*] dev22h2\user
     [*] Font Driver Host\UMFD-1
     [*] Font Driver Host\UMFD-0
     [*] NT AUTHORITY\NETWORK SERVICE
     [*] Window Manager\DWM-1
+    [*] NT AUTHORITY\LOCAL SERVICE
+    [*] NT AUTHORITY\ANONYMOUS LOGON
+[*] Done.
+```
+
+When specified PID with `-p` option, TokenDup enumerate only the specified process handles:
+
+```
+C:\Dev>.\TokenDump.exe -e -H -d -p 704
+
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to enumerate token handles.
+
+[Token Handle(s) - winlogon.exe (PID: 704)]
+
+Handle Session Token User          Integrity Restricted AppContainer Token Type    Impersonation Level
+====== ======= =================== ========= ========== ============ ============= ===================
+ 0x2B0       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+ 0x2B4       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+ 0x38C       1 dev22h2\user        Medium    False      False        Primary       Impersonation
+ 0x398       1 dev22h2\user        High      False      False        Primary       Identification
+ 0x3C4       1 dev22h2\user        Medium    False      False        Impersonation Impersonation
+ 0x3C8       1 dev22h2\user        Medium    False      False        Impersonation Impersonation
+ 0x3D0       1 dev22h2\user        Medium    False      False        Impersonation Impersonation
+ 0x3D4       1 dev22h2\user        Medium    False      False        Impersonation Impersonation
+
+[+] Got 8 handle(s).
+[*] Found 2 account(s).
+    [*] NT AUTHORITY\SYSTEM
+    [*] dev22h2\user
 [*] Done.
 ```
 
 To enumerate impersonated thread token, set `-T` flag as well as `-e` flag as follows:
 
 ```
-C:\Dev>.\TokenDump.exe -e -T
+C:\Dev>.\TokenDump.exe -e -T -d
 
-[>] Trying to enumerate thread tokens.
+[>] Trying to enable SeDebugPrivilege.
+[+] SeDebugPrivilege is enabled successfully.
+[>] Trying to enumerate impersonated threads.
 
- PID  TID Process Name      Token User          Integrity Impersonation Level
-==== ==== ================= =================== ========= ===================
-6552 5668 TokenStealing.exe NT AUTHORITY\SYSTEM System    Impersonation
+ PID  TID Session Process Name Token User          Integrity Impersonation Level
+==== ==== ======= ============ =================== ========= ===================
+1952 2000       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+1952 2300       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+3516 4348       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+3516 4656       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
 
-[+] Got 1 handle(s).
+[+] Got 4 thread(s).
 [*] Found 1 account(s).
     [*] NT AUTHORITY\SYSTEM
 [*] Done.
@@ -1393,93 +1419,97 @@ C:\Dev>.\TokenDump.exe -e -a network -d
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to enumerate process token.
 
- PID Process Name Token User                   Integrity Restricted AppContainer
-==== ============ ============================ ========= ========== ============
-3404 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
-4656 msdtc.exe    NT AUTHORITY\NETWORK SERVICE System    False      False
-1628 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
-2916 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
-2464 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
-4592 WmiPrvSE.exe NT AUTHORITY\NETWORK SERVICE System    False      False
-7840 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
-7408 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
- 940 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+ PID Session Process Name Token User                   Integrity Restricted AppContainer
+==== ======= ============ ============================ ========= ========== ============
+1932       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+3500       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+2904       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+2504       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+7012       0 msdtc.exe    NT AUTHORITY\NETWORK SERVICE System    False      False
+7092       0 sppsvc.exe   NT AUTHORITY\NETWORK SERVICE System    False      False
+1676       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
+3584       0 WmiPrvSE.exe NT AUTHORITY\NETWORK SERVICE System    False      False
+1000       0 svchost.exe  NT AUTHORITY\NETWORK SERVICE System    False      False
 
 [+] Got 9 token information.
 [*] Found 7 account(s).
-    [*] X64DEV\user
-    [*] Font Driver Host\UMFD-0
     [*] NT AUTHORITY\SYSTEM
+    [*] dev22h2\user
     [*] NT AUTHORITY\LOCAL SERVICE
-    [*] Font Driver Host\UMFD-1
     [*] NT AUTHORITY\NETWORK SERVICE
+    [*] Font Driver Host\UMFD-0
+    [*] Font Driver Host\UMFD-1
     [*] Window Manager\DWM-1
 [*] Done.
 
-C:\Dev>.\TokenDump.exe -e -a network -H -d
+C:\Dev>.\TokenDump.exe -e -a network -d -H
 
 [>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to enumerate token handles.
 
-[Token Handle(s) - lsass.exe (PID: 704)]
+[Token Handle(s) - lsass.exe (PID: 768)]
 
-Handle Token User                   Integrity Restricted AppContainer Token Type    Impersonation Level
-====== ============================ ========= ========== ============ ============= ===================
- 0x8C4 NT AUTHORITY\NETWORK SERVICE System    False      False        Impersonation Impersonation
+Handle Session Token User                   Integrity Restricted AppContainer Token Type    Impersonation Level
+====== ======= ============================ ========= ========== ============ ============= ===================
+ 0x914       0 NT AUTHORITY\NETWORK SERVICE System    False      False        Impersonation Impersonation
 
 --snip--
 
-[Token Handle(s) - svchost.exe (PID: 7408)]
+[Token Handle(s) - msdtc.exe (PID: 7012)]
 
-Handle Token User                   Integrity Restricted AppContainer Token Type Impersonation Level
-====== ============================ ========= ========== ============ ========== ===================
-  0xB0 NT AUTHORITY\NETWORK SERVICE System    False      False        Primary    Anonymous
+Handle Session Token User                   Integrity Restricted AppContainer Token Type Impersonation Level
+====== ======= ============================ ========= ========== ============ ========== ===================
+ 0x23C       0 NT AUTHORITY\NETWORK SERVICE System    False      False        Primary    Anonymous
 
-[+] Got 29 handle(s).
-[*] Found 7 account(s).
+[+] Got 27 handle(s).
+[*] Found 8 account(s).
     [*] NT AUTHORITY\SYSTEM
-    [*] X64DEV\user
-    [*] Font Driver Host\UMFD-0
+    [*] dev22h2\user
     [*] Font Driver Host\UMFD-1
+    [*] Font Driver Host\UMFD-0
     [*] NT AUTHORITY\NETWORK SERVICE
     [*] Window Manager\DWM-1
     [*] NT AUTHORITY\LOCAL SERVICE
+    [*] NT AUTHORITY\ANONYMOUS LOGON
 [*] Done.
 ```
 
 To get verbose information for a specific process, set `-s` flag and target PID as `-p` option value:
 
 ```
-C:\Dev>.\TokenDump.exe -s -p 5520
+C:\Dev>.\TokenDump.exe -s -p 5996
 
 [>] Trying to dump process token information.
 
-[Token Information for ShellExperienceHost.exe (PID: 5520)]
+[Token Information for StartMenuExperienceHost.exe (PID: 5996)]
 
-ImageFilePath       : C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exe
-CommandLine         : "C:\Windows\SystemApps\ShellExperienceHost_cw5n1h2txyewy\ShellExperienceHost.exe" -ServerName:App.AppXtk181tbxbce2qsex02s8tw7hfxa9xb3t.mca
-Token User          : X64DEV\user (SID: S-1-5-21-1272994938-2904448873-3522237253-1001)
-Token Owner         : X64DEV\user (SID: S-1-5-21-1272994938-2904448873-3522237253-1001)
-Primary Group       : X64DEV\None (SID: S-1-5-21-1272994938-2904448873-3522237253-513)
+ImageFilePath       : C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exe
+CommandLine         : "C:\Windows\SystemApps\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\StartMenuExperienceHost.exe" -ServerName:App.AppXywbrabmsek0gm3tkwpr5kwzbs55tkqay.mca
+Token User          : dev22h2\user (SID: S-1-5-21-3896868301-3921591151-1374190648-1001)
+Token Owner         : dev22h2\user (SID: S-1-5-21-3896868301-3921591151-1374190648-1001)
+Primary Group       : dev22h2\None (SID: S-1-5-21-3896868301-3921591151-1374190648-513)
 Token Type          : Primary
 Impersonation Level : Anonymous
-Token ID            : 0x00000000002FCAC9
-Authentication ID   : 0x000000000001E809
+Token ID            : 0x0000000000063D9A
+Authentication ID   : 0x000000000001DFE5
 Original ID         : 0x00000000000003E7
-Modified ID         : 0x00000000002FCAB9
+Modified ID         : 0x0000000000063D24
 Integrity Level     : Low
+Protection Level    : N/A
 Session ID          : 1
 Elevation Type      : Limited
+Mandatory Policy    : NoWriteUp
 Elevated            : False
-Restricted          : False
 AppContainer        : True
-AppContainer Name   : microsoft.windows.shellexperiencehost_cw5n1h2txyewy
-AppContainer SID    : S-1-15-2-155514346-2573954481-755741238-1654018636-1233331829-3075935687-2861478708
-AppContainer Number : 6
+TokenFlags          : VirtualizeAllowed, IsFiltered, LowBox
+AppContainer Name   : microsoft.windows.startmenuexperiencehost_cw5n1h2txyewy
+AppContainer SID    : S-1-15-2-515815643-2845804217-1874292103-218650560-777617685-4287762684-137415000
+AppContainer Number : 2
 Has Linked Token    : True
 Token Source        : User32
-Token Source ID     : 0x000000000001E500
+Token Source ID     : 0x000000000001DE9D
+
 
     PRIVILEGES INFORMATION
     ----------------------
@@ -1495,7 +1525,7 @@ Token Source ID     : 0x000000000001E500
 
     Group Name                                                    Attributes
     ============================================================= =============================================
-    X64DEV\None                                                   Mandatory, EnabledByDefault, Enabled
+    dev22h2\None                                                  Mandatory, EnabledByDefault, Enabled
     Everyone                                                      Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Local account and member of Administrators group UseForDenyOnly
     BUILTIN\Administrators                                        UseForDenyOnly
@@ -1505,7 +1535,7 @@ Token Source ID     : 0x000000000001E500
     NT AUTHORITY\Authenticated Users                              Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\This Organization                                Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Local account                                    Mandatory, EnabledByDefault, Enabled
-    NT AUTHORITY\LogonSessionId_0_124092                          Mandatory, EnabledByDefault, Enabled, LogonId
+    NT AUTHORITY\LogonSessionId_0_122425                          Mandatory, EnabledByDefault, Enabled, LogonId
     LOCAL                                                         Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\NTLM Authentication                              Mandatory, EnabledByDefault, Enabled
     Mandatory Label\Low Mandatory Level                           Integrity, IntegrityEnabled
@@ -1514,92 +1544,96 @@ Token Source ID     : 0x000000000001E500
     APPCONTAINER CAPABILITIES
     -------------------------
 
-    Capability Name                                                                  Flags
-    ================================================================================ =======
-    NAMED CAPABILITIES\GlobalMediaControl                                            Enabled
-    APPLICATION PACKAGE AUTHORITY\Software and hardware certificates or a smart card Enabled
-    NAMED CAPABILITIES\RemoteSystem                                                  Enabled
-    APPLICATION PACKAGE AUTHORITY\Your pictures library                              Enabled
-    NAMED CAPABILITIES\ActivitySystem                                                Enabled
-    NAMED CAPABILITIES\BluetoothDeviceSettings                                       Enabled
-    NAMED CAPABILITIES\PackageQuery                                                  Enabled
-    NAMED CAPABILITIES\CellularDeviceControl                                         Enabled
-    NAMED CAPABILITIES\CellularDeviceIdentity                                        Enabled
-    NAMED CAPABILITIES\NetworkDeviceSettings                                         Enabled
-    NAMED CAPABILITIES\AppointmentsSystem                                            Enabled
-    NAMED CAPABILITIES\EnterpriseCloudSSO                                            Enabled
-    NAMED CAPABILITIES\ChatSystem                                                    Enabled
-    NAMED CAPABILITIES\ContactsSystem                                                Enabled
-    NAMED CAPABILITIES\EmailSystem                                                   Enabled
-    NAMED CAPABILITIES\PhoneCallHistorySystem                                        Enabled
-    NAMED CAPABILITIES\InputInjection                                                Enabled
-    NAMED CAPABILITIES\UserDataAccountSetup                                          Enabled
-    NAMED CAPABILITIES\UserWebAccounts                                               Enabled
-    NAMED CAPABILITIES\ShellExperience                                               Enabled
-    NAMED CAPABILITIES\CloudStore                                                    Enabled
-    NAMED CAPABILITIES\CortanaSettings                                               Enabled
-    NAMED CAPABILITIES\PackageContents                                               Enabled
-    NAMED CAPABILITIES\TargetedContent                                               Enabled
-    NAMED CAPABILITIES\UserAccountInformation                                        Enabled
-    APPLICATION PACKAGE AUTHORITY\Your Internet connection                           Enabled
-    NAMED CAPABILITIES\Location                                                      Enabled
-    NAMED CAPABILITIES\VisualElementsSystem                                          Enabled
-    NAMED CAPABILITIES\ActivityData                                                  Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Radios                                                        Enabled
-    NAMED CAPABILITIES\WiFiControl                                                   Enabled
-    NAMED CAPABILITIES\CellularData                                                  Enabled
-    NAMED CAPABILITIES\WifiData                                                      Enabled
-    NAMED CAPABILITIES\BluetoothAdapter                                              Enabled
-    NAMED CAPABILITIES\BluetoothSync                                                 Enabled
-    PACKAGE CAPABILITY\microsoft.windows.shellexperiencehost_cw5n1h2txyewy           Enabled
-    NAMED CAPABILITIES\AccessoryManager                                              Enabled
-    NAMED CAPABILITIES\AccessoryManager                                              Enabled
-    NAMED CAPABILITIES\Contacts                                                      Enabled
-    NAMED CAPABILITIES\Email                                                         Enabled
-    NAMED CAPABILITIES\PhoneCallHistory                                              Enabled
-    NAMED CAPABILITIES\UserAccountInformation                                        Enabled
-    NAMED CAPABILITIES\ID_CAP_LOCATION                                               Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Bluetooth                                                     Enabled
-    NAMED CAPABILITIES\Radios                                                        Enabled
-    NAMED CAPABILITIES\WiFiControl                                                   Enabled
+    Capability Name                                                            Flags
+    ========================================================================== =======
+    APPLICATION PACKAGE AUTHORITY\Your Internet connection                     Enabled
+    APPLICATION PACKAGE AUTHORITY\Your home or work networks                   Enabled
+    NAMED CAPABILITIES\PackageQuery                                            Enabled
+    NAMED CAPABILITIES\ActivitySystem                                          Enabled
+    NAMED CAPABILITIES\PreviewStore                                            Enabled
+    NAMED CAPABILITIES\CortanaPermissions                                      Enabled
+    NAMED CAPABILITIES\AppointmentsSystem                                      Enabled
+    NAMED CAPABILITIES\TeamEditionExperience                                   Enabled
+    NAMED CAPABILITIES\ShellExperience                                         Enabled
+    NAMED CAPABILITIES\PackageContents                                         Enabled
+    NAMED CAPABILITIES\VisualElementsSystem                                    Enabled
+    NAMED CAPABILITIES\UserAccountInformation                                  Enabled
+    NAMED CAPABILITIES\ActivityData                                            Enabled
+    NAMED CAPABILITIES\CloudStore                                              Enabled
+    NAMED CAPABILITIES\TargetedContent                                         Enabled
+    NAMED CAPABILITIES\StoreAppInstall                                         Enabled
+    NAMED CAPABILITIES\StoreLicenseManagement                                  Enabled
+    NAMED CAPABILITIES\CortanaSettings                                         Enabled
+    NAMED CAPABILITIES\DependencyTarget                                        Enabled
+    NAMED CAPABILITIES\SearchSettings                                          Enabled
+    NAMED CAPABILITIES\CellularData                                            Enabled
+    NAMED CAPABILITIES\WifiData                                                Enabled
+    PACKAGE CAPABILITY\microsoft.windows.startmenuexperiencehost_cw5n1h2txyewy Enabled
+    NAMED CAPABILITIES\AccessoryManager                                        Enabled
+    NAMED CAPABILITIES\UserAccountInformation                                  Enabled
 
 
     DACL INFORMATION
     ----------------
 
-    Account Name                                        Access                      Flags Type
-    =================================================== =========================== ===== =============
-    X64DEV\user                                         GenericAll                  None  AccessAllowed
-    NT AUTHORITY\SYSTEM                                 GenericAll                  None  AccessAllowed
-    NT AUTHORITY\LogonSessionId_0_124092                GenericExecute, GenericRead None  AccessAllowed
-    microsoft.windows.shellexperiencehost_cw5n1h2txyewy GenericAll                  None  AccessAllowed
+    Account Name                                            Access                      Flags Type
+    ======================================================= =========================== ===== =============
+    dev22h2\user                                            GenericAll                  None  AccessAllowed
+    NT AUTHORITY\SYSTEM                                     GenericAll                  None  AccessAllowed
+    NT AUTHORITY\LogonSessionId_0_122425                    GenericExecute, GenericRead None  AccessAllowed
+    microsoft.windows.startmenuexperiencehost_cw5n1h2txyewy GenericAll                  None  AccessAllowed
+
+
+    SECURITY ATTRIBUTES INFORMATION
+    -------------------------------
+
+    [*] WIN://SYSAPPID
+        Flags : None
+        Type  : String
+            Value[0x00] : Microsoft.Windows.StartMenuExperienceHost_10.0.22621.1_neutral_neutral_cw5n1h2txyewy
+            Value[0x01] : App
+            Value[0x02] : Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy
+
+    [*] WIN://PKG
+        Flags : None
+        Type  : UInt64
+            Value[0x00] : 0x0000000200000001
+
+    [*] WIN://PKGHOSTID
+        Flags : None
+        Type  : UInt64
+            Value[0x00] : 0x1000000000000001
+
+    [*] TSA://ProcUnique
+        Flags : NonInheritable, Unique
+        Type  : UInt64
+            Value[0x00] : 0x0000000000000041
+            Value[0x01] : 0x0000000000063D9B
 
 
 
-[Linked Token Information for ShellExperienceHost.exe (PID: 5520)]
+[Linked Token Information for StartMenuExperienceHost.exe (PID: 5996)]
 
-Token User          : X64DEV\user (SID: S-1-5-21-1272994938-2904448873-3522237253-1001)
+Token User          : dev22h2\user (SID: S-1-5-21-3896868301-3921591151-1374190648-1001)
 Token Owner         : BUILTIN\Administrators (SID: S-1-5-32-544)
-Primary Group       : X64DEV\None (SID: S-1-5-21-1272994938-2904448873-3522237253-513)
+Primary Group       : dev22h2\None (SID: S-1-5-21-3896868301-3921591151-1374190648-513)
 Token Type          : Impersonation
 Impersonation Level : Identification
-Token ID            : 0x0000000000E9BC5F
-Authentication ID   : 0x000000000001E798
+Token ID            : 0x000000000016ECE6
+Authentication ID   : 0x000000000001DF83
 Original ID         : 0x00000000000003E7
-Modified ID         : 0x000000000001E808
+Modified ID         : 0x000000000001DFE4
 Integrity Level     : High
+Protection Level    : N/A
 Session ID          : 1
 Elevation Type      : Full
+Mandatory Policy    : NoWriteUp, NewProcessMin
 Elevated            : True
-Restricted          : False
 AppContainer        : False
+TokenFlags          : NotLow
 Token Source        : User32
-Token Source ID     : 0x000000000001E500
+Token Source ID     : 0x000000000001DE9D
+
 
     PRIVILEGES INFORMATION
     ----------------------
@@ -1637,7 +1671,7 @@ Token Source ID     : 0x000000000001E500
 
     Group Name                                                    Attributes
     ============================================================= =============================================
-    X64DEV\None                                                   Mandatory, EnabledByDefault, Enabled
+    dev22h2\None                                                  Mandatory, EnabledByDefault, Enabled
     Everyone                                                      Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Local account and member of Administrators group Mandatory, EnabledByDefault, Enabled
     BUILTIN\Administrators                                        Mandatory, EnabledByDefault, Enabled, Owner
@@ -1647,7 +1681,7 @@ Token Source ID     : 0x000000000001E500
     NT AUTHORITY\Authenticated Users                              Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\This Organization                                Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Local account                                    Mandatory, EnabledByDefault, Enabled
-    NT AUTHORITY\LogonSessionId_0_124092                          Mandatory, EnabledByDefault, Enabled, LogonId
+    NT AUTHORITY\LogonSessionId_0_122425                          Mandatory, EnabledByDefault, Enabled, LogonId
     LOCAL                                                         Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\NTLM Authentication                              Mandatory, EnabledByDefault, Enabled
     Mandatory Label\High Mandatory Level                          Integrity, IntegrityEnabled
@@ -1660,7 +1694,34 @@ Token Source ID     : 0x000000000001E500
     ==================================== =========================== ===== =============
     BUILTIN\Administrators               GenericAll                  None  AccessAllowed
     NT AUTHORITY\SYSTEM                  GenericAll                  None  AccessAllowed
-    NT AUTHORITY\LogonSessionId_0_124092 GenericExecute, GenericRead None  AccessAllowed
+    NT AUTHORITY\LogonSessionId_0_122425 GenericExecute, GenericRead None  AccessAllowed
+
+
+    SECURITY ATTRIBUTES INFORMATION
+    -------------------------------
+
+    [*] WIN://SYSAPPID
+        Flags : None
+        Type  : String
+            Value[0x00] : Microsoft.Windows.StartMenuExperienceHost_10.0.22621.1_neutral_neutral_cw5n1h2txyewy
+            Value[0x01] : App
+            Value[0x02] : Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy
+
+    [*] WIN://PKG
+        Flags : None
+        Type  : UInt64
+            Value[0x00] : 0x0000000200000001
+
+    [*] WIN://PKGHOSTID
+        Flags : None
+        Type  : UInt64
+            Value[0x00] : 0x1000000000000001
+
+    [*] TSA://ProcUnique
+        Flags : NonInheritable, Unique
+        Type  : UInt64
+            Value[0x00] : 0x0000000000000041
+            Value[0x01] : 0x0000000000063D9B
 
 
 [*] Done.
@@ -1669,32 +1730,35 @@ Token Source ID     : 0x000000000001E500
 If you set handle value in a specific process as `-v` option and the PID as `-p` option as well as `-s` flag, this tool get verbose information for the handle as follows:
 
 ```
-C:\Dev>.\TokenDump.exe -s -p 8828 -v 0x428 -d
+C:\Dev>.\TokenDump.exe -s -p 7012 -v 0x23C -d
 
 [>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to dump token handle information.
 
-[Token Information for Handle 0x428 of svchost.exe (PID: 8828)]
+[Token Information for Handle 0x23C of msdtc.exe (PID: 7012)]
 
-Token User          : NT AUTHORITY\LOCAL SERVICE (SID: S-1-5-19)
-Token Owner         : NT AUTHORITY\LOCAL SERVICE (SID: S-1-5-19)
-Primary Group       : NT AUTHORITY\LOCAL SERVICE (SID: S-1-5-19)
-Token Type          : Impersonation
-Impersonation Level : Impersonation
-Token ID            : 0x000000000119F79B
-Authentication ID   : 0x00000000000003E5
+Token User          : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
+Token Owner         : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
+Primary Group       : NT AUTHORITY\NETWORK SERVICE (SID: S-1-5-20)
+Token Type          : Primary
+Impersonation Level : Anonymous
+Token ID            : 0x000000000007DF17
+Authentication ID   : 0x00000000000003E4
 Original ID         : 0x00000000000003E7
-Modified ID         : 0x000000000119F79D
+Modified ID         : 0x000000000007DEE2
 Integrity Level     : System
+Protection Level    : N/A
 Session ID          : 0
 Elevation Type      : Default
-Elevated            : True
-Restricted          : False
+Mandatory Policy    : NoWriteUp, NewProcessMin
+Elevated            : False
 AppContainer        : False
+TokenFlags          : IsFiltered, NotLow
 Has Linked Token    : False
-Token Source        : Advapi
-Token Source ID     : 0x000000000006C1EC
+Token Source        : N/A
+Token Source ID     : N/A
+
 
     PRIVILEGES INFORMATION
     ----------------------
@@ -1702,7 +1766,7 @@ Token Source ID     : 0x000000000006C1EC
     Privilege Name          State
     ======================= =========================
     SeChangeNotifyPrivilege EnabledByDefault, Enabled
-    SeImpersonatePrivilege  EnabledByDefault, Enabled
+    SeCreateGlobalPrivilege EnabledByDefault, Enabled
 
 
     GROUP INFORMATION
@@ -1717,19 +1781,29 @@ Token Source ID     : 0x000000000006C1EC
     CONSOLE LOGON                          Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Authenticated Users       Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\This Organization         Mandatory, EnabledByDefault, Enabled
-    NT SERVICE\LicenseManager              EnabledByDefault, Enabled, Owner
-    NT AUTHORITY\LogonSessionId_0_442859   Mandatory, EnabledByDefault, Enabled, Owner, LogonId
+    NT SERVICE\MSDTC                       EnabledByDefault, Enabled, Owner
+    NT AUTHORITY\LogonSessionId_0_515780   Mandatory, EnabledByDefault, Enabled, Owner, LogonId
     LOCAL                                  Mandatory, EnabledByDefault, Enabled
 
 
     DACL INFORMATION
     ----------------
 
-    Account Name              Access      Flags Type
-    ========================= =========== ===== =============
-    NT AUTHORITY\SYSTEM       GenericAll  None  AccessAllowed
-    OWNER RIGHTS              ReadControl None  AccessAllowed
-    NT SERVICE\LicenseManager GenericAll  None  AccessAllowed
+    Account Name        Access      Flags Type
+    =================== =========== ===== =============
+    NT AUTHORITY\SYSTEM GenericAll  None  AccessAllowed
+    OWNER RIGHTS        ReadControl None  AccessAllowed
+    NT SERVICE\MSDTC    GenericAll  None  AccessAllowed
+
+
+    SECURITY ATTRIBUTES INFORMATION
+    -------------------------------
+
+    [*] TSA://ProcUnique
+        Flags : NonInheritable, Unique
+        Type  : UInt64
+            Value[0x00] : 0x0000000000000070
+            Value[0x01] : 0x000000000007DF18
 
 
 [*] Done.
@@ -1742,82 +1816,64 @@ C:\Dev>.\TokenDump.exe -e -T -d
 
 [>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
-[>] Trying to enumerate thread tokens.
+[>] Trying to enumerate impersonated threads.
 
- PID  TID Process Name      Token User          Integrity Impersonation Level
-==== ==== ================= =================== ========= ===================
-2052 6768 svchost.exe       NT AUTHORITY\SYSTEM System    Impersonation
-3416 2068 svchost.exe       NT AUTHORITY\SYSTEM System    Impersonation
-3416 4168 svchost.exe       NT AUTHORITY\SYSTEM System    Impersonation
-2864 8696 TokenStealing.exe NT AUTHORITY\SYSTEM System    Impersonation
-4936 4848 TiWorker.exe      NT AUTHORITY\SYSTEM System    Impersonation
+ PID  TID Session Process Name Token User          Integrity Impersonation Level
+==== ==== ======= ============ =================== ========= ===================
+1952 2000       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+1952 2300       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+3516 4348       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
+3516 4656       0 svchost.exe  NT AUTHORITY\SYSTEM System    Impersonation
 
-[+] Got 5 handle(s).
+[+] Got 4 thread(s).
 [*] Found 1 account(s).
     [*] NT AUTHORITY\SYSTEM
 [*] Done.
 
 
-C:\Dev>.\TokenDump.exe -s -p 4936 -t 4848 -d
+C:\Dev>.\TokenDump.exe -s -p 3516 -t 4656 -d
 
 [>] Trying to enable SeDebugPrivilege.
 [+] SeDebugPrivilege is enabled successfully.
 [>] Trying to dump thread token information.
 
-[Token Information for TiWorker.exe (PID: 4936, TID: 4848)]
+[Token Information for svchost.exe (PID: 3516, TID: 4656)]
 
 Token User          : NT AUTHORITY\SYSTEM (SID: S-1-5-18)
 Token Owner         : NT AUTHORITY\SYSTEM (SID: S-1-5-18)
 Primary Group       : NT AUTHORITY\SYSTEM (SID: S-1-5-18)
 Token Type          : Impersonation
 Impersonation Level : Impersonation
-Token ID            : 0x00000000010C7342
+Token ID            : 0x0000000000038CC4
 Authentication ID   : 0x00000000000003E7
 Original ID         : 0x00000000000003E7
-Modified ID         : 0x0000000000F9368D
+Modified ID         : 0x000000000002CE61
 Integrity Level     : System
+Protection Level    : N/A
 Session ID          : 0
 Elevation Type      : Default
+Mandatory Policy    : NoWriteUp, NewProcessMin
 Elevated            : True
-Restricted          : False
 AppContainer        : False
+TokenFlags          : IsFiltered, NotLow, EnforceRedirectionTrust
 Has Linked Token    : False
 Token Source        : N/A
 Token Source ID     : N/A
 
+
     PRIVILEGES INFORMATION
     ----------------------
 
-    Privilege Name                            State
-    ========================================= =========================
-    SeAssignPrimaryTokenPrivilege             Disabled
-    SeLockMemoryPrivilege                     EnabledByDefault, Enabled
-    SeIncreaseQuotaPrivilege                  Disabled
-    SeTcbPrivilege                            EnabledByDefault, Enabled
-    SeSecurityPrivilege                       Enabled
-    SeTakeOwnershipPrivilege                  Disabled
-    SeLoadDriverPrivilege                     Disabled
-    SeSystemProfilePrivilege                  EnabledByDefault, Enabled
-    SeSystemtimePrivilege                     Disabled
-    SeProfileSingleProcessPrivilege           EnabledByDefault, Enabled
-    SeIncreaseBasePriorityPrivilege           EnabledByDefault, Enabled
-    SeCreatePagefilePrivilege                 EnabledByDefault, Enabled
-    SeCreatePermanentPrivilege                EnabledByDefault, Enabled
-    SeBackupPrivilege                         Enabled
-    SeRestorePrivilege                        Enabled
-    SeShutdownPrivilege                       Disabled
-    SeDebugPrivilege                          EnabledByDefault, Enabled
-    SeAuditPrivilege                          EnabledByDefault, Enabled
-    SeSystemEnvironmentPrivilege              Disabled
-    SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
-    SeUndockPrivilege                         Disabled
-    SeManageVolumePrivilege                   Disabled
-    SeImpersonatePrivilege                    EnabledByDefault, Enabled
-    SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
-    SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
-    SeTimeZonePrivilege                       EnabledByDefault, Enabled
-    SeCreateSymbolicLinkPrivilege             EnabledByDefault, Enabled
-    SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
+    Privilege Name                State
+    ============================= =========================
+    SeAssignPrimaryTokenPrivilege Disabled
+    SeTcbPrivilege                EnabledByDefault, Enabled
+    SeSecurityPrivilege           Disabled
+    SeSystemProfilePrivilege      EnabledByDefault, Enabled
+    SeDebugPrivilege              EnabledByDefault, Enabled
+    SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+    SeImpersonatePrivilege        EnabledByDefault, Enabled
+    SeCreateGlobalPrivilege       EnabledByDefault, Enabled
 
 
     GROUP INFORMATION
@@ -1832,8 +1888,8 @@ Token Source ID     : N/A
     CONSOLE LOGON                          Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\Authenticated Users       Mandatory, EnabledByDefault, Enabled
     NT AUTHORITY\This Organization         Mandatory, EnabledByDefault, Enabled
-    NT SERVICE\TrustedInstaller            EnabledByDefault, Enabled, Owner
-    NT AUTHORITY\LogonSessionId_0_14288153 Mandatory, EnabledByDefault, Enabled, Owner, LogonId
+    NT SERVICE\DiagTrack                   EnabledByDefault, Enabled, Owner
+    NT AUTHORITY\LogonSessionId_0_180260   Mandatory, EnabledByDefault, Enabled, Owner, LogonId
     LOCAL                                  Mandatory, EnabledByDefault, Enabled
     BUILTIN\Administrators                 EnabledByDefault, Enabled, Owner
 
@@ -1841,11 +1897,21 @@ Token Source ID     : N/A
     DACL INFORMATION
     ----------------
 
-    Account Name                Access      Flags Type
-    =========================== =========== ===== =============
-    NT AUTHORITY\SYSTEM         GenericAll  None  AccessAllowed
-    OWNER RIGHTS                ReadControl None  AccessAllowed
-    NT SERVICE\TrustedInstaller GenericAll  None  AccessAllowed
+    Account Name         Access      Flags Type
+    ==================== =========== ===== =============
+    NT AUTHORITY\SYSTEM  GenericAll  None  AccessAllowed
+    OWNER RIGHTS         ReadControl None  AccessAllowed
+    NT SERVICE\DiagTrack GenericAll  None  AccessAllowed
+
+
+    SECURITY ATTRIBUTES INFORMATION
+    -------------------------------
+
+    [*] TSA://ProcUnique
+        Flags : NonInheritable, Unique
+        Type  : UInt64
+            Value[0x00] : 0x0000000000000047
+            Value[0x01] : 0x000000000002C0FA
 
 
 [*] Done.
