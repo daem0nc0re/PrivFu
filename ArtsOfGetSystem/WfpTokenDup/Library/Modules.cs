@@ -170,7 +170,7 @@ namespace WfpTokenDup.Library
             var hEngine = IntPtr.Zero;
             var status = false;
 
-            if (Environment.Is64BitProcess)
+            if (!Environment.Is64BitProcess)
             {
                 Console.WriteLine("[-] This method currently supports only 64 bit mode.");
                 return false;
@@ -294,6 +294,7 @@ namespace WfpTokenDup.Library
                 if (hSystemToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to find SYSTEM token. This technique is not stable, so try again.");
+                    Console.WriteLine("[-] If not successful after several attempts, try reboot the system.");
                 }
                 else
                 {
