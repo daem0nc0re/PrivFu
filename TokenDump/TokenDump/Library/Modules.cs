@@ -144,7 +144,7 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetTokenHandleInformation(string accountFilter, bool debug)
+        public static bool GetTokenHandleInformation(string accountFilter, int pid, bool debug)
         {
             int nEntryCount = 0;
             var uniqueUsers = new List<string>();
@@ -172,29 +172,39 @@ namespace TokenDump.Library
                 "Token",
                 out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles))
             {
-                foreach (var handleInfo in handles)
+                if ((pid != 0) && !handles.ContainsKey(pid))
                 {
-                    var status = Utilities.GetBriefTokenInformationFromHandle(
-                        handleInfo.Key,
-                        handleInfo.Value,
-                        out List<BriefTokenInformation> info);
-
-                    if (status)
+                    Console.WriteLine("[-] Specified PID is not found.");
+                }
+                else
+                {
+                    foreach (var handleInfo in handles)
                     {
-                        Utilities.DumpBriefHandleInformation(
-                            info,
-                            accountFilter,
-                            out int nResultsCount);
-                        nEntryCount += nResultsCount;
+                        if ((pid != 0) && (handleInfo.Key != pid))
+                            continue;
 
-                        foreach (var entry in info)
+                        var status = Utilities.GetBriefTokenInformationFromHandle(
+                            handleInfo.Key,
+                            handleInfo.Value,
+                            out List<BriefTokenInformation> info);
+
+                        if (status)
                         {
-                            if (!uniqueUsers.Contains(entry.TokenUserName))
-                                uniqueUsers.Add(entry.TokenUserName);
-                        }
-                    }
+                            Utilities.DumpBriefHandleInformation(
+                                info,
+                                accountFilter,
+                                out int nResultsCount);
+                            nEntryCount += nResultsCount;
 
-                    info.Clear();
+                            foreach (var entry in info)
+                            {
+                                if (!uniqueUsers.Contains(entry.TokenUserName))
+                                    uniqueUsers.Add(entry.TokenUserName);
+                            }
+                        }
+
+                        info.Clear();
+                    }
                 }
             }
 

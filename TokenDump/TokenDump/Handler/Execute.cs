@@ -7,6 +7,7 @@ namespace TokenDump.Handler
     {
         public static void Run(CommandLineParser options)
         {
+            int pid = 0;
             string account = options.GetValue("account");
             bool debug = options.GetFlag("debug");
 
@@ -16,6 +17,19 @@ namespace TokenDump.Handler
                 return;
             }
 
+            if (!string.IsNullOrEmpty(options.GetValue("pid")))
+            {
+                try
+                {
+                    pid = Convert.ToInt32(options.GetValue("pid"), 10);
+                }
+                catch
+                {
+                    Console.WriteLine("\n[!] Failed to parse PID.\n");
+                    return;
+                }
+            }
+
             Console.WriteLine();
 
             do
@@ -23,7 +37,7 @@ namespace TokenDump.Handler
                 if (options.GetFlag("enum"))
                 {
                     if (options.GetFlag("handle"))
-                        Modules.GetTokenHandleInformation(account, debug);
+                        Modules.GetTokenHandleInformation(account, pid, debug);
                     else if (options.GetFlag("thread"))
                         Modules.GetThreadTokenInformation(account, debug);
                     else
@@ -31,19 +45,8 @@ namespace TokenDump.Handler
                 }
                 else if (options.GetFlag("scan"))
                 {
-                    int pid;
                     int tid;
                     IntPtr hObject;
-
-                    try
-                    {
-                        pid = Convert.ToInt32(options.GetValue("pid"), 10);
-                    }
-                    catch
-                    {
-                        Console.WriteLine("[!] Failed to parse PID.");
-                        break;
-                    }
 
                     if (pid > 0)
                     {

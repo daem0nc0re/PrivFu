@@ -19,7 +19,7 @@ namespace TokenDump
                 options.AddFlag(false, "H", "handle", "Flag to scan token handles. Use with -e option.");
                 options.AddFlag(false, "s", "scan", "Flag to get verbose information for a specific process, thread or handle.");
                 options.AddParameter(false, "a", "account", null, "Specifies account name filter string. Use with -e flag.");
-                options.AddParameter(false, "p", "pid", null, "Specifies a target PID in decimal format. Use with -s flag.");
+                options.AddParameter(false, "p", "pid", null, "Specifies a target PID in decimal format. Use with -s flag, or -e and -H flag.");
                 options.AddParameter(false, "t", "tid", null, "Specifies a target TID in decimal format. Use with -s flag and -p option.");
                 options.AddParameter(false, "v", "value", null, "Specifies a token handle value in hex format. Use with -s flag and -p option.");
                 options.Parse(args);
