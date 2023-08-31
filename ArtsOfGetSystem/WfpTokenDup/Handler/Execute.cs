@@ -23,7 +23,7 @@ namespace WfpTokenDup.Handler
             }
             catch
             {
-                Console.WriteLine("[-] Failed to parse PID.");
+                Console.WriteLine("\n[-] Failed to parse PID.\n");
                 return;
             }
 
@@ -34,9 +34,11 @@ namespace WfpTokenDup.Handler
             }
             catch
             {
-                Console.WriteLine("[-] Failed to parse handle value.");
+                Console.WriteLine("\n[-] Failed to parse handle value.\n");
                 return;
             }
+
+            Console.WriteLine();
 
             if (options.GetFlag("system"))
             {
@@ -59,6 +61,7 @@ namespace WfpTokenDup.Handler
                 Console.WriteLine("[-] No options. Try -h flag.");
             }
 
+            Console.WriteLine();
         }
     }
 }
