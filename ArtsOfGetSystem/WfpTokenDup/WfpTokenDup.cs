@@ -7,6 +7,22 @@ namespace WfpTokenDup
     {
         static void Main(string[] args)
         {
+            bool isSupported;
+            Version osVersion = Environment.OSVersion.Version;
+
+            if (osVersion.Major > 6)
+                isSupported = true;
+            else if ((osVersion.Major == 6) && (osVersion.Minor > 1))
+                isSupported = true;
+            else
+                isSupported = false;
+
+            if (!isSupported)
+            {
+                Console.WriteLine("\n[-] This technique supports OSes newer than Win8 or Win Server 2012.\n");
+                return;
+            }
+
             var options = new CommandLineParser();
 
             try

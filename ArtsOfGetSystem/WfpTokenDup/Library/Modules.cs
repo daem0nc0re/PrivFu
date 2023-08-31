@@ -170,6 +170,12 @@ namespace WfpTokenDup.Library
             var hEngine = IntPtr.Zero;
             var status = false;
 
+            if (Environment.Is64BitProcess)
+            {
+                Console.WriteLine("[-] This method currently supports only 64 bit mode.");
+                return false;
+            }
+
             if (!Utilities.EnableTokenPrivileges(
                 requiredPrivileges,
                 out Dictionary<string, bool> adjustedPrivs))
