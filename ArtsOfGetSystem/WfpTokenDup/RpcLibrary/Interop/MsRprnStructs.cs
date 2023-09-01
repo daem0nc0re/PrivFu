@@ -22,13 +22,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct DEVMODE_CONTAINER
-    {
-        public int cbBuf;
-        public IntPtr /* BYTE* */ pDevMode;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct FULL_PTR_XLAT_TABLES
     {
         public IntPtr RefIdToPointer;

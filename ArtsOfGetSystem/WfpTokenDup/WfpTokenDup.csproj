@@ -54,6 +54,7 @@
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />
     <Compile Include="Library\Utilities.cs" />
+    <Compile Include="RpcLibrary\Header.cs" />
     <Compile Include="RpcLibrary\Interop\MsRprnConsts.cs" />
     <Compile Include="RpcLibrary\Interop\MsRprnDelegateTypes.cs" />
     <Compile Include="RpcLibrary\Interop\MsRprnEnums.cs" />

