@@ -18,7 +18,6 @@ namespace WfpTokenDup.Library
 
         public static bool ConvertStringToSockAddr(string addressString, out SOCKADDR sockAddr)
         {
-            bool status;
             int nReturnCode;
             var nInfoLength = Marshal.SizeOf(typeof(SOCKADDR));
             var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
@@ -29,18 +28,14 @@ namespace WfpTokenDup.Library
                 IntPtr.Zero,
                 pInfoBuffer,
                 ref nInfoLength);
-            status = (nReturnCode == 0);
 
-            if (!status)
-            {
-                for (var offset = 0; offset < nInfoLength; offset++)
-                    Marshal.WriteByte(pInfoBuffer, offset, 0);
-            }
+            if (nReturnCode != 0)
+                ZeroMemory(pInfoBuffer, nInfoLength);
 
             sockAddr = (SOCKADDR)Marshal.PtrToStructure(pInfoBuffer, typeof(SOCKADDR));
             Marshal.FreeHGlobal(pInfoBuffer);
 
-            return status;
+            return (nReturnCode == 0);
         }
 
 
