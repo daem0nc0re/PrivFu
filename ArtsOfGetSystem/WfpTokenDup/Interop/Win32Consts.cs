@@ -121,6 +121,6 @@ namespace WfpTokenDup.Interop
          */
         public const string SE_DEBUG_NAME = "SeDebugPrivilege";
         public const string SE_IMPERSONATE_NAME = "SeImpersonatePrivilege";
-        public const string SE_TCB_NAME = "SeImpersonatePrivilege";
+        public const string SE_TCB_NAME = "SeTcbPrivilege";
     }
 }
