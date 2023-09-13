@@ -38,15 +38,6 @@ namespace WfpTokenDup.Interop
             in STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool DuplicateTokenEx(
-            IntPtr hExistingToken,
-            ACCESS_MASK dwDesiredAccess,
-            IntPtr /* LPSECURITY_ATTRIBUTES */ lpTokenAttributes,
-            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            TOKEN_TYPE TokenType,
-            out IntPtr phNewToken);
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
@@ -108,13 +99,6 @@ namespace WfpTokenDup.Interop
         public static extern int FwpmIPsecTunnelDeleteByKey0(
             IntPtr engineHandle,
             in Guid key);
-
-        [DllImport("fwpuclnt.dll")]
-        public static extern NTSTATUS FwpsOpenToken0(
-            IntPtr engineHandle,
-            LUID modifiedId,
-            ACCESS_MASK desiredAccess,
-            out IntPtr accessToken);
 
         /*
          * ntdll.dll
@@ -231,8 +215,5 @@ namespace WfpTokenDup.Interop
             IntPtr /* LPWSAPROTOCOL_INFOW */ lpProtocolInfo,
             IntPtr /* LPSOCKADDR */ lpAddress,
             ref int lpAddressLength);
-
-        [DllImport("ws2_32.dll")]
-        public static extern int WSAGetLastError();
     }
 }
