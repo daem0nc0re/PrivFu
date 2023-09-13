@@ -241,7 +241,7 @@ namespace RpcLibrary
         }
 
 
-        public int RpcOpenPrinter(
+        public RPC_STATUS RpcOpenPrinter(
             string printerName,
             out IntPtr hPrinter,
             string dataType,
