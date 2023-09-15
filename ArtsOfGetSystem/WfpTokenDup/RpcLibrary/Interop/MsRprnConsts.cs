@@ -161,7 +161,7 @@ namespace RpcLibrary.Interop
                 FormatCode = 0x35, /* FC64_FORCED_BOGUS_STRUCT */
                 Alignment = 7,
                 Flags = (NDR64_STRUCTURE_FLAGS)3,
-                Reserve = 0,
+                Reserved = 0,
                 MemorySize = 0x10,
                 OriginalMemberLayout = IntPtr.Zero,
                 OriginalPointerLayout = IntPtr.Zero,
@@ -179,7 +179,7 @@ namespace RpcLibrary.Interop
                 frag2 = new NDR64_MEMPAD_FORMAT
                 {
                     FormatCode = 0x90, /* FC64_STRUCTPADN */
-                    Reserve1 = 0,
+                    Reserved1 = 0,
                     MemPad = 4,
                     Reserved2 = 0
                 },

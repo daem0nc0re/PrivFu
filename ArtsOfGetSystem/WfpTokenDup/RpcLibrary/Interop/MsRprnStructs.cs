@@ -377,7 +377,7 @@ namespace RpcLibrary.Interop
         public byte FormatCode;
         public byte Alignment;
         public NDR64_STRUCTURE_FLAGS Flags;
-        public byte Reserve;
+        public byte Reserved;
         public uint MemorySize;
         public IntPtr OriginalMemberLayout;
         public IntPtr OriginalPointerLayout;
@@ -423,7 +423,7 @@ namespace RpcLibrary.Interop
     internal struct NDR64_MEMPAD_FORMAT
     {
         public byte FormatCode;
-        public byte Reserve1;
+        public byte Reserved1;
         public ushort MemPad;
         public uint Reserved2;
     }
