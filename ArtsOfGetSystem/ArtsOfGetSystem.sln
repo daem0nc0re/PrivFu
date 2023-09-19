@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NamedPipeClient", "NamedPip
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WfpTokenDup", "WfpTokenDup\WfpTokenDup.csproj", "{6F99CB40-8FEF-4B63-A35D-9CEEC71F7B5F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrintSpoofer", "PrintSpoofer\PrintSpoofer.csproj", "{449CE476-7B27-47F5-B09C-570788A2F261}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{6F99CB40-8FEF-4B63-A35D-9CEEC71F7B5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F99CB40-8FEF-4B63-A35D-9CEEC71F7B5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F99CB40-8FEF-4B63-A35D-9CEEC71F7B5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{449CE476-7B27-47F5-B09C-570788A2F261}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{449CE476-7B27-47F5-B09C-570788A2F261}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{449CE476-7B27-47F5-B09C-570788A2F261}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{449CE476-7B27-47F5-B09C-570788A2F261}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

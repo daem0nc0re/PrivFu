@@ -204,7 +204,7 @@ namespace RpcLibrary
                         rpcStatus = NativeMethods.RpcBindingFromStringBinding(
                             stringBinding,
                             out hBinding);
-                        // RpcMethods.RpcStringFree(in stringBinding);
+                        // NativeMethods.RpcStringFree(in stringBinding);
 
                         if (rpcStatus != 0)
                             hBinding = IntPtr.Zero;
