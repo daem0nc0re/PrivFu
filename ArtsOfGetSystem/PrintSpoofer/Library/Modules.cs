@@ -185,7 +185,7 @@ namespace PrintSpoofer.Library
                 }
                 else
                 {
-                    Console.WriteLine("[+] SYSTEM process is executed successfully.");
+                    Console.WriteLine("[+] SYSTEM process is executed successfully (PID = {0}).", processInformation.dwProcessId);
 
                     if (interactive)
                         NativeMethods.NtWaitForSingleObject(processInformation.hThread, true, IntPtr.Zero);
