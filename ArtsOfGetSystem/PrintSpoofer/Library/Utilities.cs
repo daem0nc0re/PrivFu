@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO.Pipes;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Security.Principal;
-using System.Xml.Linq;
 using PrintSpoofer.Interop;
-using RpcLibrary;
 
 namespace PrintSpoofer.Library
 {
-    using RPC_STATUS = Int32;
-
     internal class Utilities
     {
         public static IntPtr CreateNewNamedPipe(string pipePath)
