@@ -17,6 +17,12 @@ namespace PrintSpoofer
     {
         static void Main(string[] args)
         {
+            if (!Environment.Is64BitProcess)
+            {
+                Console.WriteLine("\n[-] This program does not support 32bit mode.\n");
+                return;
+            }
+
             var options = new CommandLineParser();
 
             try
