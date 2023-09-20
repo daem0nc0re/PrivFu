@@ -119,7 +119,7 @@ namespace PrintSpoofer.Library
                 else
                 {
                     var sid = Helpers.GetTokenUserSid(WindowsIdentity.GetCurrent().Token);
-                    Console.WriteLine("[+] Named pipe impersonation is succesful (SID: {0}).", sid);
+                    Console.WriteLine("[+] Named pipe impersonation is successful (SID: {0}).", sid);
                     NativeMethods.NtClose(hPipe);
                     hPipe = Win32Consts.INVALID_HANDLE_VALUE;
                 }
