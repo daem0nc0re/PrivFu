@@ -46,7 +46,7 @@ namespace RpcLibrary
         private readonly IntPtr pRpcTransferSyntax = IntPtr.Zero;
         private readonly IntPtr pRpcProtseqEndpoint = IntPtr.Zero;
         private readonly IntPtr pAutoHandle = IntPtr.Zero;
-        private readonly IntPtr pSyntaxInfo = IntPtr.Zero; // Locate 2 pointers (MIDL_SYNTAX_INFO)
+        private readonly IntPtr pSyntaxInfo = IntPtr.Zero;
         private readonly IntPtr pSequenceName = IntPtr.Zero;
         private readonly IntPtr pEndpointPath = IntPtr.Zero;
 
@@ -1025,13 +1025,14 @@ namespace RpcLibrary
 
         public void Dispose()
         {
-            Marshal.FreeHGlobal(pRpcTransferSyntax);
-            Marshal.FreeHGlobal(pSyntaxInfo);
             Marshal.FreeHGlobal(pProxyInfo);
             Marshal.FreeHGlobal(pStubDesc);
-            Marshal.FreeHGlobal(pRpcClientInterface);
-            Marshal.FreeHGlobal(pAutoHandle);
             Marshal.FreeHGlobal(pBindingRoutinePair);
+            Marshal.FreeHGlobal(pRpcClientInterface);
+            Marshal.FreeHGlobal(pRpcTransferSyntax);
+            Marshal.FreeHGlobal(pRpcProtseqEndpoint);
+            Marshal.FreeHGlobal(pAutoHandle);
+            Marshal.FreeHGlobal(pSyntaxInfo);
             Marshal.FreeHGlobal(pSequenceName);
             Marshal.FreeHGlobal(pEndpointPath);
         }
@@ -1076,8 +1077,7 @@ namespace RpcLibrary
 
         public IntPtr MemoryAllocateRoutine(SIZE_T size)
         {
-            var nSize = (int)size.ToUInt32();
-            return Marshal.AllocHGlobal(nSize);
+            return Marshal.AllocHGlobal((int)size.ToUInt32());
         }
 
 
@@ -1131,7 +1131,8 @@ namespace RpcLibrary
                     accessRequired);
                 rpcStatus = returnedCode.ToInt32();
             }
-            catch (SEHException) {
+            catch (SEHException)
+            {
                 rpcStatus = Marshal.GetExceptionCode();
                 hPrinter = IntPtr.Zero;
             }
