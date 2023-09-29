@@ -6,9 +6,6 @@ using RpcLibrary.Interop;
 namespace RpcLibrary
 {
     using SIZE_T = UIntPtr;
-    using MIDL_FRAG8 = NDR64_CONTEXT_HANDLE_FORMAT;
-    using MIDL_FRAG9 = NDR64_POINTER_FORMAT;
-    using MIDL_FRAG10 = NDR64_CONFORMANT_STRING_FORMAT;
     using RPC_STATUS = Int32;
 
     internal class MsRprn : IDisposable

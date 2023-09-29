@@ -2,10 +2,6 @@
 
 namespace RpcLibrary.Interop
 {
-    using MIDL_FRAG8 = NDR64_CONTEXT_HANDLE_FORMAT;
-    using MIDL_FRAG9 = NDR64_POINTER_FORMAT;
-    using MIDL_FRAG10 = NDR64_CONFORMANT_STRING_FORMAT;
-
     internal class MsRprnConsts
     {
         public const int TYPE_FORMAT_STRING_SIZE = 47;

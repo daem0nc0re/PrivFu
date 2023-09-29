@@ -66,6 +66,13 @@ namespace RpcLibrary.Interop
         public IntPtr pfnFree; // void ( __stdcall * pfnFree)(void *);
     }
 
+    // Equivalent to NDR64_CONFORMANT_STRING_FORMAT
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG10
+    {
+        public NDR64_STRING_HEADER_FORMAT Header;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG12
     {
@@ -133,6 +140,26 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FORMAT frag6;
         public NDR64_PARAM_FORMAT frag7;
         public NDR64_PARAM_FORMAT frag8;
+    }
+
+    // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG8
+    {
+        public byte FormatCode;
+        public byte ContextFlags;
+        public byte RundownRoutineIndex;
+        public byte Ordinal;
+    }
+
+    // Equivalent to NDR64_POINTER_FORMAT
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG9
+    {
+        public byte FormatCode;
+        public byte Flags;
+        public ushort Reserved;
+        public IntPtr Pointee;
     }
 
     [StructLayout(LayoutKind.Sequential)]
