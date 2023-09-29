@@ -250,6 +250,90 @@ namespace WfpTokenDup.Library
         }
 
 
+        public static int GetServicePidBySession(string serviceName, int sessionId)
+        {
+            IntPtr hSCManager;
+            var hService = IntPtr.Zero;
+            int pid = -1;
+
+            do
+            {
+                IntPtr pInfoBuffer;
+                hSCManager = NativeMethods.OpenSCManager(null, null, ACCESS_MASK.SC_MANAGER_ENUMERATE_SERVICE);
+
+                if (hSCManager == IntPtr.Zero)
+                    break;
+
+                NativeMethods.EnumServicesStatus(
+                    hSCManager,
+                    SERVICE_TYPE.WIN32_SHARE_PROCESS,
+                    SERVICE_CONTROL_STATE.ACTIVE,
+                    IntPtr.Zero,
+                    0,
+                    out int nInfoLength,
+                    out int _,
+                    IntPtr.Zero);
+
+                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+
+                if (NativeMethods.EnumServicesStatus(
+                    hSCManager,
+                    SERVICE_TYPE.WIN32_SHARE_PROCESS,
+                    SERVICE_CONTROL_STATE.ACTIVE,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out int _,
+                    out int nServiceCount,
+                    IntPtr.Zero))
+                {
+                    for (var idx = 0; idx < nServiceCount; idx++)
+                    {
+                        IntPtr pEntry;
+                        int servicePid;
+
+                        if (Environment.Is64BitProcess)
+                            pEntry = new IntPtr(pInfoBuffer.ToInt64() + (Marshal.SizeOf(typeof(ENUM_SERVICE_STATUS)) * idx));
+                        else
+                            pEntry = new IntPtr(pInfoBuffer.ToInt32() + (Marshal.SizeOf(typeof(ENUM_SERVICE_STATUS)) * idx));
+
+                        var info = (ENUM_SERVICE_STATUS)Marshal.PtrToStructure(
+                            pEntry,
+                            typeof(ENUM_SERVICE_STATUS));
+
+                        if (info.lpServiceName.IndexOf(
+                            serviceName,
+                            StringComparison.OrdinalIgnoreCase) < 0)
+                        {
+                            continue;
+                        }
+
+                        servicePid = GetServicePid(info.lpServiceName);
+
+                        if (servicePid == -1)
+                            continue;
+
+                        if (NativeMethods.ProcessIdToSessionId(servicePid, out int serviceSessionId))
+                        {
+                            if (sessionId == serviceSessionId)
+                            {
+                                pid = servicePid;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } while (false);
+
+            if (hService != IntPtr.Zero)
+                NativeMethods.CloseServiceHandle(hService);
+
+            if (hSCManager != IntPtr.Zero)
+                NativeMethods.CloseServiceHandle(hSCManager);
+
+            return pid;
+        }
+
+
         public static string GetSessionAccountName(int sessionId)
         {
             string accountName = null;

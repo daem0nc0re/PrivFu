@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace WfpTokenDup.Interop
@@ -20,6 +21,14 @@ namespace WfpTokenDup.Interop
 
         [FieldOffset(0)]
         public IntPtr /* LONG_PTR */ Simple;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    internal struct ENUM_SERVICE_STATUS
+    {
+        public string lpServiceName;
+        public string lpDisplayName;
+        public SERVICE_STATUS ServiceStatus;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -807,6 +816,18 @@ namespace WfpTokenDup.Interop
         public LARGE_INTEGER PasswordLastSet;
         public LARGE_INTEGER PasswordCanChange;
         public LARGE_INTEGER PasswordMustChange;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SERVICE_STATUS
+    {
+        public SERVICE_TYPE dwServiceType;
+        public SERVICE_STATE dwCurrentState;
+        public SERVICE_ACCEPT dwControlsAccepted;
+        public int dwWin32ExitCode;
+        public int dwServiceSpecificExitCode;
+        public int dwCheckPoint;
+        public int dwWaitHint;
     }
 
     [StructLayout(LayoutKind.Sequential)]

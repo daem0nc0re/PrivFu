@@ -837,6 +837,13 @@ namespace WfpTokenDup.Interop
         INTERACTIVE_PROCESS = 0x00000100,
     }
 
+    internal enum SERVICE_CONTROL_STATE
+    {
+        ACTIVE = 0x00000001,
+        INACTIVE = 0x00000002,
+        STATE_ALL = 0x00000003
+    }
+
     internal enum SERVICE_STATE
     {
         STOPPED = 1,

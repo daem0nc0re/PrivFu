@@ -39,6 +39,17 @@ namespace WfpTokenDup.Interop
             out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool EnumServicesStatus(
+            IntPtr hSCManager,
+            SERVICE_TYPE dwServiceType,
+            SERVICE_CONTROL_STATE dwServiceState,
+            IntPtr /* LPENUM_SERVICE_STATUS */ lpServices,
+            int cbBufSize,
+            out int pcbBytesNeeded,
+            out int lpServicesReturned,
+            IntPtr /* ref int */ lpResumeHandle);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
             in LUID lpLuid,
@@ -99,6 +110,14 @@ namespace WfpTokenDup.Interop
         public static extern int FwpmIPsecTunnelDeleteByKey0(
             IntPtr engineHandle,
             in Guid key);
+
+        /*
+         * kernel32.dll
+         */
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool ProcessIdToSessionId(
+            int dwProcessId,
+            out int pSessionId);
 
         /*
          * ntdll.dll
