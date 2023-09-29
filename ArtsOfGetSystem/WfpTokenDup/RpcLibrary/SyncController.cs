@@ -8,6 +8,8 @@ using RpcLibrary.Interop;
 
 namespace RpcLibrary
 {
+    using RPC_STATUS = Int32;
+
     internal class SyncController : IDisposable
     {
         public readonly IntPtr SyncController_v1_0_c_ifspec = IntPtr.Zero;
@@ -24,6 +26,9 @@ namespace RpcLibrary
         private readonly byte[] MidlFrag41 = new byte[Marshal.SizeOf(typeof(MIDL_FRAG41))];
         private readonly IntPtr[] Ndr64ProcTable = new IntPtr[SyncControllerConsts.FORMAT_TABLE_LENGTH];
 
+        /*
+         * Constructor and Destructor definition
+         */
         public SyncController()
         {
             /*
@@ -148,6 +153,7 @@ namespace RpcLibrary
             pClientInterface = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)));
             pSyntaxInfo = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MIDL_SYNTAX_INFO)) * 2);
             pAutoBindHandle = Marshal.AllocHGlobal(IntPtr.Size);
+            SyncController_v1_0_c_ifspec = pClientInterface;
             Marshal.WriteIntPtr(pAutoBindHandle, IntPtr.Zero);
 
             /*
@@ -252,6 +258,36 @@ namespace RpcLibrary
             Marshal.FreeHGlobal(pClientInterface);
             Marshal.FreeHGlobal(pProxyInfo);
             Marshal.FreeHGlobal(pAutoBindHandle);
+        }
+
+        /*
+         * RPC Methods
+         */
+        public RPC_STATUS AccountsMgmtRpcDiscoverExchangeServerAuthType(
+            IntPtr IDL_handle,
+            string ServerAddress,
+            out int IntOut)
+        {
+            RPC_STATUS rpcStatus;
+            IntOut = 0;
+
+            try
+            {
+                IntPtr pReturned = NativeMethods.NdrClientCall3(
+                    pProxyInfo,
+                    13u,
+                    IntPtr.Zero,
+                    IDL_handle,
+                    ServerAddress,
+                    out IntOut);
+                rpcStatus = pReturned.ToInt32();
+            }
+            catch (SEHException)
+            {
+                rpcStatus = Marshal.GetExceptionCode();
+            }
+
+            return rpcStatus;
         }
     }
 }

@@ -22,6 +22,15 @@ namespace RpcLibrary.Interop
             ref DEVMODE_CONTAINER pDevModeContainer,
             int AccessRequired);
 
+        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr NdrClientCall3(
+            IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
+            uint nProcNum,
+            IntPtr pReturnValue,
+            IntPtr pIdlHandle,
+            string ServerAddress,
+            out int IntOut);
+
         [DllImport("rpcrt4.dll")]
         public static extern RPC_STATUS RpcBindingFree(ref IntPtr Binding);
 
