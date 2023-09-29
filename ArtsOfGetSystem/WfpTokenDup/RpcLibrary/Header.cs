@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace RpcLibrary
 {
+    using RPC_STATUS = Int32;
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct DEVMODE_CONTAINER
     {
@@ -23,5 +25,10 @@ namespace RpcLibrary
         public Guid Uuid;
         public ushort VersMajor;
         public ushort VersMinor;
+    }
+
+    internal class Consts
+    {
+        public const RPC_STATUS RPC_SUCCESS = 0;
     }
 }

@@ -195,7 +195,7 @@ namespace RpcLibrary
                         null,
                         "ncalrpc",
                         null,
-                        IntPtr.Zero,
+                        null,
                         null,
                         out string stringBinding);
 

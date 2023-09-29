@@ -61,6 +61,7 @@
     <Compile Include="RpcLibrary\Interop\MsRprnStructs.cs" />
     <Compile Include="RpcLibrary\Interop\NativeMethods.cs" />
     <Compile Include="RpcLibrary\MsRprn.cs" />
+    <Compile Include="RpcLibrary\RpcHelpers.cs" />
     <Compile Include="WfpTokenDup.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

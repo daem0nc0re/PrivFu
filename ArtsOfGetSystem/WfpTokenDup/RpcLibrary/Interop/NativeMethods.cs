@@ -61,7 +61,7 @@ namespace RpcLibrary.Interop
             string ObjUuid,
             string ProtSeq,
             string NetworkAddr,
-            IntPtr /* string */ Endpoint,
+            string Endpoint,
             string Options,
             out string StringBinding);
 
