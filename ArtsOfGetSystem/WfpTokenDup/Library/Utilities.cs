@@ -172,6 +172,58 @@ namespace WfpTokenDup.Library
         }
 
 
+        public static bool EnumerateAlpcPortObjectPath(
+            int pid,
+            out List<string> objectPath)
+        {
+            NTSTATUS ntstatus;
+            int index = Helpers.GetObjectTypeIndex("ALPC Port");
+            var status = Helpers.GetProcessHandles(pid, out List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> info);
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            var objectAttributes = new OBJECT_ATTRIBUTES();
+            objectPath = new List<string>();
+
+            if (!status || (info.Count == 0) || (index == -1))
+                return false;
+
+            ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
+                ACCESS_MASK.PROCESS_DUP_HANDLE,
+                in objectAttributes,
+                in clientId);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                foreach (var entry in info)
+                {
+                    if (entry.ObjectTypeIndex != index)
+                        continue;
+
+                    ntstatus = NativeMethods.NtDuplicateObject(
+                        hProcess,
+                        new IntPtr(entry.HandleValue),
+                        new IntPtr(-1),
+                        out IntPtr hDupHandle,
+                        ACCESS_MASK.NO_ACCESS,
+                        0u,
+                        DUPLICATE_OPTION_FLAGS.SAME_ACCESS);
+
+                    if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                        continue;
+
+                    string objectName = Helpers.GetObjectName(hDupHandle);
+
+                    if (!string.IsNullOrEmpty(objectName))
+                        objectPath.Add(objectName);
+                }
+
+                NativeMethods.NtClose(hProcess);
+            }
+
+            return (objectPath.Count > 0);
+        }
+
+
         public static IntPtr GetWfpAleHandle()
         {
             var hWfpAle = IntPtr.Zero;
