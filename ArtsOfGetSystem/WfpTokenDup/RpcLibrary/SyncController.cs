@@ -12,26 +12,23 @@ namespace RpcLibrary
     {
         public readonly IntPtr SyncController_v1_0_c_ifspec = IntPtr.Zero;
 
+        private readonly IntPtr pProxyInfo = IntPtr.Zero;
+        private readonly IntPtr pStubDesc = IntPtr.Zero;
+        private readonly IntPtr pTransferSyntax = IntPtr.Zero;
+        private readonly IntPtr pClientInterface = IntPtr.Zero;
+        private readonly IntPtr pSyntaxInfo = IntPtr.Zero;
+        private readonly IntPtr pAutoBindHandle = IntPtr.Zero;
         private readonly byte[] MidlFrag28 = new byte[Marshal.SizeOf(typeof(MIDL_FRAG28))];
         private readonly byte[] MidlFrag30 = new byte[Marshal.SizeOf(typeof(MIDL_FRAG30))];
         private readonly byte[] MidlFrag40 = new byte[Marshal.SizeOf(typeof(MIDL_FRAG40))];
         private readonly byte[] MidlFrag41 = new byte[Marshal.SizeOf(typeof(MIDL_FRAG41))];
-        private readonly RPC_CLIENT_INTERFACE RpcClientInterface = new RPC_CLIENT_INTERFACE
-        {
-            Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
-            InterfaceId = SyntaxId.SyncControllerSyntax_1_0,
-            TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
-            DispatchTable = IntPtr.Zero,
-            RpcProtseqEndpointCount = 0u,
-            RpcProtseqEndpoint = IntPtr.Zero,
-            Reserved = UIntPtr.Zero,
-            InterpreterInfo = IntPtr.Zero, // Must be patched with pointer to ProxyInfo.
-            Flags = 0x02000000u
-        };
         private readonly IntPtr[] Ndr64ProcTable = new IntPtr[SyncControllerConsts.FORMAT_TABLE_LENGTH];
 
         public SyncController()
         {
+            /*
+             * Build Ndr64ProcTable
+             */
             var midlFrag28 = new MIDL_FRAG28
             {
                 /* AccountsMgmtRpcDiscoverExchangeServerAuthType procedure */
@@ -141,10 +138,120 @@ namespace RpcLibrary
                 Ndr64ProcTable[idx] = Marshal.UnsafeAddrOfPinnedArrayElement(MidlFrag40, 0);
 
             Ndr64ProcTable[13] = Marshal.UnsafeAddrOfPinnedArrayElement(MidlFrag28, 0);
+
+            /*
+             * Allocate Buffers
+             */
+            pProxyInfo = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MIDL_STUBLESS_PROXY_INFO)));
+            pStubDesc = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MIDL_STUB_DESC)));
+            pTransferSyntax = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(RPC_SYNTAX_IDENTIFIER)));
+            pClientInterface = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)));
+            pSyntaxInfo = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MIDL_SYNTAX_INFO)) * 2);
+            pAutoBindHandle = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(pAutoBindHandle, IntPtr.Zero);
+
+            /*
+             * Build ProxyInfo
+             */
+            var proxyInfo = new MIDL_STUBLESS_PROXY_INFO
+            {
+                pStubDesc = pStubDesc,
+                ProcFormatString = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.ProcFormatString.Format, 0),
+                FormatStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.FormatStringOffsetTable, 0),
+                pTransferSyntax = pTransferSyntax,
+                nCount = new UIntPtr(2u),
+                pSyntaxInfo = pSyntaxInfo
+            };
+            Marshal.StructureToPtr(proxyInfo, pProxyInfo, true);
+
+            /*
+             * Build StubDesc
+             */
+            var stubDesc = new MIDL_STUB_DESC
+            {
+                RpcInterfaceInformation = pClientInterface,
+                pfnAllocate = Marshal.GetFunctionPointerForDelegate((MIDL_USER_ALLOCATE)RpcRoutines.Malloc),
+                pfnFree = Marshal.GetFunctionPointerForDelegate((MIDL_USER_FREE)RpcRoutines.Free),
+                handleInfo = new IMPLICIT_HANDLE_INFO { pAutoHandle = pAutoBindHandle },
+                apfnNdrRundownRoutines = IntPtr.Zero,
+                aGenericBindingRoutinePairs = IntPtr.Zero,
+                apfnExprEval = IntPtr.Zero,
+                aXmitQuintuple = IntPtr.Zero,
+                pFormatTypes = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.TypeFormatString.Format, 0),
+                fCheckBounds = 1,
+                Version = 0x00060001u,
+                pMallocFreeStruct = IntPtr.Zero,
+                MIDLVersion = 0x08010272,
+                CommFaultOffsets = IntPtr.Zero,
+                aUserMarshalQuadruple = IntPtr.Zero,
+                NotifyRoutineTable = IntPtr.Zero,
+                mFlags = new UIntPtr(0x02000001u),
+                CsRoutineTables = IntPtr.Zero,
+                ProxyServerInfo = pProxyInfo,
+                pExprInfo = IntPtr.Zero
+            };
+
+            /*
+             * Build RpcTransferSyntax
+             */
+            Marshal.StructureToPtr(SyntaxId.RpcTransferSyntax_2_0, pStubDesc, false);
+
+            /*
+             * Build RpcClientInterface
+             */
+            var rpcClientInterface = new RPC_CLIENT_INTERFACE
+            {
+                Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
+                InterfaceId = SyntaxId.SyncControllerSyntax_1_0,
+                TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
+                DispatchTable = IntPtr.Zero,
+                RpcProtseqEndpointCount = 0u,
+                RpcProtseqEndpoint = IntPtr.Zero,
+                Reserved = UIntPtr.Zero,
+                InterpreterInfo = pProxyInfo,
+                Flags = 0x02000000u
+            };
+            Marshal.StructureToPtr(rpcClientInterface, pClientInterface, true);
+
+            /*
+             * Build SyntaxInfo
+             */
+            var syntaxInfo = new MIDL_SYNTAX_INFO
+            {
+                TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
+                DispatchTable = IntPtr.Zero,
+                ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
+                FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.FormatStringOffsetTable, 0),
+                TypeString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.TypeFormatString.Format, 0),
+                aUserMarshalQuadruple = IntPtr.Zero,
+                pMethodProperties = IntPtr.Zero,
+                pReserved2 = UIntPtr.Zero
+            };
+
+            Marshal.StructureToPtr(syntaxInfo, pSyntaxInfo, false);
+
+            IntPtr pSyntaxInfo1;
+            syntaxInfo.TransferSyntax = SyntaxId.RpcTransferSyntax64_2_0;
+            syntaxInfo.ProcString = IntPtr.Zero;
+            syntaxInfo.FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(Ndr64ProcTable, 0);
+            syntaxInfo.TypeString = IntPtr.Zero;
+
+            if (Environment.Is64BitProcess)
+                pSyntaxInfo1 = new IntPtr(pSyntaxInfo.ToInt64() + Marshal.SizeOf(syntaxInfo));
+            else
+                pSyntaxInfo1 = new IntPtr(pSyntaxInfo.ToInt32() + Marshal.SizeOf(syntaxInfo));
+
+            Marshal.StructureToPtr(syntaxInfo, pSyntaxInfo1, true);
         }
 
         public void Dispose()
         {
+            Marshal.FreeHGlobal(pProxyInfo);
+            Marshal.FreeHGlobal(pStubDesc);
+            Marshal.FreeHGlobal(pTransferSyntax);
+            Marshal.FreeHGlobal(pClientInterface);
+            Marshal.FreeHGlobal(pProxyInfo);
+            Marshal.FreeHGlobal(pAutoBindHandle);
         }
     }
 }
