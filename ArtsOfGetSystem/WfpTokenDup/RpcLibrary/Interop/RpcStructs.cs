@@ -579,20 +579,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_SYNTAX_IDENTIFIER
-    {
-        public Guid SyntaxGUID;
-        public RPC_VERSION SyntaxVersion;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_VERSION
-    {
-        public ushort MajorVersion;
-        public ushort MinorVersion;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct USER_MARSHAL_ROUTINE_QUADRUPLE
     {
         public IntPtr /* USER_MARSHAL_SIZING_ROUTINE */ pfnBufferSize;
