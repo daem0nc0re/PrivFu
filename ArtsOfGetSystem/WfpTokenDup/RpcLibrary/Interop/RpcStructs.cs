@@ -130,6 +130,22 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG28
+    {
+        public NDR64_PROC_FORMAT frag1;
+        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
+        public NDR64_PARAM_FORMAT frag3;
+        public NDR64_PARAM_FORMAT frag4;
+        public NDR64_PARAM_FORMAT frag5;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG30
+    {
+        public NDR64_STRING_HEADER_FORMAT Header;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG4
     {
         public NDR64_PROC_FORMAT frag1;
@@ -140,6 +156,20 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FORMAT frag6;
         public NDR64_PARAM_FORMAT frag7;
         public NDR64_PARAM_FORMAT frag8;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG40
+    {
+        public NDR64_PROC_FORMAT frag1;
+        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
+        public NDR64_PARAM_FORMAT frag3;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MIDL_FRAG41
+    {
+        public byte frag1;
     }
 
     // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
@@ -325,22 +355,6 @@ namespace RpcLibrary.Interop
         public IntPtr aUserMarshalQuadruple;
         public IntPtr /* MIDL_INTERFACE_METHOD_PROPERTIES* */ pMethodProperties;
         public UIntPtr pReserved2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MS2DRPRN_MIDL_PROC_FORMAT_STRING
-    {
-        public short Pad;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MsRprnConsts.PROC_FORMAT_STRING_SIZE)]
-        public byte[] Format;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MS2DRPRN_MIDL_TYPE_FORMAT_STRING
-    {
-        public short Pad;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MsRprnConsts.TYPE_FORMAT_STRING_SIZE)]
-        public byte[] Format;
     }
 
     [StructLayout(LayoutKind.Sequential)]

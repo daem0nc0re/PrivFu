@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace RpcLibrary.Interop
 {
@@ -6,23 +7,25 @@ namespace RpcLibrary.Interop
     {
         public const int TYPE_FORMAT_STRING_SIZE = 47;
         public const int PROC_FORMAT_STRING_SIZE = 105;
-        public static readonly ushort[] FormatStringOffsetTable = new ushort[2] { 0, 36 };
+        public const int FORMAT_TABLE_LENGTH = 2;
 
-        public static readonly RPC_SYNTAX_IDENTIFIER RpcUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MIDL_PROC_FORMAT_STRING
         {
-            SyntaxGUID = new Guid("12345678-1234-ABCD-EF00-0123456789AB"),
-            SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
-        };
-        public static readonly RPC_SYNTAX_IDENTIFIER RpcTransferSyntax_2_0 = new RPC_SYNTAX_IDENTIFIER
+            public short Pad;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = PROC_FORMAT_STRING_SIZE)]
+            public byte[] Format;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct MIDL_TYPE_FORMAT_STRING
         {
-            SyntaxGUID = new Guid("8A885D04-1CEB-11C9-9FE8-08002B104860"),
-            SyntaxVersion = new RPC_VERSION { MajorVersion = 2, MinorVersion = 0 }
-        };
-        public static readonly RPC_SYNTAX_IDENTIFIER RpcTransferSyntax64_2_0 = new RPC_SYNTAX_IDENTIFIER
-        {
-            SyntaxGUID = new Guid("71710533-BEBA-4937-8319-B5DBEF9CCC36"),
-            SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
-        };
+            public short Pad;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = TYPE_FORMAT_STRING_SIZE)]
+            public byte[] Format;
+        }
+
+        public static readonly ushort[] FormatStringOffsetTable = new ushort[FORMAT_TABLE_LENGTH] { 0, 36 };
 
         /* RpcEnumPrinters */
         public static readonly MIDL_FRAG2 __midl_frag2 = new MIDL_FRAG2
@@ -243,7 +246,7 @@ namespace RpcLibrary.Interop
             frag1 = 0x5 /* FC64_INT32 */
         };
 
-        public static readonly MS2DRPRN_MIDL_PROC_FORMAT_STRING ms2Drprn__MIDL_ProcFormatString = new MS2DRPRN_MIDL_PROC_FORMAT_STRING
+        public static readonly MIDL_PROC_FORMAT_STRING ProcFormatString = new MIDL_PROC_FORMAT_STRING
         {
             Pad = 0,
             Format = new byte[PROC_FORMAT_STRING_SIZE]
@@ -321,7 +324,7 @@ namespace RpcLibrary.Interop
                 /* 104 */ 0x00
             }
         };
-        public static readonly MS2DRPRN_MIDL_TYPE_FORMAT_STRING ms2Drprn__MIDL_TypeFormatString = new MS2DRPRN_MIDL_TYPE_FORMAT_STRING
+        public static readonly MIDL_TYPE_FORMAT_STRING TypeFormatString = new MIDL_TYPE_FORMAT_STRING
         {
             Pad = 0,
             Format = new byte[TYPE_FORMAT_STRING_SIZE]
