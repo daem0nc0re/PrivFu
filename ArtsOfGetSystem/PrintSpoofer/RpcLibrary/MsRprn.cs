@@ -920,7 +920,7 @@ namespace RpcLibrary
             {
                 new MIDL_SYNTAX_INFO
                 {
-                    TransferSyntax = SyntaxIdentifires.RpcTransferSyntax_2_0,
+                    TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                     DispatchTable = IntPtr.Zero,
                     ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
                     FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.FormatStringOffsetTable, 0),
@@ -931,7 +931,7 @@ namespace RpcLibrary
                 },
                 new MIDL_SYNTAX_INFO
                 {
-                    TransferSyntax = SyntaxIdentifires.RpcTransferSyntax64_2_0,
+                    TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax64_2_0,
                     DispatchTable = IntPtr.Zero,
                     ProcString = IntPtr.Zero,
                     FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(Ndr64ProcTable, 0),
@@ -957,7 +957,7 @@ namespace RpcLibrary
             /*
              * Build _RpcTransferSyntax_2_0
              */
-            Marshal.StructureToPtr(SyntaxIdentifires.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
+            Marshal.StructureToPtr(SyntaxIdentifiers.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
 
             /*
              * Build __RpcProtseqEndpoint
@@ -978,8 +978,8 @@ namespace RpcLibrary
             var rpcClientInterface = new RPC_CLIENT_INTERFACE
             {
                 Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
-                InterfaceId = SyntaxIdentifires.RpcUuidSyntax_1_0,
-                TransferSyntax = SyntaxIdentifires.RpcTransferSyntax_2_0,
+                InterfaceId = SyntaxIdentifiers.RpcUuidSyntax_1_0,
+                TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
                 RpcProtseqEndpointCount = 1u,
                 RpcProtseqEndpoint = pRpcProtseqEndpoint,
