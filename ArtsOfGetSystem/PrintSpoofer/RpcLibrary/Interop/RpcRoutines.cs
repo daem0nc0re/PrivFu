@@ -35,14 +35,14 @@ namespace RpcLibrary.Interop
                         rpcString,
                         @"\pipe\spoolss",
                         null,
-                        out string stringBinding);
+                        out IntPtr pStringBinding);
 
                     if (rpcStatus == 0)
                     {
                         rpcStatus = NativeMethods.RpcBindingFromStringBinding(
-                            stringBinding,
+                            Marshal.PtrToStringUni(pStringBinding),
                             out hBinding);
-                        // NativeMethods.RpcStringFree(in stringBinding);
+                        NativeMethods.RpcStringFree(in pStringBinding);
 
                         if (rpcStatus != 0)
                             hBinding = IntPtr.Zero;

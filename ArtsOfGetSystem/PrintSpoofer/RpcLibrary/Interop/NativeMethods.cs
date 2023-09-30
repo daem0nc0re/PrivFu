@@ -83,9 +83,9 @@ namespace RpcLibrary.Interop
             string NetworkAddr,
             string Endpoint,
             string Options,
-            out string StringBinding);
+            out IntPtr /* wchar_t** */ StringBinding);
 
         [DllImport("rpcrt4.dll", EntryPoint = "RpcStringFreeW", CharSet = CharSet.Unicode)]
-        public static extern RPC_STATUS RpcStringFree(in string RpcString);
+        public static extern RPC_STATUS RpcStringFree(in IntPtr /* wchar_t** */ RpcString);
     }
 }
