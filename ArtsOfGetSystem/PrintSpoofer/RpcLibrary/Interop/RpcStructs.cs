@@ -529,22 +529,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MS2DRPRN_MIDL_PROC_FORMAT_STRING
-    {
-        public short Pad;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MsRprnConsts.PROC_FORMAT_STRING_SIZE)]
-        public byte[] Format;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MS2DRPRN_MIDL_TYPE_FORMAT_STRING
-    {
-        public short Pad;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = MsRprnConsts.TYPE_FORMAT_STRING_SIZE)]
-        public byte[] Format;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct NDR_CS_ROUTINES
     {
         public IntPtr /* NDR_CS_SIZE_CONVERT_ROUTINES* */ pSizeConvertRoutines;
@@ -800,20 +784,6 @@ namespace RpcLibrary.Interop
     {
         public IntPtr /* unsigned char* */ RpcProtocolSequence;
         public IntPtr /* unsigned char* */ Endpoint;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_SYNTAX_IDENTIFIER
-    {
-        public Guid SyntaxGUID;
-        public RPC_VERSION SyntaxVersion;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_VERSION
-    {
-        public ushort MajorVersion;
-        public ushort MinorVersion;
     }
 
     [StructLayout(LayoutKind.Sequential)]

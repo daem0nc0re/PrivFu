@@ -49,6 +49,20 @@ namespace RpcLibrary
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct RPC_SYNTAX_IDENTIFIER
+    {
+        public Guid SyntaxGUID;
+        public RPC_VERSION SyntaxVersion;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RPC_VERSION
+    {
+        public ushort MajorVersion;
+        public ushort MinorVersion;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct RPC_V2_NOTIFY_OPTIONS
     {
         public int Version;

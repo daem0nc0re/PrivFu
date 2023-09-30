@@ -59,10 +59,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RpcLibrary\Header.cs" />
     <Compile Include="RpcLibrary\Interop\MsRprnConsts.cs" />
-    <Compile Include="RpcLibrary\Interop\MsRprnDelegateTypes.cs" />
-    <Compile Include="RpcLibrary\Interop\MsRprnEnums.cs" />
-    <Compile Include="RpcLibrary\Interop\MsRprnStructs.cs" />
+    <Compile Include="RpcLibrary\Interop\DelegateTypes.cs" />
+    <Compile Include="RpcLibrary\Interop\RpcEnums.cs" />
+    <Compile Include="RpcLibrary\Interop\RpcRoutines.cs" />
+    <Compile Include="RpcLibrary\Interop\RpcStructs.cs" />
     <Compile Include="RpcLibrary\Interop\NativeMethods.cs" />
+    <Compile Include="RpcLibrary\Interop\SyntaxIdentifires.cs" />
     <Compile Include="RpcLibrary\MsRprn.cs" />
   </ItemGroup>
   <ItemGroup>

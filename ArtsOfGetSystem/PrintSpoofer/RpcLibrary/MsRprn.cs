@@ -82,18 +82,13 @@ namespace RpcLibrary
             /*
              * Resolve routine APIs
              */
-            MIDL_USER_ALLOCATE malloc = MemoryAllocateRoutine;
-            MIDL_USER_FREE free = MemoryFreeRoutine;
-            IntPtr pMalloc = Marshal.GetFunctionPointerForDelegate(malloc);
-            IntPtr pFree = Marshal.GetFunctionPointerForDelegate(free);
-            var bindingRoutinePair = new GENERIC_BINDING_ROUTINE_PAIR();
-            var bindingRoutine = (GENERIC_BINDING_ROUTINE)BindingRoutine;
-            var unbindRoutine = (GENERIC_UNBIND_ROUTINE)UnbindRoutine;
-
-            bindingRoutinePair.pfnBind = Marshal.GetFunctionPointerForDelegate(bindingRoutine);
-            bindingRoutinePair.pfnUnbind = Marshal.GetFunctionPointerForDelegate(unbindRoutine);
+            var bindingRoutinePair = new GENERIC_BINDING_ROUTINE_PAIR
+            {
+                pfnBind = Marshal.GetFunctionPointerForDelegate((GENERIC_BINDING_ROUTINE)RpcRoutines.SpoolssBinding),
+                pfnUnbind = Marshal.GetFunctionPointerForDelegate((GENERIC_UNBIND_ROUTINE)RpcRoutines.Unbind)
+            };
             pBindingRoutinePair = Marshal.AllocHGlobal(Marshal.SizeOf(bindingRoutinePair));
-            Marshal.StructureToPtr(bindingRoutinePair, pBindingRoutinePair, false);
+            Marshal.StructureToPtr(bindingRoutinePair, pBindingRoutinePair, true);
 
             /*
              * Build winspool_ProxyInfo
@@ -925,18 +920,18 @@ namespace RpcLibrary
             {
                 new MIDL_SYNTAX_INFO
                 {
-                    TransferSyntax = MsRprnConsts.RpcTransferSyntax_2_0,
+                    TransferSyntax = SyntaxIdentifires.RpcTransferSyntax_2_0,
                     DispatchTable = IntPtr.Zero,
-                    ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ms2Drprn__MIDL_ProcFormatString.Format, 0),
+                    ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
                     FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.FormatStringOffsetTable, 0),
-                    TypeString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ms2Drprn__MIDL_TypeFormatString.Format, 0),
+                    TypeString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.TypeFormatString.Format, 0),
                     aUserMarshalQuadruple = IntPtr.Zero,
                     pMethodProperties = IntPtr.Zero,
                     pReserved2 = UIntPtr.Zero
                 },
                 new MIDL_SYNTAX_INFO
                 {
-                    TransferSyntax = MsRprnConsts.RpcTransferSyntax64_2_0,
+                    TransferSyntax = SyntaxIdentifires.RpcTransferSyntax64_2_0,
                     DispatchTable = IntPtr.Zero,
                     ProcString = IntPtr.Zero,
                     FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(Ndr64ProcTable, 0),
@@ -962,7 +957,7 @@ namespace RpcLibrary
             /*
              * Build _RpcTransferSyntax_2_0
              */
-            Marshal.StructureToPtr(MsRprnConsts.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
+            Marshal.StructureToPtr(SyntaxIdentifires.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
 
             /*
              * Build __RpcProtseqEndpoint
@@ -983,8 +978,8 @@ namespace RpcLibrary
             var rpcClientInterface = new RPC_CLIENT_INTERFACE
             {
                 Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
-                InterfaceId = MsRprnConsts.RpcUuidSyntax_1_0,
-                TransferSyntax = MsRprnConsts.RpcTransferSyntax_2_0,
+                InterfaceId = SyntaxIdentifires.RpcUuidSyntax_1_0,
+                TransferSyntax = SyntaxIdentifires.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
                 RpcProtseqEndpointCount = 1u,
                 RpcProtseqEndpoint = pRpcProtseqEndpoint,
@@ -999,10 +994,10 @@ namespace RpcLibrary
              */
             var stubDesc = new MIDL_STUB_DESC(
                 pRpcClientInterface,
-                pMalloc,
-                pFree,
+                Marshal.GetFunctionPointerForDelegate((MIDL_USER_ALLOCATE)RpcRoutines.Malloc),
+                Marshal.GetFunctionPointerForDelegate((MIDL_USER_FREE)RpcRoutines.Free),
                 pAutoHandle,
-                Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ms2Drprn__MIDL_TypeFormatString.Format, 0),
+                Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.TypeFormatString.Format, 0),
                 pBindingRoutinePair,
                 pProxyInfo);
             Marshal.StructureToPtr(stubDesc, pStubDesc, true);
@@ -1013,7 +1008,7 @@ namespace RpcLibrary
             var proxyInfo = new MIDL_STUBLESS_PROXY_INFO
             {
                 pStubDesc = pStubDesc,
-                ProcFormatString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ms2Drprn__MIDL_ProcFormatString.Format, 0),
+                ProcFormatString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
                 FormatStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.FormatStringOffsetTable, 0),
                 pTransferSyntax = pRpcTransferSyntax,
                 nCount = new UIntPtr(2u),
@@ -1040,53 +1035,6 @@ namespace RpcLibrary
         /*
          * public functions
          */
-        public IntPtr BindingRoutine(IntPtr pRpcString)
-        {
-            var hBinding = IntPtr.Zero;
-            var rpcString = Marshal.PtrToStringUni(pRpcString);
-
-            try
-            {
-                do
-                {
-                    RPC_STATUS rpcStatus = NativeMethods.RpcStringBindingCompose(
-                        "12345678-1234-ABCD-EF00-0123456789AB",
-                        "ncacn_np",
-                        rpcString,
-                        @"\pipe\spoolss",
-                        null,
-                        out string stringBinding);
-
-                    if (rpcStatus == 0)
-                    {
-                        rpcStatus = NativeMethods.RpcBindingFromStringBinding(
-                            stringBinding,
-                            out hBinding);
-                        // NativeMethods.RpcStringFree(in stringBinding);
-
-                        if (rpcStatus != 0)
-                            hBinding = IntPtr.Zero;
-                    }
-                } while (false);
-            }
-            catch (Exception) { }
-
-            return hBinding;
-        }
-
-
-        public IntPtr MemoryAllocateRoutine(SIZE_T size)
-        {
-            return Marshal.AllocHGlobal((int)size.ToUInt32());
-        }
-
-
-        public void MemoryFreeRoutine(IntPtr buffer)
-        {
-            Marshal.FreeHGlobal(buffer);
-        }
-
-
         public RPC_STATUS RpcClosePrinter(ref IntPtr pPrinterHandle)
         {
             RPC_STATUS rpcStatus;
@@ -1171,13 +1119,6 @@ namespace RpcLibrary
             }
 
             return rpcStatus;
-        }
-
-
-        public void UnbindRoutine(IntPtr pServer, IntPtr hBinding)
-        {
-            _ = pServer;
-            NativeMethods.RpcBindingFree(ref hBinding);
         }
     }
 }
