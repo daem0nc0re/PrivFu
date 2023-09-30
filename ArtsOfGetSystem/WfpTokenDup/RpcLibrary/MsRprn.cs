@@ -191,14 +191,14 @@ namespace RpcLibrary
                         null,
                         null,
                         null,
-                        out string stringBinding);
+                        out IntPtr pStringBinding);
 
                     if (rpcStatus == 0)
                     {
                         rpcStatus = NativeMethods.RpcBindingFromStringBinding(
-                            stringBinding,
+                            pStringBinding,
                             out hBinding);
-                        // NativeMethods.RpcStringFree(in stringBinding);
+                        NativeMethods.RpcStringFree(in pStringBinding);
 
                         if (rpcStatus != 0)
                             hBinding = IntPtr.Zero;

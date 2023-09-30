@@ -36,7 +36,7 @@ namespace RpcLibrary.Interop
 
         [DllImport("rpcrt4.dll", EntryPoint = "RpcBindingFromStringBindingW", CharSet = CharSet.Unicode)]
         public static extern RPC_STATUS RpcBindingFromStringBinding(
-            string StringBinding,
+            IntPtr StringBinding,
             out IntPtr Binding);
 
         [DllImport("rpcrt4.dll", EntryPoint = "RpcBindingSetAuthInfoW", CharSet = CharSet.Unicode)]
@@ -72,9 +72,9 @@ namespace RpcLibrary.Interop
             string NetworkAddr,
             string Endpoint,
             string Options,
-            out string StringBinding);
+            out IntPtr /* wchar_t** */ StringBinding);
 
         [DllImport("rpcrt4.dll", EntryPoint = "RpcStringFreeW", CharSet = CharSet.Unicode)]
-        public static extern RPC_STATUS RpcStringFree(in string RpcString);
+        public static extern RPC_STATUS RpcStringFree(in IntPtr /* wchar_t** */ RpcString);
     }
 }

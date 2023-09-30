@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using RpcLibrary.Interop;
 
 namespace RpcLibrary
@@ -24,15 +21,15 @@ namespace RpcLibrary
                     null,
                     endpoint,
                     null,
-                    out string stringBinding);
+                    out IntPtr pStringBinding);
 
                 if (rpcStatus != Consts.RPC_SUCCESS)
                     break;
 
                 rpcStatus = NativeMethods.RpcBindingFromStringBinding(
-                    stringBinding,
+                    pStringBinding,
                     out hBinding);
-                //NativeMethods.RpcStringFree(in stringBinding);
+                NativeMethods.RpcStringFree(in pStringBinding);
 
                 if (rpcStatus != Consts.RPC_SUCCESS)
                     hBinding = IntPtr.Zero;
