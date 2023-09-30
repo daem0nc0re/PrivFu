@@ -514,14 +514,14 @@ namespace WfpTokenDup.Library
         public static bool SetTcpListener(
             string ipv4String,
             ushort port,
-            IntPtr hEventStart)
+            IntPtr hSetupNotifyEvent,
+            out IntPtr hListenerSocket,
+            out IntPtr hAcceptSocket)
         {
             var status = false;
-            IntPtr hSocket = Win32Consts.INVALID_SOCKET;
 
             do
             {
-                IntPtr hListenerSocket;
                 var nInfoLength = Marshal.SizeOf(typeof(SOCKADDR_IN));
                 var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
                 int nReturnCode = NativeMethods.WSAStringToAddressW(
@@ -533,12 +533,14 @@ namespace WfpTokenDup.Library
                 var sockaddr_in = (SOCKADDR_IN)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(SOCKADDR_IN));
+                hListenerSocket = Win32Consts.INVALID_SOCKET;
+                hAcceptSocket = Win32Consts.INVALID_SOCKET;
                 sockaddr_in.sin_port = (ushort)(((port << 8) | (port >> 8)) & 0xFFFF);
 
                 if (nReturnCode != 0)
                     break;
 
-                hSocket = NativeMethods.WSASocketW(
+                hListenerSocket = NativeMethods.WSASocketW(
                     (int)ADDRESS_FAMILY.AF_INET,
                     SOCKET_TYPE.STREAM,
                     IPPROTO.TCP,
@@ -546,39 +548,39 @@ namespace WfpTokenDup.Library
                     SOCKET_GROUP.NONE,
                     WSA_FLAGS.OVERLAPPED);
 
-                if (hSocket == Win32Consts.INVALID_SOCKET)
+                if (hListenerSocket == Win32Consts.INVALID_SOCKET)
                     break;
 
                 nReturnCode = NativeMethods.bind(
-                    hSocket,
+                    hListenerSocket,
                     in sockaddr_in,
                     Marshal.SizeOf(sockaddr_in));
 
                 if (nReturnCode != 0)
                     break;
 
-                nReturnCode = NativeMethods.listen(hSocket, 1);
+                nReturnCode = NativeMethods.listen(hListenerSocket, 1);
 
                 if (nReturnCode != 0)
                     break;
 
-                if (hEventStart != IntPtr.Zero)
-                    NativeMethods.NtSetEvent(hEventStart, out int _);
+                if (hSetupNotifyEvent != IntPtr.Zero)
+                    NativeMethods.NtSetEvent(hSetupNotifyEvent, out int _);
 
-                hListenerSocket = NativeMethods.WSAAccept(
-                    hSocket,
+                hAcceptSocket = NativeMethods.WSAAccept(
+                    hListenerSocket,
                     out SOCKADDR _,
                     ref nInfoLength,
                     IntPtr.Zero,
                     IntPtr.Zero);
-                status = (hListenerSocket != Win32Consts.INVALID_SOCKET);
-
-                if (status)
-                    NativeMethods.closesocket(hListenerSocket);
+                status = (hAcceptSocket != Win32Consts.INVALID_SOCKET);
             } while (false);
 
-            if (hSocket != Win32Consts.INVALID_SOCKET)
-                NativeMethods.closesocket(hSocket);
+            if (!status && (hListenerSocket != Win32Consts.INVALID_SOCKET))
+            {
+                NativeMethods.closesocket(hListenerSocket);
+                hListenerSocket = Win32Consts.INVALID_SOCKET;
+            }
 
             return status;
         }
