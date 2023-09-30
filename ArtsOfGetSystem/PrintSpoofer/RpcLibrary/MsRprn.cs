@@ -1046,7 +1046,11 @@ namespace RpcLibrary
                     29u,
                     IntPtr.Zero,
                     ref pPrinterHandle);
-                rpcStatus = returnedCode.ToInt32();
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (RPC_STATUS)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
             }
             catch (SEHException)
             {
@@ -1077,7 +1081,11 @@ namespace RpcLibrary
                     dataType,
                     ref devmodeContainer,
                     accessRequired);
-                rpcStatus = returnedCode.ToInt32();
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (RPC_STATUS)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
             }
             catch (SEHException)
             {
@@ -1111,7 +1119,11 @@ namespace RpcLibrary
                     pszLocalMachine,
                     dwPrinterLocal,
                     pOptions);
-                rpcStatus = returnedCode.ToInt32();
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (RPC_STATUS)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
             }
             catch (SEHException)
             {
