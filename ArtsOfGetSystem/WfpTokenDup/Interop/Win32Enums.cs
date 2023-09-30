@@ -477,6 +477,40 @@ namespace WfpTokenDup.Interop
         DONT_ACCEPT_EXPLICIT_CREDENTIALS = 0x00000001
     }
 
+    internal enum IPPROTO
+    {
+        HOPOPTS = 0,  // IPv6 Hop-by-Hop options
+        ICMP = 1,
+        IGMP = 2,
+        GGP = 3,
+        IPV4 = 4,
+        ST = 5,
+        TCP = 6,
+        CBT = 7,
+        EGP = 8,
+        IGP = 9,
+        PUP = 12,
+        UDP = 17,
+        IDP = 22,
+        RDP = 27,
+        IPV6 = 41, // IPv6 header
+        ROUTING = 43, // IPv6 Routing header
+        FRAGMENT = 44, // IPv6 fragmentation header
+        ESP = 50, // encapsulating security payload
+        AH = 51, // authentication header
+        ICMPV6 = 58, // ICMPv6
+        NONE = 59, // IPv6 no next header
+        DSTOPTS = 60, // IPv6 Destination options
+        ND = 77,
+        ICLFXBM = 78,
+        PIM = 103,
+        PGM = 113,
+        L2TP = 115,
+        SCTP = 132,
+        RAW = 255,
+        MAX = 256
+    }
+
     internal enum IPSEC_AUTH_TYPE
     {
         MD5 = 0,
@@ -855,6 +889,12 @@ namespace WfpTokenDup.Interop
         PAUSED
     }
 
+    internal enum SOCKET_GROUP : uint
+    {
+        NONE = 0,
+        UNCONSTRAINED_GROUP = 1,
+        CONSTRAINED_GROUP = 2
+    }
 
     internal enum SOCKET_TYPE
     {
@@ -1178,6 +1218,54 @@ namespace WfpTokenDup.Interop
         ProcessTokenReference = 0x128000,
         ReleaseTokenInformationById = 0x128004,
         ProcessExplicitCredentialQuery = 0x128010
+    }
+
+    [Flags]
+    internal enum WSA_FLAGS : uint
+    {
+        OVERLAPPED = 0x00000001,
+        MULTIPOINT_C_ROOT = 0x00000002,
+        MULTIPOINT_C_LEAF = 0x00000004,
+        MULTIPOINT_D_ROOT = 0x00000008,
+        MULTIPOINT_D_LEAF = 0x00000010,
+        ACCESS_SYSTEM_SECURITY = 0x00000040,
+        NO_HANDLE_INHERIT = 0x00000080,
+        REGISTERED_IO = 0x00000100
+    }
+
+    [Flags]
+    internal enum WSA_PROVIDOR_FLAGS : uint
+    {
+        MULTIPLE_PROTO_ENTRIES = 0x00000001,
+        RECOMMENDED_PROTO_ENTRY = 0x00000002,
+        HIDDEN = 0x00000004,
+        MATCHES_PROTOCOL_ZERO = 0x00000008,
+        NETWORKDIRECT_PROVIDER = 0x00000010
+    }
+
+    [Flags]
+    internal enum WSA_SERVICE_FLAGS1 : uint
+    {
+        CONNECTIONLESS = 0x00000001,
+        GUARANTEED_DELIVERY = 0x00000002,
+        GUARANTEED_ORDER = 0x00000004,
+        MESSAGE_ORIENTED = 0x00000008,
+        PSEUDO_STREAM = 0x00000010,
+        GRACEFUL_CLOSE = 0x00000020,
+        EXPEDITED_DATA = 0x00000040,
+        CONNECT_DATA = 0x00000080,
+        DISCONNECT_DATA = 0x00000100,
+        SUPPORT_BROADCAST = 0x00000200,
+        SUPPORT_MULTIPOINT = 0x00000400,
+        MULTIPOINT_CONTROL_PLANE = 0x00000800,
+        MULTIPOINT_DATA_PLANE = 0x00001000,
+        QOS_SUPPORTED = 0x00002000,
+        INTERRUPT = 0x00004000,
+        UNI_SEND = 0x00008000,
+        UNI_RECV = 0x00010000,
+        IFS_HANDLES = 0x00020000,
+        PARTIAL_MESSAGE = 0x00040000,
+        SAN_SUPPORT_SDP = 0x00080000
     }
 
     internal enum WTS_INFO_CLASS

@@ -62,7 +62,7 @@
     <Compile Include="RpcLibrary\Interop\RpcStructs.cs" />
     <Compile Include="RpcLibrary\Interop\NativeMethods.cs" />
     <Compile Include="RpcLibrary\Interop\SyncControllerConsts.cs" />
-    <Compile Include="RpcLibrary\Interop\SyntaxId.cs" />
+    <Compile Include="RpcLibrary\Interop\SyntaxIdentifiers.cs" />
     <Compile Include="RpcLibrary\MsRprn.cs" />
     <Compile Include="RpcLibrary\RpcHelpers.cs" />
     <Compile Include="RpcLibrary\SyncController.cs" />

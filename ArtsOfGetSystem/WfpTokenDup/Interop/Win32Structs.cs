@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace WfpTokenDup.Interop
@@ -859,6 +858,16 @@ namespace WfpTokenDup.Interop
         public byte[] sa_data;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SOCKADDR_IN
+    {
+        public ADDRESS_FAMILY sin_family;
+        public ushort sin_port;
+        public int sin_addr;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+        public byte[] sin_zero;
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     internal struct STARTUPINFO
     {
@@ -964,6 +973,32 @@ namespace WfpTokenDup.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct WSAPROTOCOL_INFOW
+    {
+        public WSA_SERVICE_FLAGS1 dwServiceFlags1;
+        public int dwServiceFlags2; // Reserved Parameter
+        public int dwServiceFlags3; // Reserved Parameter
+        public int dwServiceFlags4; // Reserved Parameter
+        public WSA_PROVIDOR_FLAGS dwProviderFlags;
+        public Guid ProviderId;
+        public int dwCatalogEntryId;
+        public WSAPROTOCOLCHAIN ProtocolChain;
+        public int iVersion;
+        public ADDRESS_FAMILY iAddressFamily;
+        public int iMaxSockAddr;
+        public int iMinSockAddr;
+        public SOCKET_TYPE iSocketType;
+        public IPPROTO iProtocol;
+        public int iProtocolMaxOffset;
+        public int iNetworkByteOrder;
+        public int iSecurityScheme;
+        public int dwMessageSize;
+        public int dwProviderReserved;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
+        public byte[] szProtocol;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct WSADATA
     {
         public short wVersion;
@@ -975,6 +1010,14 @@ namespace WfpTokenDup.Interop
         public byte[] szDescription;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 130)]
         public byte[] szSystemStatus;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct WSAPROTOCOLCHAIN
+    {
+        public int ChainLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 7)]
+        public int[] ChainEntries;
     }
 
     [StructLayout(LayoutKind.Sequential)]

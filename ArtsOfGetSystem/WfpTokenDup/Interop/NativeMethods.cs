@@ -172,18 +172,21 @@ namespace WfpTokenDup.Interop
             out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSetInformationToken(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            uint TokenInformationLength);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQuerySystemInformation(
             SYSTEM_INFORMATION_CLASS SystemInformationClass,
             IntPtr SystemInformation,
             uint SystemInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtSetEvent(IntPtr EventHandle, out int PreviousState);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtSetInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength);
 
         /*
          * secur32.dll
@@ -220,14 +223,43 @@ namespace WfpTokenDup.Interop
          * ws2_32.dll
          */
         [DllImport("ws2_32.dll")]
+        public static extern int bind(IntPtr s, in SOCKADDR_IN addr, int namelen);
+
+        [DllImport("ws2_32.dll")]
+        public static extern int closesocket(IntPtr s);
+
+        [DllImport("ws2_32.dll")]
+        public static extern int listen(IntPtr s, int backlog);
+
+        [DllImport("ws2_32.dll")]
+        public static extern IntPtr WSAAccept(
+            IntPtr s,
+            out SOCKADDR addr,
+            ref int addrlen,
+            IntPtr /* LPCONDITIONPROC callback type */ lpfnCondition,
+            IntPtr dwCallbackData);
+
+        [DllImport("ws2_32.dll")]
         public static extern int WSACleanup();
+
+        [DllImport("ws2_32.dll")]
+        public static extern int WSAGetLastError();
 
         [DllImport("ws2_32.dll")]
         public static extern int WSAStartup(
             short wVersionRequired, // 0x0202
             out WSADATA lpWSAData);
 
-        [DllImport("ws2_32.dll", CharSet = CharSet.Auto)]
+        [DllImport("ws2_32.dll", CharSet = CharSet.Unicode)]
+        public static extern IntPtr WSASocketW(
+            int /* ADDRESS_FAMILY */ af,
+            SOCKET_TYPE type,
+            IPPROTO protocol,
+            IntPtr /* in WSAPROTOCOL_INFOW */ lpProtocolInfo,
+            SOCKET_GROUP g,
+            WSA_FLAGS dwFlags);
+
+        [DllImport("ws2_32.dll", CharSet = CharSet.Unicode)]
         public static extern int WSAStringToAddressW(
             string AddressString,
             int /* ADDRESS_FAMILY */ AddressFamily,

@@ -183,7 +183,7 @@ namespace RpcLibrary
                 fCheckBounds = 1,
                 Version = 0x00060001u,
                 pMallocFreeStruct = IntPtr.Zero,
-                MIDLVersion = 0x08010272,
+                MIDLVersion = 0x08010274,
                 CommFaultOffsets = IntPtr.Zero,
                 aUserMarshalQuadruple = IntPtr.Zero,
                 NotifyRoutineTable = IntPtr.Zero,
@@ -192,11 +192,12 @@ namespace RpcLibrary
                 ProxyServerInfo = pProxyInfo,
                 pExprInfo = IntPtr.Zero
             };
+            Marshal.StructureToPtr(stubDesc, pStubDesc, true);
 
             /*
              * Build RpcTransferSyntax
              */
-            Marshal.StructureToPtr(SyntaxId.RpcTransferSyntax_2_0, pStubDesc, false);
+            Marshal.StructureToPtr(SyntaxIdentifiers.RpcTransferSyntax_2_0, pTransferSyntax, false);
 
             /*
              * Build RpcClientInterface
@@ -204,8 +205,8 @@ namespace RpcLibrary
             var rpcClientInterface = new RPC_CLIENT_INTERFACE
             {
                 Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
-                InterfaceId = SyntaxId.SyncControllerSyntax_1_0,
-                TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
+                InterfaceId = SyntaxIdentifiers.SyncControllerSyntax_1_0,
+                TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
                 RpcProtseqEndpointCount = 0u,
                 RpcProtseqEndpoint = IntPtr.Zero,
@@ -220,11 +221,11 @@ namespace RpcLibrary
              */
             var syntaxInfo = new MIDL_SYNTAX_INFO
             {
-                TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
+                TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
-                ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
+                ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.ProcFormatString.Format, 0),
                 FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.FormatStringOffsetTable, 0),
-                TypeString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.TypeFormatString.Format, 0),
+                TypeString = Marshal.UnsafeAddrOfPinnedArrayElement(SyncControllerConsts.TypeFormatString.Format, 0),
                 aUserMarshalQuadruple = IntPtr.Zero,
                 pMethodProperties = IntPtr.Zero,
                 pReserved2 = UIntPtr.Zero
@@ -233,7 +234,7 @@ namespace RpcLibrary
             Marshal.StructureToPtr(syntaxInfo, pSyntaxInfo, false);
 
             IntPtr pSyntaxInfo1;
-            syntaxInfo.TransferSyntax = SyntaxId.RpcTransferSyntax64_2_0;
+            syntaxInfo.TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax64_2_0;
             syntaxInfo.ProcString = IntPtr.Zero;
             syntaxInfo.FmtStringOffset = Marshal.UnsafeAddrOfPinnedArrayElement(Ndr64ProcTable, 0);
             syntaxInfo.TypeString = IntPtr.Zero;
@@ -252,7 +253,7 @@ namespace RpcLibrary
             Marshal.FreeHGlobal(pStubDesc);
             Marshal.FreeHGlobal(pTransferSyntax);
             Marshal.FreeHGlobal(pClientInterface);
-            Marshal.FreeHGlobal(pProxyInfo);
+            Marshal.FreeHGlobal(pSyntaxInfo);
             Marshal.FreeHGlobal(pAutoBindHandle);
         }
 
@@ -269,14 +270,18 @@ namespace RpcLibrary
 
             try
             {
-                IntPtr pReturned = NativeMethods.NdrClientCall3(
+                IntPtr returnedCode = NativeMethods.NdrClientCall3(
                     pProxyInfo,
                     13u,
                     IntPtr.Zero,
                     IDL_handle,
                     ServerAddress,
                     out IntOut);
-                rpcStatus = pReturned.ToInt32();
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (int)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
             }
             catch (SEHException)
             {

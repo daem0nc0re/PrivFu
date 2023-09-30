@@ -16,7 +16,9 @@ namespace WfpTokenDup.Library
         }
 
 
-        public static bool ConvertStringToSockAddr(string addressString, out SOCKADDR sockAddr)
+        public static bool ConvertStringToSockAddr(
+            string addressString,
+            out SOCKADDR sockAddr)
         {
             int nReturnCode;
             var nInfoLength = Marshal.SizeOf(typeof(SOCKADDR));

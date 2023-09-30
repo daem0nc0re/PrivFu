@@ -2,7 +2,7 @@
 
 namespace RpcLibrary.Interop
 {
-    internal class SyntaxId
+    internal class SyntaxIdentifiers
     {
         public static readonly RPC_SYNTAX_IDENTIFIER RpcUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
         {

@@ -518,36 +518,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_CLIENT_INTERFACE
-    {
-        public uint Length;
-        public RPC_SYNTAX_IDENTIFIER InterfaceId;
-        public RPC_SYNTAX_IDENTIFIER TransferSyntax;
-        public IntPtr /* PRPC_DISPATCH_TABLE */ DispatchTable;
-        public uint RpcProtseqEndpointCount;
-        public IntPtr /* PRPC_PROTSEQ_ENDPOINT */ RpcProtseqEndpoint;
-        public UIntPtr Reserved;
-        public IntPtr InterpreterInfo;
-        public uint Flags;
-
-        public RPC_CLIENT_INTERFACE(
-            RPC_SYNTAX_IDENTIFIER _InterfaseId,
-            RPC_SYNTAX_IDENTIFIER _TransferSyntax,
-            IntPtr _InterpreterInfo)
-        {
-            Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE));
-            InterfaceId = _InterfaseId;
-            TransferSyntax = _TransferSyntax;
-            DispatchTable = IntPtr.Zero;
-            RpcProtseqEndpointCount = 0u;
-            RpcProtseqEndpoint = IntPtr.Zero;
-            Reserved = UIntPtr.Zero;
-            InterpreterInfo = _InterpreterInfo;
-            Flags = 0x02000000u;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct RPC_DISPATCH_TABLE
     {
         public uint DispatchTableCount;

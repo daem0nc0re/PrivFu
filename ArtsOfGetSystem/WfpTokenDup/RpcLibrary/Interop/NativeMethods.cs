@@ -58,12 +58,12 @@ namespace RpcLibrary.Interop
         public static extern RPC_STATUS RpcEpResolveBinding(IntPtr Binding, IntPtr IfSpec);
 
         [DllImport("rpcrt4.dll")]
-        public static extern RPC_STATUS RpcIfIdVectorFree(IntPtr /* RPC_IF_ID_VECTOR** */ IfIdVector);
+        public static extern RPC_STATUS RpcIfIdVectorFree(in IntPtr /* RPC_IF_ID_VECTOR** */ IfIdVector);
 
         [DllImport("rpcrt4.dll")]
         public static extern RPC_STATUS RpcMgmtInqIfIds(
             IntPtr Binding,
-            IntPtr /* RPC_IF_ID_VECTOR** */ IfIdVector);
+            out IntPtr /* RPC_IF_ID_VECTOR** */ IfIdVector);
 
         [DllImport("rpcrt4.dll", EntryPoint = "RpcStringBindingComposeW", CharSet = CharSet.Unicode)]
         public static extern RPC_STATUS RpcStringBindingCompose(

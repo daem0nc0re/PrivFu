@@ -1,6 +1,5 @@
 ﻿using System;
 using WfpTokenDup.Handler;
-using WfpTokenDup.Library;
 
 namespace WfpTokenDup
 {

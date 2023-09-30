@@ -122,5 +122,11 @@ namespace WfpTokenDup.Interop
         public const string SE_DEBUG_NAME = "SeDebugPrivilege";
         public const string SE_IMPERSONATE_NAME = "SeImpersonatePrivilege";
         public const string SE_TCB_NAME = "SeTcbPrivilege";
+
+        /*
+         * Socket
+         */
+        public const int SOCKET_ERROR = -1;
+        public static readonly IntPtr INVALID_SOCKET = new IntPtr(-1);
     }
 }

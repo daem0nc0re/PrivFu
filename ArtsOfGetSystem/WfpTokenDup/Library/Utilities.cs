@@ -511,6 +511,79 @@ namespace WfpTokenDup.Library
         }
 
 
+        public static bool SetTcpListener(
+            string ipv4String,
+            ushort port,
+            IntPtr hEventStart)
+        {
+            var status = false;
+            IntPtr hSocket = Win32Consts.INVALID_SOCKET;
+
+            do
+            {
+                IntPtr hListenerSocket;
+                var nInfoLength = Marshal.SizeOf(typeof(SOCKADDR_IN));
+                var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                int nReturnCode = NativeMethods.WSAStringToAddressW(
+                    ipv4String,
+                    (int)ADDRESS_FAMILY.AF_INET,
+                    IntPtr.Zero,
+                    pInfoBuffer,
+                    ref nInfoLength);
+                var sockaddr_in = (SOCKADDR_IN)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(SOCKADDR_IN));
+                sockaddr_in.sin_port = (ushort)(((port << 8) | (port >> 8)) & 0xFFFF);
+
+                if (nReturnCode != 0)
+                    break;
+
+                hSocket = NativeMethods.WSASocketW(
+                    (int)ADDRESS_FAMILY.AF_INET,
+                    SOCKET_TYPE.STREAM,
+                    IPPROTO.TCP,
+                    IntPtr.Zero,
+                    SOCKET_GROUP.NONE,
+                    WSA_FLAGS.OVERLAPPED);
+
+                if (hSocket == Win32Consts.INVALID_SOCKET)
+                    break;
+
+                nReturnCode = NativeMethods.bind(
+                    hSocket,
+                    in sockaddr_in,
+                    Marshal.SizeOf(sockaddr_in));
+
+                if (nReturnCode != 0)
+                    break;
+
+                nReturnCode = NativeMethods.listen(hSocket, 1);
+
+                if (nReturnCode != 0)
+                    break;
+
+                if (hEventStart != IntPtr.Zero)
+                    NativeMethods.NtSetEvent(hEventStart, out int _);
+
+                hListenerSocket = NativeMethods.WSAAccept(
+                    hSocket,
+                    out SOCKADDR _,
+                    ref nInfoLength,
+                    IntPtr.Zero,
+                    IntPtr.Zero);
+                status = (hListenerSocket != Win32Consts.INVALID_SOCKET);
+
+                if (status)
+                    NativeMethods.closesocket(hListenerSocket);
+            } while (false);
+
+            if (hSocket != Win32Consts.INVALID_SOCKET)
+                NativeMethods.closesocket(hSocket);
+
+            return status;
+        }
+
+
         public static IntPtr WfpGetRegisteredToken(IntPtr hWfpAle, in LUID luid)
         {
             NTSTATUS ntstatus;

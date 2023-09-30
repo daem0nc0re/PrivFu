@@ -79,7 +79,7 @@ namespace RpcLibrary
             /*
              * Build _RpcTransferSyntax_2_0
              */
-            Marshal.StructureToPtr(SyntaxId.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
+            Marshal.StructureToPtr(SyntaxIdentifiers.RpcTransferSyntax_2_0, pRpcTransferSyntax, false);
 
             /*
              * Build winspool_FormatStringOffsetTable
@@ -92,7 +92,7 @@ namespace RpcLibrary
              */
             var syntaxInfo = new MIDL_SYNTAX_INFO
             {
-                TransferSyntax = SyntaxId.RpcTransferSyntax_2_0,
+                TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
                 ProcString = Marshal.UnsafeAddrOfPinnedArrayElement(MsRprnConsts.ProcFormatString.Format, 0),
                 FmtStringOffset = pFormatStringOffsetTable,
@@ -105,7 +105,7 @@ namespace RpcLibrary
             Marshal.StructureToPtr(syntaxInfo, pSyntaxInfo, false);
 
             IntPtr pSyntaxInfo1;
-            syntaxInfo.TransferSyntax = SyntaxId.RpcTransferSyntax64_2_0;
+            syntaxInfo.TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax64_2_0;
             syntaxInfo.ProcString = IntPtr.Zero;
             syntaxInfo.FmtStringOffset = pNdr64ProcTable;
             syntaxInfo.TypeString = IntPtr.Zero;
@@ -121,8 +121,8 @@ namespace RpcLibrary
              * Build winspool___RpcClientInterface
              */
             var rpcClientInterface = new RPC_CLIENT_INTERFACE(
-                SyntaxId.RpcUuidSyntax_1_0,
-                SyntaxId.RpcTransferSyntax_2_0,
+                SyntaxIdentifiers.RpcUuidSyntax_1_0,
+                SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 pProxyInfo);
             Marshal.StructureToPtr(rpcClientInterface, pRpcClientInterface, true);
 
@@ -242,7 +242,11 @@ namespace RpcLibrary
                     dataType,
                     ref devmodeContainer,
                     accessRequired);
-                rpcStatus = returnedCode.ToInt32();
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (int)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
             }
             catch (SEHException) {
                 rpcStatus = Marshal.GetExceptionCode();
