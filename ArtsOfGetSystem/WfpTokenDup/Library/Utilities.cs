@@ -40,7 +40,7 @@ namespace WfpTokenDup.Library
                 {
                     string tokenSid = Helpers.GetTokenUserSid(hDupObject);
 
-                    if (Helpers.CompareIgnoreCase(tokenSid, targetSid))
+                    if (string.IsNullOrEmpty(targetSid))
                     {
                         luid = tmpLuid;
                         hToken = hDupObject;
@@ -48,7 +48,16 @@ namespace WfpTokenDup.Library
                     }
                     else
                     {
-                        NativeMethods.NtClose(hDupObject);
+                        if (Helpers.CompareIgnoreCase(tokenSid, targetSid))
+                        {
+                            luid = tmpLuid;
+                            hToken = hDupObject;
+                            break;
+                        }
+                        else
+                        {
+                            NativeMethods.NtClose(hDupObject);
+                        }
                     }
                 }
             }

