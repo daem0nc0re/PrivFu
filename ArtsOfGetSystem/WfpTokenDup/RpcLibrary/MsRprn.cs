@@ -5,7 +5,6 @@ using RpcLibrary.Interop;
 
 namespace RpcLibrary
 {
-    using SIZE_T = UIntPtr;
     using RPC_STATUS = Int32;
 
     internal class MsRprn : IDisposable

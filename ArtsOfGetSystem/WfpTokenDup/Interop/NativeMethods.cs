@@ -257,9 +257,6 @@ namespace WfpTokenDup.Interop
         public static extern int WSACleanup();
 
         [DllImport("ws2_32.dll")]
-        public static extern int WSAGetLastError();
-
-        [DllImport("ws2_32.dll")]
         public static extern int WSAStartup(
             short wVersionRequired, // 0x0202
             out WSADATA lpWSAData);
