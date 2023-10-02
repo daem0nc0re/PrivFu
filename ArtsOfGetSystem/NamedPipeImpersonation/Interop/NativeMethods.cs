@@ -194,8 +194,7 @@ namespace NamedPipeImpersonation.Interop
         public static extern NTSTATUS NtOpenJobObject(
             out IntPtr JobHandle,
             ACCESS_MASK DesiredAccess,
-            in OBJECT_ATTRIBUTES ObjectAttributes
-    );
+            in OBJECT_ATTRIBUTES ObjectAttributes);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationJobObject(

@@ -126,6 +126,14 @@ namespace WfpTokenDup.Interop
         public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtCreateEvent(
+            out IntPtr EventHandle,
+            ACCESS_MASK DesiredAccess,
+            IntPtr /* POBJECT_ATTRIBUTES */ ObjectAttributes,
+            EVENT_TYPE EventType,
+            BOOLEAN InitialState);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtDeviceIoControlFile(
             IntPtr FileHandle,
             IntPtr Event,
@@ -187,6 +195,12 @@ namespace WfpTokenDup.Interop
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtWaitForSingleObject(
+            IntPtr Handle,
+            bool Alertable,
+            in LARGE_INTEGER Timeout);
 
         /*
          * secur32.dll

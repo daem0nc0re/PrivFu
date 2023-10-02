@@ -8,6 +8,12 @@ namespace RpcLibrary
 
     internal class RpcHelpers
     {
+        public static RPC_STATUS CloseBindingHandle(ref IntPtr hBinding)
+        {
+            return NativeMethods.RpcBindingFree(ref hBinding);
+        }
+
+
         public static IntPtr GetBindingHandle(string endpoint)
         {
             RPC_STATUS rpcStatus;

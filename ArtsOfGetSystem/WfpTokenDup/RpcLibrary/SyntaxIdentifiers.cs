@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RpcLibrary.Interop
+namespace RpcLibrary
 {
     internal class SyntaxIdentifiers
     {

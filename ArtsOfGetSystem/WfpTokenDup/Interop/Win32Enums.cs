@@ -62,6 +62,10 @@ namespace WfpTokenDup.Interop
         TOKEN_READ = 0x00020008,
         TOKEN_WRITE = 0x000200E0,
 
+        // For Events
+        EVENT_MODIFY_STATE = 0x00000002,
+        EVENT_ALL_ACCESS = 0x001F0003,
+
         // For Files
         FILE_ANY_ACCESS = 0x00000000,
         FILE_READ_ACCESS = 0x00000001,
@@ -218,6 +222,12 @@ namespace WfpTokenDup.Interop
         CLOSE_SOURCE = 0x00000001,
         SAME_ACCESS = 0x00000002,
         SAME_ATTRIBUTES = 0x00000004
+    }
+
+    internal enum EVENT_TYPE
+    {
+        NotificationEvent,
+        SynchronizationEvent
     }
 
     [Flags]
