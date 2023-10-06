@@ -1,6 +1,5 @@
 ﻿using System;
 using WfpTokenDup.Handler;
-using WfpTokenDup.Library;
 
 namespace WfpTokenDup
 {
@@ -8,8 +7,7 @@ namespace WfpTokenDup
     {
         static void Main(string[] args)
         {
-            Modules.GetSessionShell(1);
-            /*bool isSupported;
+            bool isSupported;
             Version osVersion = Environment.OSVersion.Version;
 
             if (osVersion.Major > 6)
@@ -46,7 +44,7 @@ namespace WfpTokenDup
             {
                 options.GetHelp();
                 Console.WriteLine(ex.Message);
-            }*/
+            }
         }
     }
 }

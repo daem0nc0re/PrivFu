@@ -166,6 +166,17 @@ namespace WfpTokenDup.Interop
         SECTION_ALL_ACCESS = 0x000F001F
     }
 
+    internal enum ACCESS_MODE
+    {
+        NOT_USED_ACCESS,
+        GRANT_ACCESS,
+        SET_ACCESS,
+        DENY_ACCESS,
+        REVOKE_ACCESS,
+        SET_AUDIT_SUCCESS,
+        SET_AUDIT_FAILURE
+    }
+
     internal enum ADDRESS_FAMILY : ushort
     {
         AF_UNSPEC = 0, // unspecified
@@ -487,6 +498,20 @@ namespace WfpTokenDup.Interop
         DONT_ACCEPT_EXPLICIT_CREDENTIALS = 0x00000001
     }
 
+    [Flags]
+    internal enum INHERITANCE_FLAGS : uint
+    {
+        NO_INHERITANCE = 0x00000000,
+        SUB_OBJECTS_ONLY_INHERIT = 0x00000001,
+        SUB_CONTAINERS_ONLY_INHERIT = 0x00000002,
+        SUB_CONTAINERS_AND_OBJECTS_INHERIT = 0x00000003,
+        INHERIT_NO_PROPAGATE = 0x00000004,
+        INHERIT_ONLY = 0x00000008,
+        INHERITED_ACCESS_ENTRY = 0x00000010,
+        INHERITED_PARENT = 0x10000000,
+        INHERITED_GRANDPARENT = 0x20000000
+    }
+
     internal enum IPPROTO
     {
         HOPOPTS = 0,  // IPv6 Hop-by-Hop options
@@ -620,6 +645,12 @@ namespace WfpTokenDup.Interop
     {
         LOGON_WITH_PROFILE = 0x00000001,
         LOGON_NETCREDENTIALS_ONLY = 0x00000002
+    }
+
+    internal enum MULTIPLE_TRUSTEE_OPERATION
+    {
+        NO_MULTIPLE_TRUSTEE,
+        TRUSTEE_IS_IMPERSONATE
     }
 
     [Flags]
@@ -1217,6 +1248,28 @@ namespace WfpTokenDup.Interop
     {
         Primary = 1,
         Impersonation
+    }
+
+    internal enum TRUSTEE_FORM
+    {
+        SID,
+        NAME,
+        TRUSTEE_BAD_FORM,
+        OBJECTS_AND_SID,
+        OBJECTS_AND_NAME
+    }
+
+    internal enum TRUSTEE_TYPE
+    {
+        UNKNOWN,
+        USER,
+        GROUP,
+        DOMAIN,
+        ALIAS,
+        WELL_KNOWN_GROUP,
+        DELETED,
+        INVALID,
+        COMPUTER
     }
 
     internal enum WFPALE_IOCTL_CODES : uint

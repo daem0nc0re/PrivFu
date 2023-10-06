@@ -27,6 +27,9 @@ namespace WfpTokenDup.Interop
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr Sid);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool CreateProcessWithToken(
             IntPtr hToken,
             LOGON_FLAGS dwLogonFlags,
@@ -114,6 +117,9 @@ namespace WfpTokenDup.Interop
         /*
          * kernel32.dll
          */
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool LocalFree(IntPtr hMem);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ProcessIdToSessionId(
             int dwProcessId,
@@ -217,6 +223,15 @@ namespace WfpTokenDup.Interop
 
         [DllImport("secur32.dll")]
         public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr Buffer);
+
+        /*
+         * user32.dll
+         */
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool CloseDesktop(IntPtr hDesktop);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool CloseWindowStation(IntPtr hWinSta);
 
         /*
          * wtsapi32.dll

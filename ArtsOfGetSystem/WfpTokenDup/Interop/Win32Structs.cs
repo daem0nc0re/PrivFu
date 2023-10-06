@@ -31,6 +31,15 @@ namespace WfpTokenDup.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct EXPLICIT_ACCESS
+    {
+        public ACCESS_MASK grfAccessPermissions;
+        public ACCESS_MODE grfAccessMode;
+        public INHERITANCE_FLAGS grfInheritance;
+        public TRUSTEE Trustee;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct FWP_BYTE_BLOB
     {
         public int Size;
@@ -929,6 +938,17 @@ namespace WfpTokenDup.Interop
     internal struct TOKEN_USER
     {
         public SID_AND_ATTRIBUTES User;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TRUSTEE
+    {
+        public IntPtr /* TRUSTEE */ pMultibleTrustee;
+        public MULTIPLE_TRUSTEE_OPERATION MultipleTrusteeOperation;
+        public TRUSTEE_FORM TrusteeForm;
+        public TRUSTEE_TYPE TrusteeType;
+        public IntPtr pTrusteeData;
+        public IntPtr ptstrName;
     }
 
     [StructLayout(LayoutKind.Sequential)]
