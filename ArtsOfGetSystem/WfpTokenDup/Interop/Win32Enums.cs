@@ -227,6 +227,13 @@ namespace WfpTokenDup.Interop
     }
 
     [Flags]
+    internal enum DESKTOP_FLAGS : uint
+    {
+        NONE = 0x00000000,
+        DF_ALLOWOTHERACCOUNTHOOK = 0x00000001
+    }
+
+    [Flags]
     internal enum DUPLICATE_OPTION_FLAGS : uint
     {
         NONE = 0x00000000,

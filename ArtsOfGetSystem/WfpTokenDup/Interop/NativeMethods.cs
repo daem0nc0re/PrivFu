@@ -233,6 +233,19 @@ namespace WfpTokenDup.Interop
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool CloseWindowStation(IntPtr hWinSta);
 
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr OpenDesktop(
+            string lpszDesktop,
+            DESKTOP_FLAGS dwFlags,
+            bool fInherit,
+            ACCESS_MASK dwDesiredAccess);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr OpenWindowStation(
+            string lpszWinSta,
+            bool fInherit,
+            ACCESS_MASK dwDesiredAccess);
+
         /*
          * wtsapi32.dll
          */
