@@ -136,6 +136,7 @@ namespace WfpTokenDup.Interop
         GENERIC_EXECUTE = 0x20000000,
         GENERIC_WRITE = 0x40000000,
         GENERIC_READ = 0x80000000,
+        GENERIC_ACCESS = 0xF0000000,
         DESKTOP_READOBJECTS = 0x00000001,
         DESKTOP_CREATEWINDOW = 0x00000002,
         DESKTOP_CREATEMENU = 0x00000004,
@@ -887,6 +888,43 @@ namespace WfpTokenDup.Interop
         Identification,
         Impersonation,
         Delegation
+    }
+
+    [Flags]
+    internal enum SECURITY_DESCRIPTOR_CONTROL : ushort
+    {
+        SE_OWNER_DEFAULTED = 0x0001,
+        SE_GROUP_DEFAULTED = 0x0002,
+        SE_DACL_PRESENT = 0x0004,
+        SE_DACL_DEFAULTED = 0x0008,
+        SE_SACL_PRESENT = 0x0010,
+        SE_SACL_DEFAULTED = 0x0020,
+        SE_DACL_AUTO_INHERIT_REQ = 0x0100,
+        SE_SACL_AUTO_INHERIT_REQ = 0x0200,
+        SE_DACL_AUTO_INHERITED = 0x0400,
+        SE_SACL_AUTO_INHERITED = 0x0800,
+        SE_DACL_PROTECTED = 0x1000,
+        SE_SACL_PROTECTED = 0x2000,
+        SE_RM_CONTROL_VALID = 0x4000,
+        SE_SELF_RELATIVE = 0x8000
+    }
+
+    [Flags]
+    internal enum SECURITY_INFORMATION : uint
+    {
+        OWNER = 0x00000001,
+        GROUP = 0x00000002,
+        DACL = 0x00000004,
+        SACL = 0x00000008,
+        LABEL = 0x00000010,
+        ATTRIBUTE = 0x00000020,
+        SCOPE = 0x00000040,
+        PROCESS_TRUST_LABEL = 0x00000080,
+        BACKUP = 0x00010000,
+        UNPROTECTED_SACL = 0x10000000,
+        UNPROTECTED_DACL = 0x20000000,
+        PROTECTED_SACL = 0x40000000,
+        PROTECTED_DACL = 0x80000000
     }
 
     [Flags]

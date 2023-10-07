@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -84,6 +85,13 @@ namespace WfpTokenDup.Interop
             IntPtr lpBuffer,
             int cbBufSize,
             out int pcbBytesNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int SetEntriesInAcl(
+            uint cCountOfExplicitEntries,
+            IntPtr /* EXPLICIT_ACCESS[] */ pListOfExplicitEntries,
+            IntPtr /* PACL */ OldAcl,
+            out IntPtr /* PACL* */ NewAcl);
 
         /*
          * fwpuclnt.dll
@@ -201,6 +209,12 @@ namespace WfpTokenDup.Interop
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtSetSecurityObject(
+            IntPtr Handle,
+            SECURITY_INFORMATION SecurityInformation,
+            in SECURITY_DESCRIPTOR SecurityDescriptor);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtWaitForSingleObject(

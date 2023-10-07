@@ -799,6 +799,18 @@ namespace WfpTokenDup.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct SECURITY_DESCRIPTOR
+    {
+        public byte Revision;
+        public byte Sbz1;
+        public SECURITY_DESCRIPTOR_CONTROL Control;
+        public IntPtr Owner; // PSID
+        public IntPtr Group; // PSID
+        public IntPtr Sacl; // PACL
+        public IntPtr Dacl; // PACL
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct SECURITY_LOGON_SESSION_DATA
     {
         public uint Size;
@@ -947,7 +959,6 @@ namespace WfpTokenDup.Interop
         public MULTIPLE_TRUSTEE_OPERATION MultipleTrusteeOperation;
         public TRUSTEE_FORM TrusteeForm;
         public TRUSTEE_TYPE TrusteeType;
-        public IntPtr pTrusteeData;
         public IntPtr ptstrName;
     }
 

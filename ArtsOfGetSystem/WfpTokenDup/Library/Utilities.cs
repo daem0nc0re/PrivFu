@@ -10,6 +10,119 @@ namespace WfpTokenDup.Library
 
     internal class Utilities
     {
+        public static bool AllowDesktopAccessForEveryone()
+        {
+            IntPtr hStation = IntPtr.Zero;
+            IntPtr pExplicitAccess;
+            var nUnitSize = Marshal.SizeOf(typeof(EXPLICIT_ACCESS));
+            var hDesktop = IntPtr.Zero;
+            var status = false;
+
+            if (!NativeMethods.ConvertStringSidToSid("S-1-1-0", out IntPtr pEveryone))
+                return false;
+
+            if (!NativeMethods.ConvertStringSidToSid(
+                "S-1-15-2-1",
+                out IntPtr pAllPackages))
+            {
+                NativeMethods.LocalFree(pEveryone);
+                return false;
+            }
+
+            pExplicitAccess = Marshal.AllocHGlobal(nUnitSize * 2);
+
+            do
+            {
+                int nReturned;
+                NTSTATUS ntstatus;
+                SECURITY_DESCRIPTOR securityDescriptor;
+                IntPtr pExplicitAccessEntry = pExplicitAccess;
+                var explicitAccess = new EXPLICIT_ACCESS
+                {
+                    grfAccessPermissions = ACCESS_MASK.GENERIC_ACCESS,
+                    grfAccessMode = ACCESS_MODE.GRANT_ACCESS,
+                    grfInheritance = INHERITANCE_FLAGS.NO_INHERITANCE,
+                    Trustee = new TRUSTEE
+                    {
+                        pMultibleTrustee = IntPtr.Zero,
+                        MultipleTrusteeOperation = MULTIPLE_TRUSTEE_OPERATION.NO_MULTIPLE_TRUSTEE,
+                        TrusteeForm = TRUSTEE_FORM.SID,
+                        TrusteeType = TRUSTEE_TYPE.UNKNOWN,
+                        ptstrName = pEveryone
+                    }
+                };
+                Marshal.StructureToPtr(explicitAccess, pExplicitAccessEntry, false);
+
+                if (Environment.Is64BitProcess)
+                    pExplicitAccessEntry = new IntPtr(pExplicitAccess.ToInt64() + nUnitSize);
+                else
+                    pExplicitAccessEntry = new IntPtr(pExplicitAccess.ToInt32() + nUnitSize);
+
+                explicitAccess.Trustee.ptstrName = pAllPackages;
+                Marshal.StructureToPtr(explicitAccess, pExplicitAccessEntry, true);
+
+                hStation = NativeMethods.OpenWindowStation(
+                    "Winsta0",
+                    false,
+                    ACCESS_MASK.READ_CONTROL | ACCESS_MASK.WRITE_DAC);
+
+                if (hStation == IntPtr.Zero)
+                    break;
+
+                hDesktop = NativeMethods.OpenDesktop(
+                    "Default",
+                    DESKTOP_FLAGS.NONE,
+                    false,
+                    ACCESS_MASK.READ_CONTROL | ACCESS_MASK.WRITE_DAC);
+
+                if (hDesktop == IntPtr.Zero)
+                    break;
+
+                nReturned = NativeMethods.SetEntriesInAcl(
+                    2u,
+                    pExplicitAccess,
+                    IntPtr.Zero,
+                    out IntPtr pNewAcl);
+
+                if (nReturned != Win32Consts.ERROR_SUCCESS)
+                    break;
+
+                securityDescriptor = new SECURITY_DESCRIPTOR
+                {
+                    Revision = 1,
+                    Control = SECURITY_DESCRIPTOR_CONTROL.SE_DACL_PRESENT | SECURITY_DESCRIPTOR_CONTROL.SE_DACL_AUTO_INHERIT_REQ,
+                    Dacl = pNewAcl
+                };
+
+                ntstatus = NativeMethods.NtSetSecurityObject(
+                    hStation,
+                    SECURITY_INFORMATION.DACL,
+                    in securityDescriptor);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtSetSecurityObject(
+                    hDesktop,
+                    SECURITY_INFORMATION.DACL,
+                    in securityDescriptor);
+                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+            } while (false);
+
+            Marshal.FreeHGlobal(pExplicitAccess);
+            NativeMethods.LocalFree(pEveryone);
+            NativeMethods.LocalFree(pAllPackages);
+
+            if (hDesktop != IntPtr.Zero) 
+                NativeMethods.CloseDesktop(hDesktop);
+
+            if (hStation != IntPtr.Zero)
+                NativeMethods.CloseWindowStation(hStation);
+
+            return status;
+        }
+
+
         public static IntPtr BruteForcingWfpToken(
             IntPtr hWfpAle,
             string targetSid,

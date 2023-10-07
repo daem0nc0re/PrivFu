@@ -21,6 +21,11 @@ namespace WfpTokenDup.Interop
         public static readonly NTSTATUS STATUS_NOT_FOUND = Convert.ToInt32("0xC0000225", 16);
 
         /*
+         * Win32 Error
+         */
+        public const int ERROR_SUCCESS = 0;
+
+        /*
          * WTS Consts
          */
         public static readonly IntPtr WTS_CURRENT_SERVER = IntPtr.Zero;

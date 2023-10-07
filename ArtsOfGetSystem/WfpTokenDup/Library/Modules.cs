@@ -233,6 +233,12 @@ namespace WfpTokenDup.Library
                     Console.WriteLine("[+] Got a WFP engine handle (hanlde = 0x{0}).", hEngine.ToString("X"));
                 }
 
+                if (!Utilities.AllowDesktopAccessForEveryone())
+                {
+                    Console.WriteLine("[-] Failed to adjust desktop ACL.");
+                    break;
+                }
+
                 Console.WriteLine("[>] Installing new IPSec policy.");
 
                 status = Utilities.InstallIPSecPolicyIPv4(
