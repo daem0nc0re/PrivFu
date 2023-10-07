@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using WfpTokenDup.Handler;
 
 namespace WfpTokenDup
@@ -31,7 +32,11 @@ namespace WfpTokenDup
                 options.AddFlag(false, "h", "help", "Displays this help message.");
                 options.AddFlag(false, "S", "system", "Flag to get SYSTEM shell.");
                 options.AddParameter(false, "p", "pid", null, "Specifies PID to duplicate token handle in decimal format.");
+                options.AddParameter(false, "s", "session", null, "Specifies interactive session ID.");
                 options.AddParameter(false, "v", "value", null, "Specifies handle value to duplicate token handle in hex format.");
+                options.AddExclusive(new List<string> { "system", "pid" });
+                options.AddExclusive(new List<string> { "system", "session" });
+                options.AddExclusive(new List<string> { "pid", "session" });
                 options.Parse(args);
 
                 Execute.Run(options);
