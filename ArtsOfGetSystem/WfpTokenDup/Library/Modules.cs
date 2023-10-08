@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
 using RpcLibrary;
 using WfpTokenDup.Interop;
@@ -139,7 +140,7 @@ namespace WfpTokenDup.Library
 
                 if (status)
                 {
-                    Console.WriteLine("[+] Got a token assigned shell.");
+                    Console.WriteLine("[+] Got a token assigned shell (PID: {0}).", processInfo.dwProcessId);
                     NativeMethods.NtClose(processInfo.hThread);
                     NativeMethods.NtClose(processInfo.hProcess);
                 }
@@ -168,6 +169,9 @@ namespace WfpTokenDup.Library
             };
             var hEngine = IntPtr.Zero;
             var status = false;
+            var currentSessionId = Helpers.GetTokenSessionId(WindowsIdentity.GetCurrent().Token);
+
+            Console.WriteLine("[*] Current session ID is {0}.", currentSessionId);
 
             if (!Environment.Is64BitProcess)
             {
@@ -410,7 +414,7 @@ namespace WfpTokenDup.Library
 
                 if (status)
                 {
-                    Console.WriteLine("[+] Got a token assigned shell.");
+                    Console.WriteLine("[+] Got a token assigned shell (PID: {0}).", processInfo.dwProcessId);
                     NativeMethods.NtClose(processInfo.hThread);
                     NativeMethods.NtClose(processInfo.hProcess);
                 }
@@ -607,7 +611,7 @@ namespace WfpTokenDup.Library
 
                 if (status)
                 {
-                    Console.WriteLine("[+] Got a token assigned shell.");
+                    Console.WriteLine("[+] Got a token assigned shell (PID: {0}).", processInfo.dwProcessId);
                     NativeMethods.NtClose(processInfo.hThread);
                     NativeMethods.NtClose(processInfo.hProcess);
                 }
