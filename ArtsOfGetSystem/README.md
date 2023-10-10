@@ -8,7 +8,7 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
   - [Named Pipe Impersonation](#named-pipe-impersonation)
   - [Token Stealing](#token-stealing)
   - [Print Spoofer](#print-spoofer)
-  - [EfsPotato]
+  - [EfsPotato](#efspotato)
   - [Token Duplication with WFP](#token-duplication-with-wfp)
 
 ## Named Pipe Impersonation
