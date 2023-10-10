@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WfpTokenDup", "WfpTokenDup\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrintSpoofer", "PrintSpoofer\PrintSpoofer.csproj", "{449CE476-7B27-47F5-B09C-570788A2F261}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfsPotato", "EfsPotato\EfsPotato.csproj", "{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{449CE476-7B27-47F5-B09C-570788A2F261}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{449CE476-7B27-47F5-B09C-570788A2F261}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{449CE476-7B27-47F5-B09C-570788A2F261}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
