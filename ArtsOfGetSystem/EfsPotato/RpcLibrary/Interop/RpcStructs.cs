@@ -3,49 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace RpcLibrary.Interop
 {
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct ARRAY_INFO
-    {
-        public int Dimension;
-        public IntPtr /* unsigned long* */ BufferConformanceMark;
-        public IntPtr /* unsigned long* */ BufferVarianceMark;
-        public IntPtr /* unsigned long* */ MaxCountArray;
-        public IntPtr /* unsigned long* */ OffsetArray;
-        public IntPtr /* unsigned long* */ ActualCountArray;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct COMM_FAULT_OFFSETS
-    {
-        public short CommOffset;
-        public short FaultOffset;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct FULL_PTR_XLAT_TABLES
-    {
-        public IntPtr RefIdToPointer;
-        public IntPtr PointerToRefId;
-        public uint NextRefId;
-        public XLAT_SIDE XlatSide;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct GENERIC_BINDING_INFO
-    {
-        public IntPtr pObj;
-        public uint Size;
-        public IntPtr /* GENERIC_BINDING_ROUTINE */ pfnBind;
-        public IntPtr /* GENERIC_UNBIND_ROUTINE */ pfnUnbind;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct GENERIC_BINDING_ROUTINE_PAIR
-    {
-        public IntPtr /* GENERIC_BINDING_ROUTINE */ pfnBind;
-        public IntPtr /* GENERIC_UNBIND_ROUTINE */ pfnUnbind;
-    }
-
     [StructLayout(LayoutKind.Explicit)]
     internal struct IMPLICIT_HANDLE_INFO
     {
@@ -57,20 +14,6 @@ namespace RpcLibrary.Interop
 
         [FieldOffset(0)]
         public IntPtr /* PGENERIC_BINDING_INFO */ pGenericBindingInfo;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MALLOC_FREE_STRUCT
-    {
-        public IntPtr pfnAllocate; // void* ( __stdcall * pfnAllocate)(size_t);
-        public IntPtr pfnFree; // void ( __stdcall * pfnFree)(void *);
-    }
-
-    // Equivalent to NDR64_CONFORMANT_STRING_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG10
-    {
-        public NDR64_STRING_HEADER_FORMAT Header;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -100,13 +43,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG12
-    {
-        public NDR64_BOGUS_STRUCTURE_HEADER_FORMAT frag1;
-        public MIDL_FRAG12_INNER frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG12_INNER
     {
         public NDR64_SIMPLE_MEMBER_FORMAT frag1;
@@ -129,28 +65,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG13
-    {
-        public NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
-        public NDR64_ARRAY_ELEMENT_INFO frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG131
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG134
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG134_EFSR
     {
         public NDR64_PROC_FORMAT frag1;
@@ -161,66 +75,12 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG135
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-        public NDR64_PARAM_FORMAT frag4;
-        public NDR64_PARAM_FORMAT frag5;
-        public NDR64_PARAM_FORMAT frag6;
-        public NDR64_PARAM_FORMAT frag7;
-        public NDR64_PARAM_FORMAT frag8;
-        public NDR64_PARAM_FORMAT frag9;
-    }
-
-    // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG136
-    {
-        public byte FormatCode;
-        public byte ContextFlags;
-        public byte RundownRoutineIndex;
-        public byte Ordinal;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG137_EFSR
     {
         public byte FormatCode;
         public byte Flags;
         public ushort Reserved;
         public IntPtr Pointee;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG138
-    {
-        public byte frag1;
-    }
-
-    // Equivalent to NDR64_POINTER_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG139
-    {
-        public byte FormatCode;
-        public byte Flags;
-        public ushort Reserved;
-        public IntPtr Pointee;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG14
-    {
-        public uint frag1;
-        public NDR64_EXPR_VAR frag2;
-    }
-
-    // Equivalent to NDR64_CONFORMANT_STRING_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG140
-    {
-        public NDR64_STRING_HEADER_FORMAT Header;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -236,76 +96,12 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG141
-    {
-        public byte frag1;
-    }
-
-    // Equivalent to NDR64_POINTER_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG142
-    {
-        public byte FormatCode;
-        public byte Flags;
-        public ushort Reserved;
-        public IntPtr Pointee;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG143
-    {
-        public NDR64_BOGUS_STRUCTURE_HEADER_FORMAT frag1;
-        public MIDL_FRAG143_INNER frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG143_EFSR
     {
         public byte FormatCode;
         public byte Flags;
         public ushort Reserved;
         public IntPtr Pointee;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG143_INNER
-    {
-        public NDR64_SIMPLE_MEMBER_FORMAT frag1;
-        public NDR64_SIMPLE_MEMBER_FORMAT frag2;
-        public NDR64_SIMPLE_MEMBER_FORMAT frag3;
-        public NDR64_MEMPAD_FORMAT frag4;
-        public NDR64_SIMPLE_MEMBER_FORMAT frag5;
-        public NDR64_SIMPLE_MEMBER_FORMAT frag6;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG144
-    {
-        public NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
-        public MIDL_FRAG144_INNER1 frag2;
-        public NDR64_ARRAY_ELEMENT_INFO frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG144_INNER1
-    {
-        public NDR64_REPEAT_FORMAT frag1;
-        public MIDL_FRAG144_INNER2 frag2;
-        public byte frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG144_INNER2
-    {
-        public NDR64_POINTER_INSTANCE_HEADER_FORMAT frag1;
-        public NDR64_POINTER_FORMAT frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG145
-    {
-        public uint frag1;
-        public NDR64_EXPR_VAR frag2;
     }
 
     // Equivalent to NDR64_POINTER_FORMAT
@@ -339,39 +135,11 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG148
-    {
-        public byte frag1;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG149
-    {
-        public NDR64_STRUCTURE_HEADER_FORMAT frag1;
-        public MIDL_FRAG149_INNER frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG149_EFSR
     {
         public NDR64_PROC_FORMAT frag1;
         public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
         public NDR64_PARAM_FORMAT frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG149_INNER
-    {
-        public NDR64_NO_REPEAT_FORMAT frag1;
-        public NDR64_POINTER_INSTANCE_HEADER_FORMAT frag2;
-        public NDR64_POINTER_FORMAT frag3;
-        public byte frag4;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG15
-    {
-        public byte frag1;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -385,20 +153,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG150
-    {
-        public NDR64_CONF_ARRAY_HEADER_FORMAT frag1;
-        public NDR64_ARRAY_ELEMENT_INFO frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG151
-    {
-        public uint frag1;
-        public NDR64_EXPR_VAR frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG151_EFSR
     {
         public NDR64_PROC_FORMAT frag1;
@@ -407,18 +161,6 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FORMAT frag4;
         public NDR64_PARAM_FORMAT frag5;
         public NDR64_PARAM_FORMAT frag6;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG152
-    {
-        public NDR64_POINTER_FORMAT frag1;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG153
-    {
-        public byte frag1;
     }
 
     // Equivalent to NDR64_POINTER_FORMAT
@@ -439,12 +181,6 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FORMAT frag3;
         public NDR64_PARAM_FORMAT frag4;
         public NDR64_PARAM_FORMAT frag5;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG16
-    {
-        public NDR64_POINTER_FORMAT frag1;
     }
 
     // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
@@ -562,12 +298,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG18
-    {
-        public byte frag1;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG18_EFSR
     {
         public byte FormatCode;
@@ -584,14 +314,6 @@ namespace RpcLibrary.Interop
     {
         public NDR64_PROC_FORMAT frag1;
         public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG2
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -633,16 +355,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG28_SYNC
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-        public NDR64_PARAM_FORMAT frag4;
-        public NDR64_PARAM_FORMAT frag5;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG28_EFSR
     {
         public NDR64_PROC_FORMAT frag1;
@@ -650,12 +362,6 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FORMAT frag3;
         public NDR64_PARAM_FORMAT frag4;
         public NDR64_PARAM_FORMAT frag5;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG30
-    {
-        public NDR64_STRING_HEADER_FORMAT Header;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -680,19 +386,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG4
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-        public NDR64_PARAM_FORMAT frag4;
-        public NDR64_PARAM_FORMAT frag5;
-        public NDR64_PARAM_FORMAT frag6;
-        public NDR64_PARAM_FORMAT frag7;
-        public NDR64_PARAM_FORMAT frag8;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG41_EFSR
     {
         public NDR64_BOGUS_STRUCTURE_HEADER_FORMAT frag1;
@@ -712,20 +405,6 @@ namespace RpcLibrary.Interop
         public byte ContextFlags;
         public byte RundownRoutineIndex;
         public byte Ordinal;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG40
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG41
-    {
-        public byte frag1;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -854,14 +533,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG71
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_FRAG71_EFSR
     {
         public NDR64_BOGUS_STRUCTURE_HEADER_FORMAT frag1;
@@ -880,45 +551,6 @@ namespace RpcLibrary.Interop
         public NDR64_POINTER_FORMAT frag2_2_2;
         public byte frag2_3;
         public NDR64_ARRAY_ELEMENT_INFO frag3;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG73
-    {
-        public NDR64_PROC_FORMAT frag1;
-        public NDR64_BIND_AND_NOTIFY_EXTENSION frag2;
-        public NDR64_PARAM_FORMAT frag3;
-        public NDR64_PARAM_FORMAT frag4;
-    }
-
-    // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG75
-    {
-        public byte FormatCode;
-        public byte ContextFlags;
-        public byte RundownRoutineIndex;
-        public byte Ordinal;
-    }
-
-    // Equivalent to NDR64_CONTEXT_HANDLE_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG8
-    {
-        public byte FormatCode;
-        public byte ContextFlags;
-        public byte RundownRoutineIndex;
-        public byte Ordinal;
-    }
-
-    // Equivalent to NDR64_POINTER_FORMAT
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_FRAG9
-    {
-        public byte FormatCode;
-        public byte Flags;
-        public ushort Reserved;
-        public IntPtr Pointee;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -1046,27 +678,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_INTERFACE_METHOD_PROPERTIES
-    {
-        public ushort MethodCount;
-        public IntPtr /* MIDL_METHOD_PROPERTY_MAP** */ MethodProperties;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_METHOD_PROPERTY
-    {
-        public uint Id;
-        public UIntPtr Value;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct MIDL_METHOD_PROPERTY_MAP
-    {
-        public uint Count;
-        public IntPtr /* const MIDL_METHOD_PROPERTY* */ Properties;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct MIDL_STUBLESS_PROXY_INFO
     {
         public IntPtr /* PMIDL_STUB_DESC */ pStubDesc;
@@ -1100,37 +711,6 @@ namespace RpcLibrary.Interop
         public IntPtr /* NDR_CS_ROUTINES* */ CsRoutineTables;
         public IntPtr ProxyServerInfo;
         public IntPtr /* NDR_EXPR_DESC* */ pExprInfo;
-
-        public MIDL_STUB_DESC(
-            IntPtr _pRpcInterfaceInformation,
-            IntPtr _pfnAllocate,
-            IntPtr _pfnFree,
-            IntPtr _pAutoHandle,
-            IntPtr _pFormatTypes,
-            IntPtr _aGenericBindingRoutinePairs,
-            IntPtr _pProxyServerInfo)
-        {
-            RpcInterfaceInformation = _pRpcInterfaceInformation;
-            pfnAllocate = _pfnAllocate;
-            pfnFree = _pfnFree;
-            handleInfo = new IMPLICIT_HANDLE_INFO { pAutoHandle = _pAutoHandle };
-            apfnNdrRundownRoutines = IntPtr.Zero;
-            aGenericBindingRoutinePairs = _aGenericBindingRoutinePairs;
-            apfnExprEval = IntPtr.Zero;
-            aXmitQuintuple = IntPtr.Zero;
-            pFormatTypes = _pFormatTypes;
-            fCheckBounds = 1;
-            Version = 0x00060001u;
-            pMallocFreeStruct = IntPtr.Zero;
-            MIDLVersion = 0x08010274;
-            CommFaultOffsets = IntPtr.Zero;
-            aUserMarshalQuadruple = IntPtr.Zero;
-            NotifyRoutineTable = IntPtr.Zero;
-            mFlags = new UIntPtr(0x02000001u);
-            CsRoutineTables = IntPtr.Zero;
-            ProxyServerInfo = _pProxyServerInfo;
-            pExprInfo = IntPtr.Zero;
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -1211,37 +791,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR_CS_ROUTINES
-    {
-        public IntPtr /* NDR_CS_SIZE_CONVERT_ROUTINES* */ pSizeConvertRoutines;
-        public IntPtr /* CS_TAG_GETTING_ROUTINE* */ pTagGettingRoutines;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR_CS_SIZE_CONVERT_ROUTINES
-    {
-        public IntPtr /* CS_TYPE_NET_SIZE_ROUTINE */ pfnNetSize;
-        public IntPtr /* CS_TYPE_TO_NETCS_ROUTINE */ pfnToNetCs;
-        public IntPtr /* CS_TYPE_LOCAL_SIZE_ROUTINE */ pfnLocalSize;
-        public IntPtr /* CS_TYPE_FROM_NETCS_ROUTINE */ pfnFromNetCs;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR_EXPR_DESC
-    {
-        public IntPtr /* unsigned short* */ pOffset;
-        public IntPtr /* PFORMAT_STRING (unsigned char**) */ pFormatExpr;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR_SCONTEXT
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
-        public IntPtr[] pad;
-        public IntPtr userContext;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct NDR64_ARRAY_ELEMENT_INFO
     {
         public uint ElementMemSize;
@@ -1301,21 +850,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR64_CONFORMANT_STRING_FORMAT
-    {
-        public NDR64_STRING_HEADER_FORMAT Header;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR64_CONTEXT_HANDLE_FORMAT
-    {
-        public byte FormatCode;
-        public byte ContextFlags;
-        public byte RundownRoutineIndex;
-        public byte Ordinal;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct NDR64_EXPR_VAR
     {
         public byte ExprType;
@@ -1349,18 +883,6 @@ namespace RpcLibrary.Interop
         public NDR64_PARAM_FLAGS Attributes;
         public ushort Reserved;
         public uint StackOffset;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct NDR64_PIPE_FORMAT
-    {
-        public byte FormatCode;
-        public byte Flags;
-        public byte Alignment;
-        public byte Reserved;
-        public IntPtr Type;
-        public uint MemorySize;
-        public uint BufferSize;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -1441,14 +963,6 @@ namespace RpcLibrary.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_DISPATCH_TABLE
-    {
-        public uint DispatchTableCount;
-        public IntPtr /* RPC_DISPATCH_FUNCTION* */ DispatchTable;
-        public UIntPtr Reserved;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct RPC_MESSAGE
     {
         public IntPtr Handle;
@@ -1462,21 +976,5 @@ namespace RpcLibrary.Interop
         public IntPtr ManagerEpv;
         public IntPtr ImportContext;
         public uint RpcFlags;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct RPC_PROTSEQ_ENDPOINT
-    {
-        public IntPtr /* unsigned char* */ RpcProtocolSequence;
-        public IntPtr /* unsigned char* */ Endpoint;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct USER_MARSHAL_ROUTINE_QUADRUPLE
-    {
-        public IntPtr /* USER_MARSHAL_SIZING_ROUTINE */ pfnBufferSize;
-        public IntPtr /* USER_MARSHAL_MARSHALLING_ROUTINE */ pfnMarshall;
-        public IntPtr /* USER_MARSHAL_UNMARSHALLING_ROUTINE */ pfnUnmarshall;
-        public IntPtr /* USER_MARSHAL_FREEING_ROUTINE */ pfnFree;
     }
 }
