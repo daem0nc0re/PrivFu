@@ -12,33 +12,6 @@ namespace RpcLibrary.Interop
          * rpcrt4.dll
          */
         [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr NdrClientCall2(
-            IntPtr /* [In] PMIDL_STUB_DESC */ pStubDescriptor,
-            IntPtr pFormat,
-            IntPtr hBindingHandle,
-            string pFileName);
-
-        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr NdrClientCall3(
-            IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
-            uint nProcNum,
-            IntPtr pReturnValue,
-            string pPrinterName,
-            out IntPtr pHandle,
-            string pDatatype,
-            ref DEVMODE_CONTAINER pDevModeContainer,
-            int AccessRequired);
-
-        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr NdrClientCall3(
-            IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
-            uint nProcNum,
-            IntPtr pReturnValue,
-            IntPtr pIdlHandle,
-            string ServerAddress,
-            out int IntOut);
-
-        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr NdrClientCall3(
             IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
             uint nProcNum,
