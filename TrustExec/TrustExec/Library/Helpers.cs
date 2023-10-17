@@ -59,7 +59,7 @@ namespace TrustExec.Library
             var referencedDomainName = new StringBuilder();
             var pSid = IntPtr.Zero;
             sidString = null;
-            peUse = SID_NAME_USE.SidTypeUnknown;
+            peUse = SID_NAME_USE.Unknown;
 
             if (!string.IsNullOrEmpty(domainName) && domainName.Trim() == ".")
                 domainName = Environment.MachineName;
@@ -97,7 +97,7 @@ namespace TrustExec.Library
                         pSid = Marshal.AllocHGlobal(nSidSize);
 
                     referencedDomainName.Clear();
-                    peUse = SID_NAME_USE.SidTypeUnknown;
+                    peUse = SID_NAME_USE.Unknown;
                 }
             } while (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
 
@@ -207,7 +207,7 @@ namespace TrustExec.Library
                     continue;
                 }
 
-                if (peUse == SID_NAME_USE.SidTypeAlias || peUse == SID_NAME_USE.SidTypeWellKnownGroup)
+                if (peUse == SID_NAME_USE.Alias || peUse == SID_NAME_USE.WellKnownGroup)
                 {
                     result.Add(sid);
                     Console.WriteLine("[+] \"{0}\" is added as an extra group.", accountName);
@@ -243,7 +243,7 @@ namespace TrustExec.Library
             {
                 accountName = null;
                 domainName = null;
-                peUse = SID_NAME_USE.SidTypeUnknown;
+                peUse = SID_NAME_USE.Unknown;
             }
 
             return status;
@@ -278,7 +278,7 @@ namespace TrustExec.Library
             {
                 accountName = null;
                 domainName = null;
-                sidType = SID_NAME_USE.SidTypeUnknown;
+                sidType = SID_NAME_USE.Unknown;
             }
 
             return status;

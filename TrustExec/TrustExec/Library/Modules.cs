@@ -55,7 +55,7 @@ namespace TrustExec.Library
         public static bool LookupSid(string domain, string username, string sid)
         {
             var status = false;
-            var peUse = SID_NAME_USE.SidTypeUnknown;
+            var peUse = SID_NAME_USE.Unknown;
 
             if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
                 !string.IsNullOrEmpty(sid))

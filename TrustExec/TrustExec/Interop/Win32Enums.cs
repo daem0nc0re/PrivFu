@@ -339,17 +339,17 @@ namespace TrustExec.Interop
 
     internal enum SID_NAME_USE
     {
-        SidTypeUser = 1,
-        SidTypeGroup,
-        SidTypeDomain,
-        SidTypeAlias,
-        SidTypeWellKnownGroup,
-        SidTypeDeletedAccount,
-        SidTypeInvalid,
-        SidTypeUnknown,
-        SidTypeComputer,
-        SidTypeLabel,
-        SidTypeLogonSession
+        User = 1,
+        Group,
+        Domain,
+        Alias,
+        WellKnownGroup,
+        DeletedAccount,
+        Invalid,
+        Unknown,
+        Computer,
+        Label,
+        LogonSession
     }
 
     internal enum SW : short
