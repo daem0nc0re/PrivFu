@@ -233,6 +233,7 @@ namespace TrustExec.Library
             out SID_NAME_USE peUse)
         {
             var status = false;
+            sid = sid.ToUpper();
 
             if (NativeMethods.ConvertStringSidToSid(sid, out IntPtr pSid))
             {

@@ -57,23 +57,14 @@ namespace TrustExec.Library
             var status = false;
             var peUse = SID_NAME_USE.Unknown;
 
-            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
-                !string.IsNullOrEmpty(sid))
-            {
+            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) && !string.IsNullOrEmpty(sid))
                 Console.WriteLine("[!] Username or domain name should not be specified with SID at a time.");
-            }
             else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
-            {
                 status = Helpers.ConvertAccountNameToSidString(ref username, ref domain, out sid, out peUse);
-            }
             else if (!string.IsNullOrEmpty(sid))
-            {
                 status = Helpers.ConvertSidStringToAccountName(ref sid, out username, out domain, out peUse);
-            }
             else
-            {
                 Console.WriteLine("[!] SID, domain name or username to lookup is required.");
-            }
 
             if (status)
             {
@@ -90,7 +81,7 @@ namespace TrustExec.Library
 
                 Console.WriteLine("[*] Result:");
                 Console.WriteLine("    [*] Account Name : {0}", accountName);
-                Console.WriteLine("    [*] SID          : {0}", string.IsNullOrEmpty(sid) ? "N/A" : sid);
+                Console.WriteLine("    [*] SID          : {0}", sid  ?? "N/A");
                 Console.WriteLine("    [*] Account Type : {0}", peUse.ToString());
             }
             else
