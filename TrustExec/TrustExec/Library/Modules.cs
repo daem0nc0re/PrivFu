@@ -70,7 +70,7 @@ namespace TrustExec.Library
             {
                 string accountName;
 
-                if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
+                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
                     accountName = string.Format(@"{0}\{1}", domain, username);
                 else if (!string.IsNullOrEmpty(username))
                     accountName = username;
