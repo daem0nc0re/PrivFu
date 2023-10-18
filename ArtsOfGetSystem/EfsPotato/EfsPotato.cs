@@ -21,6 +21,7 @@ namespace EfsPotato
                 options.AddFlag(false, "h", "help", "Displays this help message.");
                 options.AddFlag(false, "i", "interactive", "Flag to execute command with interactive mode.");
                 options.AddParameter(true, "c", "command", null, "Specifies command to execute.");
+                options.AddParameter(false, "e", "endpoint", "efsrpc", "\"efsrpc\", \"lsarpc\", \"lsass\", \"netlogon\" or \"samr\".");
                 options.AddParameter(false, "s", "session", null, "Specifies session ID.");
                 options.AddParameter(false, "t", "timeout", "3000", "Specifies timeout in milliseconds. Default is 3,000 ms.");
                 options.Parse(args);

@@ -26,7 +26,8 @@ namespace RpcLibrary
         };
         /*
          * UUID reference:
-         * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/1baaad2f-7a84-4238-b113-f32827a39cd2
+         * * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/1baaad2f-7a84-4238-b113-f32827a39cd2
+         * * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/ab3c0be4-5b55-4a08-b198-f17170100be6
          */
         public static readonly RPC_SYNTAX_IDENTIFIER LsarUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
         {
@@ -36,6 +37,21 @@ namespace RpcLibrary
         public static readonly RPC_SYNTAX_IDENTIFIER EfsrUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
         {
             SyntaxGUID = new Guid("DF1941C5-FE89-4E79-BF10-463657ACF44D"),
+            SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
+        };
+        public static readonly RPC_SYNTAX_IDENTIFIER SamrUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        {
+            SyntaxGUID = new Guid("C681D488-D850-11D0-8C52-00C04FD90F7E"),
+            SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
+        };
+        public static readonly RPC_SYNTAX_IDENTIFIER LsassUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        {
+            SyntaxGUID = new Guid("C681D488-D850-11D0-8C52-00C04FD90F7E"),
+            SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
+        };
+        public static readonly RPC_SYNTAX_IDENTIFIER NetlogonUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        {
+            SyntaxGUID = new Guid("C681D488-D850-11D0-8C52-00C04FD90F7E"),
             SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
         };
     }

@@ -59,6 +59,7 @@ namespace EfsPotato.Handler
 
                 Modules.GetSystem(
                     options.GetValue("command"),
+                    options.GetValue("endpoint"),
                     sessionId,
                     options.GetFlag("interactive"));
             } while (false);

