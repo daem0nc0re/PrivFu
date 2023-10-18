@@ -28,12 +28,12 @@ namespace RpcLibrary
          * UUID reference:
          * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/1baaad2f-7a84-4238-b113-f32827a39cd2
          */
-        public static readonly RPC_SYNTAX_IDENTIFIER EfsrUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        public static readonly RPC_SYNTAX_IDENTIFIER LsarUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
         {
             SyntaxGUID = new Guid("C681D488-D850-11D0-8C52-00C04FD90F7E"),
             SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
         };
-        public static readonly RPC_SYNTAX_IDENTIFIER LsarUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
+        public static readonly RPC_SYNTAX_IDENTIFIER EfsrUuidSyntax_1_0 = new RPC_SYNTAX_IDENTIFIER
         {
             SyntaxGUID = new Guid("DF1941C5-FE89-4E79-BF10-463657ACF44D"),
             SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0 }
