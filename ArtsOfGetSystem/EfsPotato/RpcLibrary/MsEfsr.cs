@@ -86,11 +86,20 @@ namespace RpcLibrary
         private readonly IntPtr pAutoBindHandle = IntPtr.Zero;
         private readonly IntPtr pRpcTransferSyntax = IntPtr.Zero;
         private readonly IntPtr pSyntaxInfo = IntPtr.Zero;
+        private string EndpointUuidString = null;
 
         private static readonly IntPtr[] Ndr64ProcTable = new IntPtr[MsEfsrConsts.FORMAT_TABLE_LENGTH];
 
         public MsEfsr()
         {
+            /*
+             * Set Endpoint UUID
+             * 
+             * UUID reference:
+             * * https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-efsr/1baaad2f-7a84-4238-b113-f32827a39cd2
+             */
+            EndpointUuidString = "DF1941C5-FE89-4E79-BF10-463657ACF44D";
+
             /*
              * Allocate required buffers
              */
@@ -2595,7 +2604,11 @@ namespace RpcLibrary
             var rpcClientInterface = new RPC_CLIENT_INTERFACE
             {
                 Length = (uint)Marshal.SizeOf(typeof(RPC_CLIENT_INTERFACE)),
-                InterfaceId = SyntaxIdentifiers.LsarUuidSyntax_1_0,//SyntaxIdentifiers.EfsrUuidSyntax_1_0,
+                InterfaceId = new RPC_SYNTAX_IDENTIFIER
+                {
+                    SyntaxGUID = new Guid(EndpointUuidString),
+                    SyntaxVersion = new RPC_VERSION { MajorVersion = 1, MinorVersion = 0}
+                },
                 TransferSyntax = SyntaxIdentifiers.RpcTransferSyntax_2_0,
                 DispatchTable = IntPtr.Zero,
                 RpcProtseqEndpointCount = 0u,
@@ -2662,6 +2675,66 @@ namespace RpcLibrary
             Marshal.FreeHGlobal(pAutoBindHandle);
             Marshal.FreeHGlobal(pRpcTransferSyntax);
             Marshal.FreeHGlobal(pSyntaxInfo);
+        }
+
+        /*
+         * public methods
+         */
+
+
+        public IntPtr GetEfsrBindingHandle(string networkAddress)
+        {
+            RPC_STATUS rpcStatus;
+            IntPtr hBinding = IntPtr.Zero;
+
+            do
+            {
+                rpcStatus = NativeMethods.RpcStringBindingCompose(
+                    EndpointUuidString,
+                    "ncacn_np",
+                    networkAddress,
+                    null,
+                    null,
+                    out IntPtr pStringBinding);
+
+                if (rpcStatus != Consts.RPC_S_OK)
+                    break;
+
+                rpcStatus = NativeMethods.RpcBindingFromStringBinding(
+                    pStringBinding,
+                    out hBinding);
+                NativeMethods.RpcStringFree(in pStringBinding);
+
+                if (rpcStatus != Consts.RPC_S_OK)
+                {
+                    hBinding = IntPtr.Zero;
+                    break;
+                }
+
+                rpcStatus = NativeMethods.RpcBindingSetAuthInfo(
+                    hBinding,
+                    networkAddress,
+                    RPC_C_AUTHN_LEVEL.PKT_PRIVACY,
+                    RPC_C_AUTHN.GSS_NEGOTIATE,
+                    IntPtr.Zero,
+                    RPC_C_AUTHZ.NONE);
+
+                if (rpcStatus != Consts.RPC_S_OK)
+                {
+                    NativeMethods.RpcBindingFree(ref hBinding);
+                    hBinding = IntPtr.Zero;
+                }
+
+                rpcStatus = NativeMethods.RpcBindingSetOption(hBinding, RPC_C_OPT.CALL_TIMEOUT, new UIntPtr(1_000_000u));
+
+                if (rpcStatus != Consts.RPC_S_OK)
+                {
+                    NativeMethods.RpcBindingFree(ref hBinding);
+                    hBinding = IntPtr.Zero;
+                }
+            } while (false);
+
+            return hBinding;
         }
 
         /*
