@@ -16,8 +16,26 @@ namespace RpcLibrary.Interop
             IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
             uint nProcNum,
             IntPtr pReturnValue,
+            IntPtr hContext);
+
+
+        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr NdrClientCall3(
+            IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
+            uint nProcNum,
+            IntPtr pReturnValue,
             IntPtr hBinding,
             string FileName);
+
+        [DllImport("rpcrt4.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr NdrClientCall3(
+            IntPtr /* in MIDL_STUBLESS_PROXY_INFO */ pProxyInfo,
+            uint nProcNum,
+            IntPtr pReturnValue,
+            IntPtr hBinding,
+            out IntPtr hContext,
+            string FileName,
+            int Flags);
 
         [DllImport("rpcrt4.dll")]
         public static extern RPC_STATUS RpcBindingFree(ref IntPtr Binding);

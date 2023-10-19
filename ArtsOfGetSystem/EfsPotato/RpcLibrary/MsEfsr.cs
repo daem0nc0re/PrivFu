@@ -2795,5 +2795,53 @@ namespace RpcLibrary
 
             return rpcStatus;
         }
+
+
+        public void EfsRpcCloseRaw(ref IntPtr hContext)
+        {
+            try
+            {
+                NativeMethods.NdrClientCall3(
+                    pProxyInfo,
+                    3,
+                    IntPtr.Zero,
+                    hContext);
+            }
+            catch (SEHException) { }
+        }
+
+
+        public RPC_STATUS EfsRpcOpenFileRaw(
+            IntPtr binding_h,
+            out IntPtr hContext,
+            string /* wchar_t* */ FileName,
+            int Flags)
+        {
+            RPC_STATUS rpcStatus;
+            hContext = IntPtr.Zero;
+
+            try
+            {
+                IntPtr returnedCode = NativeMethods.NdrClientCall3(
+                    pProxyInfo,
+                    0,
+                    IntPtr.Zero,
+                    binding_h,
+                    out hContext,
+                    FileName,
+                    Flags);
+
+                if (Environment.Is64BitProcess)
+                    rpcStatus = (int)(returnedCode.ToInt64() & 0x00000000_FFFFFFFFL);
+                else
+                    rpcStatus = returnedCode.ToInt32();
+            }
+            catch (SEHException)
+            {
+                rpcStatus = Marshal.GetExceptionCode();
+            }
+
+            return rpcStatus;
+        }
     }
 }
