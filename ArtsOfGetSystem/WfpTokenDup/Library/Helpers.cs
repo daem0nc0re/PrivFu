@@ -500,19 +500,41 @@ namespace WfpTokenDup.Library
         }
 
 
-        public static bool SetTokenSessionId(IntPtr hToken, int sessionId)
+        public static string GetTokenSessionSid(IntPtr hToken)
         {
             NTSTATUS ntstatus;
-            IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
-            Marshal.WriteInt32(pInfoBuffer, sessionId);
+            IntPtr pInfoBuffer;
+            string stringSid = null;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
 
-            ntstatus = NativeMethods.NtSetInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenSessionId,
-                pInfoBuffer,
-                4u);
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenLogonSid,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
 
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                if (Marshal.ReadInt32(pInfoBuffer) > 0)
+                {
+                    var status = NativeMethods.ConvertSidToStringSid(
+                        Marshal.ReadIntPtr(pInfoBuffer, IntPtr.Size),
+                        out stringSid);
+
+                    if (!status)
+                        stringSid = null;
+                }
+            }
+
+            return stringSid;
         }
 
 

@@ -933,6 +933,14 @@ namespace WfpTokenDup.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_GROUPS
+    {
+        public int GroupCount;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public SID_AND_ATTRIBUTES[] Groups;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
