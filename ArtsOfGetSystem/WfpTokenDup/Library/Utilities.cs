@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using WfpTokenDup.Interop;
@@ -343,6 +344,50 @@ namespace WfpTokenDup.Library
             }
 
             return (objectPath.Count > 0);
+        }
+
+
+        public static string GetDesktopSessionSid()
+        {
+            int pid;
+            string stringSid = null;
+
+            try
+            {
+                pid = Process.GetProcessesByName("explorer")[0].Id;
+            }
+            catch
+            {
+                return null;
+            }
+
+            do
+            {
+                var objectAttributes = new OBJECT_ATTRIBUTES();
+                var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+                NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                    out IntPtr hProcess,
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    ACCESS_MASK.TOKEN_QUERY,
+                    out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                stringSid = Helpers.GetTokenSessionSid(hToken);
+                NativeMethods.NtClose(hToken);
+            } while (false);
+
+            return stringSid;
         }
 
 

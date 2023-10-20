@@ -178,6 +178,12 @@ namespace WfpTokenDup.Interop
             in CLIENT_ID ClientId);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenProcessToken(
+            IntPtr ProcessHandle,
+            ACCESS_MASK DesiredAccess,
+            out IntPtr TokenHandle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
