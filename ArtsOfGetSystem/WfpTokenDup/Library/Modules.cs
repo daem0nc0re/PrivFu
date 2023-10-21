@@ -131,7 +131,7 @@ namespace WfpTokenDup.Library
                     LOGON_FLAGS.LOGON_WITH_PROFILE,
                     null,
                     Environment.GetEnvironmentVariable("COMSPEC"),
-                    PROCESS_CREATION_FLAGS.NONE,
+                    PROCESS_CREATION_FLAGS.CREATE_NEW_CONSOLE,
                     IntPtr.Zero,
                     Environment.CurrentDirectory,
                     in startupInfo,

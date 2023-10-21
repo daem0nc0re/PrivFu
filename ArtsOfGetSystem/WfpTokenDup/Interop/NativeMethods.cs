@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -208,13 +207,6 @@ namespace WfpTokenDup.Interop
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtSetEvent(IntPtr EventHandle, out int PreviousState);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSetInformationToken(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            uint TokenInformationLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtSetSecurityObject(
