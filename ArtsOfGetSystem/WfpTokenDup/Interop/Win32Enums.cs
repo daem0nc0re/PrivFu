@@ -698,6 +698,20 @@ namespace WfpTokenDup.Interop
     }
 
     [Flags]
+    internal enum SE_GROUP_ATTRIBUTES : uint
+    {
+        Mandatory = 0x00000001,
+        EnabledByDefault = 0x00000002,
+        Enabled = 0x00000004,
+        Owner = 0x00000008,
+        UseForDenyOnly = 0x00000010,
+        Integrity = 0x00000020,
+        IntegrityEnabled = 0x00000040,
+        Resource = 0x20000000,
+        LogonId = 0xC0000000
+    }
+
+    [Flags]
     internal enum SE_PRIVILEGE_ATTRIBUTES : uint
     {
         Disabled = 0x00000000,

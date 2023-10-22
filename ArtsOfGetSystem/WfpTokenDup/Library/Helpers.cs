@@ -569,6 +569,106 @@ namespace WfpTokenDup.Library
         }
 
 
+        public static bool SetTokenLogonSid(IntPtr hToken, string stringSid)
+        {
+            if (!stringSid.StartsWith("S-1-5-5", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
+                return false;
+
+            bool status = SetTokenLogonSid(hToken, pSid);
+            NativeMethods.LocalFree(pSid);
+
+            return status;
+        }
+
+        public static bool SetTokenLogonSid(IntPtr hToken, IntPtr pSid)
+        {
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
+
+            if ((Marshal.ReadByte(pSid) != 1) ||
+                (Marshal.ReadInt16(pSid, 2) != 0) ||
+                (Marshal.ReadInt32(pSid, 4) != 0x05000000) ||
+                (Marshal.ReadInt32(pSid, 8) != 5))
+            {
+                return false;
+            }
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenGroups,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                IntPtr pUpdatedGroups;
+                var isUpdated = false;
+                var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                var nGroupCount = Marshal.ReadInt32(pInfoBuffer);
+
+                for (var idx = 0; idx < nGroupCount; idx++)
+                {
+                    var sidAttributes = (SE_GROUP_ATTRIBUTES)Marshal.ReadInt32(pInfoBuffer, (IntPtr.Size * 2) + (nUnitSize * idx));
+
+                    if ((sidAttributes & SE_GROUP_ATTRIBUTES.LogonId) != 0)
+                    {
+                        Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Size + (nUnitSize * idx), pSid);
+                        isUpdated = true;
+                        break;
+                    }
+                }
+
+                if (!isUpdated)
+                {
+                    var groupAttributes = (int)(SE_GROUP_ATTRIBUTES.Enabled &
+                        SE_GROUP_ATTRIBUTES.EnabledByDefault &
+                        SE_GROUP_ATTRIBUTES.LogonId &
+                        SE_GROUP_ATTRIBUTES.Mandatory);
+                    pUpdatedGroups = Marshal.AllocHGlobal((int)nInfoLength + nUnitSize);
+
+                    for (var idx = 0; idx < (int)nInfoLength; idx++)
+                        Marshal.WriteByte(pUpdatedGroups, idx, Marshal.ReadByte(pInfoBuffer, idx));
+
+                    for (var idx = 0; idx < nUnitSize; idx++)
+                        Marshal.WriteByte(pUpdatedGroups, (int)nInfoLength + idx, 0);
+
+                    Marshal.WriteIntPtr(pUpdatedGroups, (int)nInfoLength, pSid);
+                    Marshal.WriteInt32(pUpdatedGroups, (int)nInfoLength + IntPtr.Size, groupAttributes);
+                    nInfoLength += (uint)nUnitSize;
+                }
+                else
+                {
+                    pUpdatedGroups = pInfoBuffer;
+                }
+
+                ntstatus = NativeMethods.NtSetInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenGroups,
+                    pUpdatedGroups,
+                    nInfoLength);
+
+                if (pUpdatedGroups != pInfoBuffer)
+                    Marshal.FreeHGlobal(pUpdatedGroups);
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static void WriteGuidToPointer(IntPtr pBuffer, in Guid guid)
         {
             WriteGuidToPointer(pBuffer, 0, in guid);
