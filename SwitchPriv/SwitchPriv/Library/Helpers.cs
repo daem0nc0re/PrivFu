@@ -280,55 +280,24 @@ namespace SwitchPriv.Library
 
         public static void ListPrivilegeOptionValues()
         {
-            Console.WriteLine();
-            Console.WriteLine("Available values for --enable, --disable, and --remove options:");
-            Console.WriteLine("    + CreateToken                    : Specifies SeCreateTokenPrivilege.");
-            Console.WriteLine("    + AssignPrimaryToken             : Specifies SeAssignPrimaryTokenPrivilege.");
-            Console.WriteLine("    + LockMemory                     : Specifies SeLockMemoryPrivilege.");
-            Console.WriteLine("    + IncreaseQuota                  : Specifies SeIncreaseQuotaPrivilege.");
-            Console.WriteLine("    + MachineAccount                 : Specifies SeMachineAccountPrivilege.");
-            Console.WriteLine("    + Tcb                            : Specifies SeTcbPrivilege.");
-            Console.WriteLine("    + Security                       : Specifies SeSecurityPrivilege.");
-            Console.WriteLine("    + TakeOwnership                  : Specifies SeTakeOwnershipPrivilege.");
-            Console.WriteLine("    + LoadDriver                     : Specifies SeLoadDriverPrivilege.");
-            Console.WriteLine("    + SystemProfile                  : Specifies SeSystemProfilePrivilege.");
-            Console.WriteLine("    + Systemtime                     : Specifies SeSystemtimePrivilege.");
-            Console.WriteLine("    + ProfileSingle                  : Specifies SeProfileSingleProcessPrivilege.");
-            Console.WriteLine("    + IncreaseBasePriority           : Specifies SeIncreaseBasePriorityPrivilege.");
-            Console.WriteLine("    + CreatePagefile                 : Specifies SeCreatePagefilePrivilege.");
-            Console.WriteLine("    + CreatePermanent                : Specifies SeCreatePermanentPrivilege.");
-            Console.WriteLine("    + Backup                         : Specifies SeBackupPrivilege.");
-            Console.WriteLine("    + Restore                        : Specifies SeRestorePrivilege.");
-            Console.WriteLine("    + Shutdown                       : Specifies SeShutdownPrivilege.");
-            Console.WriteLine("    + Debug                          : Specifies SeDebugPrivilege.");
-            Console.WriteLine("    + Audit                          : Specifies SeAuditPrivilege.");
-            Console.WriteLine("    + SystemEnvironment              : Specifies SeSystemEnvironmentPrivilege.");
-            Console.WriteLine("    + ChangeNotify                   : Specifies SeChangeNotifyPrivilege.");
-            Console.WriteLine("    + RemoteShutdown                 : Specifies SeRemoteShutdownPrivilege.");
-            Console.WriteLine("    + Undock                         : Specifies SeUndockPrivilege.");
-            Console.WriteLine("    + SyncAgent                      : Specifies SeSyncAgentPrivilege.");
-            Console.WriteLine("    + EnableDelegation               : Specifies SeEnableDelegationPrivilege.");
-            Console.WriteLine("    + ManageVolume                   : Specifies SeManageVolumePrivilege.");
-            Console.WriteLine("    + Impersonate                    : Specifies SeImpersonatePrivilege.");
-            Console.WriteLine("    + CreateGlobal                   : Specifies SeCreateGlobalPrivilege.");
-            Console.WriteLine("    + TrustedCredManAccess           : Specifies SeTrustedCredManAccessPrivilege.");
-            Console.WriteLine("    + Relabel                        : Specifies SeRelabelPrivilege.");
-            Console.WriteLine("    + IncreaseWorkingSet             : Specifies SeIncreaseWorkingSetPrivilege.");
-            Console.WriteLine("    + TimeZone                       : Specifies SeTimeZonePrivilege.");
-            Console.WriteLine("    + CreateSymbolicLink             : Specifies SeCreateSymbolicLinkPrivilege.");
-            Console.WriteLine("    + DelegateSessionUserImpersonate : Specifies SeDelegateSessionUserImpersonatePrivilege.");
-            Console.WriteLine("    + All                            : Specifies all token privileges.");
-            Console.WriteLine();
-            Console.WriteLine("Available values for --integrity option:");
-            Console.WriteLine("    + 0 : UNTRUSTED_MANDATORY_LEVEL");
-            Console.WriteLine("    + 1 : LOW_MANDATORY_LEVEL");
-            Console.WriteLine("    + 2 : MEDIUM_MANDATORY_LEVEL");
-            Console.WriteLine("    + 3 : MEDIUM_PLUS_MANDATORY_LEVEL");
-            Console.WriteLine("    + 4 : HIGH_MANDATORY_LEVEL");
-            Console.WriteLine("    + 5 : SYSTEM_MANDATORY_LEVEL");
-            Console.WriteLine("    + 6 : PROTECTED_MANDATORY_LEVEL");
-            Console.WriteLine("    + 7 : SECURE_MANDATORY_LEVEL");
-            Console.WriteLine();
+            var outputBuilder = new StringBuilder();
+
+            outputBuilder.Append("\n");
+            outputBuilder.Append("Available values for --integrity option:\n\n");
+            outputBuilder.Append("    * 0 : UNTRUSTED_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 1 : LOW_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 2 : MEDIUM_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 3 : MEDIUM_PLUS_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 4 : HIGH_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 5 : SYSTEM_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 6 : PROTECTED_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 7 : SECURE_MANDATORY_LEVEL\n\n");
+            outputBuilder.Append("Example :\n\n");
+            outputBuilder.Append("    * Down a specific process' integrity level to Low.\n\n");
+            outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -s 1\n\n", AppDomain.CurrentDomain.FriendlyName);
+            outputBuilder.Append("Protected and Secure level should not be available, but left for research purpose.\n\n");
+
+            Console.WriteLine(outputBuilder.ToString());
         }
 
 
