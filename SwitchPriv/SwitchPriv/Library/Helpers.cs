@@ -46,80 +46,60 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetFullPrivilegeName(string shortenName)
+        public static bool GetFullPrivilegeName(
+            string filter,
+            out List<string> candidatePrivs)
         {
-            if (CompareIgnoreCase(shortenName, "CreateToken"))
-                return "SeCreateTokenPrivilege";
-            else if (CompareIgnoreCase(shortenName, "AssignPrimaryToken"))
-                return "SeAssignPrimaryTokenPrivilege";
-            else if (CompareIgnoreCase(shortenName, "LockMemory"))
-                return "SeLockMemoryPrivilege";
-            else if (CompareIgnoreCase(shortenName, "IncreaseQuota"))
-                return "SeIncreaseQuotaPrivilege";
-            else if (CompareIgnoreCase(shortenName, "MachineAccount"))
-                return "SeMachineAccountPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Tcb"))
-                return "SeTcbPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Security"))
-                return "SeSecurityPrivilege";
-            else if (CompareIgnoreCase(shortenName, "TakeOwnership"))
-                return "SeTakeOwnershipPrivilege";
-            else if (CompareIgnoreCase(shortenName, "LoadDriver"))
-                return "SeLoadDriverPrivilege";
-            else if (CompareIgnoreCase(shortenName, "SystemProfile"))
-                return "SeSystemProfilePrivilege";
-            else if (CompareIgnoreCase(shortenName, "Systemtime"))
-                return "SeSystemtimePrivilege";
-            else if (CompareIgnoreCase(shortenName, "ProfileSingleProcess"))
-                return "SeProfileSingleProcessPrivilege";
-            else if (CompareIgnoreCase(shortenName, "IncreaseBasePriority"))
-                return "SeIncreaseBasePriorityPrivilege";
-            else if (CompareIgnoreCase(shortenName, "CreatePagefile"))
-                return "SeCreatePagefilePrivilege";
-            else if (CompareIgnoreCase(shortenName, "CreatePermanent"))
-                return "SeCreatePermanentPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Backup"))
-                return "SeBackupPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Restore"))
-                return "SeRestorePrivilege";
-            else if (CompareIgnoreCase(shortenName, "Shutdown"))
-                return "SeShutdownPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Debug"))
-                return "SeDebugPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Audit"))
-                return "SeAuditPrivilege";
-            else if (CompareIgnoreCase(shortenName, "SystemEnvironment"))
-                return "SeSystemEnvironmentPrivilege";
-            else if (CompareIgnoreCase(shortenName, "ChangeNotify"))
-                return "SeChangeNotifyPrivilege";
-            else if (CompareIgnoreCase(shortenName, "RemoteShutdown"))
-                return "SeRemoteShutdownPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Undock"))
-                return "SeUndockPrivilege";
-            else if (CompareIgnoreCase(shortenName, "SyncAgent"))
-                return "SeSyncAgentPrivilege";
-            else if (CompareIgnoreCase(shortenName, "EnableDelegation"))
-                return "SeEnableDelegationPrivilege";
-            else if (CompareIgnoreCase(shortenName, "ManageVolume"))
-                return "SeManageVolumePrivilege";
-            else if (CompareIgnoreCase(shortenName, "Impersonate"))
-                return "SeImpersonatePrivilege";
-            else if (CompareIgnoreCase(shortenName, "CreateGlobal"))
-                return "SeCreateGlobalPrivilege";
-            else if (CompareIgnoreCase(shortenName, "TrustedCredManAccess"))
-                return "SeTrustedCredManAccessPrivilege";
-            else if (CompareIgnoreCase(shortenName, "Relabel"))
-                return "SeRelabelPrivilege";
-            else if (CompareIgnoreCase(shortenName, "IncreaseWorkingSet"))
-                return "SeIncreaseWorkingSetPrivilege";
-            else if (CompareIgnoreCase(shortenName, "TimeZone"))
-                return "SeTimeZonePrivilege";
-            else if (CompareIgnoreCase(shortenName, "CreateSymbolicLink"))
-                return "SeCreateSymbolicLinkPrivilege";
-            else if (CompareIgnoreCase(shortenName, "DelegateSessionUserImpersonate"))
-                return "SeDelegateSessionUserImpersonatePrivilege";
-            else
-                return null;
+            var validNames = new List<string>
+            {
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
+                Win32Consts.SE_AUDIT_NAME,
+                Win32Consts.SE_BACKUP_NAME,
+                Win32Consts.SE_CHANGE_NOTIFY_NAME,
+                Win32Consts.SE_CREATE_GLOBAL_NAME,
+                Win32Consts.SE_CREATE_PAGEFILE_NAME,
+                Win32Consts.SE_CREATE_PERMANENT_NAME,
+                Win32Consts.SE_CREATE_SYMBOLIC_LINK_NAME,
+                Win32Consts.SE_CREATE_TOKEN_NAME,
+                Win32Consts.SE_DEBUG_NAME,
+                Win32Consts.SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME,
+                Win32Consts.SE_ENABLE_DELEGATION_NAME,
+                Win32Consts.SE_IMPERSONATE_NAME,
+                Win32Consts.SE_INCREASE_BASE_PRIORITY_NAME,
+                Win32Consts.SE_INCREASE_QUOTA_NAME,
+                Win32Consts.SE_INCREASE_WORKING_SET_NAME,
+                Win32Consts.SE_LOAD_DRIVER_NAME,
+                Win32Consts.SE_LOCK_MEMORY_NAME,
+                Win32Consts.SE_MACHINE_ACCOUNT_NAME,
+                Win32Consts.SE_MANAGE_VOLUME_NAME,
+                Win32Consts.SE_PROFILE_SINGLE_PROCESS_NAME,
+                Win32Consts.SE_RELABEL_NAME,
+                Win32Consts.SE_REMOTE_SHUTDOWN_NAME,
+                Win32Consts.SE_RESTORE_NAME,
+                Win32Consts.SE_SECURITY_NAME,
+                Win32Consts.SE_SHUTDOWN_NAME,
+                Win32Consts.SE_SYNC_AGENT_NAME,
+                Win32Consts.SE_SYSTEMTIME_NAME,
+                Win32Consts.SE_SYSTEM_ENVIRONMENT_NAME,
+                Win32Consts.SE_SYSTEM_PROFILE_NAME,
+                Win32Consts.SE_TAKE_OWNERSHIP_NAME,
+                Win32Consts.SE_TCB_NAME,
+                Win32Consts.SE_TIME_ZONE_NAME,
+                Win32Consts.SE_TRUSTED_CREDMAN_ACCESS_NAME,
+                Win32Consts.SE_UNDOCK_NAME
+            };
+            candidatePrivs = new List<string>();
+
+            if (string.IsNullOrEmpty(filter))
+                return false;
+
+            foreach (var priv in validNames)
+            {
+                if (priv.IndexOf(filter, StringComparison.OrdinalIgnoreCase) != -1)
+                    candidatePrivs.Add(priv);
+            }
+
+            return true;
         }
 
 

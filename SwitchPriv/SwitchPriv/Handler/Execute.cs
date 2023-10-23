@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using SwitchPriv.Library;
 
 namespace SwitchPriv.Handler
@@ -8,8 +9,9 @@ namespace SwitchPriv.Handler
         public static void Run(CommandLineParser options)
         {
             int pid;
-            string priv;
             int integrityIndex;
+            string privilege;
+            bool asSystem = options.GetFlag("system");
             StringComparison opt = StringComparison.OrdinalIgnoreCase;
 
             if (options.GetFlag("help"))
@@ -45,91 +47,43 @@ namespace SwitchPriv.Handler
             
             if (options.GetFlag("get"))
             {
-                Modules.GetPrivileges(pid, options.GetFlag("system"));
+                Modules.GetPrivileges(pid, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("enable")))
             {
-                if (string.Compare(options.GetValue("enable"), "All", opt) == 0)
-                {
-                    Modules.EnableAllPrivileges(pid, options.GetFlag("system"));
-                }
+                privilege = options.GetValue("enable");
+
+                if (string.Compare(privilege, "All", opt) == 0)
+                    Modules.EnableAllPrivileges(pid, asSystem);
                 else
-                {
-                    priv = Helpers.GetFullPrivilegeName(options.GetValue("enable"));
-
-                    if (priv == null)
-                    {
-                        options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify requested token privilege.");
-
-                        return;
-                    }
-
-                    Modules.EnableTokenPrivilege(pid, priv, options.GetFlag("system"));
-                }
+                    Modules.EnableTokenPrivilege(pid, privilege, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("disable")))
             {
-                if (string.Compare(options.GetValue("disable"), "All", opt) == 0)
-                {
-                    Modules.DisableAllPrivileges(pid, options.GetFlag("system"));
-                }
+                privilege = options.GetValue("disable");
+
+                if (string.Compare(privilege, "All", opt) == 0)
+                    Modules.DisableAllPrivileges(pid, asSystem);
                 else
-                {
-                    priv = Helpers.GetFullPrivilegeName(options.GetValue("disable"));
-
-                    if (string.IsNullOrEmpty(priv))
-                    {
-                        options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify the requested token privilege.");
-
-                        return;
-                    }
-
-                    Modules.DisableTokenPrivilege(pid, priv, options.GetFlag("system"));
-                }
+                    Modules.DisableTokenPrivilege(pid, privilege, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("remove")))
             {
-                if (string.Compare(options.GetValue("remove"), "All", opt) == 0)
-                {
-                    Modules.RemoveAllPrivileges(pid, options.GetFlag("system"));
-                }
+                privilege = options.GetValue("remove");
+
+                if (string.Compare(privilege, "All", opt) == 0)
+                    Modules.RemoveAllPrivileges(pid, asSystem);
                 else
-                {
-                    priv = Helpers.GetFullPrivilegeName(options.GetValue("remove"));
-
-                    if (string.IsNullOrEmpty(priv))
-                    {
-                        options.GetHelp();
-                        Console.WriteLine("[-] Failed to the specify requested token privilege.");
-
-                        return;
-                    }
-
-                    Modules.RemoveTokenPrivilege(pid, priv, options.GetFlag("system"));
-                }
+                    Modules.RemoveTokenPrivilege(pid, privilege, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("find")))
             {
+                privilege = options.GetValue("find");
+
                 if (string.Compare(options.GetValue("find"), "All", opt) == 0)
-                {
                     Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
-                }
                 else
-                {
-                    priv = Helpers.GetFullPrivilegeName(options.GetValue("find"));
-
-                    if (string.IsNullOrEmpty(priv))
-                    {
-                        options.GetHelp();
-                        Console.WriteLine("[-] Failed to specify the requested token privilege.");
-
-                        return;
-                    }
-
-                    Modules.FindPrivilegedProcess(priv, options.GetFlag("system"));
-                }
+                    Modules.FindPrivilegedProcess(privilege, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("integrity")))
             {

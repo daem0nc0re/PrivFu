@@ -118,9 +118,9 @@ namespace SwitchPriv.Library
             {
                 int error;
                 IntPtr hProcess;
-                var isAvailable = false;
+                var candidatePrivs = new List<string>();
 
-                Console.WriteLine("[>] Trying to disable {0}.", privilegeName);
+                Console.WriteLine("[>] Trying to disable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
@@ -163,21 +163,28 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
-                    {
-                        isAvailable = true;
-                        privilegeName = priv.Key;
-                        break;
-                    }
+                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key);
                 }
 
-                if (!isAvailable)
+                if (candidatePrivs.Count == 0)
                 {
-                    Console.WriteLine("[-] {0} is not available.", privilegeName);
+                    Console.WriteLine("[-] No candidates to disable.");
+                    break;
+                }
+                else if (candidatePrivs.Count > 1)
+                {
+                    Console.WriteLine("[-] Cannot specify a unique privilege to disable.");
+
+                    foreach (var priv in candidatePrivs)
+                        Console.WriteLine("    [*] {0}", priv);
+
                     break;
                 }
                 else
                 {
+                    privilegeName = candidatePrivs[0];
+
                     if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                     {
                         Console.WriteLine("[*] {0} is already disabled.", privilegeName);
@@ -311,16 +318,16 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
             {
                 int error;
                 IntPtr hProcess;
-                var isAvailable = false;
+                var candidatePrivs = new List<string>();
 
-                Console.WriteLine("[>] Trying to enable {0}.", privilegeName);
+                Console.WriteLine("[>] Trying to enable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
@@ -363,21 +370,28 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
-                    {
-                        isAvailable = true;
-                        privilegeName = priv.Key;
-                        break;
-                    }
+                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key);
                 }
 
-                if (!isAvailable)
+                if (candidatePrivs.Count == 0)
                 {
-                    Console.WriteLine("[-] {0} is not available.", privilegeName);
+                    Console.WriteLine("[-] No candidates to enable.");
+                    break;
+                }
+                else if (candidatePrivs.Count > 1)
+                {
+                    Console.WriteLine("[-] Cannot specify a unique privilege to enable.");
+
+                    foreach (var priv in candidatePrivs)
+                        Console.WriteLine("    [*] {0}", priv);
+
                     break;
                 }
                 else
                 {
+                    privilegeName = candidatePrivs[0];
+
                     if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                     {
                         Console.WriteLine("[*] {0} is already enabled.", privilegeName);
@@ -409,7 +423,7 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool FindPrivilegedProcess(string targetPrivilege, bool asSystem)
+        public static bool FindPrivilegedProcess(string privilegeName, bool asSystem)
         {
             var privilegedProcesses = new Dictionary<int, string>();
             var deniedProcesses = new Dictionary<int, string>();
@@ -419,7 +433,32 @@ namespace SwitchPriv.Library
                 bool status;
                 IntPtr hProcess;
 
-                Console.WriteLine("[>] Searching processes have {0}.", targetPrivilege);
+                if (Helpers.GetFullPrivilegeName(privilegeName, out List<string> candidatePrivs))
+                {
+                    if (candidatePrivs.Count > 1)
+                    {
+                        Console.WriteLine("[-] Cannot specify a unique privilege to search.");
+
+                        foreach (var priv in candidatePrivs)
+                            Console.WriteLine("    [*] {0}", priv);
+
+                        break;
+                    }
+                    else if (candidatePrivs.Count == 0)
+                    {
+                        Console.WriteLine("[-] No candidates to search.");
+                    }
+                    else
+                    {
+                        privilegeName = candidatePrivs[0];
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to specify a unique privilege to search.");
+                }
+
+                Console.WriteLine("[>] Searching processes have {0}.", privilegeName);
 
                 if (asSystem)
                 {
@@ -456,7 +495,7 @@ namespace SwitchPriv.Library
 
                     foreach (var priv in privs.Keys)
                     {
-                        if (Helpers.CompareIgnoreCase(priv, targetPrivilege))
+                        if (Helpers.CompareIgnoreCase(priv, privilegeName))
                         {
                             privilegedProcesses.Add(proc.Id, proc.ProcessName);
                             break;
@@ -466,7 +505,7 @@ namespace SwitchPriv.Library
 
                 if (privilegedProcesses.Count == 0)
                 {
-                    Console.WriteLine("[-] No process has {0}.", targetPrivilege);
+                    Console.WriteLine("[-] No process has {0}.", privilegeName);
                 }
                 else
                 {
@@ -753,9 +792,9 @@ namespace SwitchPriv.Library
             {
                 int error;
                 IntPtr hProcess;
-                var isAvailable = false;
+                var candidatePrivs = new List<string>();
 
-                Console.WriteLine("[>] Trying to remove {0}.", privilegeName);
+                Console.WriteLine("[>] Trying to remove a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
@@ -798,18 +837,27 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (Helpers.CompareIgnoreCase(priv.Key, privilegeName))
-                    {
-                        isAvailable = true;
-                        privilegeName = priv.Key;
-                        break;
-                    }
+                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key);
                 }
 
-                if (!isAvailable)
+                if (candidatePrivs.Count == 0)
                 {
-                    Console.WriteLine("[*] {0} is already removed.", privilegeName);
+                    Console.WriteLine("[-] No candidates to remove.");
                     break;
+                }
+                else if (candidatePrivs.Count > 1)
+                {
+                    Console.WriteLine("[-] Cannot specify a unique privilege to remove.");
+
+                    foreach (var priv in candidatePrivs)
+                        Console.WriteLine("    [*] {0}", priv);
+
+                    break;
+                }
+                else
+                {
+                    privilegeName = candidatePrivs[0];
                 }
 
                 status = Utilities.RemoveTokenPrivileges(
