@@ -852,218 +852,59 @@ Mandatory Label\System Mandatory Level         Label            S-1-16-16384
 This tool is to enable or disable specific token privileges for a process:
 
 ```
-C:\dev>SwitchPriv.exe -h
+PS C:\Dev> .\SwitchPriv.exe -h
 
 SwitchPriv - Tool to control token privileges.
 
 Usage: SwitchPriv.exe [Options]
 
         -h, --help      : Displays this help message.
-        -e, --enable    : Specifies token privilege to enable. Case insensitive.
-        -d, --disable   : Specifies token privilege to disable. Case insensitive.
-        -r, --remove    : Specifies token privilege to remove. Case insensitive.
-        -f, --find      : Specifies token privilege to find.
+        -d, --disable   : Specifies token privilege to disable or "all".
+        -e, --enable    : Specifies token privilege to enable or "all".
+        -f, --filter    : Specifies token privilege you want to remain.
+        -i, --integrity : Specifies integrity level to set in decimal value.
         -p, --pid       : Specifies the target PID. Default specifies PPID.
-        -i, --integrity : Specifies integrity level to set.
+        -r, --remove    : Specifies token privilege to remove or "all".
+        -s, --search    : Specifies token privilege to search.
         -g, --get       : Flag to get available privileges for the target process.
-        -s, --system    : Flag to run as "NT AUTHORITY\SYSTEM".
-        -l, --list      : Flag to list values for --enable, --disable, --remove and --integrity options.
+        -l, --list      : Flag to list values for --integrity options.
+        -S, --system    : Flag to run as "NT AUTHORITY\SYSTEM".
 ```
 
-To list values for `--enable`, `--disable`, `--remove` and `--integrity` options, execute this tool with `--list` flag as follows:
+To list values for `--integrity` option, execute with `--list` flag as follows:
 
 ```
-C:\dev>SwitchPriv.exe -l
-
-Available values for --enable, --disable, and --remove options:
-    + CreateToken                    : Specifies SeCreateTokenPrivilege.
-    + AssignPrimaryToken             : Specifies SeAssignPrimaryTokenPrivilege.
-    + LockMemory                     : Specifies SeLockMemoryPrivilege.
-    + IncreaseQuota                  : Specifies SeIncreaseQuotaPrivilege.
-    + MachineAccount                 : Specifies SeMachineAccountPrivilege.
-    + Tcb                            : Specifies SeTcbPrivilege.
-    + Security                       : Specifies SeSecurityPrivilege.
-    + TakeOwnership                  : Specifies SeTakeOwnershipPrivilege.
-    + LoadDriver                     : Specifies SeLoadDriverPrivilege.
-
---snip--
+PS C:\Dev> .\SwitchPriv.exe -l
 
 Available values for --integrity option:
-    + 0 : UNTRUSTED_MANDATORY_LEVEL
-    + 1 : LOW_MANDATORY_LEVEL
-    + 2 : MEDIUM_MANDATORY_LEVEL
-    + 3 : MEDIUM_PLUS_MANDATORY_LEVEL
-    + 4 : HIGH_MANDATORY_LEVEL
-    + 5 : SYSTEM_MANDATORY_LEVEL
-    + 6 : PROTECTED_MANDATORY_LEVEL
-    + 7 : SECURE_MANDATORY_LEVEL
+
+    * 0 : UNTRUSTED_MANDATORY_LEVEL
+    * 1 : LOW_MANDATORY_LEVEL
+    * 2 : MEDIUM_MANDATORY_LEVEL
+    * 3 : MEDIUM_PLUS_MANDATORY_LEVEL
+    * 4 : HIGH_MANDATORY_LEVEL
+    * 5 : SYSTEM_MANDATORY_LEVEL
+    * 6 : PROTECTED_MANDATORY_LEVEL
+    * 7 : SECURE_MANDATORY_LEVEL
+
+Example :
+
+    * Down a specific process' integrity level to Low.
+
+        PS C:\> .\SwitchPriv.exe -p 4142 -s 1
+
+Protected and Secure level should not be available, but left for research purpose.
 ```
 
-If you want to control privilege for a remote process, specify the target PID as follows.
-For example, to enable SeUndockPrivilege for PID 7584, execute with `--enable` option as follows:
+The target process' PID is specified with `-p` option.
+You can list available privileges for the target process with `-g` flag and `-p` option as follows:
 
 ```
-C:\dev>SwitchPriv.exe -p 6968 -e undock
-
-[>] Trying to enable SeUndockPrivilege.
-    [*] Target PID   : 6968
-    [*] Process Name : Notepad
-[+] SeUndockPrivilege is enabled successfully.
-[*] Done.
-```
-
-To list current token privileges for the target process, execute with `--get` flag as follws:
-
-```
-C:\dev>SwitchPriv.exe -p 6968 -g
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
 
 [>] Trying to get available token privilege(s) for the target process.
-    [*] Target PID   : 6968
+    [*] Target PID   : 9408
     [*] Process Name : Notepad
-[+] Got 5 token privilege(s).
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                State
-============================= =========================
-SeShutdownPrivilege           Disabled
-SeChangeNotifyPrivilege       EnabledByDefault, Enabled
-SeUndockPrivilege             Enabled
-SeIncreaseWorkingSetPrivilege Disabled
-SeTimeZonePrivilege           Disabled
-
-[*] Integrity Level : Medium Mandatory Level
-[*] Done.
-```
-
-To perform any actions as SYSTEM, set `--system` flag as follows:
-
-```
-C:\dev>SwitchPriv.exe -p 1140 -g -s
-
-[>] Trying to get available token privilege(s) for the target process.
-    [*] Target PID   : 1140
-    [*] Process Name : svchost
-[>] Trying to get SYSTEM.
-[+] Got SYSTEM privilege.
-[+] Got 28 token privilege(s).
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                            State
-========================================= =========================
-SeAssignPrimaryTokenPrivilege             Disabled
-SeLockMemoryPrivilege                     EnabledByDefault, Enabled
-SeIncreaseQuotaPrivilege                  Disabled
-SeTcbPrivilege                            EnabledByDefault, Enabled
-SeSecurityPrivilege                       Disabled
-SeTakeOwnershipPrivilege                  Disabled
-SeLoadDriverPrivilege                     Disabled
-SeSystemProfilePrivilege                  EnabledByDefault, Enabled
-SeSystemtimePrivilege                     Disabled
-SeProfileSingleProcessPrivilege           EnabledByDefault, Enabled
-SeIncreaseBasePriorityPrivilege           EnabledByDefault, Enabled
-SeCreatePagefilePrivilege                 EnabledByDefault, Enabled
-SeCreatePermanentPrivilege                EnabledByDefault, Enabled
-SeBackupPrivilege                         Disabled
-SeRestorePrivilege                        Disabled
-SeShutdownPrivilege                       Disabled
-SeDebugPrivilege                          EnabledByDefault, Enabled
-SeAuditPrivilege                          EnabledByDefault, Enabled
-SeSystemEnvironmentPrivilege              Disabled
-SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
-SeUndockPrivilege                         Disabled
-SeManageVolumePrivilege                   Disabled
-SeImpersonatePrivilege                    EnabledByDefault, Enabled
-SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
-SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
-SeTimeZonePrivilege                       EnabledByDefault, Enabled
-SeCreateSymbolicLinkPrivilege             EnabledByDefault, Enabled
-SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
-
-[*] Integrity Level : System Mandatory Level
-[*] Done.
-```
-
-For example, to enable SeChangeNotifyPrivilege, execute with `--disable` option as follows:
-
-```
-C:\dev>SwitchPriv.exe -p 8520 -d changenotify
-
-[>] Trying to disable SeChangeNotifyPrivilege.
-    [*] Target PID   : 8520
-    [*] Process Name : Notepad
-[+] SeChangeNotifyPrivilege is disabled successfully.
-[*] Done.
-
-
-C:\dev>SwitchPriv.exe -p 8520 -g
-
-[>] Trying to get available token privilege(s) for the target process.
-    [*] Target PID   : 8520
-    [*] Process Name : Notepad
-[+] Got 5 token privilege(s).
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                State
-============================= ================
-SeShutdownPrivilege           Enabled
-SeChangeNotifyPrivilege       EnabledByDefault
-SeUndockPrivilege             Enabled
-SeIncreaseWorkingSetPrivilege Enabled
-SeTimeZonePrivilege           Enabled
-
-[*] Integrity Level : Medium Mandatory Level
-[*] Done.
-```
-
-If you don't specify `--pid` option, targets parent process of this tool as follows:
-
-```
-C:\dev>whoami /priv
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                Description                          State
-============================= ==================================== ========
-SeShutdownPrivilege           Shut down the system                 Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
-SeUndockPrivilege             Remove computer from docking station Disabled
-SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
-SeTimeZonePrivilege           Change the time zone                 Disabled
-
-C:\dev>SwitchPriv.exe -e timezone
-
-[>] Trying to enable SeTimeZonePrivilege.
-    [*] Target PID   : 9468
-    [*] Process Name : cmd
-[+] SeTimeZonePrivilege is enabled successfully.
-[*] Done.
-
-
-C:\dev>whoami /priv
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                Description                          State
-============================= ==================================== ========
-SeShutdownPrivilege           Shut down the system                 Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
-SeUndockPrivilege             Remove computer from docking station Disabled
-SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
-SeTimeZonePrivilege           Change the time zone                 Enabled
-
-C:\dev>SwitchPriv.exe -g
-
-[>] Trying to get available token privilege(s) for the target process.
-    [*] Target PID   : 9468
-    [*] Process Name : cmd
 [+] Got 5 token privilege(s).
 
 PRIVILEGES INFORMATION
@@ -1081,48 +922,268 @@ SeTimeZonePrivilege           Disabled
 [*] Done.
 ```
 
+When `-p` option is not specified, PID will be parent PID for this tool:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 6772
+    [*] Process Name : powershell
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Disabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+```
+
+Privilege name to control is specfied with any case insensitive strings which can specify a unique privilege name in available privileges for the target process.
+For example, to enable `SeUndockPrivilege` for the target process, execute with `--enable` option as follows:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Disabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -e und
+
+[>] Trying to enable a token privilege.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] SeUndockPrivilege is enabled successfully.
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+```
+
+When you set bogus string which can not specify a unique privilege name, you will get following message:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -e se
+
+[>] Trying to enable a token privilege.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[-] Cannot specify a unique privilege to enable.
+    [*] SeShutdownPrivilege
+    [*] SeChangeNotifyPrivilege
+    [*] SeUndockPrivilege
+    [*] SeIncreaseWorkingSetPrivilege
+    [*] SeTimeZonePrivilege
+[*] Done.
+```
+
+For example, to enable SeChangeNotifyPrivilege, execute with `--disable` option as follows:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -d chan
+
+[>] Trying to disable a token privilege.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] SeChangeNotifyPrivilege is disabled successfully.
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= ==========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Disabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+```
+
 To remove privilege, use `--remove` option as follows:
 
 ```
-C:\dev>whoami /priv
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 5 token privilege(s).
 
 PRIVILEGES INFORMATION
 ----------------------
 
-Privilege Name                Description                          State
-============================= ==================================== ========
-SeShutdownPrivilege           Shut down the system                 Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
-SeUndockPrivilege             Remove computer from docking station Disabled
-SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
-SeTimeZonePrivilege           Change the time zone                 Enabled
+Privilege Name                State
+============================= ==========================
+SeShutdownPrivilege           Disabled
+SeChangeNotifyPrivilege       EnabledByDefault, Disabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Disabled
+SeTimeZonePrivilege           Disabled
 
-C:\dev>SwitchPriv.exe -r timezone
-
-[>] Trying to remove SeTimeZonePrivilege.
-    [*] Target PID   : 9788
-    [*] Process Name : cmd
-[+] SeTimeZonePrivilege is removed successfully.
+[*] Integrity Level : Medium Mandatory Level
 [*] Done.
 
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -r inc
 
-C:\dev>whoami /priv
+[>] Trying to remove a token privilege.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] SeIncreaseWorkingSetPrivilege is removed successfully.
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 9408 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 9408
+    [*] Process Name : Notepad
+[+] Got 4 token privilege(s).
 
 PRIVILEGES INFORMATION
 ----------------------
 
-Privilege Name                Description                          State
-============================= ==================================== ========
-SeShutdownPrivilege           Shut down the system                 Disabled
-SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
-SeUndockPrivilege             Remove computer from docking station Disabled
-SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
+Privilege Name          State
+======================= ==========================
+SeShutdownPrivilege     Disabled
+SeChangeNotifyPrivilege EnabledByDefault, Disabled
+SeUndockPrivilege       Enabled
+SeTimeZonePrivilege     Disabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+```
+
+If you want to test a specific privilege, you can remove all privileges other than you want to test with `-f` option as follows:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 4392
+    [*] Process Name : powershell
+[+] Got 5 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                State
+============================= =========================
+SeShutdownPrivilege           Enabled
+SeChangeNotifyPrivilege       EnabledByDefault, Enabled
+SeUndockPrivilege             Enabled
+SeIncreaseWorkingSetPrivilege Enabled
+SeTimeZonePrivilege           Enabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -f tim
+
+[>] Trying to remove all token privileges except one.
+    [*] Target PID   : 4392
+    [*] Process Name : powershell
+[>] Trying to remove all privileges except for SeTimeZonePrivilege.
+[+] SeShutdownPrivilege is removed successfully.
+[+] SeChangeNotifyPrivilege is removed successfully.
+[+] SeUndockPrivilege is removed successfully.
+[+] SeIncreaseWorkingSetPrivilege is removed successfully.
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 4392
+    [*] Process Name : powershell
+[+] Got 1 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name      State
+=================== =======
+SeTimeZonePrivilege Enabled
+
+[*] Integrity Level : Medium Mandatory Level
+[*] Done.
 ```
 
 To enable, disable or remove all available token privileges, specify `all` as the value for `--enable`, `--disable` or `--remove` option:
 
 ```
-C:\dev>whoami /priv
+PS C:\Dev> whoami /priv
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1133,20 +1194,19 @@ SeShutdownPrivilege           Shut down the system                 Disabled
 SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
 SeUndockPrivilege             Remove computer from docking station Disabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Disabled
-
-C:\dev>SwitchPriv.exe -e all
+SeTimeZonePrivilege           Change the time zone                 Disabled
+PS C:\Dev> .\SwitchPriv.exe -e all
 
 [>] Trying to enable all token privileges.
-    [*] Target PID   : 9788
-    [*] Process Name : cmd
+    [*] Target PID   : 6772
+    [*] Process Name : powershell
 [+] SeShutdownPrivilege is enabled successfully.
 [+] SeUndockPrivilege is enabled successfully.
 [+] SeIncreaseWorkingSetPrivilege is enabled successfully.
 [+] SeTimeZonePrivilege is enabled successfully.
 [*] Done.
 
-
-C:\dev>whoami /priv
+PS C:\Dev> whoami /priv
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1157,32 +1217,33 @@ SeShutdownPrivilege           Shut down the system                 Enabled
 SeChangeNotifyPrivilege       Bypass traverse checking             Enabled
 SeUndockPrivilege             Remove computer from docking station Enabled
 SeIncreaseWorkingSetPrivilege Increase a process working set       Enabled
+SeTimeZonePrivilege           Change the time zone                 Enabled
 ```
 
-To find process have a specific privilege, use `--find` option as follows:
+To find process have a specific privilege, use `-s` option as follows:
 
 ```
-C:\dev>SwitchPriv.exe -f createtoken
+PS C:\Dev> .\SwitchPriv.exe -s createt
 
 [>] Searching processes have SeCreateTokenPrivilege.
 [+] Got 5 process(es).
-    [*] csrss (PID : 800)
-    [*] smss (PID : 660)
-    [*] lsass (PID : 1088)
-    [*] Memory Compression (PID : 3600)
-    [*] csrss (PID : 868)
+    [*] Memory Compression (PID : 2548)
+    [*] smss (PID : 372)
+    [*] lsass (PID : 736)
+    [*] csrss (PID : 584)
+    [*] csrss (PID : 504)
 [*] Access is denied by following 2 process(es).
     [*] System (PID : 4)
     [*] Idle (PID : 0)
 [*] Done.
 
 
-C:\dev>SwitchPriv.exe -g -p 800
+PS C:\Dev> .\SwitchPriv.exe -g -p 2548
 
 [>] Trying to get available token privilege(s) for the target process.
-    [*] Target PID   : 800
-    [*] Process Name : csrss
-[+] Got 30 token privilege(s).
+    [*] Target PID   : 2548
+    [*] Process Name : Memory Compression
+[+] Got 31 token privilege(s).
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -1214,6 +1275,7 @@ SeUndockPrivilege                         Disabled
 SeManageVolumePrivilege                   Disabled
 SeImpersonatePrivilege                    EnabledByDefault, Enabled
 SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
+SeTrustedCredManAccessPrivilege           Disabled
 SeRelabelPrivilege                        Disabled
 SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
 SeTimeZonePrivilege                       EnabledByDefault, Enabled
@@ -1224,25 +1286,76 @@ SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
 [*] Done.
 ```
 
-
-
 If you want to set integrity level, use `--integrity` option as follows:
 
 ```
-C:\dev>whoami /groups | findstr /i level
+PS C:\Dev> whoami /groups | findstr /i level
 Mandatory Label\Medium Mandatory Level                        Label            S-1-16-8192
 
+PS C:\Dev> .\SwitchPriv.exe -i 1
 
-C:\dev>SwitchPriv.exe -i 1
+[>] Trying to update Integrity Level.
+    [*] Target PID   : 3436
+    [*] Process Name : powershell
+[>] Trying to update Integrity Level to LOW_MANDATORY_LEVEL.
+[+] Integrity Level is updated successfully.
+[*] Done.
 
-[>] Trying to set integrity level.
-    |-> Target PID   : 5144
-    |-> Process Name : cmd
-[>] Trying to set LOW_MANDATORY_LEVEL.
-[+] LOW_MANDATORY_LEVEL is set successfully.
-
-C:\dev>whoami /groups | findstr /i level
+PS C:\Dev> whoami /groups | findstr /i level
 Mandatory Label\Low Mandatory Level                           Label            S-1-16-4096
+```
+
+To perform any actions as SYSTEM, set `-S` flag as follows (`SeDebugPrivilege` and `SeImpersonatePrivilege` are required):
+
+```
+PS C:\Dev> .\SwitchPriv.exe -g -p 2548 -S
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 2548
+    [*] Process Name : Memory Compression
+[>] Trying to get SYSTEM.
+[+] Got SYSTEM privilege.
+[+] Got 31 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            State
+========================================= =========================
+SeCreateTokenPrivilege                    Disabled
+SeAssignPrimaryTokenPrivilege             Disabled
+SeLockMemoryPrivilege                     EnabledByDefault, Enabled
+SeIncreaseQuotaPrivilege                  Disabled
+SeTcbPrivilege                            EnabledByDefault, Enabled
+SeSecurityPrivilege                       Disabled
+SeTakeOwnershipPrivilege                  Disabled
+SeLoadDriverPrivilege                     Disabled
+SeSystemProfilePrivilege                  EnabledByDefault, Enabled
+SeSystemtimePrivilege                     Disabled
+SeProfileSingleProcessPrivilege           EnabledByDefault, Enabled
+SeIncreaseBasePriorityPrivilege           EnabledByDefault, Enabled
+SeCreatePagefilePrivilege                 EnabledByDefault, Enabled
+SeCreatePermanentPrivilege                EnabledByDefault, Enabled
+SeBackupPrivilege                         Disabled
+SeRestorePrivilege                        Disabled
+SeShutdownPrivilege                       Disabled
+SeDebugPrivilege                          EnabledByDefault, Enabled
+SeAuditPrivilege                          EnabledByDefault, Enabled
+SeSystemEnvironmentPrivilege              Disabled
+SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
+SeUndockPrivilege                         Disabled
+SeManageVolumePrivilege                   Disabled
+SeImpersonatePrivilege                    EnabledByDefault, Enabled
+SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
+SeTrustedCredManAccessPrivilege           Disabled
+SeRelabelPrivilege                        Disabled
+SeIncreaseWorkingSetPrivilege             EnabledByDefault, Enabled
+SeTimeZonePrivilege                       EnabledByDefault, Enabled
+SeCreateSymbolicLinkPrivilege             EnabledByDefault, Enabled
+SeDelegateSessionUserImpersonatePrivilege EnabledByDefault, Enabled
+
+[*] Integrity Level : System Mandatory Level
+[*] Done.
 ```
 
 
