@@ -65,6 +65,15 @@ namespace SwitchPriv.Handler
                 else
                     Modules.DisableTokenPrivilege(pid, privilege, asSystem);
             }
+            else if (!string.IsNullOrEmpty(options.GetValue("filter")))
+            {
+                privilege = options.GetValue("filter");
+
+                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                    Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
+                else
+                    Modules.FilterTokenPrivilege(pid, privilege, asSystem);
+            }
             else if (!string.IsNullOrEmpty(options.GetValue("remove")))
             {
                 privilege = options.GetValue("remove");

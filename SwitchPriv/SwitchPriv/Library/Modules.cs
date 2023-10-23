@@ -17,7 +17,7 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -106,12 +106,19 @@ namespace SwitchPriv.Library
         public static bool DisableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             var status = false;
+
+            if (string.IsNullOrEmpty(privilegeName))
+            {
+                Console.WriteLine("[-] Privilege name is required.");
+                return false;
+            }
+
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -224,7 +231,7 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -313,6 +320,13 @@ namespace SwitchPriv.Library
         public static bool EnableTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             var status = false;
+
+            if (string.IsNullOrEmpty(privilegeName))
+            {
+                Console.WriteLine("[-] Privilege name is required.");
+                return false;
+            }
+
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
@@ -423,6 +437,123 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool FilterTokenPrivilege(int pid, string privilegeName, bool asSystem)
+        {
+            var status = false;
+
+            if (string.IsNullOrEmpty(privilegeName))
+            {
+                Console.WriteLine("[-] Privilege name is required.");
+                return false;
+            }
+
+            pid = Utilities.ResolveProcessId(pid, out string processName);
+
+            if (pid == -1)
+            {
+                Console.WriteLine("[-] Failed to resolve the specified PID.");
+                return false;
+            }
+
+            do
+            {
+                int error;
+                IntPtr hProcess;
+                var candidatePrivs = new List<string>();
+                var privsToRemove = new List<string>();
+
+                Console.WriteLine("[>] Trying to remove all token privileges except one.");
+                Console.WriteLine("    [*] Target PID   : {0}", pid);
+                Console.WriteLine("    [*] Process Name : {0}", processName);
+
+                if (asSystem)
+                {
+                    asSystem = GetSystem();
+
+                    if (!asSystem)
+                        break;
+                }
+
+                hProcess = NativeMethods.OpenProcess(
+                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                    false,
+                    pid);
+
+                if (hProcess == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
+
+                status = NativeMethods.OpenProcessToken(
+                    hProcess,
+                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
+                    out IntPtr hToken);
+                NativeMethods.CloseHandle(hProcess);
+
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
+
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+                foreach (var priv in availablePrivs)
+                {
+                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key);
+                    else
+                        privsToRemove.Add(priv.Key);
+                }
+
+                if (candidatePrivs.Count == 0)
+                {
+                    Console.WriteLine("[-] No candidates to remove.");
+                    break;
+                }
+                else if (candidatePrivs.Count > 1)
+                {
+                    Console.WriteLine("[-] Cannot specify a unique privilege to remove.");
+
+                    foreach (var priv in candidatePrivs)
+                        Console.WriteLine("    [*] {0}", priv);
+
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[>] Trying to remove all privileges except for {0}.", candidatePrivs[0]);
+                }
+
+                status = Utilities.RemoveTokenPrivileges(
+                    hToken,
+                    privsToRemove,
+                    out Dictionary<string, bool> operationStatus);
+                NativeMethods.CloseHandle(hToken);
+
+                foreach (var priv in operationStatus)
+                {
+                    if (priv.Value)
+                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                    else
+                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                }
+            } while (false);
+
+            if (asSystem)
+                NativeMethods.RevertToSelf();
+
+            Console.WriteLine("[*] Done.");
+
+            return status;
+        }
+
+
         public static bool GetPrivileges(int pid, bool asSystem)
         {
             var status = false;
@@ -431,7 +562,7 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -582,7 +713,7 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -670,12 +801,19 @@ namespace SwitchPriv.Library
         public static bool RemoveTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
             var status = false;
+
+            if (string.IsNullOrEmpty(privilegeName))
+            {
+                Console.WriteLine("[-] Privilege name is required.");
+                return false;
+            }
+
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
             {
                 Console.WriteLine("[-] Failed to resolve the specified PID.");
-                return status;
+                return false;
             }
 
             do
@@ -778,6 +916,12 @@ namespace SwitchPriv.Library
         {
             var privilegedProcesses = new Dictionary<int, string>();
             var deniedProcesses = new Dictionary<int, string>();
+
+            if (string.IsNullOrEmpty(privilegeName))
+            {
+                Console.WriteLine("[-] Privilege name is required.");
+                return false;
+            }
 
             do
             {
