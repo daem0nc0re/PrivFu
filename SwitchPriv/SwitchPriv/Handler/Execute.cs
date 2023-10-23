@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using SwitchPriv.Library;
 
 namespace SwitchPriv.Handler
@@ -12,7 +11,6 @@ namespace SwitchPriv.Handler
             int integrityIndex;
             string privilege;
             bool asSystem = options.GetFlag("system");
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
 
             if (options.GetFlag("help"))
             {
@@ -53,7 +51,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("enable");
 
-                if (string.Compare(privilege, "All", opt) == 0)
+                if (Helpers.CompareIgnoreCase(privilege, "All"))
                     Modules.EnableAllPrivileges(pid, asSystem);
                 else
                     Modules.EnableTokenPrivilege(pid, privilege, asSystem);
@@ -62,7 +60,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("disable");
 
-                if (string.Compare(privilege, "All", opt) == 0)
+                if (Helpers.CompareIgnoreCase(privilege, "All"))
                     Modules.DisableAllPrivileges(pid, asSystem);
                 else
                     Modules.DisableTokenPrivilege(pid, privilege, asSystem);
@@ -71,19 +69,19 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("remove");
 
-                if (string.Compare(privilege, "All", opt) == 0)
+                if (Helpers.CompareIgnoreCase(privilege, "All"))
                     Modules.RemoveAllPrivileges(pid, asSystem);
                 else
                     Modules.RemoveTokenPrivilege(pid, privilege, asSystem);
             }
-            else if (!string.IsNullOrEmpty(options.GetValue("find")))
+            else if (!string.IsNullOrEmpty(options.GetValue("search")))
             {
-                privilege = options.GetValue("find");
+                privilege = options.GetValue("search");
 
-                if (string.Compare(options.GetValue("find"), "All", opt) == 0)
+                if (Helpers.CompareIgnoreCase(privilege, "All"))
                     Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
                 else
-                    Modules.FindPrivilegedProcess(privilege, asSystem);
+                    Modules.SearchPrivilegedProcess(privilege, asSystem);
             }
             else if (!string.IsNullOrEmpty(options.GetValue("integrity")))
             {

@@ -423,116 +423,6 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool FindPrivilegedProcess(string privilegeName, bool asSystem)
-        {
-            var privilegedProcesses = new Dictionary<int, string>();
-            var deniedProcesses = new Dictionary<int, string>();
-
-            do
-            {
-                bool status;
-                IntPtr hProcess;
-
-                if (Helpers.GetFullPrivilegeName(privilegeName, out List<string> candidatePrivs))
-                {
-                    if (candidatePrivs.Count > 1)
-                    {
-                        Console.WriteLine("[-] Cannot specify a unique privilege to search.");
-
-                        foreach (var priv in candidatePrivs)
-                            Console.WriteLine("    [*] {0}", priv);
-
-                        break;
-                    }
-                    else if (candidatePrivs.Count == 0)
-                    {
-                        Console.WriteLine("[-] No candidates to search.");
-                    }
-                    else
-                    {
-                        privilegeName = candidatePrivs[0];
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("[-] Failed to specify a unique privilege to search.");
-                }
-
-                Console.WriteLine("[>] Searching processes have {0}.", privilegeName);
-
-                if (asSystem)
-                {
-                    asSystem = GetSystem();
-
-                    if (!asSystem)
-                        break;
-                }
-
-                foreach (var proc in Process.GetProcesses())
-                {
-                    hProcess = NativeMethods.OpenProcess(
-                        ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                        false,
-                        proc.Id);
-
-                    if (hProcess == IntPtr.Zero)
-                    {
-                        deniedProcesses.Add(proc.Id, proc.ProcessName);
-                        continue;
-                    }
-
-                    status = NativeMethods.OpenProcessToken(hProcess, TokenAccessFlags.TOKEN_QUERY, out IntPtr hToken);
-                    NativeMethods.CloseHandle(hProcess);
-
-                    if (!status)
-                    {
-                        deniedProcesses.Add(proc.Id, proc.ProcessName);
-                        continue;
-                    }
-
-                    Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
-                    NativeMethods.CloseHandle(hToken);
-
-                    foreach (var priv in privs.Keys)
-                    {
-                        if (Helpers.CompareIgnoreCase(priv, privilegeName))
-                        {
-                            privilegedProcesses.Add(proc.Id, proc.ProcessName);
-                            break;
-                        }
-                    }
-                }
-
-                if (privilegedProcesses.Count == 0)
-                {
-                    Console.WriteLine("[-] No process has {0}.", privilegeName);
-                }
-                else
-                {
-                    Console.WriteLine("[+] Got {0} process(es).", privilegedProcesses.Count);
-
-                    foreach (var proc in privilegedProcesses)
-                        Console.WriteLine("    [*] {0} (PID : {1})", proc.Value, proc.Key);
-                }
-
-                if (deniedProcesses.Count > 0)
-                {
-                    Console.WriteLine("[*] Access is denied by following {0} process(es).", deniedProcesses.Count);
-
-                    foreach (var denied in deniedProcesses)
-                        Console.WriteLine("    [*] {0} (PID : {1})", denied.Value, denied.Key);
-                }
-            } while (false);
-
-            if (asSystem)
-                NativeMethods.RevertToSelf();
-
-            Console.WriteLine("[*] Done.");
-
-            return (privilegedProcesses.Count > 0);
-        }
-
-
         public static bool GetPrivileges(int pid, bool asSystem)
         {
             var status = false;
@@ -881,6 +771,116 @@ namespace SwitchPriv.Library
             Console.WriteLine("[*] Done.");
 
             return status;
+        }
+
+
+        public static bool SearchPrivilegedProcess(string privilegeName, bool asSystem)
+        {
+            var privilegedProcesses = new Dictionary<int, string>();
+            var deniedProcesses = new Dictionary<int, string>();
+
+            do
+            {
+                bool status;
+                IntPtr hProcess;
+
+                if (Helpers.GetFullPrivilegeName(privilegeName, out List<string> candidatePrivs))
+                {
+                    if (candidatePrivs.Count > 1)
+                    {
+                        Console.WriteLine("[-] Cannot specify a unique privilege to search.");
+
+                        foreach (var priv in candidatePrivs)
+                            Console.WriteLine("    [*] {0}", priv);
+
+                        break;
+                    }
+                    else if (candidatePrivs.Count == 0)
+                    {
+                        Console.WriteLine("[-] No candidates to search.");
+                    }
+                    else
+                    {
+                        privilegeName = candidatePrivs[0];
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to specify a unique privilege to search.");
+                }
+
+                Console.WriteLine("[>] Searching processes have {0}.", privilegeName);
+
+                if (asSystem)
+                {
+                    asSystem = GetSystem();
+
+                    if (!asSystem)
+                        break;
+                }
+
+                foreach (var proc in Process.GetProcesses())
+                {
+                    hProcess = NativeMethods.OpenProcess(
+                        ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
+                        false,
+                        proc.Id);
+
+                    if (hProcess == IntPtr.Zero)
+                    {
+                        deniedProcesses.Add(proc.Id, proc.ProcessName);
+                        continue;
+                    }
+
+                    status = NativeMethods.OpenProcessToken(hProcess, TokenAccessFlags.TOKEN_QUERY, out IntPtr hToken);
+                    NativeMethods.CloseHandle(hProcess);
+
+                    if (!status)
+                    {
+                        deniedProcesses.Add(proc.Id, proc.ProcessName);
+                        continue;
+                    }
+
+                    Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
+                    NativeMethods.CloseHandle(hToken);
+
+                    foreach (var priv in privs.Keys)
+                    {
+                        if (Helpers.CompareIgnoreCase(priv, privilegeName))
+                        {
+                            privilegedProcesses.Add(proc.Id, proc.ProcessName);
+                            break;
+                        }
+                    }
+                }
+
+                if (privilegedProcesses.Count == 0)
+                {
+                    Console.WriteLine("[-] No process has {0}.", privilegeName);
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got {0} process(es).", privilegedProcesses.Count);
+
+                    foreach (var proc in privilegedProcesses)
+                        Console.WriteLine("    [*] {0} (PID : {1})", proc.Value, proc.Key);
+                }
+
+                if (deniedProcesses.Count > 0)
+                {
+                    Console.WriteLine("[*] Access is denied by following {0} process(es).", deniedProcesses.Count);
+
+                    foreach (var denied in deniedProcesses)
+                        Console.WriteLine("    [*] {0} (PID : {1})", denied.Value, denied.Key);
+                }
+            } while (false);
+
+            if (asSystem)
+                NativeMethods.RevertToSelf();
+
+            Console.WriteLine("[*] Done.");
+
+            return (privilegedProcesses.Count > 0);
         }
 
 
