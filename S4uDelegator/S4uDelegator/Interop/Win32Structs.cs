@@ -205,27 +205,21 @@ namespace S4uDelegator.Interop
     internal struct TOKEN_GROUPS
     {
         public int GroupCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public SID_AND_ATTRIBUTES[] Groups;
-
-        public TOKEN_GROUPS(int privilegeCount)
-        {
-            GroupCount = privilegeCount;
-            Groups = new SID_AND_ATTRIBUTES[32];
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public LUID_AND_ATTRIBUTES[] Privileges;
 
         public TOKEN_PRIVILEGES(int privilegeCount)
         {
             PrivilegeCount = privilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[36];
+            Privileges = new LUID_AND_ATTRIBUTES[1];
         }
     }
 

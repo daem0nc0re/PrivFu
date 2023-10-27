@@ -11,9 +11,7 @@ namespace S4uDelegator.Library
 
     internal class Utilities
     {
-        public static bool CreateTokenAssignedProcess(
-            IntPtr hToken,
-            string command)
+        public static bool CreateTokenAssignedProcess(IntPtr hToken, string command)
         {
             var startupInfo = new STARTUPINFO
             {
@@ -27,7 +25,7 @@ namespace S4uDelegator.Library
                 IntPtr.Zero,
                 IntPtr.Zero,
                 false,
-                0,
+                ProcessCreationFlags.CREATE_BREAKAWAY_FROM_JOB,
                 IntPtr.Zero,
                 Environment.CurrentDirectory,
                 in startupInfo,
@@ -239,127 +237,6 @@ namespace S4uDelegator.Library
             } while (false);
 
             return hS4uLogonToken;
-        }
-
-
-        public static IntPtr GetKerbS4uLogonToken(
-            string upn,
-            string realm,
-            SECURITY_LOGON_TYPE type,
-            string[] groupSids)
-        {
-            int error;
-            NTSTATUS ntstatus;
-            var pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
-            var tokenSource = new TOKEN_SOURCE("NtLmSsp");
-            var pTokenGroups = IntPtr.Zero;
-
-            Console.WriteLine("[>] Trying to Kerberos S4U logon.");
-
-            ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to connect LSA store.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            ntstatus = NativeMethods.LsaLookupAuthenticationPackage(
-                hLsa,
-                in pkgName,
-                out uint authnPkg);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to lookup auth package.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                NativeMethods.LsaClose(hLsa);
-
-                return IntPtr.Zero;
-            }
-
-            var kerbS4uLogon = new MSV1_0_S4U_LOGON(
-                MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon,
-                0,
-                upn,
-                realm);
-            var originName = new LSA_STRING("S4U");
-            var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-
-            if (groupSids.Length > 0)
-            {
-                var tokenGroups = new TOKEN_GROUPS(0);
-                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
-
-                for (var idx = 0; idx < groupSids.Length; idx++)
-                {
-                    if (!NativeMethods.ConvertStringSidToSid(
-                        groupSids[idx],
-                        out IntPtr pSid))
-                    {
-                        continue;
-                    }
-
-                    tokenGroups.Groups[idx].Sid = pSid;
-                    tokenGroups.Groups[idx].Attributes = (uint)(
-                        SE_GROUP_ATTRIBUTES.ENABLED |
-                        SE_GROUP_ATTRIBUTES.MANDATORY);
-                    tokenGroups.GroupCount++;
-                }
-
-                if (tokenGroups.GroupCount == 0)
-                {
-                    Marshal.FreeHGlobal(pTokenGroups);
-                    pTokenGroups = IntPtr.Zero;
-                }
-                else
-                {
-                    Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
-                }
-            }
-
-            ntstatus = NativeMethods.LsaLogonUser(
-                hLsa,
-                in originName,
-                type,
-                authnPkg,
-                kerbS4uLogon.Buffer,
-                (uint)kerbS4uLogon.Length,
-                pTokenGroups,
-                in tokenSource,
-                out IntPtr profileBuffer,
-                out uint _,
-                out LUID _,
-                pS4uTokenBuffer,
-                out QUOTA_LIMITS _,
-                out int _);
-
-            kerbS4uLogon.Dispose();
-            NativeMethods.LsaFreeReturnBuffer(profileBuffer);
-            NativeMethods.LsaClose(hLsa);
-
-            if (pTokenGroups != IntPtr.Zero)
-                Marshal.FreeHGlobal(pTokenGroups);
-
-            var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
-            Marshal.FreeHGlobal(pS4uTokenBuffer);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to S4U logon.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] S4U logon is successful.");
-
-            return hS4uToken;
         }
 
 
