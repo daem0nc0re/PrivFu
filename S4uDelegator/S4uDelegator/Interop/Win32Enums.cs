@@ -30,6 +30,19 @@ namespace S4uDelegator.Interop
         FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
     }
 
+    internal enum MSV1_0_LOGON_SUBMIT_TYPE
+    {
+        MsV1_0InteractiveLogon = 2,
+        MsV1_0Lm20Logon,
+        MsV1_0NetworkLogon,
+        MsV1_0SubAuthLogon,
+        MsV1_0WorkstationUnlockLogon = 7,
+        MsV1_0S4ULogon = 12,
+        MsV1_0VirtualLogon = 82,
+        MsV1_0NoElevationLogon = 83,
+        MsV1_0LuidLogon = 84
+    }
+
     [Flags]
     internal enum ProcessAccessFlags : uint
     {
@@ -72,10 +85,10 @@ namespace S4uDelegator.Interop
 
     internal enum SECURITY_IMPERSONATION_LEVEL
     {
-        SecurityAnonymous,
-        SecurityIdentification,
-        SecurityImpersonation,
-        SecurityDelegation
+        Anonymous,
+        Identification,
+        Impersonation,
+        Delegation
     }
 
     internal enum SECURITY_LOGON_TYPE
@@ -112,9 +125,9 @@ namespace S4uDelegator.Interop
     [Flags]
     internal enum SE_PRIVILEGE_ATTRIBUTES : uint
     {
-        SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001,
-        SE_PRIVILEGE_ENABLED = 0x00000002,
-        SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000,
+        ENABLED_BY_DEFAULT = 0x00000001,
+        ENABLED = 0x00000002,
+        USED_FOR_ACCESS = 0x80000000,
     }
 
     internal enum SID_NAME_USE

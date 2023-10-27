@@ -8,6 +8,7 @@ namespace S4uDelegator.Interop
     {
         // NTSTATUS
         public const NTSTATUS STATUS_SUCCESS = 0;
+        public static NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         // Win32 Error
         public const int ERROR_BAD_LENGTH = 0x00000018;

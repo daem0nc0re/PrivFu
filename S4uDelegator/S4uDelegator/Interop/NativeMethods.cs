@@ -18,7 +18,7 @@ namespace S4uDelegator.Interop
             IntPtr /*ref TOKEN_PRIVILEGES*/ NewState,
             int BufferLength,
             IntPtr /*out TOKEN_PRIVILEGES*/ PreviousState,
-            IntPtr /*out int*/ ReturnLength);
+            out int ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool AllocateLocallyUniqueId(out LUID Luid);
@@ -40,7 +40,7 @@ namespace S4uDelegator.Interop
             ProcessCreationFlags dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
-            ref STARTUPINFO lpStartupInfo,
+            in STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
@@ -51,14 +51,6 @@ namespace S4uDelegator.Interop
             SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
             TOKEN_TYPE TokenType,
             out IntPtr phNewToken);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool GetTokenInformation(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            int TokenInformationLength,
-            out int ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
@@ -89,7 +81,7 @@ namespace S4uDelegator.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeName(
             string lpSystemName,
-            ref LUID lpLuid,
+            in LUID lpLuid,
             StringBuilder lpName,
             ref int cchName);
 
@@ -134,9 +126,6 @@ namespace S4uDelegator.Interop
             ref int nSize);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern int GetCurrentThreadId();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LocalFree(IntPtr hMem);
 
         [DllImport("kernel32.dll", SetLastError = true)]
@@ -149,6 +138,17 @@ namespace S4uDelegator.Interop
         public static extern uint WaitForSingleObject(
             IntPtr hHandle,
             uint dwMilliseconds);
+
+        /*
+         * ntdll.dll
+         */
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationToken(
+            IntPtr TokenHandle,
+            TOKEN_INFORMATION_CLASS TokenInformationClass,
+            IntPtr TokenInformation,
+            uint TokenInformationLength,
+            out uint ReturnLength);
 
         /*
          * secur32.dll

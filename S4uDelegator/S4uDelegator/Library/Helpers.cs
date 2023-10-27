@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,6 +9,8 @@ using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Helpers
     {
         public static bool CompareIgnoreCase(string strA, string strB)
@@ -184,105 +187,84 @@ namespace S4uDelegator.Library
         }
 
 
-        public static string GetCurrentDomain()
+        public static string GetCurrentDomainName()
         {
-            int error;
             bool status;
-            var domain = new StringBuilder();
-            var nSize = 0;
+            int nNameLength = 255;
+            string domainName = Environment.UserDomainName;
+            var nameBuilder = new StringBuilder(nNameLength);
 
             do
             {
                 status = NativeMethods.GetComputerNameEx(
                     COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
-                    domain,
-                    ref nSize);
-                error = Marshal.GetLastWin32Error();
+                    nameBuilder,
+                    ref nNameLength);
 
                 if (!status)
                 {
-                    domain.Capacity = nSize;
-                    domain.Clear();
+                    nameBuilder.Clear();
+                    nameBuilder.Capacity = nNameLength;
                 }
-            } while (!status && error == Win32Consts.ERROR_MORE_DATA);
+            } while (Marshal.GetLastWin32Error() == Win32Consts.ERROR_MORE_DATA);
 
-            if (!status || nSize == 0)
-                return null;
+            if (status && (nNameLength > 0))
+                domainName = nameBuilder.ToString();
 
-            return domain.ToString();
+            return domainName;
         }
 
 
-        public static IntPtr GetInformationFromToken(
+        public static bool GetTokenPrivileges(
             IntPtr hToken,
-            TOKEN_INFORMATION_CLASS tokenInfoClass)
+            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
-            bool status;
-            int error;
-            int length = 4;
-            IntPtr buffer;
+            NTSTATUS ntstatus;
+            IntPtr pInformationBuffer;
+            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
 
             do
             {
-                buffer = Marshal.AllocHGlobal(length);
-                ZeroMemory(buffer, length);
-                status = NativeMethods.GetTokenInformation(
-                    hToken, tokenInfoClass, buffer, length, out length);
-                error = Marshal.GetLastWin32Error();
+                pInformationBuffer = Marshal.AllocHGlobal((int)nInformationLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                    pInformationBuffer,
+                    nInformationLength,
+                    out nInformationLength);
 
-                if (!status)
-                    Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInformationBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
 
-            if (!status)
-                return IntPtr.Zero;
-
-            return buffer;
-        }
-
-
-        public static bool GetPrivilegeLuid(
-            string privilegeName,
-            out LUID luid)
-        {
-            int error;
-
-            if (!NativeMethods.LookupPrivilegeValue(
-                null,
-                privilegeName,
-                out luid))
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to lookup {0}.", privilegeName);
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
+                var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
+                    pInformationBuffer,
+                    typeof(TOKEN_PRIVILEGES));
+                var nEntryOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+                var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
 
-                return false;
+                for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
+                {
+                    int cchName = 128;
+                    var stringBuilder = new StringBuilder(cchName);
+                    var luid = LUID.FromInt64(Marshal.ReadInt64(pInformationBuffer, nEntryOffset + (nUnitSize * idx)));
+                    var nAttributesOffset = Marshal.OffsetOf(typeof(LUID_AND_ATTRIBUTES), "Attributes").ToInt32();
+                    var attributes = (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(
+                        pInformationBuffer,
+                        nEntryOffset + (nUnitSize * idx) + nAttributesOffset);
+
+                    NativeMethods.LookupPrivilegeName(null, in luid, stringBuilder, ref cchName);
+                    privileges.Add(stringBuilder.ToString(), attributes);
+                    stringBuilder.Clear();
+                }
+
+                Marshal.FreeHGlobal(pInformationBuffer);
             }
 
-            return true;
-        }
-
-
-        public static string GetPrivilegeName(LUID priv)
-        {
-            int error;
-            int cchName = 255;
-            StringBuilder privilegeName = new StringBuilder(255);
-
-            if (!NativeMethods.LookupPrivilegeName(
-                null,
-                ref priv,
-                privilegeName,
-                ref cchName))
-            {
-                error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to lookup privilege name.");
-                Console.WriteLine("    |-> {0}\n", GetWin32ErrorMessage(error, false));
-
-                return null;
-            }
-
-            return privilegeName.ToString();
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 
@@ -323,10 +305,10 @@ namespace S4uDelegator.Library
         }
 
 
-        public static void ZeroMemory(IntPtr buffer, int size)
+        public static void ZeroMemory(IntPtr pBuffer, int nSize)
         {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
+            for (var offset = 0; offset < nSize; offset++)
+                Marshal.WriteByte(pBuffer, offset, 0);
         }
     }
 }

