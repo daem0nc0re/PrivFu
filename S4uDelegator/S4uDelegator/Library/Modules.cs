@@ -96,7 +96,7 @@ namespace S4uDelegator.Library
                     TOKEN_TYPE.TokenPrimary,
                     out hPrimaryToken);
 
-                NativeMethods.CloseHandle(hImpersonationToken);
+                NativeMethods.NtClose(hImpersonationToken);
 
                 if (!status)
                 {
@@ -116,7 +116,7 @@ namespace S4uDelegator.Library
                 hPrimaryToken,
                 @"C:\Windows\System32\cmd.exe");
 
-            NativeMethods.CloseHandle(hPrimaryToken);
+            NativeMethods.NtClose(hPrimaryToken);
 
             return status;
         }
@@ -277,7 +277,7 @@ namespace S4uDelegator.Library
             if (!string.IsNullOrEmpty(accountName) &&
                 !string.IsNullOrEmpty(accountSid))
             {
-                if (peUse != SID_NAME_USE.SidTypeUser)
+                if (peUse != SID_NAME_USE.User)
                 {
                     Console.WriteLine("[-] Target account should be user account.\n");
 
@@ -367,8 +367,8 @@ namespace S4uDelegator.Library
                             "    |-> [IGNORED] Failed to resolve {0}.",
                             groupSids[idx].ToUpper());
                     }
-                    else if ((peUse == SID_NAME_USE.SidTypeGroup) ||
-                        (peUse == SID_NAME_USE.SidTypeWellKnownGroup))
+                    else if ((peUse == SID_NAME_USE.Group) ||
+                        (peUse == SID_NAME_USE.WellKnownGroup))
                     {
                         Console.WriteLine(
                             "    |-> [VALID] {0} (SID : {1}) will be added.",

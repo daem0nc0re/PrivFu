@@ -106,9 +106,6 @@ namespace S4uDelegator.Interop
         /*
          * kernel32.dll
          */
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hModule);
-
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
             FormatMessageFlags dwFlags,
@@ -134,6 +131,9 @@ namespace S4uDelegator.Interop
             bool bInheritHandle,
             int processId);
 
+        [DllImport("kernel32.dll")]
+        public static extern void SetLastError(int dwErrCode);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern uint WaitForSingleObject(
             IntPtr hHandle,
@@ -142,6 +142,9 @@ namespace S4uDelegator.Interop
         /*
          * ntdll.dll
          */
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtClose(IntPtr hObject);
+
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
@@ -159,27 +162,27 @@ namespace S4uDelegator.Interop
         [DllImport("secur32.dll", SetLastError = false)]
         public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr buffer);
 
-        [DllImport("Secur32.dll", SetLastError = true)]
+        [DllImport("secur32.dll")]
         public static extern NTSTATUS LsaLogonUser(
             IntPtr LsaHandle,
-            ref LSA_STRING OriginName,
+            in LSA_STRING OriginName,
             SECURITY_LOGON_TYPE LogonType,
             uint AuthenticationPackage,
             IntPtr AuthenticationInformation,
-            int AuthenticationInformationLength,
-            IntPtr /*ref TOKEN_GROUPS*/ pLocalGroups,
-            ref TOKEN_SOURCE SourceContext,
+            uint AuthenticationInformationLength,
+            IntPtr /* in TOKEN_GROUPS */ LocalGroups,
+            in TOKEN_SOURCE SourceContext,
             out IntPtr ProfileBuffer,
-            out int ProfileBufferLength,
+            out uint ProfileBufferLength,
             out LUID LogonId,
-            IntPtr /*out IntPtr Token*/ pToken,
+            IntPtr Token, // [out] PHANDLE
             out QUOTA_LIMITS Quotas,
-            out int SubStatus);
+            out NTSTATUS SubStatus);
 
         [DllImport("Secur32.dll", SetLastError = true)]
         public static extern NTSTATUS LsaLookupAuthenticationPackage(
             IntPtr LsaHandle,
-            ref LSA_STRING PackageName,
+            in LSA_STRING PackageName,
             out uint AuthenticationPackage);
     }
 }

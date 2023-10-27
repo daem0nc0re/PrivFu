@@ -111,15 +111,15 @@ namespace S4uDelegator.Interop
     [Flags]
     internal enum SE_GROUP_ATTRIBUTES : uint
     {
-        SE_GROUP_MANDATORY = 0x00000001,
-        SE_GROUP_ENABLED_BY_DEFAULT = 0x00000002,
-        SE_GROUP_ENABLED = 0x00000004,
-        SE_GROUP_OWNER = 0x00000008,
-        SE_GROUP_USE_FOR_DENY_ONLY = 0x00000010,
-        SE_GROUP_INTEGRITY = 0x00000020,
-        SE_GROUP_INTEGRITY_ENABLED = 0x00000040,
-        SE_GROUP_RESOURCE = 0x20000000,
-        SE_GROUP_LOGON_ID = 0xC0000000
+        MANDATORY = 0x00000001,
+        ENABLED_BY_DEFAULT = 0x00000002,
+        ENABLED = 0x00000004,
+        OWNER = 0x00000008,
+        USE_FOR_DENY_ONLY = 0x00000010,
+        INTEGRITY = 0x00000020,
+        INTEGRITY_ENABLED = 0x00000040,
+        RESOURCE = 0x20000000,
+        LOGON_ID = 0xC0000000
     }
 
     [Flags]
@@ -132,17 +132,17 @@ namespace S4uDelegator.Interop
 
     internal enum SID_NAME_USE
     {
-        SidTypeUser = 1,
-        SidTypeGroup,
-        SidTypeDomain,
-        SidTypeAlias,
-        SidTypeWellKnownGroup,
-        SidTypeDeletedAccount,
-        SidTypeInvalid,
-        SidTypeUnknown,
-        SidTypeComputer,
-        SidTypeLabel,
-        SidTypeLogonSession
+        User = 1,
+        Group,
+        Domain,
+        Alias,
+        WellKnownGroup,
+        DeletedAccount,
+        Invalid,
+        Unknown,
+        Computer,
+        Label,
+        LogonSession
     }
 
     [Flags]

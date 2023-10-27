@@ -166,7 +166,7 @@ namespace S4uDelegator.Library
             if (!status)
                 return null;
 
-            if (peUse == SID_NAME_USE.SidTypeDomain)
+            if (peUse == SID_NAME_USE.Domain)
             {
                 return pReferencedDomainName.ToString();
             }
@@ -184,6 +184,41 @@ namespace S4uDelegator.Library
                     pReferencedDomainName.ToString(),
                     pName.ToString());
             }
+        }
+
+
+        public static bool ConvertSidToAccountName(
+            IntPtr pSid,
+            out string accountName,
+            out string domainName,
+            out SID_NAME_USE sidType)
+        {
+            int nAccountNameLength = 255;
+            int nDomainNameLength = 255;
+            var accountNameBuilder = new StringBuilder(nAccountNameLength);
+            var domainNameBuilder = new StringBuilder(nDomainNameLength);
+            bool status = NativeMethods.LookupAccountSid(
+                null,
+                pSid,
+                accountNameBuilder,
+                ref nAccountNameLength,
+                domainNameBuilder,
+                ref nDomainNameLength,
+                out sidType);
+
+            if (status)
+            {
+                accountName = accountNameBuilder.ToString();
+                domainName = domainNameBuilder.ToString();
+            }
+            else
+            {
+                accountName = null;
+                domainName = null;
+                sidType = SID_NAME_USE.Unknown;
+            }
+
+            return status;
         }
 
 
