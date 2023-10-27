@@ -103,6 +103,9 @@ namespace S4uDelegator.Interop
             TokenAccessFlags DesiredAccess,
             out IntPtr TokenHandle);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool RevertToSelf();
+
         /*
          * kernel32.dll
          */

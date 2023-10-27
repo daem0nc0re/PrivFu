@@ -11,37 +11,6 @@ namespace S4uDelegator.Library
 
     internal class Utilities
     {
-        public static bool CreateTokenAssignedProcess(IntPtr hToken, string command)
-        {
-            var startupInfo = new STARTUPINFO
-            {
-                cb = Marshal.SizeOf(typeof(STARTUPINFO)),
-                lpDesktop = @"Winsta0\Default"
-            };
-            bool status = NativeMethods.CreateProcessAsUser(
-                hToken,
-                null,
-                command,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                false,
-                ProcessCreationFlags.CREATE_BREAKAWAY_FROM_JOB,
-                IntPtr.Zero,
-                Environment.CurrentDirectory,
-                in startupInfo,
-                out PROCESS_INFORMATION processInformation);
-
-            if (status)
-            {
-                NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-                NativeMethods.NtClose(processInformation.hThread);
-                NativeMethods.NtClose(processInformation.hProcess);
-            }
-
-            return status;
-        }
-
-
         public static bool EnableTokenPrivileges(
             List<string> requiredPrivs,
             out Dictionary<string, bool> adjustedPrivs)
