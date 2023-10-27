@@ -126,19 +126,19 @@ namespace S4uDelegator.Library
         }
 
 
-        public static bool ImpersonateWithS4uLogon(
+        public static IntPtr GetS4uLogonToken(
             string upn,
             string domain,
             in LSA_STRING pkgName,
             in TOKEN_SOURCE tokenSource,
-            List<string> localGroupSids)
+            List<string> groupSids)
         {
-            var status = false;
+            var hS4uLogonToken = IntPtr.Zero;
 
             do
             {
                 IntPtr pTokenGroups;
-                int nGroupCount = localGroupSids.Count;
+                int nGroupCount = groupSids.Count;
                 var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
                 var nTokenGroupsSize = nGroupsOffset;
                 var pSidBuffersToLocalFree = new List<IntPtr>();
@@ -169,7 +169,7 @@ namespace S4uDelegator.Library
                     nGroupCount = 0;
                     Helpers.ZeroMemory(pTokenGroups, nTokenGroupsSize);
 
-                    foreach (var stringSid in localGroupSids)
+                    foreach (var stringSid in groupSids)
                     {
                         if (NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
                         {
@@ -224,15 +224,9 @@ namespace S4uDelegator.Library
                     NativeMethods.LsaClose(hLsa);
 
                     if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    {
                         NativeMethods.SetLastError(NativeMethods.LsaNtStatusToWinError(ntstatus));
-                    }
                     else
-                    {
-                        var hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
-                        status = ImpersonateThreadToken(hS4uLogonToken);
-                        NativeMethods.NtClose(hS4uLogonToken);
-                    }
+                        hS4uLogonToken = Marshal.ReadIntPtr(pTokenBuffer);
 
                     Marshal.FreeHGlobal(pTokenBuffer);
                 }
@@ -244,7 +238,7 @@ namespace S4uDelegator.Library
                     NativeMethods.LocalFree(pSidBuffer);
             } while (false);
 
-            return status;
+            return hS4uLogonToken;
         }
 
 
@@ -345,127 +339,6 @@ namespace S4uDelegator.Library
                 out int _);
 
             kerbS4uLogon.Dispose();
-            NativeMethods.LsaFreeReturnBuffer(profileBuffer);
-            NativeMethods.LsaClose(hLsa);
-
-            if (pTokenGroups != IntPtr.Zero)
-                Marshal.FreeHGlobal(pTokenGroups);
-
-            var hS4uToken = Marshal.ReadIntPtr(pS4uTokenBuffer);
-            Marshal.FreeHGlobal(pS4uTokenBuffer);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to S4U logon.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, true));
-
-                return IntPtr.Zero;
-            }
-
-            Console.WriteLine("[+] S4U logon is successful.");
-
-            return hS4uToken;
-        }
-
-
-        public static IntPtr GetMsvS4uLogonToken(
-            string username,
-            string domain,
-            SECURITY_LOGON_TYPE type,
-            string[] groupSids)
-        {
-            int error;
-            NTSTATUS ntstatus;
-            var pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-            var tokenSource = new TOKEN_SOURCE("User32");
-            var pTokenGroups = IntPtr.Zero;
-
-            Console.WriteLine("[>] Trying to MSV S4U logon.");
-
-            ntstatus = NativeMethods.LsaConnectUntrusted(out IntPtr hLsa);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to connect lsa store.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
-            }
-
-            ntstatus = NativeMethods.LsaLookupAuthenticationPackage(
-                hLsa,
-                in pkgName,
-                out uint authnPkg);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-            {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to lookup auth package.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-                NativeMethods.LsaClose(hLsa);
-
-                return IntPtr.Zero;
-            }
-
-            var msvS4uLogon = new MSV1_0_S4U_LOGON(
-                MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon,
-                0,
-                username,
-                domain);
-            var originName = new LSA_STRING("S4U");
-            var pS4uTokenBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-
-            if (groupSids.Length > 0)
-            {
-                var tokenGroups = new TOKEN_GROUPS(0);
-                pTokenGroups = Marshal.AllocHGlobal(Marshal.SizeOf(tokenGroups));
-
-                for (var idx = 0; idx < groupSids.Length; idx++)
-                {
-                    if (!NativeMethods.ConvertStringSidToSid(
-                        groupSids[idx],
-                        out IntPtr pSid))
-                    {
-                        continue;
-                    }
-
-                    tokenGroups.Groups[idx].Sid = pSid;
-                    tokenGroups.Groups[idx].Attributes = (uint)(
-                        SE_GROUP_ATTRIBUTES.ENABLED |
-                        SE_GROUP_ATTRIBUTES.MANDATORY);
-                    tokenGroups.GroupCount++;
-                }
-
-                if (tokenGroups.GroupCount == 0)
-                {
-                    Marshal.FreeHGlobal(pTokenGroups);
-                    pTokenGroups = IntPtr.Zero;
-                }
-                else
-                {
-                    Marshal.StructureToPtr(tokenGroups, pTokenGroups, true);
-                }
-            }
-
-            ntstatus = NativeMethods.LsaLogonUser(
-                hLsa,
-                in originName,
-                type,
-                authnPkg,
-                msvS4uLogon.Buffer,
-                (uint)msvS4uLogon.Length,
-                pTokenGroups,
-                in tokenSource,
-                out IntPtr profileBuffer,
-                out uint _,
-                out LUID _,
-                pS4uTokenBuffer,
-                out QUOTA_LIMITS _,
-                out int _);
-
-            msvS4uLogon.Dispose();
             NativeMethods.LsaFreeReturnBuffer(profileBuffer);
             NativeMethods.LsaClose(hLsa);
 

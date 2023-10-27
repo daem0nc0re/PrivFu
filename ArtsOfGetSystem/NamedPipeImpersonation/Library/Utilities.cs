@@ -179,14 +179,14 @@ namespace NamedPipeImpersonation.Library
             string domain,
             in LSA_STRING pkgName,
             in TOKEN_SOURCE tokenSource,
-            List<string> localGroupSids)
+            List<string> groupSids)
         {
             var status = false;
 
             do
             {
                 IntPtr pTokenGroups;
-                int nGroupCount = localGroupSids.Count;
+                int nGroupCount = groupSids.Count;
                 var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
                 var nTokenGroupsSize = nGroupsOffset;
                 var pSidBuffersToLocalFree = new List<IntPtr>();
@@ -217,7 +217,7 @@ namespace NamedPipeImpersonation.Library
                     nGroupCount = 0;
                     Helpers.ZeroMemory(pTokenGroups, nTokenGroupsSize);
 
-                    foreach (var stringSid in localGroupSids)
+                    foreach (var stringSid in groupSids)
                     {
                         if (NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
                         {
