@@ -47,7 +47,7 @@ namespace NamedPipeImpersonation.Library
             {
                 accountName = null;
                 domainName = null;
-                sidType = SID_NAME_USE.SidTypeUnknown;
+                sidType = SID_NAME_USE.Unknown;
             }
 
             return status;
@@ -198,7 +198,7 @@ namespace NamedPipeImpersonation.Library
             user = null;
             domain = null;
             stringSid = null;
-            peUse = SID_NAME_USE.SidTypeUnknown;
+            peUse = SID_NAME_USE.Unknown;
 
             do
             {

@@ -223,8 +223,8 @@ namespace NamedPipeImpersonation.Library
                         {
                             Helpers.ConvertSidToAccountName(pSid, out string _, out string _, out SID_NAME_USE sidType);
 
-                            if ((sidType == SID_NAME_USE.SidTypeAlias) ||
-                                (sidType == SID_NAME_USE.SidTypeWellKnownGroup))
+                            if ((sidType == SID_NAME_USE.Alias) ||
+                                (sidType == SID_NAME_USE.WellKnownGroup))
                             {
                                 Marshal.WriteIntPtr(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize)), pSid);
                                 Marshal.WriteInt32(pTokenGroups, (nGroupsOffset + (nGroupCount * nUnitSize) + IntPtr.Size), attributes);
