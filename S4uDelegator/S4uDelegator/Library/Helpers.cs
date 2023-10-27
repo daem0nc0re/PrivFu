@@ -189,32 +189,32 @@ namespace S4uDelegator.Library
 
         public static bool ConvertSidToAccountName(
             IntPtr pSid,
-            out string accountName,
-            out string domainName,
+            out string name,
+            out string domain,
             out SID_NAME_USE sidType)
         {
-            int nAccountNameLength = 255;
-            int nDomainNameLength = 255;
-            var accountNameBuilder = new StringBuilder(nAccountNameLength);
-            var domainNameBuilder = new StringBuilder(nDomainNameLength);
+            int nNameLength = 255;
+            int nDomainLength = 255;
+            var nameBuilder = new StringBuilder(nNameLength);
+            var domainBuilder = new StringBuilder(nDomainLength);
             bool status = NativeMethods.LookupAccountSid(
                 null,
                 pSid,
-                accountNameBuilder,
-                ref nAccountNameLength,
-                domainNameBuilder,
-                ref nDomainNameLength,
+                nameBuilder,
+                ref nNameLength,
+                domainBuilder,
+                ref nDomainLength,
                 out sidType);
 
             if (status)
             {
-                accountName = accountNameBuilder.ToString();
-                domainName = domainNameBuilder.ToString();
+                name = (nNameLength == 0) ? null : nameBuilder.ToString();
+                domain = (nDomainLength == 0) ? null : domainBuilder.ToString();
             }
             else
             {
-                accountName = null;
-                domainName = null;
+                name = null;
+                domain = null;
                 sidType = SID_NAME_USE.Unknown;
             }
 
