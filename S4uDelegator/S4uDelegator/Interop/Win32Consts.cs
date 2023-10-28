@@ -11,6 +11,7 @@ namespace S4uDelegator.Interop
         public static NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
 
         // Win32 Error
+        public const int ERROR_ACCESS_DENIED = 0x00000005;
         public const int ERROR_BAD_LENGTH = 0x00000018;
         public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
         public const int ERROR_MORE_DATA = 0x000000EA;

@@ -289,5 +289,23 @@ namespace S4uDelegator.Library
 
             return status;
         }
+
+
+        public static bool VerifyGroupSid(
+            ref string stringSid,
+            out string accountName)
+        {
+            var validTypes = new List<SID_NAME_USE>
+            {
+                SID_NAME_USE.Alias,
+                SID_NAME_USE.Group,
+                SID_NAME_USE.WellKnownGroup
+            };
+            accountName = Helpers.ConvertStringSidToAccountName(
+                ref stringSid,
+                out SID_NAME_USE sidType);
+
+            return validTypes.Contains(sidType);
+        }
     }
 }

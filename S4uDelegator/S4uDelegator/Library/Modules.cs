@@ -15,7 +15,7 @@ namespace S4uDelegator.Library
             string[] extraSids)
         {
             bool isImpersonated;
-            List<string> groupSids;
+            var groupSids = new List<string>();
             var requiredPrivs = new List<string>
             {
                 Win32Consts.SE_TCB_NAME,
@@ -23,7 +23,7 @@ namespace S4uDelegator.Library
             };
             var status = false;
 
-            if (string.IsNullOrEmpty(domain))
+            if (string.IsNullOrEmpty(sid) && string.IsNullOrEmpty(domain))
                 domain = Environment.MachineName;
 
             if (!VerifyAccount(
@@ -37,9 +37,28 @@ namespace S4uDelegator.Library
             }
 
             if (extraSids.Length > 0)
-                groupSids = VerifyGroupSids(extraSids);
-            else
-                groupSids = new List<string>();
+                Console.WriteLine("[>] Verifying extra group SID(s).");
+
+            for (var idx = 0; idx < extraSids.Length; idx++)
+            {
+                bool isGroupSid = Utilities.VerifyGroupSid(
+                    ref extraSids[idx],
+                    out string accountName);
+
+                if (isGroupSid)
+                {
+                    Console.WriteLine("[*] {0} (SID : {1}) will be added as a group.", accountName, extraSids[idx]);
+                    groupSids.Add(extraSids[idx]);
+                }
+                else if (string.IsNullOrEmpty(accountName))
+                {
+                    Console.WriteLine("[-] {0} is not valid SID.", extraSids[idx]);
+                }
+                else
+                {
+                    Console.WriteLine("[-] {0} (SID : {1}) is not group account, so will be ignored.", accountName, extraSids[idx]);
+                }
+            }
 
             if (!Utilities.EnableTokenPrivileges(
                 new List<string> { Win32Consts.SE_DEBUG_NAME, Win32Consts.SE_IMPERSONATE_NAME },
@@ -111,6 +130,10 @@ namespace S4uDelegator.Library
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to S4U logon.");
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+
+                    if (error == Win32Consts.ERROR_ACCESS_DENIED)
+                        Console.WriteLine("[!] Some extra group may not be permitted.");
+
                     break;
                 }
 
@@ -261,15 +284,14 @@ namespace S4uDelegator.Library
             if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
                 !string.IsNullOrEmpty(sid))
             {
-                Console.WriteLine("[!] Account name and SID should not be specified at a time.\n");
-
+                Console.WriteLine("[!] Account name and SID should not be specified at a time.");
                 return false;
             }
 
             if (string.IsNullOrEmpty(sid))
             {
                 if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format("{0}\\{1}", domain, username);
+                    accountName = string.Format(@"{0}\{1}", domain, username);
                 else if (!string.IsNullOrEmpty(domain))
                     accountName = domain;
                 else if (!string.IsNullOrEmpty(username))
@@ -294,8 +316,7 @@ namespace S4uDelegator.Library
             {
                 if (peUse != SID_NAME_USE.User)
                 {
-                    Console.WriteLine("[-] Target account should be user account.\n");
-
+                    Console.WriteLine("[-] Target account should be user account.");
                     return false;
                 }
 
@@ -306,7 +327,7 @@ namespace S4uDelegator.Library
                 }
                 catch
                 {
-                    Console.WriteLine("[-] Failed to parse account name.\n");
+                    Console.WriteLine("[-] Failed to parse account name.");
 
                     return false;
                 }
@@ -330,15 +351,13 @@ namespace S4uDelegator.Library
                     }
                     else
                     {
-                        Console.WriteLine("[-] Target account cannot be used to S4U.\n");
-
+                        Console.WriteLine("[-] Target account cannot be used to S4U.");
                         return false;
                     }
                 }
                 else
                 {
-                    Console.WriteLine("[-] Target account cannot be used to S4U.\n");
-
+                    Console.WriteLine("[-] Target account cannot be used to S4U.");
                     return false;
                 }
 
@@ -352,56 +371,6 @@ namespace S4uDelegator.Library
 
                 return false;
             }
-        }
-
-
-        private static List<string> VerifyGroupSids(string[] groupSids)
-        {
-            var result = new List<string>();
-            string accountName;
-            var filter = new Regex(@"^(s|S)(-\d+)+$");
-
-            if (groupSids.Length > 0)
-            {
-                Console.WriteLine("[>] Group SID to add:");
-
-                for (var idx = 0; idx < groupSids.Length; idx++)
-                {
-                    if (!filter.IsMatch(groupSids[idx]))
-                        continue;
-                    else if (result.Contains(groupSids[idx].ToUpper()))
-                        continue;
-
-                    accountName = Helpers.ConvertStringSidToAccountName(
-                        ref groupSids[idx],
-                        out SID_NAME_USE peUse);
-
-                    if (string.IsNullOrEmpty(accountName))
-                    {
-                        Console.WriteLine(
-                            "    [-] Failed to resolve {0}.",
-                            groupSids[idx].ToUpper());
-                    }
-                    else if ((peUse == SID_NAME_USE.Group) ||
-                        (peUse == SID_NAME_USE.WellKnownGroup))
-                    {
-                        Console.WriteLine(
-                            "    [+] {0} (SID : {1}) will be added.",
-                            accountName,
-                            groupSids[idx].ToUpper());
-                        result.Add(groupSids[idx].ToUpper());
-                    }
-                    else
-                    {
-                        Console.WriteLine(
-                            "    [-] {0} (SID : {1}) is not group account.",
-                            accountName,
-                            groupSids[idx].ToUpper());
-                    }
-                }
-            }
-
-            return result;
         }
     }
 }
