@@ -57,10 +57,10 @@ namespace S4uDelegator.Library
             do
             {
                 int error;
+                IntPtr hPrimaryToken;
                 IntPtr hImpersonationToken;
                 LSA_STRING pkgName;
                 TOKEN_SOURCE tokenSource;
-                var hPrimaryToken = IntPtr.Zero;
                 var startupInfo = new STARTUPINFO
                 {
                     cb = Marshal.SizeOf(typeof(STARTUPINFO)),
@@ -92,50 +92,41 @@ namespace S4uDelegator.Library
                 {
                     pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
                     tokenSource = new TOKEN_SOURCE("User32");
-                    hPrimaryToken = Utilities.GetS4uLogonToken(
-                        username,
-                        domain,
-                        in pkgName,
-                        in tokenSource,
-                        groupSids);
                 }
                 else
                 {
                     pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME_A);
                     tokenSource = new TOKEN_SOURCE("NtLmSsp");
-                    hImpersonationToken = Utilities.GetS4uLogonToken(
+                }
+
+                hImpersonationToken = Utilities.GetS4uLogonToken(
                         username,
                         domain,
                         in pkgName,
                         in tokenSource,
                         groupSids);
 
-                    if (hImpersonationToken == IntPtr.Zero)
-                    {
-                        error = Marshal.GetLastWin32Error();
-                        Console.WriteLine("[-] Failed to S4U logon.");
-                        Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    }
-                    else
-                    {
-                        status = NativeMethods.DuplicateTokenEx(
-                            hImpersonationToken,
-                            TokenAccessFlags.TOKEN_ALL_ACCESS,
-                            IntPtr.Zero,
-                            SECURITY_IMPERSONATION_LEVEL.Anonymous,
-                            TOKEN_TYPE.TokenPrimary,
-                            out hPrimaryToken);
-                        NativeMethods.NtClose(hImpersonationToken);
-
-                        if (!status)
-                            hPrimaryToken = IntPtr.Zero;
-                    }
-                }
-
-                if (hPrimaryToken == IntPtr.Zero)
+                if (hImpersonationToken == IntPtr.Zero)
                 {
                     error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to S4U logon.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    break;
+                }
+
+                status = NativeMethods.DuplicateTokenEx(
+                    hImpersonationToken,
+                    TokenAccessFlags.TOKEN_ALL_ACCESS,
+                    IntPtr.Zero,
+                    SECURITY_IMPERSONATION_LEVEL.Anonymous,
+                    TOKEN_TYPE.TokenPrimary,
+                    out hPrimaryToken);
+                NativeMethods.NtClose(hImpersonationToken);
+
+                if (!status)
+                {
+                    error = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to duplicate S4U logon token.");
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
                     break;
                 }
@@ -143,7 +134,7 @@ namespace S4uDelegator.Library
                 {
                     Console.WriteLine("[+] S4U logon is successful.");
                 }
-                
+
                 Console.WriteLine("[>] Trying to create a token assigned process.");
 
                 status = NativeMethods.CreateProcessAsUser(
@@ -351,7 +342,7 @@ namespace S4uDelegator.Library
                     return false;
                 }
 
-                Console.WriteLine("    |-> User Principal Name : {0}", string.IsNullOrEmpty(upn) ? "(NULL)" : upn);
+                Console.WriteLine("    [*] User Principal Name : {0}", string.IsNullOrEmpty(upn) ? "(NULL)" : upn);
 
                 return true;
             }
