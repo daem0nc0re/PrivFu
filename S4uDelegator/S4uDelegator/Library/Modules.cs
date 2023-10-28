@@ -189,7 +189,8 @@ namespace S4uDelegator.Library
             var sidType = SID_NAME_USE.Unknown;
             var status = false;
 
-            if (!string.IsNullOrEmpty(stringSid))
+            if (!string.IsNullOrEmpty(stringSid) &&
+                Regex.IsMatch(stringSid, @"^S(-[0-9]+)+$", RegexOptions.IgnoreCase))
             {
                 accountName = Helpers.ConvertStringSidToAccountName(
                     ref stringSid,
