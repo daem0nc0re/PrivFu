@@ -11,9 +11,10 @@ namespace S4uDelegator.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-
                 return;
             }
+
+            Console.WriteLine();
 
             if (!string.IsNullOrEmpty(options.GetValue("domain")) ||
                 !string.IsNullOrEmpty(options.GetValue("username")) ||
@@ -27,9 +28,10 @@ namespace S4uDelegator.Handler
             else
             {
                 options.GetHelp();
-
-                Console.WriteLine("[-] Missing account information.\n");
+                Console.WriteLine("[-] Missing account information.");
             }
+
+            Console.WriteLine();
         }
 
 
@@ -38,9 +40,10 @@ namespace S4uDelegator.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-
                 return;
             }
+
+            Console.WriteLine();
 
             if (!string.IsNullOrEmpty(options.GetValue("username")) ||
                 !string.IsNullOrEmpty(options.GetValue("sid")))
@@ -63,7 +66,7 @@ namespace S4uDelegator.Handler
                     }
                     else
                     {
-                        Console.WriteLine("\n[!] Specified value for -e option is invalid format.\n");
+                        Console.WriteLine("[!] Specified value for -e option is invalid format.");
 
                         return;
                     }
@@ -78,9 +81,10 @@ namespace S4uDelegator.Handler
             else
             {
                 options.GetHelp();
-
-                Console.WriteLine("[-] Missing account information.\n");
+                Console.WriteLine("[-] Missing account information.");
             }
+
+            Console.WriteLine();
         }
     }
 }

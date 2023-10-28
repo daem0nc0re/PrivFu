@@ -183,87 +183,49 @@ namespace S4uDelegator.Library
         }
 
 
-        public static bool LookupSid(
-            string domain,
-            string username,
-            string sid)
+        public static bool LookupSid(string domain, string name, string stringSid)
         {
-            string result;
-            string accountName;
+            string accountName = null;
+            var sidType = SID_NAME_USE.Unknown;
+            var status = false;
 
-            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
-                !string.IsNullOrEmpty(sid))
+            if (!string.IsNullOrEmpty(stringSid))
             {
-                Console.WriteLine("\n[!] Username or domain name should not be specified with SID at a time.\n");
-
-                return false;
+                accountName = Helpers.ConvertStringSidToAccountName(
+                    ref stringSid,
+                    out sidType);
+                status = !string.IsNullOrEmpty(accountName);
             }
-            else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
+            else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(name))
             {
-                if (!string.IsNullOrEmpty(domain) && domain.Trim() == ".")
+                if (!string.IsNullOrEmpty(domain) && (domain.Trim() == "."))
                     domain = Environment.MachineName;
 
-                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format("{0}\\{1}", domain, username);
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(domain))
+                    accountName = string.Format(@"{0}\{1}", domain, name);
+                else if (!string.IsNullOrEmpty(name))
+                    accountName = name;
                 else if (!string.IsNullOrEmpty(domain))
                     accountName = domain;
-                else if (!string.IsNullOrEmpty(username))
-                    accountName = username;
-                else
-                    return false;
 
-                result = Helpers.ConvertAccountNameToStringSid(
+                stringSid = Helpers.ConvertAccountNameToStringSid(
                     ref accountName,
-                    out SID_NAME_USE peUse);
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", accountName);
-                    Console.WriteLine("    |-> SID          : {0}", result);
-                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
-                    Console.WriteLine();
-
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("\n[*] No result.\n");
-
-                    return false;
-                }
+                    out sidType);
+                status = !string.IsNullOrEmpty(stringSid);
             }
-            else if (!string.IsNullOrEmpty(sid))
+
+            if (status)
             {
-                result = Helpers.ConvertSidStringToAccountName(
-                    ref sid,
-                    out SID_NAME_USE peUse);
-
-                if (!string.IsNullOrEmpty(result))
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("[*] Result:");
-                    Console.WriteLine("    |-> Account Name : {0}", result);
-                    Console.WriteLine("    |-> SID          : {0}", sid);
-                    Console.WriteLine("    |-> Account Type : {0}", peUse.ToString());
-                    Console.WriteLine();
-
-                    return true;
-                }
-                else
-                {
-                    Console.WriteLine("\n[*] No result.\n");
-
-                    return false;
-                }
+                Console.WriteLine("[*] Account Name : {0}", accountName);
+                Console.WriteLine("[*] SID          : {0}", stringSid);
+                Console.WriteLine("[*] Account Type : {0}", sidType.ToString());
             }
             else
             {
-                Console.WriteLine("\n[!] SID, domain name or username to lookup is required.\n");
-
-                return false;
+                Console.WriteLine("[-] Queried account is not found.");
             }
+
+            return status;
         }
 
 
@@ -330,7 +292,7 @@ namespace S4uDelegator.Library
             else
             {
                 accountSid = sid;
-                accountName = Helpers.ConvertSidStringToAccountName(
+                accountName = Helpers.ConvertStringSidToAccountName(
                     ref accountSid,
                     out peUse);
             }
@@ -358,9 +320,9 @@ namespace S4uDelegator.Library
                 }
 
                 Console.WriteLine("[>] Target account to S4U:");
-                Console.WriteLine("    |-> Account Name        : {0}", accountName);
-                Console.WriteLine("    |-> Account Sid         : {0}", accountSid);
-                Console.WriteLine("    |-> Account Type        : {0}", peUse.ToString());
+                Console.WriteLine("    [*] Account Name        : {0}", accountName);
+                Console.WriteLine("    [*] Account Sid         : {0}", accountSid);
+                Console.WriteLine("    [*] Account Type        : {0}", peUse.ToString());
 
                 if (rgx.IsMatch(accountSid))
                 {
@@ -418,21 +380,21 @@ namespace S4uDelegator.Library
                     else if (result.Contains(groupSids[idx].ToUpper()))
                         continue;
 
-                    accountName = Helpers.ConvertSidStringToAccountName(
+                    accountName = Helpers.ConvertStringSidToAccountName(
                         ref groupSids[idx],
                         out SID_NAME_USE peUse);
 
                     if (string.IsNullOrEmpty(accountName))
                     {
                         Console.WriteLine(
-                            "    |-> [IGNORED] Failed to resolve {0}.",
+                            "    [-] Failed to resolve {0}.",
                             groupSids[idx].ToUpper());
                     }
                     else if ((peUse == SID_NAME_USE.Group) ||
                         (peUse == SID_NAME_USE.WellKnownGroup))
                     {
                         Console.WriteLine(
-                            "    |-> [VALID] {0} (SID : {1}) will be added.",
+                            "    [+] {0} (SID : {1}) will be added.",
                             accountName,
                             groupSids[idx].ToUpper());
                         result.Add(groupSids[idx].ToUpper());
@@ -440,7 +402,7 @@ namespace S4uDelegator.Library
                     else
                     {
                         Console.WriteLine(
-                            "    |-> [IGNORED] {0} (SID : {1}) is not group.",
+                            "    [-] {0} (SID : {1}) is not group account.",
                             accountName,
                             groupSids[idx].ToUpper());
                     }

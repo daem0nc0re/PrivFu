@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
@@ -30,6 +29,10 @@ namespace S4uDelegator.Library
             int nSidLength = 256;
             int nDomainLength = 256;
             var domainBuilder = new StringBuilder(nDomainLength);
+            sidType = SID_NAME_USE.Unknown;
+
+            if (string.IsNullOrEmpty(accountName))
+                return null;
 
             do
             {
@@ -75,80 +78,32 @@ namespace S4uDelegator.Library
         }
 
 
-        public static string ConvertSidStringToAccountName(
-            ref string sid,
-            out SID_NAME_USE peUse)
+        public static string ConvertStringSidToAccountName(
+            ref string stringSid,
+            out SID_NAME_USE sidType)
         {
-            string accountName;
-            sid = sid.ToUpper();
+            string accountName = null;
+            stringSid = stringSid.ToUpper();
+            sidType = SID_NAME_USE.Unknown;
 
-            if (!NativeMethods.ConvertStringSidToSid(sid, out IntPtr pSid))
+            if (NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSid))
             {
-                peUse = 0;
-                return null;
-            }
+                ConvertSidToAccountName(
+                    pSid,
+                    out string name,
+                    out string domain,
+                    out sidType);
+                NativeMethods.LocalFree(pSid);
 
-            accountName = ConvertSidToAccountName(pSid, out peUse);
-            NativeMethods.LocalFree(pSid);
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(domain))
+                    accountName = string.Format(@"{0}\{1}", domain, name);
+                else if (!string.IsNullOrEmpty(name))
+                    accountName = name;
+                else if (!string.IsNullOrEmpty(domain))
+                    accountName = domain;
+            }
 
             return accountName;
-        }
-
-
-        public static string ConvertSidToAccountName(
-            IntPtr pSid,
-            out SID_NAME_USE peUse)
-        {
-            bool status;
-            int error;
-            StringBuilder pName = new StringBuilder();
-            int cchName = 4;
-            StringBuilder pReferencedDomainName = new StringBuilder();
-            int cchReferencedDomainName = 4;
-
-            do
-            {
-                pName.Capacity = cchName;
-                pReferencedDomainName.Capacity = cchReferencedDomainName;
-
-                status = NativeMethods.LookupAccountSid(
-                    null,
-                    pSid,
-                    pName,
-                    ref cchName,
-                    pReferencedDomainName,
-                    ref cchReferencedDomainName,
-                    out peUse);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                {
-                    pName.Clear();
-                    pReferencedDomainName.Clear();
-                }
-            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
-
-            if (!status)
-                return null;
-
-            if (peUse == SID_NAME_USE.Domain)
-            {
-                return pReferencedDomainName.ToString();
-            }
-            else if (cchName == 0)
-            {
-                return pReferencedDomainName.ToString();
-            }
-            else if (cchReferencedDomainName == 0)
-            {
-                return pName.ToString();
-            }
-            else
-            {
-                return string.Format("{0}\\{1}",
-                    pReferencedDomainName.ToString(),
-                    pName.ToString());
-            }
         }
 
 
