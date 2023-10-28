@@ -291,9 +291,7 @@ namespace S4uDelegator.Library
         }
 
 
-        public static bool VerifyGroupSid(
-            ref string stringSid,
-            out string accountName)
+        public static bool IsGroupSid(ref string stringSid, out string accountName)
         {
             var validTypes = new List<SID_NAME_USE>
             {

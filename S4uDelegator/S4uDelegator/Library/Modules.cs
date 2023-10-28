@@ -41,7 +41,7 @@ namespace S4uDelegator.Library
 
             for (var idx = 0; idx < extraSids.Length; idx++)
             {
-                bool isGroupSid = Utilities.VerifyGroupSid(
+                bool isGroupSid = Utilities.IsGroupSid(
                     ref extraSids[idx],
                     out string accountName);
 
@@ -76,7 +76,6 @@ namespace S4uDelegator.Library
             do
             {
                 int error;
-                IntPtr hPrimaryToken;
                 IntPtr hImpersonationToken;
                 LSA_STRING pkgName;
                 TOKEN_SOURCE tokenSource;
@@ -132,7 +131,7 @@ namespace S4uDelegator.Library
                     Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
 
                     if (error == Win32Consts.ERROR_ACCESS_DENIED)
-                        Console.WriteLine("[!] Some extra group may not be permitted.");
+                        Console.WriteLine("[!] Some extra groups may not be permitted.");
 
                     break;
                 }
@@ -143,7 +142,7 @@ namespace S4uDelegator.Library
                     IntPtr.Zero,
                     SECURITY_IMPERSONATION_LEVEL.Anonymous,
                     TOKEN_TYPE.TokenPrimary,
-                    out hPrimaryToken);
+                    out IntPtr hPrimaryToken);
                 NativeMethods.NtClose(hImpersonationToken);
 
                 if (!status)
