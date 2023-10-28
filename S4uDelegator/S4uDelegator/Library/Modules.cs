@@ -212,7 +212,7 @@ namespace S4uDelegator.Library
                 else
                     return false;
 
-                result = Helpers.ConvertAccountNameToSidString(
+                result = Helpers.ConvertAccountNameToStringSid(
                     ref accountName,
                     out SID_NAME_USE peUse);
 
@@ -277,7 +277,7 @@ namespace S4uDelegator.Library
             string computerName = Environment.MachineName;
             string currentDomain = Helpers.GetCurrentDomainName();
             string fqdn = currentDomain;
-            string localSid = Helpers.ConvertAccountNameToSidString(
+            string localSid = Helpers.ConvertAccountNameToStringSid(
                 ref computerName,
                 out SID_NAME_USE _);
             string domainSid;
@@ -298,7 +298,7 @@ namespace S4uDelegator.Library
             }
             else
             {
-                domainSid = Helpers.ConvertAccountNameToSidString(
+                domainSid = Helpers.ConvertAccountNameToStringSid(
                     ref currentDomain,
                     out SID_NAME_USE _);
                 patternDomainSid = string.Format("^{0}(-\\d+)$", domainSid);
@@ -323,7 +323,7 @@ namespace S4uDelegator.Library
                 else
                     return false;
 
-                accountSid = Helpers.ConvertAccountNameToSidString(
+                accountSid = Helpers.ConvertAccountNameToStringSid(
                     ref accountName,
                     out peUse);
             }

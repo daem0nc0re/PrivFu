@@ -19,94 +19,59 @@ namespace S4uDelegator.Library
         }
 
 
-        public static string ConvertAccountNameToSidString(
+        public static string ConvertAccountNameToStringSid(
             ref string accountName,
-            out SID_NAME_USE peUse)
+            out SID_NAME_USE sidType)
         {
-            int error;
             bool status;
-            string username;
-            string domain;
-            Regex rx1 = new Regex(
-                @"^[^\\]+\\[^\\]+$",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            Regex rx2 = new Regex(
-                @"^[^\\]+$",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            int error;
             IntPtr pSid;
-            int cbSid = 8;
-            StringBuilder referencedDomainName = new StringBuilder();
-            int cchReferencedDomainName = 8;
-            peUse = 0;
-
-            if (rx1.IsMatch(accountName))
-            {
-                try
-                {
-                    domain = accountName.Split('\\')[0];
-                    username = accountName.Split('\\')[1];
-
-                    if (domain == ".")
-                    {
-                        accountName = string.Format(
-                            "{0}\\{1}",
-                            Environment.MachineName,
-                            username);
-                    }
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-            else if (!rx2.IsMatch(accountName))
-            {
-                return null;
-            }
+            string stringSid = null;
+            int nSidLength = 256;
+            int nDomainLength = 256;
+            var domainBuilder = new StringBuilder(nDomainLength);
 
             do
             {
-                referencedDomainName.Capacity = cchReferencedDomainName;
-                pSid = Marshal.AllocHGlobal(cbSid);
-                ZeroMemory(pSid, cbSid);
-
+                pSid = Marshal.AllocHGlobal(nSidLength);
                 status = NativeMethods.LookupAccountName(
                     null,
                     accountName,
                     pSid,
-                    ref cbSid,
-                    referencedDomainName,
-                    ref cchReferencedDomainName,
-                    out peUse);
+                    ref nSidLength,
+                    domainBuilder,
+                    ref nDomainLength,
+                    out sidType);
                 error = Marshal.GetLastWin32Error();
 
                 if (!status)
                 {
-                    referencedDomainName.Clear();
                     Marshal.FreeHGlobal(pSid);
+                    domainBuilder.Capacity = nDomainLength;
                 }
-            } while (!status && error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
+            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER));
 
-            if (!status)
-                return null;
-
-            if (!NativeMethods.IsValidSid(pSid))
-                return null;
-
-            accountName = ConvertSidToAccountName(pSid, out peUse);
-
-            if (NativeMethods.ConvertSidToStringSid(pSid, out string strSid))
+            if (status)
             {
-                NativeMethods.LocalFree(pSid);
+                ConvertSidToAccountName(
+                    pSid,
+                    out string name,
+                    out string domain,
+                    out sidType);
+                NativeMethods.ConvertSidToStringSid(pSid, out stringSid);
 
-                return strSid;
-            }
-            else
-            {
-                NativeMethods.LocalFree(pSid);
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(domain))
+                    accountName = string.Format(@"{0}\{1}", domain, name);
+                else if (!string.IsNullOrEmpty(name))
+                    accountName = name;
+                else if (!string.IsNullOrEmpty(domain))
+                    accountName = domain;
 
-                return null;
+                Marshal.FreeHGlobal(pSid);
+                domainBuilder.Clear();
             }
+
+            return stringSid;
         }
 
 

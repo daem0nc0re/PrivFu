@@ -17,9 +17,9 @@ namespace S4uDelegator
 
         static void Main(string[] args)
         {
-            StringComparison opt = StringComparison.OrdinalIgnoreCase;
-            CommandLineParser subOptions = new CommandLineParser();
-            CommandLineParser options = new CommandLineParser();
+            var opt = StringComparison.OrdinalIgnoreCase;
+            var subOptions = new CommandLineParser();
+            var options = new CommandLineParser();
             string[] reminder;
 
             try
@@ -60,16 +60,12 @@ namespace S4uDelegator
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex.Message);
-
-                return;
             }
             catch (ArgumentException ex)
             {
                 options.GetHelp();
                 PrintModules();
                 Console.WriteLine(ex.Message);
-
-                return;
             }
         }
     }
