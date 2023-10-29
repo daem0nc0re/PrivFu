@@ -1,22 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace S4uDelegator.Interop
 {
     internal enum COMPUTER_NAME_FORMAT
     {
-        ComputerNameNetBIOS,
-        ComputerNameDnsHostname,
-        ComputerNameDnsDomain,
-        ComputerNameDnsFullyQualified,
-        ComputerNamePhysicalNetBIOS,
-        ComputerNamePhysicalDnsHostname,
-        ComputerNamePhysicalDnsDomain,
-        ComputerNamePhysicalDnsFullyQualified,
-        ComputerNameMax
+        NetBIOS,
+        DnsHostname,
+        DnsDomain,
+        DnsFullyQualified,
+        PhysicalNetBIOS,
+        PhysicalDnsHostname,
+        PhysicalDnsDomain,
+        PhysicalDnsFullyQualified,
+        Max
     }
 
     internal enum EXTENDED_NAME_FORMAT

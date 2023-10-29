@@ -414,6 +414,7 @@ namespace S4uDelegator.Library
                 }
 
                 if (((sidType == SID_NAME_USE.User) || (sidType == SID_NAME_USE.Group)) &&
+                    Helpers.IsDomainMachine() &&
                     !isLocalAccount)
                 {
                     status = NativeMethods.TranslateName(

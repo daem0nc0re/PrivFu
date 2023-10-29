@@ -152,7 +152,7 @@ namespace S4uDelegator.Library
             do
             {
                 status = NativeMethods.GetComputerNameEx(
-                    COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
+                    COMPUTER_NAME_FORMAT.DnsDomain,
                     nameBuilder,
                     ref nNameLength);
 
@@ -205,10 +205,6 @@ namespace S4uDelegator.Library
 
                 NativeMethods.NetApiBufferFree(pDataBuffer);
             }
-
-            Console.WriteLine("[STATUS] {0}", status);
-            Console.WriteLine("[nEntries] {0}", nEntries);
-            Console.WriteLine("[localGroups.Count] {0}", localGroups.Count);
 
             return status;
         }
@@ -344,6 +340,12 @@ namespace S4uDelegator.Library
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             else
                 return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
+        }
+
+
+        public static bool IsDomainMachine()
+        {
+            return !CompareIgnoreCase(GetCurrentDomainName(), Environment.MachineName);
         }
 
 
