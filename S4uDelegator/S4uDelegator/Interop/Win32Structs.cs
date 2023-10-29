@@ -4,6 +4,12 @@ using System.Text;
 
 namespace S4uDelegator.Interop
 {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct GROUP_INFO_0
+    {
+        public string grpi0_name;
+    }
+
     internal class MSV1_0_S4U_LOGON : IDisposable
     {
         public IntPtr Buffer { get; } = IntPtr.Zero;
@@ -272,5 +278,18 @@ namespace S4uDelegator.Interop
             else
                 return Marshal.PtrToStringUni(buffer, Length / 2);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct USER_INFO_1
+    {
+        public string usri1_name;
+        public string usri1_password;
+        public int usri1_password_age;
+        public USER_PRIVS usri1_priv;
+        public string usri1_home_dir;
+        public string usri1_comment;
+        public USER_FLAGS usri1_flags;
+        public string usri1_script_path;
     }
 }

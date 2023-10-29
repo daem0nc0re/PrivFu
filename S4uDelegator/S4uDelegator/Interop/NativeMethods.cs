@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -143,6 +144,33 @@ namespace S4uDelegator.Interop
             uint dwMilliseconds);
 
         /*
+         * netapi32.dll
+         */
+        [DllImport("netapi32.dll")]
+        public static extern int NetApiBufferFree(IntPtr Buffer);
+
+        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int NetGroupEnum(
+            string servername,
+            int level,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr /* ref IntPtr */ resume_handle);
+
+        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int NetUserEnum(
+            string servername,
+            int level,
+            USER_INFO_FILTER filter,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr /* ref IntPtr */ resume_handle);
+
+        /*
          * ntdll.dll
          */
         [DllImport("ntdll.dll")]
@@ -187,5 +215,13 @@ namespace S4uDelegator.Interop
             IntPtr LsaHandle,
             in LSA_STRING PackageName,
             out uint AuthenticationPackage);
+
+        [DllImport("secur32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool TranslateName(
+            string lpAccountName,
+            EXTENDED_NAME_FORMAT AccountNameFormat,
+            EXTENDED_NAME_FORMAT DesiredNameFormat,
+            StringBuilder lpTranslatedName,
+            ref uint nSize);
     }
 }

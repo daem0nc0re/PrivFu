@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Text;
+using System.Text.RegularExpressions;
 using S4uDelegator.Interop;
 
 namespace S4uDelegator.Library
@@ -305,6 +307,132 @@ namespace S4uDelegator.Library
                 out SID_NAME_USE sidType);
 
             return validTypes.Contains(sidType);
+        }
+
+
+        public static bool VerifyAccountName(
+            ref string domain,
+            ref string name,
+            ref string stringSid,
+            out string accountName,
+            out string upn,
+            out SID_NAME_USE sidType)
+        {
+            var isLocalAccount = false;
+            var status = false;
+            upn = null;
+            sidType = SID_NAME_USE.Unknown;
+
+            if (!string.IsNullOrEmpty(domain) && (domain.Trim() == "."))
+                domain = Environment.MachineName;
+
+            if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(domain))
+                accountName = string.Format(@"{0}\{1}", domain, name);
+            else if (!string.IsNullOrEmpty(name))
+                accountName = name;
+            else if (!string.IsNullOrEmpty(domain))
+                accountName = domain;
+            else
+                accountName = null;
+
+            if (!string.IsNullOrEmpty(stringSid))
+            {
+                if (Regex.IsMatch(stringSid, @"^S(-[0-9]+)+$", RegexOptions.IgnoreCase))
+                    stringSid = stringSid.ToUpper();
+                else
+                    return false;
+            }
+
+            do
+            {
+                var nUpnLength = 1024u;
+                var upnBuilder = new StringBuilder((int)nUpnLength);
+
+                if (!string.IsNullOrEmpty(stringSid))
+                {
+                    accountName = Helpers.ConvertStringSidToAccountName(
+                        ref stringSid,
+                        out sidType);
+
+                    var nameArray = accountName.Split('\\');
+
+                    if (nameArray.Length == 2)
+                    {
+                        domain = nameArray[0];
+                        name = nameArray[1];
+                    }
+                    else
+                    {
+                        name = nameArray[0];
+                    }
+                }
+                else if (!string.IsNullOrEmpty(accountName))
+                {
+                    stringSid = Helpers.ConvertAccountNameToStringSid(
+                        ref accountName,
+                        out sidType);
+                }
+
+                if (string.IsNullOrEmpty(accountName))
+                    break;
+
+                if (sidType == SID_NAME_USE.User)
+                {
+                    Helpers.GetLocalUsers(out Dictionary<string, bool> localUsers);
+
+                    foreach (var user in localUsers.Keys)
+                    {
+                        var samName = string.Format(@"{0}\{1}", Environment.MachineName, user);
+                        string userSid = Helpers.ConvertAccountNameToStringSid(
+                            ref samName,
+                            out SID_NAME_USE _);
+
+                        if (Helpers.CompareIgnoreCase(userSid, stringSid))
+                        {
+                            isLocalAccount = true;
+                            break;
+                        }
+                    }
+                }
+                else if (sidType == SID_NAME_USE.Group)
+                {
+                    Helpers.GetLocalGroups(out List<string> localGroups);
+
+                    foreach (var group in localGroups)
+                    {
+                        var samName = string.Format(@"{0}\{1}", Environment.MachineName, group);
+                        string userSid = Helpers.ConvertAccountNameToStringSid(
+                            ref samName,
+                            out SID_NAME_USE _);
+
+                        if (Helpers.CompareIgnoreCase(userSid, stringSid))
+                        {
+                            isLocalAccount = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (((sidType == SID_NAME_USE.User) || (sidType == SID_NAME_USE.Group)) &&
+                    !isLocalAccount)
+                {
+                    status = NativeMethods.TranslateName(
+                        accountName,
+                        EXTENDED_NAME_FORMAT.NameSamCompatible,
+                        EXTENDED_NAME_FORMAT.NameUserPrincipal,
+                        upnBuilder,
+                        ref nUpnLength);
+
+                    if (status)
+                        upn = upnBuilder.ToString();
+                }
+                else
+                {
+                    status = true;
+                }
+            } while (false);
+
+            return status;
         }
     }
 }

@@ -26,14 +26,24 @@ namespace S4uDelegator.Library
             if (string.IsNullOrEmpty(sid) && string.IsNullOrEmpty(domain))
                 domain = Environment.MachineName;
 
-            if (!VerifyAccount(
+            if (!Utilities.VerifyAccountName(
                 ref domain,
                 ref username,
                 ref sid,
-                out string upn))
+                out string targetAccount,
+                out string upn,
+                out SID_NAME_USE sidType))
             {
                 Console.WriteLine("[-] Invalid account is specified.");
                 return false;
+            }
+            else
+            {
+                Console.WriteLine("[*] S4U logon target information:");
+                Console.WriteLine("    [*] Account : {0}", targetAccount);
+                Console.WriteLine("    [*] SID     : {0}", sid);
+                Console.WriteLine("    [*] UPN     : {0}", upn ?? "(Null)");
+                Console.WriteLine("    [*] Type    : {0}", sidType.ToString());
             }
 
             if (extraSids.Length > 0)
@@ -52,7 +62,7 @@ namespace S4uDelegator.Library
                 }
                 else if (string.IsNullOrEmpty(accountName))
                 {
-                    Console.WriteLine("[-] {0} is not valid SID.", extraSids[idx]);
+                    Console.WriteLine("[-] {0} is not valid SID, so will be ignored.", extraSids[idx]);
                 }
                 else
                 {
@@ -118,11 +128,11 @@ namespace S4uDelegator.Library
                 }
 
                 hImpersonationToken = Utilities.GetS4uLogonToken(
-                        username,
-                        domain,
-                        in pkgName,
-                        in tokenSource,
-                        groupSids);
+                    username,
+                    domain,
+                    in pkgName,
+                    in tokenSource,
+                    groupSids);
 
                 if (hImpersonationToken == IntPtr.Zero)
                 {
@@ -240,136 +250,6 @@ namespace S4uDelegator.Library
             }
 
             return status;
-        }
-
-
-        private static bool VerifyAccount(
-            ref string domain,
-            ref string username,
-            ref string sid,
-            out string upn)
-        {
-            SID_NAME_USE peUse;
-            string computerName = Environment.MachineName;
-            string currentDomain = Helpers.GetCurrentDomainName();
-            string fqdn = currentDomain;
-            string localSid = Helpers.ConvertAccountNameToStringSid(
-                ref computerName,
-                out SID_NAME_USE _);
-            string domainSid;
-            string accountName;
-            string accountSid;
-            string patternDomainSid;
-            string patternLocalSid = string.Format("^{0}(-\\d+)$", localSid);
-            var rgx = new Regex(patternLocalSid);
-            upn = null;
-
-            if (domain == ".")
-                domain = Environment.MachineName;
-
-            if (string.IsNullOrEmpty(currentDomain))
-            {
-                domainSid = null;
-                patternDomainSid = null;
-            }
-            else
-            {
-                domainSid = Helpers.ConvertAccountNameToStringSid(
-                    ref currentDomain,
-                    out SID_NAME_USE _);
-                patternDomainSid = string.Format("^{0}(-\\d+)$", domainSid);
-            }
-
-            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) &&
-                !string.IsNullOrEmpty(sid))
-            {
-                Console.WriteLine("[!] Account name and SID should not be specified at a time.");
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(sid))
-            {
-                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format(@"{0}\{1}", domain, username);
-                else if (!string.IsNullOrEmpty(domain))
-                    accountName = domain;
-                else if (!string.IsNullOrEmpty(username))
-                    accountName = username;
-                else
-                    return false;
-
-                accountSid = Helpers.ConvertAccountNameToStringSid(
-                    ref accountName,
-                    out peUse);
-            }
-            else
-            {
-                accountSid = sid;
-                accountName = Helpers.ConvertStringSidToAccountName(
-                    ref accountSid,
-                    out peUse);
-            }
-
-            if (!string.IsNullOrEmpty(accountName) &&
-                !string.IsNullOrEmpty(accountSid))
-            {
-                if (peUse != SID_NAME_USE.User)
-                {
-                    Console.WriteLine("[-] Target account should be user account.");
-                    return false;
-                }
-
-                try
-                {
-                    domain = accountName.Split('\\')[0];
-                    username = accountName.Split('\\')[1];
-                }
-                catch
-                {
-                    Console.WriteLine("[-] Failed to parse account name.");
-
-                    return false;
-                }
-
-                Console.WriteLine("[>] Target account to S4U:");
-                Console.WriteLine("    [*] Account Name        : {0}", accountName);
-                Console.WriteLine("    [*] Account Sid         : {0}", accountSid);
-                Console.WriteLine("    [*] Account Type        : {0}", peUse.ToString());
-
-                if (rgx.IsMatch(accountSid))
-                {
-                    upn = null;
-                }
-                else if (!string.IsNullOrEmpty(domainSid))
-                {
-                    rgx = new Regex(patternDomainSid);
-
-                    if (rgx.IsMatch(accountSid))
-                    {
-                        upn = string.Format("{0}@{1}", username, fqdn);
-                    }
-                    else
-                    {
-                        Console.WriteLine("[-] Target account cannot be used to S4U.");
-                        return false;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("[-] Target account cannot be used to S4U.");
-                    return false;
-                }
-
-                Console.WriteLine("    [*] User Principal Name : {0}", string.IsNullOrEmpty(upn) ? "(NULL)" : upn);
-
-                return true;
-            }
-            else
-            {
-                Console.WriteLine("[-] Failed to resolve target account information.\n");
-
-                return false;
-            }
         }
     }
 }
