@@ -314,7 +314,7 @@ namespace S4uDelegator.Library
             ref string domain,
             ref string name,
             ref string stringSid,
-            out string accountName,
+            out string samAccountName,
             out string upn,
             out SID_NAME_USE sidType)
         {
@@ -327,13 +327,13 @@ namespace S4uDelegator.Library
                 domain = Environment.MachineName;
 
             if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(domain))
-                accountName = string.Format(@"{0}\{1}", domain, name);
+                samAccountName = string.Format(@"{0}\{1}", domain, name);
             else if (!string.IsNullOrEmpty(name))
-                accountName = name;
+                samAccountName = name;
             else if (!string.IsNullOrEmpty(domain))
-                accountName = domain;
+                samAccountName = domain;
             else
-                accountName = null;
+                samAccountName = null;
 
             if (!string.IsNullOrEmpty(stringSid))
             {
@@ -350,11 +350,11 @@ namespace S4uDelegator.Library
 
                 if (!string.IsNullOrEmpty(stringSid))
                 {
-                    accountName = Helpers.ConvertStringSidToAccountName(
+                    samAccountName = Helpers.ConvertStringSidToAccountName(
                         ref stringSid,
                         out sidType);
 
-                    var nameArray = accountName.Split('\\');
+                    var nameArray = samAccountName.Split('\\');
 
                     if (nameArray.Length == 2)
                     {
@@ -366,25 +366,28 @@ namespace S4uDelegator.Library
                         name = nameArray[0];
                     }
                 }
-                else if (!string.IsNullOrEmpty(accountName))
+                else if (!string.IsNullOrEmpty(samAccountName))
                 {
                     stringSid = Helpers.ConvertAccountNameToStringSid(
-                        ref accountName,
+                        ref samAccountName,
                         out sidType);
                 }
 
-                if (string.IsNullOrEmpty(accountName))
+                if (string.IsNullOrEmpty(samAccountName))
                     break;
 
                 if (sidType == SID_NAME_USE.User)
                 {
                     Helpers.GetLocalUsers(out Dictionary<string, bool> localUsers);
 
-                    foreach (var user in localUsers.Keys)
+                    foreach (var username in localUsers.Keys)
                     {
-                        var samName = string.Format(@"{0}\{1}", Environment.MachineName, user);
+                        var samAccountNameUser = string.Format(
+                            @"{0}\{1}",
+                            Environment.MachineName,
+                            username);
                         string userSid = Helpers.ConvertAccountNameToStringSid(
-                            ref samName,
+                            ref samAccountNameUser,
                             out SID_NAME_USE _);
 
                         if (Helpers.CompareIgnoreCase(userSid, stringSid))
@@ -398,11 +401,14 @@ namespace S4uDelegator.Library
                 {
                     Helpers.GetLocalGroups(out List<string> localGroups);
 
-                    foreach (var group in localGroups)
+                    foreach (var groupname in localGroups)
                     {
-                        var samName = string.Format(@"{0}\{1}", Environment.MachineName, group);
+                        var samAccountNameGroup = string.Format(
+                            @"{0}\{1}",
+                            Environment.MachineName,
+                            groupname);
                         string userSid = Helpers.ConvertAccountNameToStringSid(
-                            ref samName,
+                            ref samAccountNameGroup,
                             out SID_NAME_USE _);
 
                         if (Helpers.CompareIgnoreCase(userSid, stringSid))
@@ -418,7 +424,7 @@ namespace S4uDelegator.Library
                     !isLocalAccount)
                 {
                     status = NativeMethods.TranslateName(
-                        accountName,
+                        samAccountName,
                         EXTENDED_NAME_FORMAT.NameSamCompatible,
                         EXTENDED_NAME_FORMAT.NameUserPrincipal,
                         upnBuilder,
