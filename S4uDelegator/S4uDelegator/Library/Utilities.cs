@@ -345,9 +345,6 @@ namespace S4uDelegator.Library
 
             do
             {
-                var nUpnLength = 1024u;
-                var upnBuilder = new StringBuilder((int)nUpnLength);
-
                 if (!string.IsNullOrEmpty(stringSid))
                 {
                     samAccountName = Helpers.ConvertStringSidToAccountName(
@@ -423,6 +420,8 @@ namespace S4uDelegator.Library
                     Helpers.IsDomainMachine() &&
                     !isLocalAccount)
                 {
+                    var nUpnLength = 1024u;
+                    var upnBuilder = new StringBuilder((int)nUpnLength);
                     status = NativeMethods.TranslateName(
                         samAccountName,
                         EXTENDED_NAME_FORMAT.NameSamCompatible,
