@@ -56,9 +56,6 @@ namespace S4uDelegator.Interop
         public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
 
         [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool IsValidSid(IntPtr pSid);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool LookupAccountName(
             string lpSystemName,
             string lpAccountName,

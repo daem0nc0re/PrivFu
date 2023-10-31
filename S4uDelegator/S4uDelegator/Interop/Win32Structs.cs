@@ -239,10 +239,16 @@ namespace S4uDelegator.Interop
 
         public TOKEN_SOURCE(string name)
         {
+            var random = new Random();
+            var soureNameBytes = Encoding.ASCII.GetBytes(name);
+            int nSourceNameLength = (soureNameBytes.Length > 8) ? 8 : soureNameBytes.Length;
             SourceName = new byte[8];
-            Encoding.GetEncoding(1252).GetBytes(name, 0, name.Length, SourceName, 0);
-            if (!NativeMethods.AllocateLocallyUniqueId(out SourceIdentifier))
-                throw new System.ComponentModel.Win32Exception();
+            SourceIdentifier = new LUID
+            {
+                LowPart = random.Next(Int32.MinValue, Int32.MaxValue),
+                HighPart = random.Next(Int32.MinValue, Int32.MaxValue)
+            };
+            Buffer.BlockCopy(soureNameBytes, 0, SourceName, 0, nSourceNameLength);
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using S4uDelegator.Handler;
+using S4uDelegator.Interop;
 
 namespace S4uDelegator
 {
