@@ -163,7 +163,7 @@ namespace UserRightsUtil.Library
             if (!status)
                 return null;
 
-            if (peUse == SID_NAME_USE.SidTypeDomain)
+            if (peUse == SID_NAME_USE.Domain)
             {
                 return pReferencedDomainName.ToString();
             }

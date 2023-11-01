@@ -36,10 +36,10 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser &&
-                    peUse != SID_NAME_USE.SidTypeGroup &&
-                    peUse != SID_NAME_USE.SidTypeWellKnownGroup &&
-                    peUse != SID_NAME_USE.SidTypeAlias)
+                else if (peUse != SID_NAME_USE.User &&
+                    peUse != SID_NAME_USE.Group &&
+                    peUse != SID_NAME_USE.WellKnownGroup &&
+                    peUse != SID_NAME_USE.Alias)
                 {
                     Console.WriteLine("\n[-] Specified account is not user or group account.\n");
 
@@ -56,10 +56,10 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser &&
-                    peUse != SID_NAME_USE.SidTypeGroup &&
-                    peUse != SID_NAME_USE.SidTypeWellKnownGroup &&
-                    peUse != SID_NAME_USE.SidTypeAlias)
+                else if (peUse != SID_NAME_USE.User &&
+                    peUse != SID_NAME_USE.Group &&
+                    peUse != SID_NAME_USE.WellKnownGroup &&
+                    peUse != SID_NAME_USE.Alias)
                 {
                     Console.WriteLine("\n[-] Specified account is not user or group account.\n");
 
@@ -162,8 +162,8 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser &&
-                    peUse != SID_NAME_USE.SidTypeGroup)
+                else if (peUse != SID_NAME_USE.User &&
+                    peUse != SID_NAME_USE.Group)
                 {
                     Console.WriteLine("\n[-] Specified account is not user or non well-known group account.\n");
 
@@ -180,8 +180,8 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser &&
-                    peUse != SID_NAME_USE.SidTypeGroup)
+                else if (peUse != SID_NAME_USE.User &&
+                    peUse != SID_NAME_USE.Group)
                 {
                     Console.WriteLine("\n[-] Specified account is not user or non well-known group account.\n");
 
@@ -329,7 +329,7 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser)
+                else if (peUse != SID_NAME_USE.User)
                 {
                     Console.WriteLine("\n[-] Specified account is not user account.\n");
 
@@ -346,7 +346,7 @@ namespace UserRightsUtil.Library
 
                     return false;
                 }
-                else if (peUse != SID_NAME_USE.SidTypeUser)
+                else if (peUse != SID_NAME_USE.User)
                 {
                     Console.WriteLine("\n[-] Specified account is not user account.\n");
 

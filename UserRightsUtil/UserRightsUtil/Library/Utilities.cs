@@ -59,7 +59,7 @@ namespace UserRightsUtil.Library
                 }
             }
 
-            if (peUse != SID_NAME_USE.SidTypeAlias)
+            if (peUse != SID_NAME_USE.Alias)
             {
                 ntstatus = NativeMethods.NetUserGetLocalGroups(
                     Environment.MachineName,
@@ -68,8 +68,8 @@ namespace UserRightsUtil.Library
                     Win32Consts.LG_INCLUDE_INDIRECT,
                     out IntPtr pLocalGroupUserInfo,
                     Win32Consts.MAX_PREFERRED_LENGTH,
-                    out int entriesread_LG,
-                    out int totalentries_LG);
+                    out int _,
+                    out int _);
 
                 if (ntstatus != Win32Consts.NERR_Success)
                 {
@@ -84,7 +84,7 @@ namespace UserRightsUtil.Library
                     out IntPtr pLocalGroups,
                     Win32Consts.MAX_PREFERRED_LENGTH,
                     out int entriesread,
-                    out int totalentries,
+                    out int _,
                     ref resume_handle);
 
                 if (ntstatus != Win32Consts.NERR_Success)
@@ -117,7 +117,7 @@ namespace UserRightsUtil.Library
                     {
                         strSid = Helpers.ConvertAccountNameToSidString(
                             ref accountName,
-                            out peUse);
+                            out _);
                         NativeMethods.ConvertStringSidToSid(strSid, out pSid);
 
                         NativeMethods.LsaEnumerateAccountRights(
@@ -158,8 +158,7 @@ namespace UserRightsUtil.Library
         }
 
 
-        public static List<string> GetUsersWithRight(
-            Rights right)
+        public static List<string> GetUsersWithRight(Rights right)
         {
             int error;
             int ntstatus;

@@ -3,26 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace UserRightsUtil.Interop
 {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct LOCALGROUP_INFO_0
-    {
-        [MarshalAs(UnmanagedType.LPWStr)]
-        public string name;
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct LOCALGROUP_USERS_INFO_0
-    {
-        [MarshalAs(UnmanagedType.LPWStr)]
-        public string name;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct LSA_ENUMERATION_INFORMATION
-    {
-        public IntPtr Sid;
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct LSA_OBJECT_ATTRIBUTES
     {

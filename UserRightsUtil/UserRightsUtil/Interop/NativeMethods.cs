@@ -17,9 +17,6 @@ namespace UserRightsUtil.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
-        [DllImport("advapi32.dll")]
-        public static extern int GetLengthSid(IntPtr pSid);
-
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool IsValidSid(IntPtr pSid);
 
