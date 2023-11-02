@@ -5,6 +5,8 @@ using UserRightsUtil.Interop;
 
 namespace UserRightsUtil.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Utilities
     {
         public static List<Rights> GetUserRights(IntPtr pSid)
@@ -222,27 +224,22 @@ namespace UserRightsUtil.Library
         }
 
 
-        public static IntPtr GetSystemLsaHandle(
-            PolicyAccessRights policyAccess)
+        public static IntPtr GetSystemLsaHandle(PolicyAccessRights policyAccess)
         {
-            int error;
-            int ntstatus;
-            var lsaObjAttrs = new LSA_OBJECT_ATTRIBUTES();
-            lsaObjAttrs.Length = Marshal.SizeOf(lsaObjAttrs);
-
-            ntstatus = NativeMethods.LsaOpenPolicy(
+            var lsaObjAttrs = new LSA_OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(LSA_OBJECT_ATTRIBUTES))
+            };
+            NTSTATUS ntstatus = NativeMethods.LsaOpenPolicy(
                 IntPtr.Zero,
-                ref lsaObjAttrs,
+                in lsaObjAttrs,
                 policyAccess,
                 out IntPtr lsaHandle);
 
             if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
-                error = NativeMethods.LsaNtStatusToWinError(ntstatus);
-                Console.WriteLine("[-] Failed to get LSA handle.");
-                Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                return IntPtr.Zero;
+                NativeMethods.SetLastError(NativeMethods.LsaNtStatusToWinError(ntstatus));
+                lsaHandle = IntPtr.Zero;
             }
 
             return lsaHandle;

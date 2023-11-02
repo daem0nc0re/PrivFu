@@ -73,7 +73,7 @@ namespace UserRightsUtil.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int LsaOpenPolicy(
             IntPtr SystemName, // Win32Struct.LSA_UNICODE_STRING[]
-            ref LSA_OBJECT_ATTRIBUTES ObjectAttributes,
+            in LSA_OBJECT_ATTRIBUTES ObjectAttributes,
             PolicyAccessRights AccessMask,
             out IntPtr PolicyHandle);
 
@@ -86,7 +86,7 @@ namespace UserRightsUtil.Interop
             int CountOfRights);
 
         /*
-         * kenel32.dll
+         * kernel32.dll
          */
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern int FormatMessage(
@@ -100,6 +100,9 @@ namespace UserRightsUtil.Interop
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr LocalFree(IntPtr hMem);
+
+        [DllImport("kernel32.dll")]
+        public static extern void SetLastError(int dwErrCode);
 
         /*
          * netapi32.dll
