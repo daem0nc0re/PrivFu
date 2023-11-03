@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using S4uDelegator.Library;
 
@@ -6,7 +7,7 @@ namespace S4uDelegator.Handler
 {
     internal class Execute
     {
-        public static void LookupCommand(CommandLineParser options)
+        public static void Run(CommandLineParser options)
         {
             if (options.GetFlag("help"))
             {
@@ -14,74 +15,45 @@ namespace S4uDelegator.Handler
                 return;
             }
 
-            Console.WriteLine();
-
-            if (!string.IsNullOrEmpty(options.GetValue("domain")) ||
-                !string.IsNullOrEmpty(options.GetValue("username")) ||
-                !string.IsNullOrEmpty(options.GetValue("sid")))
-            {
-                Modules.LookupSid(
-                    options.GetValue("domain"),
-                    options.GetValue("username"),
-                    options.GetValue("sid"));
-            }
-            else
-            {
-                options.GetHelp();
-                Console.WriteLine("[-] Missing account information.");
-            }
-
-            Console.WriteLine();
-        }
-
-
-        public static void ShellCommand(CommandLineParser options)
-        {
-            if (options.GetFlag("help"))
-            {
-                options.GetHelp();
-                return;
-            }
+            string domain = options.GetValue("domain");
+            string name = options.GetValue("name");
+            string stringSid = options.GetValue("sid");
 
             Console.WriteLine();
 
-            if (!string.IsNullOrEmpty(options.GetValue("username")) ||
-                !string.IsNullOrEmpty(options.GetValue("sid")))
+            if (options.GetFlag("lookup") && options.GetFlag("execute"))
             {
-                var groupSids = new string[] { };
-                var filter = new Regex(@"^(s|S)(-\d+)+(,(s|S)(-\d+)+)*$");
+                Console.WriteLine("[-] -l and -x cannot be specifed at a time.");
+            }
+            else if (options.GetFlag("lookup"))
+            {
+                Modules.LookupSid(domain, name, stringSid);
+            }
+            else if (options.GetFlag("execute"))
+            {
+                var extraSids = new List<string>();
 
                 if (!string.IsNullOrEmpty(options.GetValue("extra")))
                 {
-                    if (filter.IsMatch(options.GetValue("extra")))
-                    {
-                        if (options.GetValue("extra").Contains(","))
-                        {
-                            groupSids = options.GetValue("extra").Split(',');
-                        }
-                        else
-                        {
-                            groupSids = new string[] { options.GetValue("extra") };
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("[!] Specified value for -e option is invalid format.");
+                    var sidInputs = options.GetValue("extra").Split(',');
 
-                        return;
+                    for (var idx = 0; idx < sidInputs.Length; idx++)
+                    {
+                        var sid = sidInputs[idx].Trim().ToUpper();
+
+                        if (extraSids.Contains(sid))
+                            continue;
+
+                        if (Regex.IsMatch(sid, @"^S(-[0-9]+)+$", RegexOptions.IgnoreCase))
+                            extraSids.Add(sid);
                     }
                 }
 
-                Modules.GetShell(
-                    options.GetValue("domain"),
-                    options.GetValue("username"),
-                    options.GetValue("sid"),
-                    groupSids);
+                Modules.GetShell(domain, name, stringSid, extraSids.ToArray());
             }
             else
             {
-                options.GetHelp();
-                Console.WriteLine("[-] Missing account information.");
+                Console.WriteLine("[-] -l or -x flag must be specified.");
             }
 
             Console.WriteLine();
