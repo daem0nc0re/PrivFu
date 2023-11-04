@@ -15,6 +15,67 @@ namespace S4uDelegator.Interop
         Max
     }
 
+    internal enum DC_ADDRESS_TYPE : uint
+    {
+        INET_ADDRESS = 1,
+        NETBIOS_ADDRESS
+    }
+
+    [Flags]
+    internal enum DS_FLAGS : uint
+    {
+        PDC_FLAG = 0x00000001, // DC is PDC of Domain
+        GC_FLAG = 0x00000004, // DC is a GC of forest
+        LDAP_FLAG = 0x00000008, // Server supports an LDAP server
+        DS_FLAG = 0x00000010, // DC supports a DS and is a Domain Controller
+        KDC_FLAG = 0x00000020, // DC is running KDC service
+        TIMESERV_FLAG = 0x00000040, // DC is running time service
+        CLOSEST_FLAG = 0x00000080, // DC is in closest site to client
+        WRITABLE_FLAG = 0x00000100, // DC has a writable DS
+        GOOD_TIMESERV_FLAG = 0x00000200, // DC is running time service (and has clock hardware)
+        NDNC_FLAG = 0x00000400,    // DomainName is non-domain NC serviced by the LDAP server
+        SELECT_SECRET_DOMAIN_6_FLAG = 0x00000800, // DC has some secrets
+        FULL_SECRET_DOMAIN_6_FLAG = 0x00001000, // DC has all secrets
+        WS_FLAG = 0x00002000, // DC is running web service
+        DS_8_FLAG = 0x00004000, // DC is running Win8 or later
+        DS_9_FLAG = 0x00008000, // DC is running Win8.1 or later
+        DS_10_FLAG = 0x00010000, // DC is running WinThreshold or later
+        KEY_LIST_FLAG = 0x00020000, // DC supports key list requests
+        PING_FLAGS = 0x000FFFFF // Flags returned on ping
+    }
+
+    [Flags]
+    internal enum DS_NAME_FLAGS : uint
+    {
+        NONE = 0x00000000,
+        FORCE_REDISCOVERY = 0x00000001,
+        DIRECTORY_SERVICE_REQUIRED = 0x00000010,
+        DIRECTORY_SERVICE_PREFERRED = 0x00000020,
+        GC_SERVER_REQUIRED = 0x00000040,
+        PDC_REQUIRED = 0x00000080,
+        BACKGROUND_ONLY = 0x00000100,
+        IP_REQUIRED = 0x00000200,
+        KDC_REQUIRED = 0x00000400,
+        TIMESERV_REQUIRED = 0x00000800,
+        WRITABLE_REQUIRED = 0x00001000,
+        GOOD_TIMESERV_PREFERRED = 0x00002000,
+        AVOID_SELF = 0x00004000,
+        ONLY_LDAP_NEEDED = 0x00008000,
+        IS_FLAT_NAME = 0x00010000,
+        IS_DNS_NAME = 0x00020000,
+        TRY_NEXTCLOSEST_SITE = 0x00040000,
+        DIRECTORY_SERVICE_6_REQUIRED = 0x00080000,
+        WEB_SERVICE_REQUIRED = 0x00100000,
+        DIRECTORY_SERVICE_8_REQUIRED = 0x00200000,
+        DIRECTORY_SERVICE_9_REQUIRED = 0x00400000,
+        DIRECTORY_SERVICE_10_REQUIRED = 0x00800000,
+        KEY_LIST_SUPPORT_REQUIRED = 0x01000000,
+        RETURN_DNS_NAME = 0x40000000,
+        RETURN_FLAT_NAME = 0x80000000,
+        VALID_FLAGS = 0xC1FFFFF1,
+        DIRECTORY_SERVICE_ALL_VERSIONS = 0x00E80010
+    }
+
     internal enum EXTENDED_NAME_FORMAT
     {
         NameUnknown = 0,

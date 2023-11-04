@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Xml.Linq;
 using S4uDelegator.Handler;
 using S4uDelegator.Interop;
+using S4uDelegator.Library;
 
 namespace S4uDelegator
 {

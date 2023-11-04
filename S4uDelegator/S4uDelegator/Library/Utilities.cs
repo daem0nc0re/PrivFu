@@ -320,6 +320,8 @@ namespace S4uDelegator.Library
         {
             var isLocalAccount = false;
             var status = false;
+            string currentDomain = Helpers.GetCurrentDomainName();
+            bool isDomainEnv = !Helpers.CompareIgnoreCase(currentDomain, Environment.UserDomainName);
             upn = null;
             sidType = SID_NAME_USE.Unknown;
 
@@ -350,7 +352,6 @@ namespace S4uDelegator.Library
                     samAccountName = Helpers.ConvertStringSidToAccountName(
                         ref stringSid,
                         out sidType);
-
                     var nameArray = samAccountName.Split('\\');
 
                     if (nameArray.Length == 2)
@@ -417,20 +418,25 @@ namespace S4uDelegator.Library
                 }
 
                 if (((sidType == SID_NAME_USE.User) || (sidType == SID_NAME_USE.Group)) &&
-                    Helpers.IsDomainMachine() &&
+                    isDomainEnv &&
                     !isLocalAccount)
                 {
-                    var nUpnLength = 1024u;
-                    var upnBuilder = new StringBuilder((int)nUpnLength);
-                    status = NativeMethods.TranslateName(
-                        samAccountName,
-                        EXTENDED_NAME_FORMAT.NameSamCompatible,
-                        EXTENDED_NAME_FORMAT.NameUserPrincipal,
-                        upnBuilder,
-                        ref nUpnLength);
+                    string fullDomainName = currentDomain;
+                    string domainSid = Helpers.ConvertAccountNameToStringSid(
+                        ref currentDomain,
+                        out SID_NAME_USE _);
 
-                    if (status)
-                        upn = upnBuilder.ToString();
+                    if (string.IsNullOrEmpty(domainSid))
+                        break;
+
+                    if (Regex.IsMatch(
+                        stringSid,
+                        string.Format("^{0}", domainSid),
+                        RegexOptions.IgnoreCase))
+                    {
+                        upn = string.Format("{0}@{1}", name, fullDomainName);
+                        status = true;
+                    }
                 }
                 else
                 {

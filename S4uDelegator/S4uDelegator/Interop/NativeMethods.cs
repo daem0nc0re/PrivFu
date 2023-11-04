@@ -139,6 +139,15 @@ namespace S4uDelegator.Interop
         /*
          * netapi32.dll
          */
+        [DllImport("netapi32.dll", CharSet = CharSet.Auto)]
+        public static extern int DsGetDcName(
+            string ComputerName,
+            string DomainName,
+            IntPtr /* in Guid */ DomainGuid,
+            string SiteName,
+            DS_NAME_FLAGS Flags,
+            out IntPtr /* DOMAIN_CONTROLLER_INFO */ DomainControllerInfo);
+        
         [DllImport("netapi32.dll")]
         public static extern int NetApiBufferFree(IntPtr Buffer);
 

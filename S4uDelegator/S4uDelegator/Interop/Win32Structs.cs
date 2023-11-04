@@ -1,9 +1,25 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace S4uDelegator.Interop
 {
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+    internal struct DOMAIN_CONTROLLER_INFO
+    {
+        public string DomainControllerName;
+        public string DomainControllerAddress;
+        public DC_ADDRESS_TYPE DomainControllerAddressType;
+        public Guid DomainGuid;
+        public string DomainName;
+        public string DnsForestName;
+        public DS_FLAGS Flags;
+        public string DcSiteName;
+        public string ClientSiteName;
+    }
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     internal struct GROUP_INFO_0
     {
