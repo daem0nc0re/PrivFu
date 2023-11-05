@@ -671,109 +671,69 @@ Currently, released PoCs for a part of them.
 
 This tool is to perform S4U logon with SeTcbPrivilege.
 To perform S4U logon with this tool, administrative privileges are required.
-Currently, a few operations are implemented (more operations will be implemented in future):
 
 ```
-C:\dev>S4uDelegator.exe -h
+PS C:\Tools> .\S4uDelegator.exe -h
 
 S4uDelegator - Tool for S4U Logon.
 
 Usage: S4uDelegator.exe [Options]
 
-        -h, --help   : Displays this help message.
-        -m, --module : Specifies module name.
-
-Available Modules:
-
-        + lookup - Lookup account's SID.
-        + shell  - Perform S4U logon and get shell.
-
-[*] To see help for each modules, specify "-m <Module> -h" as arguments.
-
-[!] -m option is required.
+        -h, --help    : Displays this help message.
+        -l, --lookup  : Flag to lookup account SID.
+        -x, --execute : Flag to execute command.
+        -c, --command : Specifies command to execute. Default is cmd.exe.
+        -d, --domain  : Specifies domain name to lookup or S4U logon.
+        -e, --extra   : Specifies group SIDs you want to add for S4U logon with comma separation.
+        -n, --name    : Specifies account name to lookup or S4U logon.
+        -s, --sid     : Specifies SID to lookup.
 ```
 
-
-### lookup Module
-
-This command is to lookup account SID as follows:
+To use this tool, `-l` or `-x` flag must be specified.
+`-l` flag is for looking up account information as follows:
 
 ```
-C:\dev>S4uDelegator.exe -m lookup -d contoso -u david
+PS C:\Tools> .\S4uDelegator.exe -l -d contoso -n "domain admins"
 
-[*] Result:
-    |-> Account Name : CONTOSO\david
-    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-1104
-    |-> Account Type : SidTypeUser
+[*] Account Name : CONTOSO\Domain Admins
+[*] SID          : S-1-5-21-3654360273-254804765-2004310818-512
+[*] Account Type : Group
 
+PS C:\Tools> .\S4uDelegator.exe -l -s S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736
 
-C:\dev>S4uDelegator.exe -m lookup -s S-1-5-21-3654360273-254804765-2004310818-500
-
-[*] Result:
-    |-> Account Name : CONTOSO\Administrator
-    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-500
-    |-> Account Type : SidTypeUser
-
-
-C:\dev>S4uDelegator.exe -m lookup -d contoso -u "domain admins"
-
-[*] Result:
-    |-> Account Name : CONTOSO\Domain Admins
-    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-512
-    |-> Account Type : SidTypeGroup
+[*] Account Name : NT SERVICE\WinDefend
+[*] SID          : S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736
+[*] Account Type : WellKnownGroup
 ```
 
-If you don't specify domain name with `-d` option, use local computer name as domain name:
+To execute command with S4U logon, set `-x` flag, and specify account name or SID as follows.
+Command to execute can be specified with `-c` option (default is `cmd.exe`):
 
 ```
-C:\dev>hostname
-CL01
-
-C:\dev>S4uDelegator.exe -m lookup -u admin
-
-[*] Result:
-    |-> Account Name : CL01\admin
-    |-> SID          : S-1-5-21-2659926013-4203293582-4033841475-500
-    |-> Account Type : SidTypeUser
-```
-
-
-### shell Module
-
-This command is to get interactive shell with S4U logon:
-
-```
-C:\dev>whoami /user
+PS C:\Tools> whoami /user
 
 USER INFORMATION
 ----------------
 
-User Name     SID
-============= =============================================
-contoso\david S-1-5-21-3654360273-254804765-2004310818-1104
+User Name    SID
+============ =============================================
+contoso\jeff S-1-5-21-3654360273-254804765-2004310818-1105
+PS C:\Tools> .\S4uDelegator.exe -x -d . -n admin
 
-C:\dev>S4uDelegator.exe -m shell -u admin
-
-[>] Target account to S4U:
-    |-> Account Name        : CL01\admin
-    |-> Account Sid         : S-1-5-21-2659926013-4203293582-4033841475-500
-    |-> Account Type        : SidTypeUser
-    |-> User Principal Name : (NULL)
+[*] S4U logon target information:
+    [*] Account : CL01\admin
+    [*] SID     : S-1-5-21-2659926013-4203293582-4033841475-500
+    [*] UPN     : (Null)
+    [*] Type    : User
 [>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 7140
-[+] Impersonation is successful.
-[>] Trying to MSV S4U logon.
+[+] Got SYSTEM privileges.
+[>] Trying to S4U logon.
 [+] S4U logon is successful.
 [>] Trying to create a token assigned process.
-
 Microsoft Windows [Version 10.0.18362.175]
 (c) 2019 Microsoft Corporation. All rights reserved.
 
-C:\dev>whoami /user
+C:\Tools>whoami /user
 
 USER INFORMATION
 ----------------
@@ -783,64 +743,70 @@ User Name  SID
 cl01\admin S-1-5-21-2659926013-4203293582-4033841475-500
 ```
 
-If you want to add token groups, you can specify them comma separated SID values with `-e` option as follows:
+If you want to add extra group information, set group SIDs with comma separated value with `-e` option as follows:
 
 ```
-C:\Tools>whoami
-contoso\david
+PS C:\Tools> whoami /user
 
-C:\Tools>S4uDelegator.exe -m shell -d contoso -u administrator -e s-1-5-18,S-1-5-19
+USER INFORMATION
+----------------
 
-[>] Target account to S4U:
-    |-> Account Name        : CONTOSO\administrator
-    |-> Account Sid         : S-1-5-21-3654360273-254804765-2004310818-500
-    |-> Account Type        : SidTypeUser
-    |-> User Principal Name : administrator@contoso.local
-[>] Group SID to add:
-    |-> [VALID] NT AUTHORITY\SYSTEM (SID : S-1-5-18) will be added.
-    |-> [VALID] NT AUTHORITY\LOCAL SERVICE (SID : S-1-5-19) will be added.
+User Name     SID
+============= =============================================
+contoso\david S-1-5-21-3654360273-254804765-2004310818-1104
+PS C:\Tools> .\S4uDelegator.exe -x -d contoso -n jeff -e S-1-5-32-544,S-1-5-20 -c powershell
+
+[*] S4U logon target information:
+    [*] Account : CONTOSO\jeff
+    [*] SID     : S-1-5-21-3654360273-254804765-2004310818-1105
+    [*] UPN     : jeff@contoso.local
+    [*] Type    : User
+[>] Verifying extra group SID(s).
+[*] BUILTIN\Administrators (SID : S-1-5-32-544) will be added as a group.
+[*] NT AUTHORITY\NETWORK SERVICE (SID : S-1-5-20) will be added as a group.
 [>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 2660
-[+] Impersonation is successful.
-[>] Trying to Kerberos S4U logon.
+[+] Got SYSTEM privileges.
+[>] Trying to S4U logon.
 [+] S4U logon is successful.
 [>] Trying to create a token assigned process.
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-Microsoft Windows [Version 10.0.18362.175]
-(c) 2019 Microsoft Corporation. All rights reserved.
+Try the new cross-platform PowerShell https://aka.ms/pscore6
 
-C:\Tools>whoami
-contoso\administrator
+PS C:\Tools> whoami /user
 
-C:\Tools>whoami /groups
+USER INFORMATION
+----------------
 
+User Name    SID
+============ =============================================
+contoso\jeff S-1-5-21-3654360273-254804765-2004310818-1105
+PS C:\Tools> whoami /groups                                                                                             
 GROUP INFORMATION
 -----------------
 
-Group Name                                     Type             SID                                          Attributes
-============================================== ================ ============================================ ===============================================================
-Everyone                                       Well-known group S-1-1-0                                      Mandatory group, Enabled by default, Enabled group
-BUILTIN\Users                                  Alias            S-1-5-32-545                                 Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                         Alias            S-1-5-32-544                                 Mandatory group, Enabled by default, Enabled group, Group owner
-NT AUTHORITY\NETWORK                           Well-known group S-1-5-2                                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users               Well-known group S-1-5-11                                     Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\This Organization                 Well-known group S-1-5-15                                     Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\SYSTEM                            Well-known group S-1-5-18                                     Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\LOCAL SERVICE                     Well-known group S-1-5-19                                     Mandatory group, Enabled by default, Enabled group
-CONTOSO\Group Policy Creator Owners            Group            S-1-5-21-3654360273-254804765-2004310818-520 Mandatory group, Enabled by default, Enabled group
-CONTOSO\Domain Admins                          Group            S-1-5-21-3654360273-254804765-2004310818-512 Mandatory group, Enabled by default, Enabled group
-CONTOSO\Schema Admins                          Group            S-1-5-21-3654360273-254804765-2004310818-518 Mandatory group, Enabled by default, Enabled group
-CONTOSO\Enterprise Admins                      Group            S-1-5-21-3654360273-254804765-2004310818-519 Mandatory group, Enabled by default, Enabled group
-Service asserted identity                      Well-known group S-1-18-2                                     Mandatory group, Enabled by default, Enabled group
-CONTOSO\Denied RODC Password Replication Group Alias            S-1-5-21-3654360273-254804765-2004310818-572 Mandatory group, Enabled by default, Enabled group, Local Group
-Mandatory Label\System Mandatory Level         Label            S-1-16-16384
+Group Name                             Type             SID                                           Attributes        
+====================================== ================ ============================================= ==================================================
+Everyone                               Well-known group S-1-1-0                                       Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                          Alias            S-1-5-32-545                                  Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                   Well-known group S-1-5-2                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization         Well-known group S-1-5-15                                      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                  Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK SERVICE           Well-known group S-1-5-20                                      Mandatory group, Enabled by default, Enabled group
+CONTOSO\ServerAdmins                   Group            S-1-5-21-3654360273-254804765-2004310818-1103 Mandatory group, Enabled by default, Enabled group
+Service asserted identity              Well-known group S-1-18-2                                      Mandatory group, Enabled by default, Enabled group
+Mandatory Label\System Mandatory Level Label            S-1-16-16384
 ```
 
+> __WARNING__
+>
+> If you try S4U logon with unprivileged account for target machine, you will get error `0xC0000142` (`STATUS_DLL_INIT_FAILED`) and command cannot be executed.
+> To avoid this problem, add privileged groups as extra groups with `-e` option.
+> 
+> Additionaly, some account cannot be specified as extra group (e.g. `NT SERVICE\TrustedInstaller`) for S4U logon.
+> If you set such group accounts as extra group, S4U logon will be failed with error `0x00000005` (`ERROR_ACCESS_DENIED`)
 
 
 ## SwitchPriv
