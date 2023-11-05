@@ -371,7 +371,7 @@ namespace S4uDelegator.Library
                         out sidType);
                 }
 
-                if (string.IsNullOrEmpty(samAccountName))
+                if (string.IsNullOrEmpty(samAccountName) || string.IsNullOrEmpty(stringSid))
                     break;
 
                 if (sidType == SID_NAME_USE.User)

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Xml.Linq;
 using S4uDelegator.Handler;
-using S4uDelegator.Interop;
-using S4uDelegator.Library;
 
 namespace S4uDelegator
 {
@@ -18,6 +15,7 @@ namespace S4uDelegator
                 options.AddFlag(false, "h", "help", "Displays this help message.");
                 options.AddFlag(false, "l", "lookup", "Flag to lookup account SID.");
                 options.AddFlag(false, "x", "execute", "Flag to execute command.");
+                options.AddParameter(false, "c", "command", "cmd.exe", "Specifies command to execute. Default is cmd.exe.");
                 options.AddParameter(false, "d", "domain", null, "Specifies domain name to lookup or S4U logon.");
                 options.AddParameter(false, "e", "extra", null, "Specifies group SIDs you want to add for S4U logon with comma separation.");
                 options.AddParameter(false, "n", "name", null, "Specifies account name to lookup or S4U logon.");
