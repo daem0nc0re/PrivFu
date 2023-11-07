@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using S4uDelegator.Handler;
-using S4uDelegator.Interop;
 
 namespace S4uDelegator
 {
@@ -8,6 +8,7 @@ namespace S4uDelegator
     {
         static void Main(string[] args)
         {
+            var exclusive = new List<string> { "lookup", "execute" };
             var options = new CommandLineParser();
 
             try
@@ -20,6 +21,7 @@ namespace S4uDelegator
                 options.AddParameter(false, "e", "extra", null, "Specifies group SIDs you want to add for S4U logon with comma separation.");
                 options.AddParameter(false, "n", "name", null, "Specifies account name to lookup or S4U logon.");
                 options.AddParameter(false, "s", "sid", null, "Specifies SID to lookup.");
+                options.AddExclusive(exclusive);
                 options.Parse(args);
 
                 Execute.Run(options);
