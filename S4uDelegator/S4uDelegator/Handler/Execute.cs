@@ -49,7 +49,7 @@ namespace S4uDelegator.Handler
                     }
                 }
 
-                Modules.GetShell(domain, name, stringSid, extraSids.ToArray());
+                Modules.GetShell(options.GetValue("command"), domain, name, stringSid, extraSids.ToArray());
             }
             else
             {

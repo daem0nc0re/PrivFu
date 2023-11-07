@@ -9,6 +9,7 @@ namespace S4uDelegator.Library
     internal class Modules
     {
         public static bool GetShell(
+            string command,
             string domain,
             string username,
             string sid,
@@ -172,7 +173,7 @@ namespace S4uDelegator.Library
                 status = NativeMethods.CreateProcessAsUser(
                     hPrimaryToken,
                     null,
-                    Environment.GetEnvironmentVariable("COMSPEC"),
+                    command,
                     IntPtr.Zero,
                     IntPtr.Zero,
                     false,
