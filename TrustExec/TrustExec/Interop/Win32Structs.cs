@@ -170,16 +170,6 @@ namespace TrustExec.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct SID
-    {
-        public byte Revision;
-        public byte SubAuthorityCount;
-        public SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-        public uint[] SubAuthority;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct SID_AND_ATTRIBUTES
     {
         public IntPtr Sid; // PSID
@@ -284,19 +274,25 @@ namespace TrustExec.Interop
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_SOURCE
     {
+
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
         public byte[] SourceName;
         public LUID SourceIdentifier;
 
-        public TOKEN_SOURCE(string sourceName)
+        public TOKEN_SOURCE(string name)
         {
-            var soureNameBytes = Encoding.ASCII.GetBytes(sourceName);
+            var random = new Random();
+            var soureNameBytes = Encoding.ASCII.GetBytes(name);
             int nSourceNameLength = (soureNameBytes.Length > 8) ? 8 : soureNameBytes.Length;
             SourceName = new byte[8];
-            SourceIdentifier = new LUID();
-
+            SourceIdentifier = new LUID
+            {
+                LowPart = random.Next(Int32.MinValue, Int32.MaxValue),
+                HighPart = random.Next(Int32.MinValue, Int32.MaxValue)
+            };
             Buffer.BlockCopy(soureNameBytes, 0, SourceName, 0, nSourceNameLength);
         }
     }

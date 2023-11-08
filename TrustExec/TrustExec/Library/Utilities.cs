@@ -14,9 +14,9 @@ namespace TrustExec.Library
         public static bool AddVirtualAccount(string domain, string username, int domainRid)
         {
             int error;
-            int ntstatus;
-            string domainSid = string.Format("S-1-5-{0}", domainRid);
-            string userSid = string.Format("S-1-5-{0}-110", domainRid);
+            NTSTATUS ntstatus;
+            var domainSid = string.Format("S-1-5-{0}", domainRid);
+            var userSid = string.Format("S-1-5-{0}-110", domainRid);
 
             if (string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(username))
             {
@@ -76,7 +76,8 @@ namespace TrustExec.Library
 
         public static bool CreateTokenAssignedProcess(IntPtr hToken, string command)
         {
-            var startupInfo = new STARTUPINFO {
+            var startupInfo = new STARTUPINFO
+            {
                 cb = Marshal.SizeOf(typeof(STARTUPINFO)),
                 lpDesktop = @"Winsta0\Default"
             };

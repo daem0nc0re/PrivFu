@@ -21,9 +21,6 @@ namespace TrustExec.Interop
             out int ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool AllocateLocallyUniqueId(out LUID Luid);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
 
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -62,9 +59,6 @@ namespace TrustExec.Interop
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool IsValidSid(IntPtr pSid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool LookupAccountName(
