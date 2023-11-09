@@ -117,7 +117,7 @@ namespace UserRightsUtil.Library
 
                     if (string.Compare(accountName, groupName, opt) == 0)
                     {
-                        strSid = Helpers.ConvertAccountNameToSidString(
+                        strSid = Helpers.ConvertAccountNameToStringSid(
                             ref accountName,
                             out _);
                         NativeMethods.ConvertStringSidToSid(strSid, out pSid);

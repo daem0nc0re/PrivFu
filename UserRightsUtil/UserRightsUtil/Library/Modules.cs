@@ -24,11 +24,11 @@ namespace UserRightsUtil.Library
             else if (!string.IsNullOrEmpty(username))
             {
                 if (!string.IsNullOrEmpty(domain))
-                    accountName = string.Format("{0}\\{1}", domain, username);
+                    accountName = string.Format(@"{0}\{1}", domain, username);
                 else
                     accountName = username;
 
-                strSid = Helpers.ConvertAccountNameToSidString(ref accountName, out peUse);
+                strSid = Helpers.ConvertAccountNameToStringSid(ref accountName, out peUse);
 
                 if (string.IsNullOrEmpty(strSid))
                 {
@@ -48,7 +48,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
+                accountName = Helpers.ConvertStringSidToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
@@ -154,7 +154,7 @@ namespace UserRightsUtil.Library
                 else
                     accountName = username;
 
-                strSid = Helpers.ConvertAccountNameToSidString(ref accountName, out peUse);
+                strSid = Helpers.ConvertAccountNameToStringSid(ref accountName, out peUse);
 
                 if (string.IsNullOrEmpty(strSid))
                 {
@@ -172,7 +172,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
+                accountName = Helpers.ConvertStringSidToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
@@ -239,7 +239,7 @@ namespace UserRightsUtil.Library
                 else
                     return false;
 
-                result = Helpers.ConvertAccountNameToSidString(
+                result = Helpers.ConvertAccountNameToStringSid(
                     ref accountName,
                     out SID_NAME_USE peUse);
 
@@ -263,9 +263,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(sid))
             {
-                result = Helpers.ConvertSidStringToAccountName(
-                    ref sid,
-                    out SID_NAME_USE peUse);
+                result = Helpers.ConvertStringSidToAccountName(ref sid, out SID_NAME_USE peUse);
 
                 if (!string.IsNullOrEmpty(result))
                 {
@@ -315,13 +313,11 @@ namespace UserRightsUtil.Library
             else if (!string.IsNullOrEmpty(username))
             {
                 if (!string.IsNullOrEmpty(domain))
-                    accountName = string.Format("{0}\\{1}", domain, username);
+                    accountName = string.Format(@"{0}\{1}", domain, username);
                 else
                     accountName = username;
 
-                strSid = Helpers.ConvertAccountNameToSidString(
-                    ref accountName,
-                    out peUse);
+                strSid = Helpers.ConvertAccountNameToStringSid(ref accountName, out peUse);
 
                 if (string.IsNullOrEmpty(strSid))
                 {
@@ -338,7 +334,7 @@ namespace UserRightsUtil.Library
             }
             else if (!string.IsNullOrEmpty(strSid))
             {
-                accountName = Helpers.ConvertSidStringToAccountName(ref strSid, out peUse);
+                accountName = Helpers.ConvertStringSidToAccountName(ref strSid, out peUse);
 
                 if (string.IsNullOrEmpty(accountName))
                 {
