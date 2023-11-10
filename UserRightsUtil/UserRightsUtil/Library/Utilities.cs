@@ -9,60 +9,58 @@ namespace UserRightsUtil.Library
 
     internal class Utilities
     {
-        public static List<Rights> GetUserRights(IntPtr pSid)
+        public static bool GetUserRights(IntPtr pSid, out List<Rights> rights)
         {
-            int ntstatus;
             IntPtr hLsa;
-            var userRight = new LSA_UNICODE_STRING();
-            IntPtr pUserRight;
-            Rights right;
-            var results = new List<Rights>();
-            var opt = StringComparison.OrdinalIgnoreCase;
-            IntPtr pInfo;
-            string accountName;
-            string groupName;
-            string strSid;
-            int resume_handle = 0;
-
-            accountName = Helpers.ConvertSidToAccountName(
+            string accountName = Helpers.ConvertSidToAccountName(
                 pSid,
                 out SID_NAME_USE peUse);
+            var status = false;
+            rights = new List<Rights>();
 
-            hLsa = GetSystemLsaHandle(
-                PolicyAccessRights.POLICY_LOOKUP_NAMES);
+            if (string.IsNullOrEmpty(accountName))
+                return false;
+
+            hLsa = GetSystemLsaHandle(PolicyAccessRights.POLICY_LOOKUP_NAMES);
 
             if (hLsa == IntPtr.Zero)
-                return results;
+                return false;
 
-            ntstatus = NativeMethods.LsaEnumerateAccountRights(
-                hLsa,
-                pSid,
-                out IntPtr pUserRightsBuffer,
-                out ulong count);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            do
             {
-                for (var idx = 0UL; idx < count; idx++)
+                string groupName;
+                int nUnitSize = Marshal.SizeOf(typeof(LSA_UNICODE_STRING));
+                var pResumeHandle = IntPtr.Zero;
+                NTSTATUS ntstatus = NativeMethods.LsaEnumerateAccountRights(
+                    hLsa,
+                    pSid,
+                    out IntPtr pUserRightsBuffer,
+                    out uint nUserRightsCount);
+
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 {
-                    pUserRight = new IntPtr(
-                                pUserRightsBuffer.ToInt64() +
-                                (long)idx * Marshal.SizeOf(userRight));
+                    for (var idx = 0; idx < (int)nUserRightsCount; idx++)
+                    {
+                        IntPtr pUserRight;
 
-                    userRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
-                        pUserRight,
-                        typeof(LSA_UNICODE_STRING));
+                        if (Environment.Is64BitProcess)
+                            pUserRight = new IntPtr(pUserRightsBuffer.ToInt64() + (idx * nUnitSize));
+                        else
+                            pUserRight = new IntPtr(pUserRightsBuffer.ToInt32() + (idx * nUnitSize));
 
-                    right = (Rights)Enum.Parse(
-                        typeof(Rights),
-                        userRight.Buffer);
+                        var userRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
+                            pUserRight,
+                            typeof(LSA_UNICODE_STRING));
+                        var right = (Rights)Enum.Parse(typeof(Rights), userRight.ToString());
 
-                    if (!results.Contains(right))
-                        results.Add(right);
+                        if (!rights.Contains(right))
+                            rights.Add(right);
+                    }
                 }
-            }
 
-            if (peUse != SID_NAME_USE.Alias)
-            {
+                if (peUse == SID_NAME_USE.Alias)
+                    break;
+
                 ntstatus = NativeMethods.NetUserGetLocalGroups(
                     Environment.MachineName,
                     accountName,
@@ -73,90 +71,75 @@ namespace UserRightsUtil.Library
                     out int _,
                     out int _);
 
-                if (ntstatus != Win32Consts.NERR_Success)
-                {
-                    NativeMethods.LsaClose(hLsa);
-
-                    return results;
-                }
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
 
                 ntstatus = NativeMethods.NetLocalGroupEnum(
                     Environment.MachineName,
                     0,
                     out IntPtr pLocalGroups,
                     Win32Consts.MAX_PREFERRED_LENGTH,
-                    out int entriesread,
+                    out int nEntries,
                     out int _,
-                    ref resume_handle);
+                    ref pResumeHandle);
 
-                if (ntstatus != Win32Consts.NERR_Success)
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
                 {
-                    NativeMethods.LsaClose(hLsa);
-
-                    return results;
+                    NativeMethods.NetApiBufferFree(pLocalGroupUserInfo);
+                    break;
                 }
 
-                try
-                {
-                    groupName = Marshal.PtrToStringUni(
-                        Marshal.ReadIntPtr(pLocalGroupUserInfo));
-                }
-                catch
-                {
-                    NativeMethods.LsaClose(hLsa);
+                groupName = Marshal.PtrToStringUni(Marshal.ReadIntPtr(pLocalGroupUserInfo));
 
-                    return results;
-                }
-
-                for (var num = 0; num < entriesread; num++)
+                for (var idx = 0; idx < nEntries; idx++)
                 {
-                    pInfo = new IntPtr(
-                        pLocalGroups.ToInt64() + num * IntPtr.Size);
-                    accountName = Marshal.PtrToStringUni(
-                        Marshal.ReadIntPtr(pInfo));
+                    IntPtr pAccountName = Marshal.ReadIntPtr(pLocalGroups, (idx * IntPtr.Size));
+                    accountName = Marshal.PtrToStringUni(pAccountName);
 
-                    if (string.Compare(accountName, groupName, opt) == 0)
+                    if (Helpers.CompareIgnoreCase(accountName, groupName))
                     {
-                        strSid = Helpers.ConvertAccountNameToStringSid(
+                        string stringSid = Helpers.ConvertAccountNameToStringSid(
                             ref accountName,
-                            out _);
-                        NativeMethods.ConvertStringSidToSid(strSid, out pSid);
+                            out SID_NAME_USE _);
+                        NativeMethods.ConvertStringSidToSid(stringSid, out IntPtr pSidBytes);
 
-                        NativeMethods.LsaEnumerateAccountRights(
+                        ntstatus = NativeMethods.LsaEnumerateAccountRights(
                             hLsa,
-                            pSid,
-                            out pUserRightsBuffer,
-                            out count);
+                            pSidBytes,
+                            out IntPtr pGroupRightsBuffer,
+                            out uint nGroupRightsCount);
+                        NativeMethods.LocalFree(pSidBytes);
 
-                        for (var idx = 0UL; idx < count; idx++)
+                        if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                            break;
+
+                        for (var num = 0; num < (int)nGroupRightsCount; num++)
                         {
-                            pUserRight = new IntPtr(
-                                pUserRightsBuffer.ToInt64() +
-                                (long)idx * Marshal.SizeOf(userRight));
+                            IntPtr pGroupRight;
 
-                            userRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
-                                pUserRight,
+                            if (Environment.Is64BitProcess)
+                                pGroupRight = new IntPtr(pGroupRightsBuffer.ToInt64() + (num * nUnitSize));
+                            else
+                                pGroupRight = new IntPtr(pGroupRightsBuffer.ToInt32() + (num * nUnitSize));
+
+                            var groupRight = (LSA_UNICODE_STRING)Marshal.PtrToStructure(
+                                pGroupRight,
                                 typeof(LSA_UNICODE_STRING));
+                            var right = (Rights)Enum.Parse(typeof(Rights), groupRight.ToString());
 
-                            right = (Rights)Enum.Parse(
-                                typeof(Rights),
-                                userRight.Buffer);
-
-                            if (!results.Contains(right))
-                                results.Add(right);
+                            if (!rights.Contains(right))
+                                rights.Add(right);
                         }
-
-                        NativeMethods.LocalFree(pSid);
                     }
                 }
 
                 NativeMethods.NetApiBufferFree(pLocalGroups);
                 NativeMethods.NetApiBufferFree(pLocalGroupUserInfo);
-            }
+            } while (false);
 
             NativeMethods.LsaClose(hLsa);
 
-            return results;
+            return status;
         }
 
 

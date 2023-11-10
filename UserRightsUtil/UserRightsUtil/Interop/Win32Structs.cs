@@ -15,30 +15,36 @@ namespace UserRightsUtil.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct LSA_UNICODE_STRING
+    internal struct LSA_UNICODE_STRING : IDisposable
     {
-        ushort Length;
-        ushort MaximumLength;
-        [MarshalAs(UnmanagedType.LPWStr)]
-        public string Buffer;
+        public ushort Length;
+        public ushort MaximumLength;
+        private IntPtr buffer;
 
-        public LSA_UNICODE_STRING(string str)
+        public LSA_UNICODE_STRING(string s)
         {
-            Length = 0;
-            MaximumLength = 0;
-            Buffer = null;
-            SetString(str);
+            Length = (ushort)(s.Length * 2);
+            MaximumLength = (ushort)(Length + 2);
+            buffer = Marshal.StringToHGlobalUni(s);
         }
 
-        public void SetString(string str)
+        public void Dispose()
         {
-            if (str.Length > (ushort.MaxValue - 2) / 2)
-            {
-                throw new ArgumentException("String too long for UnicodeString");
-            }
-            Length = (ushort)(str.Length * 2);
-            MaximumLength = (ushort)((str.Length * 2) + 2);
-            Buffer = str;
+            Marshal.FreeHGlobal(buffer);
+            buffer = IntPtr.Zero;
+        }
+
+        public void SetBuffer(IntPtr _buffer)
+        {
+            buffer = _buffer;
+        }
+
+        public override string ToString()
+        {
+            if ((Length == 0) || (buffer == IntPtr.Zero))
+                return null;
+            else
+                return Marshal.PtrToStringUni(buffer, Length / 2);
         }
     }
 }

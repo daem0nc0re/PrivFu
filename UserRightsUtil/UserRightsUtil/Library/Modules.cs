@@ -11,7 +11,6 @@ namespace UserRightsUtil.Library
             string username,
             string strSid)
         {
-            List<Rights> userRights;
             string accountName;
             SID_NAME_USE peUse;
 
@@ -81,7 +80,7 @@ namespace UserRightsUtil.Library
 
             NativeMethods.ConvertStringSidToSid(strSid, out IntPtr pSid);
 
-            userRights = Utilities.GetUserRights(pSid);
+            Utilities.GetUserRights(pSid, out List<Rights> userRights);
 
             if (userRights.Count > 0)
             {

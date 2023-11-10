@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using UserRightsUtil.Interop;
 
 namespace UserRightsUtil.Library
@@ -198,13 +197,6 @@ namespace UserRightsUtil.Library
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             else
                 return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
-        }
-
-
-        public static void ZeroMemory(IntPtr buffer, int size)
-        {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
         }
     }
 }
