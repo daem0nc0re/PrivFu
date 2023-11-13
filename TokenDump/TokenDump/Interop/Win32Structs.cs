@@ -138,6 +138,23 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct KEY_FULL_INFORMATION
+    {
+        public LARGE_INTEGER LastWriteTime;
+        public uint TitleIndex;
+        public uint ClassOffset;
+        public uint ClassLength;
+        public uint SubKeys;
+        public uint MaxNameLen;
+        public uint MaxClassLen;
+        public uint Values;
+        public uint MaxValueNameLen;
+        public uint MaxValueDataLen;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+        public ushort[] /* WCHAR[] */ Class;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct KEY_NAME_INFORMATION
     {
         public uint NameLength;
@@ -155,23 +172,6 @@ namespace TokenDump.Interop
         public uint NameLength;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public ushort[] /* WCHAR[] */ Name;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct KEY_FULL_INFORMATION
-    {
-        public LARGE_INTEGER LastWriteTime;
-        public uint TitleIndex;
-        public uint ClassOffset;
-        public uint ClassLength;
-        public uint SubKeys;
-        public uint MaxNameLen;
-        public uint MaxClassLen;
-        public uint Values;
-        public uint MaxValueNameLen;
-        public uint MaxValueDataLen;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-        public ushort[] /* WCHAR[] */ Class;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 8)]
@@ -574,6 +574,17 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct THREAD_BASIC_INFORMATION
+    {
+        public NTSTATUS ExitStatus;
+        public IntPtr TebBaseAddress;
+        public CLIENT_ID ClientId;
+        public UIntPtr /* KAFFINITY */ AffinityMask;
+        public int /* KPRIORITY */ Priority;
+        public int /* KPRIORITY */ BasePriority;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_ACCESS_INFORMATION
     {
         public IntPtr /* PSID_AND_ATTRIBUTES_HASH */ SidHash;
@@ -627,6 +638,12 @@ namespace TokenDump.Interop
     internal struct TOKEN_LINKED_TOKEN
     {
         public IntPtr LinkedToken;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct TOKEN_MANDATORY_LABEL
+    {
+        public SID_AND_ATTRIBUTES Label;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -744,23 +761,6 @@ namespace TokenDump.Interop
     internal struct TOKEN_USER
     {
         public SID_AND_ATTRIBUTES User;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_MANDATORY_LABEL
-    {
-        public SID_AND_ATTRIBUTES Label;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct THREAD_BASIC_INFORMATION
-    {
-        public NTSTATUS ExitStatus;
-        public IntPtr TebBaseAddress;
-        public CLIENT_ID ClientId;
-        public UIntPtr /* KAFFINITY */ AffinityMask;
-        public int /* KPRIORITY */ Priority;
-        public int /* KPRIORITY */ BasePriority;
     }
 
     [StructLayout(LayoutKind.Sequential)]
