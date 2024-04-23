@@ -1,0 +1,8 @@
+.DS_Store
+bin/
+obj/
+.vs/
+x64/
+ARM64/
+Debug/
+Release/
