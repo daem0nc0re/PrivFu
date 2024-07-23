@@ -2048,7 +2048,7 @@ PS C:\Dev> .\TokenAssignor.exe -p 688 -m 0
 [+] Got a impersonation token from winlogon.exe (Handle = 0x2E0).
 [+] Impersonation as winlogon.exe is successful.
 [+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 9552).
-[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18).
 Microsoft Windows [Version 10.0.22631.2428]
 (c) Microsoft Corporation. All rights reserved.
 
@@ -2117,7 +2117,7 @@ PS C:\Dev> .\TokenAssignor.exe -p 688 -m 2
 [+] SeImpersonatePrivilege is enabled successfully.
 [+] Got a primary token from PID 688 (Handle = 0x2C4).
 [+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 5832).
-[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18).
 
 PS C:\Dev>
 
@@ -2151,7 +2151,7 @@ PS C:\Dev> .\TokenAssignor.exe -p 688 -m 3
 [+] Got a handle from PID 688 (Handle = 0x2C4).
 [+] Thread attribute is built successfully.
 [+] "C:\Windows\system32\cmd.exe" is executed successfully (PID = 4852).
-[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18)
+[*] User of the created process is NT AUTHORITY\SYSTEM (SID: S-1-5-18).
 
 PS C:\Dev>
 

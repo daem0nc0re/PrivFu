@@ -146,7 +146,7 @@ namespace TokenAssignor.Library
                     out string stringSid,
                     out string accountName,
                     out SID_NAME_USE _);
-                Console.WriteLine("[*] User of the created process is {0} (SID: {1})",
+                Console.WriteLine("[*] User of the created process is {0} (SID: {1}).",
                     accountName ?? "N/A",
                     stringSid ?? "N/A");
                 NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
@@ -312,7 +312,7 @@ namespace TokenAssignor.Library
                     out string stringSid,
                     out string accountName,
                     out SID_NAME_USE _);
-                Console.WriteLine("[*] User of the created process is {0} (SID: {1})",
+                Console.WriteLine("[*] User of the created process is {0} (SID: {1}).",
                     accountName ?? "N/A",
                     stringSid ?? "N/A");
                 NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
@@ -409,7 +409,7 @@ namespace TokenAssignor.Library
                     out string stringSid,
                     out string accountName,
                     out SID_NAME_USE _);
-                Console.WriteLine("[*] User of the created process is {0} (SID: {1})",
+                Console.WriteLine("[*] User of the created process is {0} (SID: {1}).",
                     accountName ?? "N/A",
                     stringSid ?? "N/A");
                 NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
