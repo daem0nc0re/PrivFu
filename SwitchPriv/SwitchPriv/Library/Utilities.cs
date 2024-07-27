@@ -198,7 +198,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_DUPLICATE,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                     break;
@@ -210,14 +210,14 @@ namespace SwitchPriv.Library
                     SECURITY_IMPERSONATION_LEVEL.Impersonation,
                     TOKEN_TYPE.TokenImpersonation,
                     out IntPtr hDupToken);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 if (!status)
                     break;
 
                 EnableTokenPrivileges(hDupToken, privs, out Dictionary<string, bool> _);
                 status = ImpersonateThreadToken(hDupToken);
-                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.NtClose(hDupToken);
             } while (false);
 
             return status;
@@ -357,7 +357,7 @@ namespace SwitchPriv.Library
                     }
                 };
                 Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);
-                nBufferSize += NativeMethods.GetLengthSid(pSid);
+                nBufferSize += 8 + (4 * Marshal.ReadByte(pSid, 1)); // SID Length
 
                 ntstatus = NativeMethods.NtSetInformationToken(
                     hToken,

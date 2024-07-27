@@ -55,7 +55,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -83,7 +83,7 @@ namespace SwitchPriv.Library
                     hToken,
                     privsToDisable,
                     out Dictionary<string, bool> adjustedPrivs);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in adjustedPrivs)
                 {
@@ -156,7 +156,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -203,7 +203,7 @@ namespace SwitchPriv.Library
                     hToken,
                     new List<string> { privilegeName },
                     out Dictionary<string, bool> adjustedPrivs);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in adjustedPrivs)
                 {
@@ -269,7 +269,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -297,7 +297,7 @@ namespace SwitchPriv.Library
                     hToken,
                     privsToEnable,
                     out Dictionary<string, bool> adjustedPrivs);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in adjustedPrivs)
                 {
@@ -370,7 +370,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -417,7 +417,7 @@ namespace SwitchPriv.Library
                     hToken,
                     new List<string> { privilegeName },
                     out Dictionary<string, bool> adjustedPrivs);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in adjustedPrivs)
                 {
@@ -491,7 +491,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -534,7 +534,7 @@ namespace SwitchPriv.Library
                     hToken,
                     privsToRemove,
                     out Dictionary<string, bool> operationStatus);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in operationStatus)
                 {
@@ -600,7 +600,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -656,7 +656,7 @@ namespace SwitchPriv.Library
                 }
 
                 resultsBuilder.AppendFormat("[*] Integrity Level : {0}", Helpers.GetTokenIntegrityLevelString(hToken));
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 Console.WriteLine(resultsBuilder.ToString());
                 resultsBuilder.Clear();
@@ -675,8 +675,8 @@ namespace SwitchPriv.Library
         {
             var status = false;
             var requiredPrivs = new List<string> {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
+                SE_PRIVILEGE_ID.SeDebugPrivilege.ToString(),
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege.ToString()
             };
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
@@ -751,7 +751,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -778,7 +778,7 @@ namespace SwitchPriv.Library
                     hToken,
                     privsToRemove,
                     out Dictionary<string, bool> operationStatus);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in operationStatus)
                 {
@@ -851,7 +851,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -892,7 +892,7 @@ namespace SwitchPriv.Library
                     hToken,
                     new List<string> { privilegeName },
                     out Dictionary<string, bool> operationStatus);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 foreach (var priv in operationStatus)
                 {
@@ -977,7 +977,7 @@ namespace SwitchPriv.Library
                     }
 
                     status = NativeMethods.OpenProcessToken(hProcess, TokenAccessFlags.TOKEN_QUERY, out IntPtr hToken);
-                    NativeMethods.CloseHandle(hProcess);
+                    NativeMethods.NtClose(hProcess);
 
                     if (!status)
                     {
@@ -986,7 +986,7 @@ namespace SwitchPriv.Library
                     }
 
                     Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs);
-                    NativeMethods.CloseHandle(hToken);
+                    NativeMethods.NtClose(hToken);
 
                     foreach (var priv in privs.Keys)
                     {
@@ -1104,7 +1104,7 @@ namespace SwitchPriv.Library
                     hProcess,
                     TokenAccessFlags.TOKEN_ADJUST_DEFAULT,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                 {
@@ -1117,7 +1117,7 @@ namespace SwitchPriv.Library
                 Console.WriteLine("[>] Trying to update Integrity Level to {0}.", ((MANDATORY_LEVEL_INDEX)integrityLevelIndex).ToString());
 
                 status = Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 if (status)
                     Console.WriteLine("[+] Integrity Level is updated successfully.");
