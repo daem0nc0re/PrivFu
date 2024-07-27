@@ -26,7 +26,7 @@ namespace SwitchPriv.Library
 
                 allDisabled = Helpers.GetTokenPrivileges(
                     hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                    out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (!allDisabled)
                     break;
@@ -37,7 +37,7 @@ namespace SwitchPriv.Library
 
                     foreach (var available in availablePrivs)
                     {
-                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        if (Helpers.CompareIgnoreCase(available.Key.ToString(), priv))
                         {
                             if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                             {
@@ -108,7 +108,7 @@ namespace SwitchPriv.Library
 
                 allEnabled = Helpers.GetTokenPrivileges(
                     hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                    out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (!allEnabled)
                     break;
@@ -119,7 +119,7 @@ namespace SwitchPriv.Library
 
                     foreach (var available in availablePrivs)
                     {
-                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        if (Helpers.CompareIgnoreCase(available.Key.ToString(), priv))
                         {
                             if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                             {
@@ -267,7 +267,7 @@ namespace SwitchPriv.Library
 
                 allRemoved = Helpers.GetTokenPrivileges(
                     hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                    out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (!allRemoved)
                     break;
@@ -278,7 +278,7 @@ namespace SwitchPriv.Library
 
                     foreach (var available in availablePrivs)
                     {
-                        if (Helpers.CompareIgnoreCase(available.Key, priv))
+                        if (Helpers.CompareIgnoreCase(available.Key.ToString(), priv))
                         {
                             IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
                             var tokenPrivileges = new TOKEN_PRIVILEGES(1);

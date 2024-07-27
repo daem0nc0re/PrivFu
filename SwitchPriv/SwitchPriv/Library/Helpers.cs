@@ -139,7 +139,7 @@ namespace SwitchPriv.Library
 
         public static bool GetTokenPrivileges(
             IntPtr hToken,
-            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
+            out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
             var nOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
             var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
@@ -151,7 +151,7 @@ namespace SwitchPriv.Library
                 pInfoBuffer,
                 nInfoLength,
                 out uint _);
-            privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
+            privileges = new Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES>();
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
@@ -160,7 +160,7 @@ namespace SwitchPriv.Library
                 for (var idx = 0; idx < nPrivilegeCount; idx++)
                 {
                     privileges.Add(
-                        ((SE_PRIVILEGE_ID)Marshal.ReadInt32(pInfoBuffer, nOffset)).ToString(),
+                        (SE_PRIVILEGE_ID)Marshal.ReadInt32(pInfoBuffer, nOffset),
                         (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(pInfoBuffer, nOffset + 8));
                     nOffset += nUnitSize;
                 }

@@ -65,12 +65,12 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
                     if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
-                        privsToDisable.Add(priv.Key);
+                        privsToDisable.Add(priv.Key.ToString());
                 }
 
                 if (privsToDisable.Count == 0)
@@ -125,7 +125,7 @@ namespace SwitchPriv.Library
             {
                 int error;
                 IntPtr hProcess;
-                var candidatePrivs = new List<string>();
+                var candidatePrivs = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to disable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
@@ -166,11 +166,11 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                    if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
                         candidatePrivs.Add(priv.Key);
                 }
 
@@ -190,11 +190,11 @@ namespace SwitchPriv.Library
                 }
                 else
                 {
-                    privilegeName = candidatePrivs[0];
+                    privilegeName = candidatePrivs[0].ToString();
 
-                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
+                    if ((availablePrivs[candidatePrivs[0]] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                     {
-                        Console.WriteLine("[*] {0} is already disabled.", privilegeName);
+                        Console.WriteLine("[*] {0} is already disabled.", candidatePrivs[0].ToString());
                         break;
                     }
                 }
@@ -279,12 +279,12 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
                     if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
-                        privsToEnable.Add(priv.Key);
+                        privsToEnable.Add(priv.Key.ToString());
                 }
 
                 if (privsToEnable.Count == 0)
@@ -339,7 +339,7 @@ namespace SwitchPriv.Library
             {
                 int error;
                 IntPtr hProcess;
-                var candidatePrivs = new List<string>();
+                var candidatePrivs = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to enable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
@@ -380,11 +380,11 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                    if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
                         candidatePrivs.Add(priv.Key);
                 }
 
@@ -404,11 +404,11 @@ namespace SwitchPriv.Library
                 }
                 else
                 {
-                    privilegeName = candidatePrivs[0];
+                    privilegeName = candidatePrivs[0].ToString();
 
-                    if ((availablePrivs[privilegeName] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
+                    if ((availablePrivs[candidatePrivs[0]] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                     {
-                        Console.WriteLine("[*] {0} is already enabled.", privilegeName);
+                        Console.WriteLine("[*] {0} is already enabled.", candidatePrivs[0].ToString());
                         break;
                     }
                 }
@@ -501,14 +501,14 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        candidatePrivs.Add(priv.Key);
+                    if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key.ToString());
                     else
-                        privsToRemove.Add(priv.Key);
+                        privsToRemove.Add(priv.Key.ToString());
                 }
 
                 if (candidatePrivs.Count == 0)
@@ -610,7 +610,7 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                status = Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                status = Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (availablePrivs.Count > 0)
                 {
@@ -628,10 +628,10 @@ namespace SwitchPriv.Library
                         if (priv.Value == SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault)
                             infoState = "EnabledByDefault, Disabled";
 
-                        infoToPrint.Add(priv.Key, infoState);
+                        infoToPrint.Add(priv.Key.ToString(), infoState);
 
-                        if (priv.Key.Length > widths[0])
-                            widths[0] = priv.Key.Length;
+                        if (priv.Key.ToString().Length > widths[0])
+                            widths[0] = priv.Key.ToString().Length;
 
                         if (infoState.Length > widths[1])
                             widths[1] = infoState.Length;
@@ -761,7 +761,7 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 if (availablePrivs.Count == 0)
                 {
@@ -771,7 +771,7 @@ namespace SwitchPriv.Library
                 else
                 {
                     foreach (var priv in availablePrivs)
-                        privsToRemove.Add(priv.Key);
+                        privsToRemove.Add(priv.Key.ToString());
                 }
 
                 status = Utilities.RemoveTokenPrivileges(
@@ -861,12 +861,12 @@ namespace SwitchPriv.Library
                     break;
                 }
 
-                Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+                Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (priv.Key.IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        candidatePrivs.Add(priv.Key);
+                    if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        candidatePrivs.Add(priv.Key.ToString());
                 }
 
                 if (candidatePrivs.Count == 0)
@@ -985,12 +985,12 @@ namespace SwitchPriv.Library
                         continue;
                     }
 
-                    Helpers.GetTokenPrivileges(hToken, out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs);
+                    Helpers.GetTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs);
                     NativeMethods.CloseHandle(hToken);
 
                     foreach (var priv in privs.Keys)
                     {
-                        if (Helpers.CompareIgnoreCase(priv, privilegeName))
+                        if (Helpers.CompareIgnoreCase(priv.ToString(), privilegeName))
                         {
                             privilegedProcesses.Add(proc.Id, proc.ProcessName);
                             break;
