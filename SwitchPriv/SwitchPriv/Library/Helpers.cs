@@ -172,19 +172,6 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetPrivilegeName(LUID priv)
-        {
-            string privilegeName = null;
-            int cchName = 255;
-            var name = new StringBuilder(cchName);
-
-            if (NativeMethods.LookupPrivilegeName(null, in priv, name, ref cchName))
-                privilegeName = name.ToString();
-
-            return privilegeName;
-        }
-
-
         public static string GetWin32ErrorMessage(int code, bool isNtStatus)
         {
             int nReturnedLength;
@@ -242,13 +229,6 @@ namespace SwitchPriv.Library
             outputBuilder.Append("Protected and Secure level should not be available, but left for research purpose.\n\n");
 
             Console.WriteLine(outputBuilder.ToString());
-        }
-
-
-        public static void ZeroMemory(IntPtr pBuffer, int nSize)
-        {
-            for (var offset = 0; offset < nSize; offset++)
-                Marshal.WriteByte(pBuffer, offset, 0);
         }
     }
 }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace SwitchPriv.Interop
@@ -51,13 +49,6 @@ namespace SwitchPriv.Interop
             StringBuilder pReferencedDomainName,
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool LookupPrivilegeName(
-            string lpSystemName,
-            in LUID lpLuid,
-            StringBuilder lpName,
-            ref int cchName);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupPrivilegeValue(
