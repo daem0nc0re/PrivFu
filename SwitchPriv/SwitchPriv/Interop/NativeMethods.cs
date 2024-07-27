@@ -23,9 +23,6 @@ namespace SwitchPriv.Interop
             out int ReturnLength);
 
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertStringSidToSid(
             string StringSid,
             out IntPtr pSid);

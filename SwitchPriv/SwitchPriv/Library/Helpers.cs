@@ -50,53 +50,15 @@ namespace SwitchPriv.Library
             string filter,
             out List<string> candidatePrivs)
         {
-            var validNames = new List<string>
-            {
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Consts.SE_AUDIT_NAME,
-                Win32Consts.SE_BACKUP_NAME,
-                Win32Consts.SE_CHANGE_NOTIFY_NAME,
-                Win32Consts.SE_CREATE_GLOBAL_NAME,
-                Win32Consts.SE_CREATE_PAGEFILE_NAME,
-                Win32Consts.SE_CREATE_PERMANENT_NAME,
-                Win32Consts.SE_CREATE_SYMBOLIC_LINK_NAME,
-                Win32Consts.SE_CREATE_TOKEN_NAME,
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME,
-                Win32Consts.SE_ENABLE_DELEGATION_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME,
-                Win32Consts.SE_INCREASE_BASE_PRIORITY_NAME,
-                Win32Consts.SE_INCREASE_QUOTA_NAME,
-                Win32Consts.SE_INCREASE_WORKING_SET_NAME,
-                Win32Consts.SE_LOAD_DRIVER_NAME,
-                Win32Consts.SE_LOCK_MEMORY_NAME,
-                Win32Consts.SE_MACHINE_ACCOUNT_NAME,
-                Win32Consts.SE_MANAGE_VOLUME_NAME,
-                Win32Consts.SE_PROFILE_SINGLE_PROCESS_NAME,
-                Win32Consts.SE_RELABEL_NAME,
-                Win32Consts.SE_REMOTE_SHUTDOWN_NAME,
-                Win32Consts.SE_RESTORE_NAME,
-                Win32Consts.SE_SECURITY_NAME,
-                Win32Consts.SE_SHUTDOWN_NAME,
-                Win32Consts.SE_SYNC_AGENT_NAME,
-                Win32Consts.SE_SYSTEMTIME_NAME,
-                Win32Consts.SE_SYSTEM_ENVIRONMENT_NAME,
-                Win32Consts.SE_SYSTEM_PROFILE_NAME,
-                Win32Consts.SE_TAKE_OWNERSHIP_NAME,
-                Win32Consts.SE_TCB_NAME,
-                Win32Consts.SE_TIME_ZONE_NAME,
-                Win32Consts.SE_TRUSTED_CREDMAN_ACCESS_NAME,
-                Win32Consts.SE_UNDOCK_NAME
-            };
             candidatePrivs = new List<string>();
 
             if (string.IsNullOrEmpty(filter))
                 return false;
 
-            foreach (var priv in validNames)
+            for (var priv = SE_PRIVILEGE_ID.MinimumIndex; priv < SE_PRIVILEGE_ID.MaximumCount; priv++)
             {
-                if (priv.IndexOf(filter, StringComparison.OrdinalIgnoreCase) != -1)
-                    candidatePrivs.Add(priv);
+                if (priv.ToString().IndexOf(filter, StringComparison.OrdinalIgnoreCase) != -1)
+                    candidatePrivs.Add(priv.ToString());
             }
 
             return true;
