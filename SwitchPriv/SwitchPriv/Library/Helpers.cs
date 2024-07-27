@@ -141,50 +141,32 @@ namespace SwitchPriv.Library
             IntPtr hToken,
             out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
-            NTSTATUS ntstatus;
-            IntPtr pInformationBuffer;
-            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+            var nOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+            var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+            var nInfoLength = (uint)(nOffset + (nUnitSize * 36));
+            var pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
             privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
-
-            do
-            {
-                pInformationBuffer = Marshal.AllocHGlobal((int)nInformationLength);
-                ntstatus = NativeMethods.NtQueryInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
-                    pInformationBuffer,
-                    nInformationLength,
-                    out nInformationLength);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(pInformationBuffer);
-            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
-                var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                    pInformationBuffer,
-                    typeof(TOKEN_PRIVILEGES));
-                var nEntryOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
-                var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+                int nPrivilegeCount = Marshal.ReadInt32(pInfoBuffer);
 
-                for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
+                for (var idx = 0; idx < nPrivilegeCount; idx++)
                 {
-                    int cchName = 128;
-                    var stringBuilder = new StringBuilder(cchName);
-                    var luid = LUID.FromInt64(Marshal.ReadInt64(pInformationBuffer, nEntryOffset + (nUnitSize * idx)));
-                    var nAttributesOffset = Marshal.OffsetOf(typeof(LUID_AND_ATTRIBUTES), "Attributes").ToInt32();
-                    var attributes = (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(
-                        pInformationBuffer,
-                        nEntryOffset + (nUnitSize * idx) + nAttributesOffset);
-
-                    NativeMethods.LookupPrivilegeName(null, in luid, stringBuilder, ref cchName);
-                    privileges.Add(stringBuilder.ToString(), attributes);
-                    stringBuilder.Clear();
+                    privileges.Add(
+                        ((SE_PRIVILEGE_ID)Marshal.ReadInt32(pInfoBuffer, nOffset)).ToString(),
+                        (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(pInfoBuffer, nOffset + 8));
+                    nOffset += nUnitSize;
                 }
-
-                Marshal.FreeHGlobal(pInformationBuffer);
             }
+
+            Marshal.FreeHGlobal(pInfoBuffer);
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
