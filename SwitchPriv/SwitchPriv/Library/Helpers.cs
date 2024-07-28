@@ -18,34 +18,6 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string ConvertIntegrityLeveSidToAccountName(IntPtr pSid)
-        {
-            string integrityLevel = "N/A";
-
-            // Verify SID = S-1-16-XXXX
-            if (Marshal.ReadInt64(pSid) == 0x10000000_00000101L)
-            {
-                int nNameLength = 255;
-                int nDomainNameLength = 255;
-                var nameBuilder = new StringBuilder(nNameLength);
-                var domainNameBuilder = new StringBuilder(nDomainNameLength);
-                var status = NativeMethods.LookupAccountSid(
-                    null,
-                    pSid,
-                    nameBuilder,
-                    ref nNameLength,
-                    domainNameBuilder,
-                    ref nDomainNameLength,
-                    out SID_NAME_USE _);
-
-                if (status)
-                    integrityLevel = nameBuilder.ToString();
-            }
-
-            return integrityLevel;
-        }
-
-
         public static bool GetFullPrivilegeName(
             string filter,
             out List<string> candidatePrivs)
@@ -99,41 +71,86 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetTokenIntegrityLevelString(IntPtr hToken)
+        public static bool GetSidAccountName(
+            IntPtr pSid,
+            out string stringSid,
+            out string accountName,
+            out SID_NAME_USE sidType)
         {
-            NTSTATUS ntstatus;
-            bool status;
-            IntPtr pInfoBuffer;
-            string integrityLevel = "N/A";
-            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
+            bool bSuccess;
+            long nAuthority = 0;
+            var nSubAuthorityCount = (int)Marshal.ReadByte(pSid, 1);
+            var stringSidBuilder = new StringBuilder("S-1");
+            var nameBuilder = new StringBuilder(255);
+            var domainBuilder = new StringBuilder(255);
+            int nNameLength = 255;
+            int nDomainLength = 255;
+            accountName = null;
 
-            do
+            for (int idx = 0; idx < 6; idx++)
             {
-                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-
-                ntstatus = NativeMethods.NtQueryInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-                    pInfoBuffer,
-                    nInfoLength,
-                    out nInfoLength);
-                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
-
-                if (!status)
-                    Marshal.FreeHGlobal(pInfoBuffer);
-            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
-
-            if (status)
-            {
-                var mandatoryLabel = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
-                    pInfoBuffer,
-                    typeof(TOKEN_MANDATORY_LABEL));
-                integrityLevel = ConvertIntegrityLeveSidToAccountName(mandatoryLabel.Label.Sid);
-
-                Marshal.FreeHGlobal(pInfoBuffer);
+                nAuthority <<= 8;
+                nAuthority |= (long)Marshal.ReadByte(pSid, 2 + idx);
             }
 
-            return integrityLevel;
+            stringSidBuilder.AppendFormat("-{0}", nAuthority);
+
+            for (int idx = 0; idx < nSubAuthorityCount; idx++)
+                stringSidBuilder.AppendFormat("-{0}", Marshal.ReadInt32(pSid, 8 + (idx * 4)));
+
+            stringSid = stringSidBuilder.ToString();
+            bSuccess = NativeMethods.LookupAccountSid(
+                null,
+                pSid,
+                nameBuilder,
+                ref nNameLength,
+                domainBuilder,
+                ref nDomainLength,
+                out sidType);
+
+            if (bSuccess)
+            {
+                if ((nNameLength > 0) && (nDomainLength > 0))
+                    accountName = string.Format(@"{0}\{1}", domainBuilder.ToString(), nameBuilder.ToString());
+                else if (nNameLength > 0)
+                    accountName = nameBuilder.ToString();
+                else if (nDomainLength > 0)
+                    accountName = domainBuilder.ToString();
+            }
+
+            return bSuccess;
+        }
+
+
+        public static bool GetTokenIntegrityLevel(
+            IntPtr hToken,
+            out string stringSid,
+            out string accountName,
+            out SID_NAME_USE sidType)
+        {
+            var nInfoLength = 0x400u;
+            var pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+            stringSid = null;
+            accountName = null;
+            sidType = SID_NAME_USE.Undefined;
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(TOKEN_MANDATORY_LABEL));
+                GetSidAccountName(info.Label.Sid, out stringSid, out accountName, out sidType);
+            }
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 

@@ -655,7 +655,12 @@ namespace SwitchPriv.Library
                     resultsBuilder.Append("[*] No available token privileges.\n");
                 }
 
-                resultsBuilder.AppendFormat("[*] Integrity Level : {0}", Helpers.GetTokenIntegrityLevelString(hToken));
+                Helpers.GetTokenIntegrityLevel(hToken, out string _, out string integrityLevel, out SID_NAME_USE _);
+
+                if (!string.IsNullOrEmpty(integrityLevel))
+                    integrityLevel = integrityLevel.Split('\\')[1];
+
+                resultsBuilder.AppendFormat("[*] Integrity Level : {0}", integrityLevel ?? "N/A");
                 NativeMethods.NtClose(hProcess);
 
                 Console.WriteLine(resultsBuilder.ToString());
