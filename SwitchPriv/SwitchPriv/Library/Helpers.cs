@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using SwitchPriv.Interop;
@@ -67,7 +65,7 @@ namespace SwitchPriv.Library
             bool bSuccess;
             long nAuthority = 0;
             var nSubAuthorityCount = (int)Marshal.ReadByte(pSid, 1);
-            var stringSidBuilder = new StringBuilder("S-1");
+            var stringSidBuilder = new StringBuilder("S-");
             var nameBuilder = new StringBuilder(255);
             var domainBuilder = new StringBuilder(255);
             int nNameLength = 255;
@@ -80,7 +78,7 @@ namespace SwitchPriv.Library
                 nAuthority |= (long)Marshal.ReadByte(pSid, 2 + idx);
             }
 
-            stringSidBuilder.AppendFormat("-{0}", nAuthority);
+            stringSidBuilder.AppendFormat("{0}-{1}", Marshal.ReadByte(pSid), nAuthority);
 
             for (int idx = 0; idx < nSubAuthorityCount; idx++)
                 stringSidBuilder.AppendFormat("-{0}", Marshal.ReadInt32(pSid, 8 + (idx * 4)));
