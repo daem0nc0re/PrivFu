@@ -11,15 +11,6 @@ namespace SwitchPriv.Interop
         /*
          * advapi32.dll
          */
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            bool DisableAllPrivileges,
-            IntPtr /* in TOKEN_PRIVILEGES */ NewState,
-            int BufferLength,
-            IntPtr /* out TOKEN_PRIVILEGES */ PreviousState,
-            out int ReturnLength);
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertStringSidToSid(
             string StringSid,
@@ -28,7 +19,7 @@ namespace SwitchPriv.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public extern static bool DuplicateTokenEx(
             IntPtr hExistingToken,
-            TokenAccessFlags dwDesiredAccess,
+            ACCESS_MASK dwDesiredAccess,
             IntPtr lpTokenAttributes,
             SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
             TOKEN_TYPE TokenType,
@@ -47,18 +38,6 @@ namespace SwitchPriv.Interop
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool LookupPrivilegeValue(
-            string lpSystemName,
-            string lpName,
-            out LUID lpLuid);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool OpenProcessToken(
-            IntPtr ProcessHandle,
-            TokenAccessFlags DesiredAccess,
-            out IntPtr TokenHandle);
-
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool RevertToSelf();
 
@@ -74,12 +53,6 @@ namespace SwitchPriv.Interop
             StringBuilder lpBuffer,
             int nSize,
             IntPtr Arguments);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr OpenProcess(
-            ProcessAccessFlags processAccess,
-            bool bInheritHandle,
-            int processId);
 
         /*
          * ntdll.dll

@@ -10,9 +10,9 @@ namespace SwitchPriv.Library
 {
     internal class Modules
     {
-        public static bool DisableAllPrivileges(int pid, bool asSystem)
+        public static bool DisableAllPrivileges(int pid, bool bAsSystem)
         {
-            var status = false;
+            var bSuccess = false;
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
@@ -23,46 +23,27 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
-                var privsToDisable = new List<string>();
+                IntPtr hToken;
+                var privsToDisable = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to disable all token privileges.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
@@ -71,42 +52,45 @@ namespace SwitchPriv.Library
                 foreach (var priv in availablePrivs)
                 {
                     if ((priv.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
-                        privsToDisable.Add(priv.Key.ToString());
+                        privsToDisable.Add(priv.Key);
                 }
 
                 if (privsToDisable.Count == 0)
                 {
+                    bSuccess = true;
                     Console.WriteLine("[*] All token privileges are already disabled.");
-                    break;
                 }
-
-                status = Utilities.DisableTokenPrivileges(
-                    hToken,
-                    privsToDisable,
-                    out Dictionary<string, bool> adjustedPrivs);
-                NativeMethods.NtClose(hToken);
-
-                foreach (var priv in adjustedPrivs)
+                else
                 {
-                    if (!priv.Value)
-                        Console.WriteLine("[+] {0} is disabled successfully.", priv.Key);
-                    else
-                        Console.WriteLine("[-] Failed to disable {0}.", priv.Key);
+                    bSuccess = Utilities.DisableTokenPrivileges(
+                        hToken,
+                        privsToDisable,
+                        out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[+] {0} is disabled successfully.", priv.Key.ToString());
+                        else
+                            Console.WriteLine("[-] Failed to disable {0}.", priv.Key.ToString());
+                    }
                 }
+
+                NativeMethods.NtClose(hToken);
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
 
 
-        public static bool DisableTokenPrivilege(int pid, string privilegeName, bool asSystem)
+        public static bool DisableTokenPrivilege(int pid, string privilegeName, bool bAsSystem)
         {
-            var status = false;
+            var bSuccess = false;
 
             if (string.IsNullOrEmpty(privilegeName))
             {
@@ -124,46 +108,27 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
-                var candidatePrivs = new List<SE_PRIVILEGE_ID>();
+                IntPtr hToken;
+                var privsToRemove = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to disable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
@@ -172,55 +137,53 @@ namespace SwitchPriv.Library
                 foreach (var priv in availablePrivs)
                 {
                     if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        candidatePrivs.Add(priv.Key);
+                        privsToRemove.Add(priv.Key);
                 }
 
-                if (candidatePrivs.Count == 0)
+                if (privsToRemove.Count == 0)
                 {
                     Console.WriteLine("[-] No candidates to disable.");
-                    break;
                 }
-                else if (candidatePrivs.Count > 1)
+                else if (privsToRemove.Count > 1)
                 {
                     Console.WriteLine("[-] Cannot specify a unique privilege to disable.");
 
-                    foreach (var priv in candidatePrivs)
-                        Console.WriteLine("    [*] {0}", priv);
-
-                    break;
+                    foreach (var priv in privsToRemove)
+                        Console.WriteLine("    [*] {0}", priv.ToString());
                 }
                 else
                 {
-                    privilegeName = candidatePrivs[0].ToString();
-
-                    if ((availablePrivs[candidatePrivs[0]] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
+                    if ((availablePrivs[privsToRemove.First()] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                     {
-                        Console.WriteLine("[*] {0} is already disabled.", candidatePrivs[0].ToString());
-                        break;
+                        bSuccess = true;
+                        Console.WriteLine("[*] {0} is already disabled.", privsToRemove.First().ToString());
+                    }
+                    else
+                    {
+                        bSuccess = Utilities.DisableTokenPrivileges(
+                            hToken,
+                            new List<SE_PRIVILEGE_ID> { privsToRemove.First() },
+                            out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+
+                        foreach (var priv in adjustedPrivs)
+                        {
+                            if (!priv.Value)
+                                Console.WriteLine("[+] {0} is disabled successfully.", priv.Key.ToString());
+                            else
+                                Console.WriteLine("[-] Failed to disable {0}.", priv.Key.ToString());
+                        }
                     }
                 }
 
-                status = Utilities.DisableTokenPrivileges(
-                    hToken,
-                    new List<string> { privilegeName },
-                    out Dictionary<string, bool> adjustedPrivs);
                 NativeMethods.NtClose(hToken);
-
-                foreach (var priv in adjustedPrivs)
-                {
-                    if (!priv.Value)
-                        Console.WriteLine("[+] {0} is disabled successfully.", priv.Key);
-                    else
-                        Console.WriteLine("[-] Failed to disable {0}.", priv.Key);
-                }
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
 
 
@@ -271,6 +234,7 @@ namespace SwitchPriv.Library
 
                 if (privsToEnable.Count == 0)
                 {
+                    bSuccess = true;
                     Console.WriteLine("[*] All token privileges are already enabled.");
                 }
                 else
@@ -356,7 +320,6 @@ namespace SwitchPriv.Library
                 if (privsToEnable.Count == 0)
                 {
                     Console.WriteLine("[-] No candidates to enable.");
-                    break;
                 }
                 else if (privsToEnable.Count > 1)
                 {
@@ -364,31 +327,32 @@ namespace SwitchPriv.Library
 
                     foreach (var priv in privsToEnable)
                         Console.WriteLine("    [*] {0}", priv);
-
-                    break;
                 }
                 else
                 {
                     if ((availablePrivs[privsToEnable.First()] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
                     {
+                        bSuccess = true;
                         Console.WriteLine("[*] {0} is already enabled.", privsToEnable.First().ToString());
-                        break;
+                    }
+                    else
+                    {
+                        bSuccess = Utilities.EnableTokenPrivileges(
+                            hToken,
+                            new List<SE_PRIVILEGE_ID> { privsToEnable.First() },
+                            out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+
+                        foreach (var priv in adjustedPrivs)
+                        {
+                            if (priv.Value)
+                                Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                            else
+                                Console.WriteLine("[-] Failed to enable {0}.", priv.Key.ToString());
+                        }
                     }
                 }
-
-                bSuccess = Utilities.EnableTokenPrivileges(
-                    hToken,
-                    new List<SE_PRIVILEGE_ID> { privsToEnable.First() },
-                    out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+                
                 NativeMethods.NtClose(hToken);
-
-                foreach (var priv in adjustedPrivs)
-                {
-                    if (priv.Value)
-                        Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
-                    else
-                        Console.WriteLine("[-] Failed to enable {0}.", priv.Key.ToString());
-                }
             } while (false);
 
             if (bAsSystem)
@@ -402,7 +366,7 @@ namespace SwitchPriv.Library
 
         public static bool FilterTokenPrivilege(int pid, string privilegeName, bool asSystem)
         {
-            var status = false;
+            var bSuccess = false;
 
             if (string.IsNullOrEmpty(privilegeName))
             {
@@ -420,10 +384,9 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
-                var candidatePrivs = new List<string>();
-                var privsToRemove = new List<string>();
+                IntPtr hToken;
+                var privsToRemain = new List<SE_PRIVILEGE_ID>();
+                var privsToRemove = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to remove all token privileges except one.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
@@ -437,30 +400,12 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
@@ -469,43 +414,40 @@ namespace SwitchPriv.Library
                 foreach (var priv in availablePrivs)
                 {
                     if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        candidatePrivs.Add(priv.Key.ToString());
+                        privsToRemain.Add(priv.Key);
                     else
-                        privsToRemove.Add(priv.Key.ToString());
+                        privsToRemove.Add(priv.Key);
                 }
 
-                if (candidatePrivs.Count == 0)
+                if (privsToRemain.Count == 0)
                 {
-                    Console.WriteLine("[-] No candidates to remove.");
-                    break;
+                    Console.WriteLine("[-] No candidates to remain.");
                 }
-                else if (candidatePrivs.Count > 1)
+                else if (privsToRemain.Count > 1)
                 {
-                    Console.WriteLine("[-] Cannot specify a unique privilege to remove.");
+                    Console.WriteLine("[-] Cannot specify a unique privilege to remain.");
 
-                    foreach (var priv in candidatePrivs)
+                    foreach (var priv in privsToRemain)
                         Console.WriteLine("    [*] {0}", priv);
-
-                    break;
                 }
                 else
                 {
-                    Console.WriteLine("[>] Trying to remove all privileges except for {0}.", candidatePrivs[0]);
+                    Console.WriteLine("[>] Trying to remove all privileges except for {0}.", privsToRemain.First().ToString());
+                    bSuccess = Utilities.RemoveTokenPrivileges(
+                        hToken,
+                        privsToRemove,
+                        out Dictionary<SE_PRIVILEGE_ID, bool> removedStatus);
+
+                    foreach (var priv in removedStatus)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                        else
+                            Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                    }
                 }
 
-                status = Utilities.RemoveTokenPrivileges(
-                    hToken,
-                    privsToRemove,
-                    out Dictionary<string, bool> operationStatus);
                 NativeMethods.NtClose(hToken);
-
-                foreach (var priv in operationStatus)
-                {
-                    if (priv.Value)
-                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
-                    else
-                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
-                }
             } while (false);
 
             if (asSystem)
@@ -513,7 +455,7 @@ namespace SwitchPriv.Library
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
 
 
@@ -652,9 +594,9 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool RemoveAllPrivileges(int pid, bool asSystem)
+        public static bool RemoveAllPrivileges(int pid, bool bAsSystem)
         {
-            var status = false;
+            var bSuccess = false;
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
@@ -665,46 +607,27 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
-                var privsToRemove = new List<string>();
+                IntPtr hToken;
+                var privsToRemove = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to remove all token privileges.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
@@ -712,42 +635,43 @@ namespace SwitchPriv.Library
 
                 if (availablePrivs.Count == 0)
                 {
+                    bSuccess = true;
                     Console.WriteLine("[*] All token privileges are already removed.");
-                    break;
                 }
                 else
                 {
                     foreach (var priv in availablePrivs)
-                        privsToRemove.Add(priv.Key.ToString());
+                        privsToRemove.Add(priv.Key);
+
+                    bSuccess = Utilities.RemoveTokenPrivileges(
+                        hToken,
+                        privsToRemove,
+                        out Dictionary<SE_PRIVILEGE_ID, bool> removedStatus);
+
+                    foreach (var priv in removedStatus)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                        else
+                            Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                    }
                 }
 
-                status = Utilities.RemoveTokenPrivileges(
-                    hToken,
-                    privsToRemove,
-                    out Dictionary<string, bool> operationStatus);
                 NativeMethods.NtClose(hToken);
-
-                foreach (var priv in operationStatus)
-                {
-                    if (priv.Value)
-                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
-                    else
-                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
-                }
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
 
 
-        public static bool RemoveTokenPrivilege(int pid, string privilegeName, bool asSystem)
+        public static bool RemoveTokenPrivilege(int pid, string privilegeName, bool bAsSystem)
         {
-            var status = false;
+            var bSuccess = false;
 
             if (string.IsNullOrEmpty(privilegeName))
             {
@@ -765,46 +689,27 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
-                var candidatePrivs = new List<string>();
+                IntPtr hToken;
+                var privsToRemove = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to remove a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_QUERY | TokenAccessFlags.TOKEN_ADJUST_PRIVILEGES,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
@@ -813,53 +718,49 @@ namespace SwitchPriv.Library
                 foreach (var priv in availablePrivs)
                 {
                     if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        candidatePrivs.Add(priv.Key.ToString());
+                        privsToRemove.Add(priv.Key);
                 }
 
-                if (candidatePrivs.Count == 0)
+                if (privsToRemove.Count == 0)
                 {
                     Console.WriteLine("[-] No candidates to remove.");
-                    break;
                 }
-                else if (candidatePrivs.Count > 1)
+                else if (privsToRemove.Count > 1)
                 {
                     Console.WriteLine("[-] Cannot specify a unique privilege to remove.");
 
-                    foreach (var priv in candidatePrivs)
-                        Console.WriteLine("    [*] {0}", priv);
-
-                    break;
+                    foreach (var priv in privsToRemove)
+                        Console.WriteLine("    [*] {0}", priv.ToString());
                 }
                 else
                 {
-                    privilegeName = candidatePrivs[0];
-                }
+                    bSuccess = Utilities.RemoveTokenPrivileges(
+                        hToken,
+                        new List<SE_PRIVILEGE_ID> { privsToRemove.First() },
+                        out Dictionary<SE_PRIVILEGE_ID, bool> removedStatus);
 
-                status = Utilities.RemoveTokenPrivileges(
-                    hToken,
-                    new List<string> { privilegeName },
-                    out Dictionary<string, bool> operationStatus);
+                    foreach (var priv in removedStatus)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is removed successfully.", priv.Key.ToString());
+                        else
+                            Console.WriteLine("[-] Failed to remove {0}.", priv.Key.ToString());
+                    }
+                }
+                
                 NativeMethods.NtClose(hToken);
-
-                foreach (var priv in operationStatus)
-                {
-                    if (priv.Value)
-                        Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
-                    else
-                        Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
-                }
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
 
 
-        public static bool SearchPrivilegedProcess(string privilegeName, bool asSystem)
+        public static bool SearchPrivilegedProcess(string privilegeName, bool bAsSystem)
         {
             var privilegedProcesses = new Dictionary<int, string>();
             var deniedProcesses = new Dictionary<int, string>();
@@ -872,9 +773,6 @@ namespace SwitchPriv.Library
 
             do
             {
-                bool status;
-                IntPtr hProcess;
-
                 if (Helpers.GetFullPrivilegeName(privilegeName, out List<string> candidatePrivs))
                 {
                     if (candidatePrivs.Count > 1)
@@ -902,31 +800,19 @@ namespace SwitchPriv.Library
 
                 Console.WriteLine("[>] Searching processes have {0}.", privilegeName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
                 foreach (var proc in Process.GetProcesses())
                 {
-                    hProcess = NativeMethods.OpenProcess(
-                        ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                        false,
-                        proc.Id);
+                    IntPtr hToken = Utilities.OpenProcessToken(proc.Id, ACCESS_MASK.TOKEN_QUERY);
 
-                    if (hProcess == IntPtr.Zero)
-                    {
-                        deniedProcesses.Add(proc.Id, proc.ProcessName);
-                        continue;
-                    }
-
-                    status = NativeMethods.OpenProcessToken(hProcess, TokenAccessFlags.TOKEN_QUERY, out IntPtr hToken);
-                    NativeMethods.NtClose(hProcess);
-
-                    if (!status)
+                    if (hToken == IntPtr.Zero)
                     {
                         deniedProcesses.Add(proc.Id, proc.ProcessName);
                         continue;
@@ -966,7 +852,7 @@ namespace SwitchPriv.Library
                 }
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
@@ -975,10 +861,10 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool asSystem)
+        public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool bAsSystem)
         {
             string mandatoryLevelSid;
-            var status = false;
+            var bSuccess = false;
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
             if (pid == -1)
@@ -1019,65 +905,46 @@ namespace SwitchPriv.Library
 
             do
             {
-                int error;
-                IntPtr hProcess;
+                IntPtr hToken;
 
                 Console.WriteLine("[>] Trying to update Integrity Level.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
                 Console.WriteLine("    [*] Process Name : {0}", processName);
 
-                if (asSystem)
+                if (bAsSystem)
                 {
-                    asSystem = GetSystem();
+                    bAsSystem = GetSystem();
 
-                    if (!asSystem)
+                    if (!bAsSystem)
                         break;
                 }
 
-                hProcess = NativeMethods.OpenProcess(
-                    ProcessAccessFlags.PROCESS_QUERY_LIMITED_INFORMATION,
-                    false,
-                    pid);
+                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_DEFAULT);
 
-                if (hProcess == IntPtr.Zero)
+                if (hToken == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to open the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
-                    break;
-                }
-
-                status = NativeMethods.OpenProcessToken(
-                    hProcess,
-                    TokenAccessFlags.TOKEN_ADJUST_DEFAULT,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (!status)
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to get a token from the target process (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
                     break;
                 }
 
                 Console.WriteLine("[>] Trying to update Integrity Level to {0}.", ((MANDATORY_LEVEL_INDEX)integrityLevelIndex).ToString());
 
-                status = Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
+                bSuccess = Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
                 NativeMethods.NtClose(hToken);
 
-                if (status)
+                if (bSuccess)
                     Console.WriteLine("[+] Integrity Level is updated successfully.");
                 else
                     Console.WriteLine("[-] Failed to update Integrity Level.");
             } while (false);
 
-            if (asSystem)
+            if (bAsSystem)
                 NativeMethods.RevertToSelf();
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
     }
 }

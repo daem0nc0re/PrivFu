@@ -102,24 +102,6 @@ namespace SwitchPriv.Interop
         ValidAttributes = 0x000007F2
     }
 
-    [Flags]
-    internal enum ProcessAccessFlags : uint
-    {
-        PROCESS_ALL_ACCESS = 0x001F0FFF,
-        Terminate = 0x00000001,
-        PROCESS_CREATE_THREAD = 0x00000002,
-        PROCESS_VM_OPERATION = 0x00000008,
-        PROCESS_VM_READ = 0x00000010,
-        PROCESS_VM_WRITE = 0x00000020,
-        PROCESS_DUP_HANDLE = 0x00000040,
-        PROCESS_CREATE_PROCESS = 0x000000080,
-        PROCESS_SET_QUOTA = 0x00000100,
-        PROCESS_SET_INFORMATION = 0x00000200,
-        PROCESS_QUERY_INFORMATION = 0x00000400,
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
-        SYNCHRONIZE = 0x00100000
-    }
-
     internal enum PROCESSINFOCLASS
     {
         ProcessBasicInformation, // q: PROCESS_BASIC_INFORMATION, PROCESS_EXTENDED_BASIC_INFORMATION
@@ -324,25 +306,6 @@ namespace SwitchPriv.Interop
         Computer,
         Label,
         LogonSession
-    }
-
-    [Flags]
-    internal enum TokenAccessFlags : uint
-    {
-        TOKEN_ADJUST_DEFAULT = 0x0080,
-        TOKEN_ADJUST_GROUPS = 0x0040,
-        TOKEN_ADJUST_PRIVILEGES = 0x0020,
-        TOKEN_ADJUST_SESSIONID = 0x0100,
-        TOKEN_ASSIGN_PRIMARY = 0x0001,
-        TOKEN_DUPLICATE = 0x0002,
-        TOKEN_EXECUTE = 0x00020000,
-        TOKEN_IMPERSONATE = 0x0004,
-        TOKEN_QUERY = 0x0008,
-        TOKEN_QUERY_SOURCE = 0x0010,
-        TOKEN_READ = 0x00020008,
-        TOKEN_WRITE = 0x000200E0,
-        TOKEN_ALL_ACCESS = 0x000F01FF,
-        MAXIMUM_ALLOWED = 0x02000000
     }
 
     internal enum TOKEN_INFORMATION_CLASS

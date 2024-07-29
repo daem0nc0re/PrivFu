@@ -158,6 +158,7 @@ namespace SwitchPriv.Library
             IntPtr hToken,
             out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
+            int nDosErrorCode;
             var nOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
             var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
             var nInfoLength = (uint)(nOffset + (nUnitSize * 36));
@@ -183,6 +184,8 @@ namespace SwitchPriv.Library
                 }
             }
 
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
             Marshal.FreeHGlobal(pInfoBuffer);
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
