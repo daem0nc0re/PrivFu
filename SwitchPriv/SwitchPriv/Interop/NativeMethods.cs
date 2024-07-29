@@ -85,6 +85,28 @@ namespace SwitchPriv.Interop
          * ntdll.dll
          */
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtAdjustPrivilegesToken(
+            IntPtr TokenHandle,
+            BOOLEAN DisableAllPrivileges,
+            IntPtr /* PTOKEN_PRIVILEGES */ NewState,
+            uint BufferLength,
+            IntPtr /* out PTOKEN_PRIVILEGES */ PreviousState, // Optional
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenProcess(
+            out IntPtr ProcessHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes,
+            in CLIENT_ID ClientId);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenProcessToken(
+            IntPtr ProcessHandle,
+            ACCESS_MASK DesiredAccess,
+            out IntPtr TokenHandle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll", SetLastError = true)]
@@ -109,5 +131,11 @@ namespace SwitchPriv.Interop
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern uint RtlNtStatusToDosError(NTSTATUS Status);
+
+        [DllImport("ntdll.dll", SetLastError = true)]
+        public static extern void RtlSetLastWin32Error(int dwErrCode);
     }
 }
