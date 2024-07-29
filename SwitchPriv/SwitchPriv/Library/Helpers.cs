@@ -12,17 +12,11 @@ namespace SwitchPriv.Library
 
     internal class Helpers
     {
-        public static bool CompareIgnoreCase(string strA, string strB)
-        {
-            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
-        }
-
-
         public static bool GetFullPrivilegeName(
             string filter,
-            out List<string> candidatePrivs)
+            out List<SE_PRIVILEGE_ID> candidatePrivs)
         {
-            candidatePrivs = new List<string>();
+            candidatePrivs = new List<SE_PRIVILEGE_ID>();
 
             if (string.IsNullOrEmpty(filter))
                 return false;
@@ -30,18 +24,11 @@ namespace SwitchPriv.Library
             for (var priv = SE_PRIVILEGE_ID.MinimumIndex; priv < SE_PRIVILEGE_ID.MaximumCount; priv++)
             {
                 if (priv.ToString().IndexOf(filter, StringComparison.OrdinalIgnoreCase) != -1)
-                    candidatePrivs.Add(priv.ToString());
+                    candidatePrivs.Add(priv);
             }
 
             return true;
         }
-
-
-        public static int GetParentProcessId()
-        {
-            return GetParentProcessId(Process.GetCurrentProcess().Handle);
-        }
-
 
         public static int GetParentProcessId(IntPtr hProcess)
         {
@@ -192,30 +179,14 @@ namespace SwitchPriv.Library
         }
 
 
-        public static string GetWin32ErrorMessage(int code, bool isNtStatus)
+        public static string GetWin32ErrorMessage(int code)
         {
-            int nReturnedLength;
             int nSizeMesssage = 256;
             var message = new StringBuilder(nSizeMesssage);
             var dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
-            var pNtdll = IntPtr.Zero;
-
-            if (isNtStatus)
-            {
-                foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
-                {
-                    if (CompareIgnoreCase(Path.GetFileName(module.FileName), "ntdll.dll"))
-                    {
-                        pNtdll = module.BaseAddress;
-                        dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;
-                        break;
-                    }
-                }
-            }
-
-            nReturnedLength = NativeMethods.FormatMessage(
+            int nReturnedLength = NativeMethods.FormatMessage(
                 dwFlags,
-                pNtdll,
+                IntPtr.Zero,
                 code,
                 0,
                 message,
@@ -242,7 +213,6 @@ namespace SwitchPriv.Library
             outputBuilder.Append("    * 4 : HIGH_MANDATORY_LEVEL\n");
             outputBuilder.Append("    * 5 : SYSTEM_MANDATORY_LEVEL\n");
             outputBuilder.Append("    * 6 : PROTECTED_MANDATORY_LEVEL\n");
-            outputBuilder.Append("    * 7 : SECURE_MANDATORY_LEVEL\n\n");
             outputBuilder.Append("Example :\n\n");
             outputBuilder.Append("    * Down a specific process' integrity level to Low.\n\n");
             outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -s 1\n\n", AppDomain.CurrentDomain.FriendlyName);

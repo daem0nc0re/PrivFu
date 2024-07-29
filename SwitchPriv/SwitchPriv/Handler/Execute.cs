@@ -51,7 +51,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("enable");
 
-                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
                     Modules.EnableAllPrivileges(pid, asSystem);
                 else
                     Modules.EnableTokenPrivilege(pid, privilege, asSystem);
@@ -60,7 +60,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("disable");
 
-                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
                     Modules.DisableAllPrivileges(pid, asSystem);
                 else
                     Modules.DisableTokenPrivilege(pid, privilege, asSystem);
@@ -69,7 +69,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("filter");
 
-                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
                     Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
                 else
                     Modules.FilterTokenPrivilege(pid, privilege, asSystem);
@@ -78,7 +78,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("remove");
 
-                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
                     Modules.RemoveAllPrivileges(pid, asSystem);
                 else
                     Modules.RemoveTokenPrivilege(pid, privilege, asSystem);
@@ -87,7 +87,7 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("search");
 
-                if (Helpers.CompareIgnoreCase(privilege, "All"))
+                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
                     Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
                 else
                     Modules.SearchPrivilegedProcess(privilege, asSystem);

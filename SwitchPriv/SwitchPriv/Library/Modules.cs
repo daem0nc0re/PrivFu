@@ -43,7 +43,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -128,7 +128,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -220,7 +220,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -305,7 +305,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -405,7 +405,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -492,7 +492,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -627,7 +627,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -709,7 +709,7 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
@@ -773,7 +773,7 @@ namespace SwitchPriv.Library
 
             do
             {
-                if (Helpers.GetFullPrivilegeName(privilegeName, out List<string> candidatePrivs))
+                if (Helpers.GetFullPrivilegeName(privilegeName, out List<SE_PRIVILEGE_ID> candidatePrivs))
                 {
                     if (candidatePrivs.Count > 1)
                     {
@@ -787,10 +787,6 @@ namespace SwitchPriv.Library
                     else if (candidatePrivs.Count == 0)
                     {
                         Console.WriteLine("[-] No candidates to search.");
-                    }
-                    else
-                    {
-                        privilegeName = candidatePrivs[0];
                     }
                 }
                 else
@@ -823,7 +819,7 @@ namespace SwitchPriv.Library
 
                     foreach (var priv in privs.Keys)
                     {
-                        if (Helpers.CompareIgnoreCase(priv.ToString(), privilegeName))
+                        if (priv == candidatePrivs.First())
                         {
                             privilegedProcesses.Add(proc.Id, proc.ProcessName);
                             break;
@@ -863,7 +859,7 @@ namespace SwitchPriv.Library
 
         public static bool SetIntegrityLevel(int pid, int integrityLevelIndex, bool bAsSystem)
         {
-            string mandatoryLevelSid;
+            int rid = -1;
             var bSuccess = false;
             pid = Utilities.ResolveProcessId(pid, out string processName);
 
@@ -873,34 +869,25 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            switch (integrityLevelIndex)
+            if (integrityLevelIndex == 0) // Untrusted
+                rid = 0;
+            else if (integrityLevelIndex == 1) // Low
+                rid = 0x1000;
+            else if (integrityLevelIndex == 2) // Medium
+                rid = 0x2000;
+            else if (integrityLevelIndex == 3) // Medium Plus
+                rid = 0x2100;
+            else if (integrityLevelIndex == 4) // High
+                rid = 0x3000;
+            else if (integrityLevelIndex == 5) // System
+                rid = 0x4000;
+            else if (integrityLevelIndex == 6) // Protected (should be invalid)
+                rid = 0x5000;
+
+            if (rid == -1)
             {
-                case 0:
-                    mandatoryLevelSid = "S-1-16-0"; // Untrusted
-                    break;
-                case 1:
-                    mandatoryLevelSid = "S-1-16-4096"; // Low
-                    break;
-                case 2:
-                    mandatoryLevelSid = "S-1-16-8192"; // Medium
-                    break;
-                case 3:
-                    mandatoryLevelSid = "S-1-16-8448"; // Medium Plus
-                    break;
-                case 4:
-                    mandatoryLevelSid = "S-1-16-12288"; // High
-                    break;
-                case 5:
-                    mandatoryLevelSid = "S-1-16-16384"; // System
-                    break;
-                case 6:
-                    mandatoryLevelSid = "S-1-16-20480"; // Protected (should be invalid)
-                    break;
-                case 7:
-                    mandatoryLevelSid = "S-1-16-28672"; // Secure (should be invalid)
-                    break;
-                default:
-                    return false;
+                Console.WriteLine("[-] Invalid integrity level option.");
+                return false;
             }
 
             do
@@ -924,19 +911,24 @@ namespace SwitchPriv.Library
                 if (hToken == IntPtr.Zero)
                 {
                     Console.WriteLine("[-] Failed to open the target process token (PID = {0}).", pid);
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error(), false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
                     break;
                 }
 
-                Console.WriteLine("[>] Trying to update Integrity Level to {0}.", ((MANDATORY_LEVEL_INDEX)integrityLevelIndex).ToString());
+                Console.WriteLine("[>] Trying to update Integrity Level to {0}.", ((MANDATORY_LABEL_RID)rid).ToString());
 
-                bSuccess = Utilities.SetMandatoryLevel(hToken, mandatoryLevelSid);
+                bSuccess = Utilities.SetMandatoryLevel(hToken, rid);
                 NativeMethods.NtClose(hToken);
 
                 if (bSuccess)
+                {
                     Console.WriteLine("[+] Integrity Level is updated successfully.");
+                }
                 else
+                {
                     Console.WriteLine("[-] Failed to update Integrity Level.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(Marshal.GetLastWin32Error()));
+                }
             } while (false);
 
             if (bAsSystem)

@@ -12,11 +12,6 @@ namespace SwitchPriv.Interop
          * advapi32.dll
          */
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool ConvertStringSidToSid(
-            string StringSid,
-            out IntPtr pSid);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public extern static bool DuplicateTokenEx(
             IntPtr hExistingToken,
             ACCESS_MASK dwDesiredAccess,

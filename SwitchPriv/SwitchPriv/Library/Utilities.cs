@@ -347,7 +347,7 @@ namespace SwitchPriv.Library
 
             if (pid == -1)
             {
-                pid = Helpers.GetParentProcessId();
+                pid = Helpers.GetParentProcessId(new IntPtr(-1));
             }
             else
             {
@@ -366,36 +366,37 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool SetMandatoryLevel(IntPtr hToken, string mandatoryLevelSid)
+        public static bool SetMandatoryLevel(IntPtr hToken, int rid)
         {
-            var status = false;
-
-            if (NativeMethods.ConvertStringSidToSid(mandatoryLevelSid, out IntPtr pSid))
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            var labelBytes = new byte[] { 1, 1, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0 };
+            var nInfoLength = Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL)) + labelBytes.Length;
+            var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+            var info = new TOKEN_MANDATORY_LABEL
             {
-                NTSTATUS ntstatus;
-                int nBufferSize = Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL));
-                IntPtr pTokenIntegrityLevel = Marshal.AllocHGlobal(nBufferSize);
-                var tokenIntegrityLevel = new TOKEN_MANDATORY_LABEL
-                {
-                    Label = new SID_AND_ATTRIBUTES
-                    {
-                        Sid = pSid,
-                        Attributes = (uint)(SE_GROUP_ATTRIBUTES.Integrity),
-                    }
-                };
-                Marshal.StructureToPtr(tokenIntegrityLevel, pTokenIntegrityLevel, true);
-                nBufferSize += 8 + (4 * Marshal.ReadByte(pSid, 1)); // SID Length
+                Label = new SID_AND_ATTRIBUTES()
+            };
+            info.Label.Attributes = (uint)(SE_GROUP_ATTRIBUTES.Integrity);
 
-                ntstatus = NativeMethods.NtSetInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
-                    pTokenIntegrityLevel,
-                    (uint)nBufferSize);
-                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
-                Marshal.FreeHGlobal(pTokenIntegrityLevel);
-            }
+            if (Environment.Is64BitProcess)
+                info.Label.Sid = new IntPtr(pInfoBuffer.ToInt64() + Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL)));
+            else
+                info.Label.Sid = new IntPtr(pInfoBuffer.ToInt32() + Marshal.SizeOf(typeof(TOKEN_MANDATORY_LABEL)));
 
-            return status;
+            Marshal.StructureToPtr(info, pInfoBuffer, true);
+            Marshal.Copy(labelBytes, 0, info.Label.Sid, labelBytes.Length);
+            Marshal.WriteInt32(info.Label.Sid, 8, rid);
+            ntstatus = NativeMethods.NtSetInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenIntegrityLevel,
+                pInfoBuffer,
+                (uint)nInfoLength);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
     }
 }

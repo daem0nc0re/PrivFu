@@ -14,8 +14,6 @@ namespace SwitchPriv.Interop
         public static readonly NTSTATUS STATUS_PRIVILEGE_NOT_HELD = Convert.ToInt32("0xC0000061", 16);
 
         // Win32Error
-        public const int ERROR_BAD_LENGTH = 0x00000018;
-        public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
         public const int ERROR_PRIVILEGE_NOT_HELD = 0x00000522;
     }
 }
