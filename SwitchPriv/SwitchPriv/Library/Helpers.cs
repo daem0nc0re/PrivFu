@@ -19,7 +19,7 @@ namespace SwitchPriv.Library
             if (string.IsNullOrEmpty(filter))
                 return false;
 
-            for (var priv = SE_PRIVILEGE_ID.MinimumIndex; priv < SE_PRIVILEGE_ID.MaximumCount; priv++)
+            for (var priv = SE_PRIVILEGE_ID.SeCreateTokenPrivilege; priv < SE_PRIVILEGE_ID.MaximumCount; priv++)
             {
                 if (priv.ToString().IndexOf(filter, StringComparison.OrdinalIgnoreCase) != -1)
                     candidatePrivs.Add(priv);
