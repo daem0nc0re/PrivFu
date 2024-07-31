@@ -17,6 +17,21 @@ namespace TokenDump.Handler
                 return;
             }
 
+            if (!options.GetFlag("enum") && !options.GetFlag("scan"))
+            {
+                Console.WriteLine("\n[!] -e or -s option must be specified.\n");
+                return;
+            }
+
+            if (options.GetFlag("scan") &&
+                string.IsNullOrEmpty(options.GetValue("pid")) &&
+                string.IsNullOrEmpty(options.GetValue("tid")) &&
+                string.IsNullOrEmpty(options.GetValue("value")))
+            {
+                Console.WriteLine("\n[!] No scan target is specified.\n");
+                return;
+            }
+
             if (!string.IsNullOrEmpty(options.GetValue("pid")))
             {
                 try

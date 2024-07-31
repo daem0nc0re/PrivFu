@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using TokenDump.Handler;
 
 namespace TokenDump
@@ -8,6 +9,7 @@ namespace TokenDump
         static void Main(string[] args)
         {
             var options = new CommandLineParser();
+            var exclusive = new List<string> { "enum", "scan" };
 
             try
             {
@@ -22,6 +24,7 @@ namespace TokenDump
                 options.AddParameter(false, "p", "pid", null, "Specifies a target PID in decimal format. Use with -s flag, or -e and -H flag.");
                 options.AddParameter(false, "t", "tid", null, "Specifies a target TID in decimal format. Use with -s flag and -p option.");
                 options.AddParameter(false, "v", "value", null, "Specifies a token handle value in hex format. Use with -s flag and -p option.");
+                options.AddExclusive(exclusive);
                 options.Parse(args);
 
                 Execute.Run(options);
