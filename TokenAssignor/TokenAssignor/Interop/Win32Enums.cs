@@ -282,7 +282,6 @@ namespace TokenAssignor.Interop
 
     internal enum SE_PRIVILEGE_ID
     {
-        MinimumIndex = 2,
         SeCreateTokenPrivilege = 2,
         SeAssignPrimaryTokenPrivilege,
         SeLockMemoryPrivilege,
