@@ -64,7 +64,7 @@ namespace SwitchPriv.Library
                 {
                     bSuccess = Utilities.DisableTokenPrivileges(
                         hToken,
-                        privsToDisable,
+                        in privsToDisable,
                         out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
                     foreach (var priv in adjustedPrivs)
@@ -109,7 +109,7 @@ namespace SwitchPriv.Library
             do
             {
                 IntPtr hToken;
-                var privsToRemove = new List<SE_PRIVILEGE_ID>();
+                var privsToDisable = new List<SE_PRIVILEGE_ID>();
 
                 Console.WriteLine("[>] Trying to disable a token privilege.");
                 Console.WriteLine("    [*] Target PID   : {0}", pid);
@@ -137,32 +137,33 @@ namespace SwitchPriv.Library
                 foreach (var priv in availablePrivs)
                 {
                     if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
-                        privsToRemove.Add(priv.Key);
+                        privsToDisable.Add(priv.Key);
                 }
 
-                if (privsToRemove.Count == 0)
+                if (privsToDisable.Count == 0)
                 {
                     Console.WriteLine("[-] No candidates to disable.");
                 }
-                else if (privsToRemove.Count > 1)
+                else if (privsToDisable.Count > 1)
                 {
                     Console.WriteLine("[-] Cannot specify a unique privilege to disable.");
 
-                    foreach (var priv in privsToRemove)
+                    foreach (var priv in privsToDisable)
                         Console.WriteLine("    [*] {0}", priv.ToString());
                 }
                 else
                 {
-                    if ((availablePrivs[privsToRemove.First()] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
+                    if ((availablePrivs[privsToDisable.First()] & SE_PRIVILEGE_ATTRIBUTES.Enabled) == 0)
                     {
                         bSuccess = true;
-                        Console.WriteLine("[*] {0} is already disabled.", privsToRemove.First().ToString());
+                        Console.WriteLine("[*] {0} is already disabled.", privsToDisable.First().ToString());
                     }
                     else
                     {
+                        var disablePrivs = new List<SE_PRIVILEGE_ID> { privsToDisable.First() };
                         bSuccess = Utilities.DisableTokenPrivileges(
                             hToken,
-                            new List<SE_PRIVILEGE_ID> { privsToRemove.First() },
+                            in disablePrivs,
                             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
                         foreach (var priv in adjustedPrivs)
@@ -241,7 +242,7 @@ namespace SwitchPriv.Library
                 {
                     bSuccess = Utilities.EnableTokenPrivileges(
                         hToken,
-                        privsToEnable,
+                        in privsToEnable,
                         out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
                     foreach (var priv in adjustedPrivs)
@@ -337,9 +338,10 @@ namespace SwitchPriv.Library
                     }
                     else
                     {
+                        var requiredPrivs = new List<SE_PRIVILEGE_ID> { privsToEnable.First() };
                         bSuccess = Utilities.EnableTokenPrivileges(
                             hToken,
-                            new List<SE_PRIVILEGE_ID> { privsToEnable.First() },
+                            in requiredPrivs,
                             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
                         foreach (var priv in adjustedPrivs)
@@ -570,7 +572,7 @@ namespace SwitchPriv.Library
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            if (!Utilities.EnableTokenPrivileges(requiredPrivs, out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs))
+            if (!Utilities.EnableTokenPrivileges(in requiredPrivs, out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs))
             {
                 foreach (var priv in adjustedPrivs)
                 {

@@ -13,7 +13,7 @@ namespace SwitchPriv.Library
     {
         public static bool DisableTokenPrivileges(
             IntPtr hToken,
-            List<SE_PRIVILEGE_ID> privsToDisable,
+            in List<SE_PRIVILEGE_ID> privsToDisable,
             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
         {
             bool bAllDisabled;
@@ -79,19 +79,19 @@ namespace SwitchPriv.Library
 
 
         public static bool EnableTokenPrivileges(
-            List<SE_PRIVILEGE_ID> requiredPrivs,
+            in List<SE_PRIVILEGE_ID> requiredPrivs,
             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
         {
             return EnableTokenPrivileges(
                 WindowsIdentity.GetCurrent().Token,
-                requiredPrivs,
+                in requiredPrivs,
                 out adjustedPrivs);
         }
 
 
         public static bool EnableTokenPrivileges(
             IntPtr hToken,
-            List<SE_PRIVILEGE_ID> privsToEnable,
+            in List<SE_PRIVILEGE_ID> privsToEnable,
             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
         {
             bool bAllEnabled;
@@ -127,6 +127,7 @@ namespace SwitchPriv.Library
                 if (!availablePrivs.ContainsKey(priv))
                 {
                     nErrorStatus = Win32Consts.STATUS_PRIVILEGE_NOT_HELD;
+                    bAllEnabled = false;
                     continue;
                 }
 
