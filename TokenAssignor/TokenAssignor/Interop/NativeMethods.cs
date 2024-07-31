@@ -100,15 +100,6 @@ namespace TokenAssignor.Interop
             out IntPtr NewTokenHandle);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtGetNextThread(
-            IntPtr ProcessHandle,
-            IntPtr ThreadHandle,
-            ACCESS_MASK DesiredAccess,
-            uint HandleAttributes,
-            uint Flags,
-            out IntPtr NewThreadHandle);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenProcess(
             out IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
@@ -122,30 +113,12 @@ namespace TokenAssignor.Interop
             out IntPtr TokenHandle);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtOpenThread(
-            out IntPtr ThreadHandle,
-            ACCESS_MASK DesiredAccess,
-            in OBJECT_ATTRIBUTES ObjectAttributes,
-            in CLIENT_ID ClientId);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtQueryInformationThread(
-            IntPtr ThreadHandle,
-            THREADINFOCLASS ThreadInformationClass,
-            IntPtr ThreadInformation,
-            uint ThreadInformationLength,
-            out uint ReturnLength);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength,
             out uint ReturnLength);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtResumeProcess(IntPtr ProcessHandle);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtResumeThread(
@@ -165,21 +138,6 @@ namespace TokenAssignor.Interop
             THREADINFOCLASS ThreadInformationClass,
             IntPtr ThreadInformation,
             uint ThreadInformationLength);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSetInformationToken(
-            IntPtr TokenHandle,
-            TOKEN_INFORMATION_CLASS TokenInformationClass,
-            IntPtr TokenInformation,
-            uint TokenInformationLength);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSuspendProcess(IntPtr ProcessHandle);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSuspendThread(
-            IntPtr ThreadHandle,
-            out uint PreviousSuspendCount);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtTerminateProcess(IntPtr ProcessHandle, NTSTATUS ExitStatus);
