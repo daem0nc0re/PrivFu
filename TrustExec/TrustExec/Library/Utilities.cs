@@ -105,42 +105,6 @@ namespace TrustExec.Library
         }
 
 
-        public static bool CreateTokenPrivileges(
-            string[] privs,
-            out TOKEN_PRIVILEGES tokenPrivileges)
-        {
-            int error;
-            int sizeOfStruct = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
-            IntPtr pPrivileges = Marshal.AllocHGlobal(sizeOfStruct);
-
-            tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                pPrivileges,
-                typeof(TOKEN_PRIVILEGES));
-            tokenPrivileges.PrivilegeCount = privs.Length;
-
-            for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
-            {
-                if (!NativeMethods.LookupPrivilegeValue(
-                    null,
-                    privs[idx],
-                    out LUID luid))
-                {
-                    error = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to lookup LUID for {0}.", privs[idx]);
-                    Console.WriteLine("    |-> {0}\n", Helpers.GetWin32ErrorMessage(error, false));
-
-                    return false;
-                }
-
-                tokenPrivileges.Privileges[idx].Attributes = (uint)(
-                    SE_PRIVILEGE_ATTRIBUTES.Enabled | SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault);
-                tokenPrivileges.Privileges[idx].Luid = luid;
-            }
-
-            return true;
-        }
-
-
         public static IntPtr CreateTrustedInstallerToken(
             TOKEN_TYPE tokenType,
             SECURITY_IMPERSONATION_LEVEL impersonationLevel,
