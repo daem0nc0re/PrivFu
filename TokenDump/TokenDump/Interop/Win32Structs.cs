@@ -633,12 +633,6 @@ namespace TokenDump.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_ELEVATION
-    {
-        public int TokenIsElevated;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_GROUPS
     {
         public int GroupCount;
@@ -650,12 +644,6 @@ namespace TokenDump.Interop
             GroupCount = nGroupCount;
             Groups = new SID_AND_ATTRIBUTES[1];
         }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_LINKED_TOKEN
-    {
-        public IntPtr LinkedToken;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -718,13 +706,6 @@ namespace TokenDump.Interop
         public TOKEN_SECURITY_ATTRIBUTE_FLAGS Flags;
         public uint ValueCount;
         public IntPtr Value;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_SECURITY_ATTRIBUTES_AND_OPERATION_INFORMATION
-    {
-        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTES_INFORMATION */ Attributes;
-        public IntPtr /* PTOKEN_SECURITY_ATTRIBUTE_OPERATION */ Operations;
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -12,15 +12,6 @@ namespace TokenDump.Interop
         /*
          * advapi32.dll
          */
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool AdjustTokenPrivileges(
-            IntPtr TokenHandle,
-            bool DisableAllPrivileges,
-            IntPtr /* in TOKEN_PRIVILEGES */ NewState,
-            int BufferLength,
-            IntPtr /* out TOKEN_PRIVILEGES */ PreviousState,
-            out int ReturnLength);
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool ConvertSidToStringSid(IntPtr Sid, out string StringSid);
 
@@ -36,19 +27,6 @@ namespace TokenDump.Interop
             StringBuilder pReferencedDomainName,
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool LookupPrivilegeName(
-            string lpSystemName,
-            in LUID lpLuid,
-            StringBuilder lpName,
-            ref int cchName);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool LookupPrivilegeValue(
-            string lpSystemName,
-            string lpName,
-            out LUID lpLuid);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool OpenProcessToken(
@@ -218,11 +196,6 @@ namespace TokenDump.Interop
         /*
          * secur32.dll
          */
-        [DllImport("secur32.dll")]
-        public static extern NTSTATUS LsaEnumerateLogonSessions(
-            out uint LogonSessionCount,
-            out IntPtr /* PLUID* */ LogonSessionList);
-
         [DllImport("secur32.dll")]
         public static extern NTSTATUS LsaGetLogonSessionData(
             in LUID LogonId, // in LUID
