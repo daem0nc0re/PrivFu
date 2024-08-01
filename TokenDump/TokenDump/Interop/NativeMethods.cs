@@ -98,6 +98,15 @@ namespace TokenDump.Interop
          * ntdll.dll
          */
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtAdjustPrivilegesToken(
+            IntPtr TokenHandle,
+            BOOLEAN DisableAllPrivileges,
+            IntPtr /* PTOKEN_PRIVILEGES */ NewState,
+            uint BufferLength,
+            IntPtr /* out PTOKEN_PRIVILEGES */ PreviousState, // Optional
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll")]
@@ -199,6 +208,12 @@ namespace TokenDump.Interop
             IntPtr SystemInformation,
             uint SystemInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern uint RtlNtStatusToDosError(NTSTATUS Status);
+
+        [DllImport("ntdll.dll", SetLastError = true)]
+        public static extern void RtlSetLastWin32Error(int dwErrCode);
 
         /*
          * secur32.dll

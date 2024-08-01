@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using TokenDump.Interop;
@@ -184,20 +185,89 @@ namespace TokenDump.Library
         }
 
 
-        public static bool EnumerateSessionLuids(out List<LUID> sessionLuids)
+        public static bool EnableTokenPrivileges(
+            in List<SE_PRIVILEGE_ID> requiredPrivs,
+            out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
         {
-            NTSTATUS ntstatus = NativeMethods.LsaEnumerateLogonSessions(
-                out uint nLogonSessionCount,
-                out IntPtr pLogonSessionList);
-            sessionLuids = new List<LUID>();
+            return EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out adjustedPrivs);
+        }
 
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+
+        public static bool EnableTokenPrivileges(
+            IntPtr hToken,
+            in List<SE_PRIVILEGE_ID> privsToEnable,
+            out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
+        {
+            bool bAllEnabled;
+            int nDosErrorCode;
+            IntPtr pInfoBuffer;
+            NTSTATUS nErrorStatus = Win32Consts.STATUS_SUCCESS;
+            adjustedPrivs = new Dictionary<SE_PRIVILEGE_ID, bool>();
+
+            foreach (var id in privsToEnable)
+                adjustedPrivs.Add(id, false);
+
+            if (privsToEnable.Count == 0)
+                return true;
+
+            bAllEnabled = Helpers.GetTokenPrivileges(
+                hToken,
+                out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
+
+            if (!bAllEnabled)
+                return false;
+
+            pInfoBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
+
+            foreach (var priv in privsToEnable)
             {
-                for (var idx = 0; idx < (int)nLogonSessionCount; idx++)
-                    sessionLuids.Add(LUID.FromInt64(Marshal.ReadInt64(pLogonSessionList, idx * 8)));
+                NTSTATUS ntstatus;
+                var info = new TOKEN_PRIVILEGES
+                {
+                    PrivilegeCount = 1,
+                    Privileges = new LUID_AND_ATTRIBUTES[1]
+                };
+
+                if (!availablePrivs.ContainsKey(priv))
+                {
+                    nErrorStatus = Win32Consts.STATUS_PRIVILEGE_NOT_HELD;
+                    bAllEnabled = false;
+                    continue;
+                }
+
+                if ((availablePrivs[priv] & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
+                {
+                    adjustedPrivs[priv] = true;
+                    continue;
+                }
+
+                info.Privileges[0].Luid.QuadPart = (long)priv;
+                info.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
+                Marshal.StructureToPtr(info, pInfoBuffer, true);
+                ntstatus = NativeMethods.NtAdjustPrivilegesToken(
+                    hToken,
+                    BOOLEAN.FALSE,
+                    pInfoBuffer,
+                    (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
+                    IntPtr.Zero,
+                    out uint _);
+                adjustedPrivs[priv] = (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                {
+                    nErrorStatus = ntstatus;
+                    bAllEnabled = false;
+                }
             }
 
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(nErrorStatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+            Marshal.FreeHGlobal(pInfoBuffer);
+
+            return bAllEnabled;
         }
 
 
@@ -1463,52 +1533,37 @@ namespace TokenDump.Library
 
         public static bool GetTokenPrivileges(
             IntPtr hToken,
-            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privileges)
+            out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privileges)
         {
-            NTSTATUS ntstatus;
-            IntPtr pInformationBuffer;
-            var nInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
-            privileges = new Dictionary<string, SE_PRIVILEGE_ATTRIBUTES>();
-
-            do
-            {
-                pInformationBuffer = Marshal.AllocHGlobal((int)nInformationLength);
-                ntstatus = NativeMethods.NtQueryInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenPrivileges,
-                    pInformationBuffer,
-                    nInformationLength,
-                    out nInformationLength);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(pInformationBuffer);
-            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+            int nDosErrorCode;
+            var nOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+            var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+            var nInfoLength = (uint)(nOffset + (nUnitSize * 36));
+            var pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenPrivileges,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+            privileges = new Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES>();
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
-                var tokenPrivileges = (TOKEN_PRIVILEGES)Marshal.PtrToStructure(
-                    pInformationBuffer,
-                    typeof(TOKEN_PRIVILEGES));
-                var nEntryOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
-                var nUnitSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+                int nPrivilegeCount = Marshal.ReadInt32(pInfoBuffer);
 
-                for (var idx = 0; idx < tokenPrivileges.PrivilegeCount; idx++)
+                for (var idx = 0; idx < nPrivilegeCount; idx++)
                 {
-                    int cchName = 128;
-                    var stringBuilder = new StringBuilder(cchName);
-                    var luid = LUID.FromInt64(Marshal.ReadInt64(pInformationBuffer, nEntryOffset + (nUnitSize * idx)));
-                    var nAttributesOffset = Marshal.OffsetOf(typeof(LUID_AND_ATTRIBUTES), "Attributes").ToInt32();
-                    var attributes = (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(
-                        pInformationBuffer,
-                        nEntryOffset + (nUnitSize * idx) + nAttributesOffset);
-
-                    NativeMethods.LookupPrivilegeName(null, in luid, stringBuilder, ref cchName);
-                    privileges.Add(stringBuilder.ToString(), attributes);
-                    stringBuilder.Clear();
+                    privileges.Add(
+                        (SE_PRIVILEGE_ID)Marshal.ReadInt32(pInfoBuffer, nOffset),
+                        (SE_PRIVILEGE_ATTRIBUTES)Marshal.ReadInt32(pInfoBuffer, nOffset + 8));
+                    nOffset += nUnitSize;
                 }
-
-                Marshal.FreeHGlobal(pInformationBuffer);
             }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+            Marshal.FreeHGlobal(pInfoBuffer);
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }

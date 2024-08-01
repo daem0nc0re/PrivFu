@@ -389,26 +389,6 @@ namespace TokenDump.Interop
         MaxProcessInfoClass
     }
 
-    internal enum RPC_C_AUTHN_TYPES : uint
-    {
-        NONE = 0,
-        DCE_PRIVATE = 1,
-        DCE_PUBLIC = 2,
-        DEC_PUBLIC = 4,
-        GSS_NEGOTIATE = 9,
-        WINNT = 10,
-        GSS_SCHANNEL = 14,
-        GSS_KERBEROS = 16,
-        DPA = 17,
-        MSN = 18,
-        KERNEL = 20,
-        DIGEST = 21,
-        NEGO_EXTENDER = 30,
-        PKU2U = 31,
-        MQ = 100,
-        DEFAULT = 0xFFFFFFFF
-    }
-
     [Flags]
     internal enum SE_GROUP_ATTRIBUTES : uint
     {
@@ -431,6 +411,46 @@ namespace TokenDump.Interop
         Enabled = 0x00000002,
         Removed = 0X00000004,
         UsedForAccess = 0x80000000
+    }
+
+    internal enum SE_PRIVILEGE_ID
+    {
+        SeCreateTokenPrivilege = 2,
+        SeAssignPrimaryTokenPrivilege,
+        SeLockMemoryPrivilege,
+        SeIncreaseQuotaPrivilege,
+        SeMachineAccountPrivilege,
+        SeTcbPrivilege,
+        SeSecurityPrivilege,
+        SeTakeOwnershipPrivilege,
+        SeLoadDriverPrivilege,
+        SeSystemProfilePrivilege,
+        SeSystemtimePrivilege,
+        SeProfileSingleProcessPrivilege,
+        SeIncreaseBasePriorityPrivilege,
+        SeCreatePagefilePrivilege,
+        SeCreatePermanentPrivilege,
+        SeBackupPrivilege,
+        SeRestorePrivilege,
+        SeShutdownPrivilege,
+        SeDebugPrivilege,
+        SeAuditPrivilege,
+        SeSystemEnvironmentPrivilege,
+        SeChangeNotifyPrivilege,
+        SeRemoteShutdownPrivilege,
+        SeUndockPrivilege,
+        SeSyncAgentPrivilege,
+        SeEnableDelegationPrivilege,
+        SeManageVolumePrivilege,
+        SeImpersonatePrivilege,
+        SeCreateGlobalPrivilege,
+        SeTrustedCredManAccessPrivilege,
+        SeRelabelPrivilege,
+        SeIncreaseWorkingSetPrivilege,
+        SeTimeZonePrivilege,
+        SeCreateSymbolicLinkPrivilege,
+        SeDelegateSessionUserImpersonatePrivilege,
+        MaximumCount
     }
 
     internal enum SEC_WINNT_AUTH_IDENTITY_FLAGS : uint

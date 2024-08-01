@@ -23,6 +23,7 @@ namespace TokenDump.Interop
         public static readonly NTSTATUS STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         public static readonly NTSTATUS STATUS_BUFFER_TOO_SMALL = Convert.ToInt32("0xC0000023", 16);
         public static readonly NTSTATUS STATUS_NO_SUCH_LOGON_SESSION = Convert.ToInt32("0xC000005F", 16);
+        public static readonly NTSTATUS STATUS_PRIVILEGE_NOT_HELD = Convert.ToInt32("0xC0000061", 16);
 
         /*
          * Win32 Error Code
@@ -30,11 +31,5 @@ namespace TokenDump.Interop
         public const int ERROR_ACCESS_DENIED = 5;
         public const int ERROR_INVALID_PARAMETER = 87;
         public const int ERROR_NO_TOKEN = 1008;
-
-        /*
-         * Privilege Name
-         */
-        public const string SE_DEBUG_NAME = "SeDebugPrivilege";
-        public const string SE_IMPERSONATE_NAME = "SeImpersonatePrivilege";
     }
 }

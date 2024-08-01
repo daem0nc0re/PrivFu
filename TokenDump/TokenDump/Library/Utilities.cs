@@ -315,7 +315,7 @@ namespace TokenDump.Library
 
         public static void DumpVerboseTokenInformation(
             VerboseTokenInformation info,
-            Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
+            Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs,
             Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
             Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
             Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
@@ -431,92 +431,6 @@ namespace TokenDump.Library
             outputBuilder.Append(ParseTokenSecurityAttributes(info.SecurityAttributesBuffer));
 
             Console.WriteLine(outputBuilder.ToString());
-        }
-
-
-        public static bool EnableTokenPrivileges(
-            List<string> requiredPrivs,
-            out Dictionary<string, bool> adjustedPrivs)
-        {
-            return EnableTokenPrivileges(
-                WindowsIdentity.GetCurrent().Token,
-                requiredPrivs,
-                out adjustedPrivs);
-        }
-
-
-        public static bool EnableTokenPrivileges(
-            IntPtr hToken,
-            List<string> requiredPrivs,
-            out Dictionary<string, bool> adjustedPrivs)
-        {
-            var allEnabled = true;
-            adjustedPrivs = new Dictionary<string, bool>();
-
-            do
-            {
-                if (requiredPrivs.Count == 0)
-                    break;
-
-                allEnabled = Helpers.GetTokenPrivileges(
-                    hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
-
-                if (!allEnabled)
-                    break;
-
-                foreach (var priv in requiredPrivs)
-                {
-                    adjustedPrivs.Add(priv, false);
-
-                    foreach (var available in availablePrivs)
-                    {
-                        if (Helpers.CompareIgnoreCase(available.Key, priv))
-                        {
-                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.Enabled) != 0)
-                            {
-                                adjustedPrivs[priv] = true;
-                            }
-                            else
-                            {
-                                IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-                                var tokenPrivileges = new TOKEN_PRIVILEGES
-                                {
-                                    PrivilegeCount = 1,
-                                    Privileges = new LUID_AND_ATTRIBUTES[1]
-                                };
-
-                                if (NativeMethods.LookupPrivilegeValue(
-                                    null,
-                                    priv,
-                                    out tokenPrivileges.Privileges[0].Luid))
-                                {
-                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
-                                    Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
-
-                                    adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
-                                        hToken,
-                                        false,
-                                        pTokenPrivileges,
-                                        Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
-                                        IntPtr.Zero,
-                                        out int _);
-                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
-                                }
-
-                                Marshal.FreeHGlobal(pTokenPrivileges);
-                            }
-
-                            break;
-                        }
-                    }
-
-                    if (!adjustedPrivs[priv])
-                        allEnabled = false;
-                }
-            } while (false);
-
-            return allEnabled;
         }
 
 
@@ -724,7 +638,7 @@ namespace TokenDump.Library
             bool isLinkedToken,
             out IntPtr hLinkedToken,
             ref VerboseTokenInformation info,
-            out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
+            out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,
@@ -1039,7 +953,7 @@ namespace TokenDump.Library
 
 
         private static string ParseTokenPrivilegesTableToString(
-            Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs)
+            Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs)
         {
             var titles = new string[] { "Privilege Name", "State" };
             var width = new int[titles.Length];
@@ -1055,14 +969,12 @@ namespace TokenDump.Library
                 var state = entry.Value.ToString();
 
                 if (entry.Value == SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault)
-                {
                     state = "EnabledByDefault, Disabled";
-                }
 
-                tableData.Add(entry.Key, state);
+                tableData.Add(entry.Key.ToString(), state);
 
-                if (entry.Key.Length > width[0])
-                    width[0] = entry.Key.Length;
+                if (entry.Key.ToString().Length > width[0])
+                    width[0] = entry.Key.ToString().Length;
 
                 if (state.Length > width[1])
                     width[1] = state.Length;

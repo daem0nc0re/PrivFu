@@ -18,17 +18,17 @@ namespace TokenDump.Library
 
             if (debug)
             {
-                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+                Console.WriteLine("[>] Trying to enable SeDebugPrivilege.");
 
-                if (Utilities.EnableTokenPrivileges(
-                    new List<string> { Win32Consts.SE_DEBUG_NAME },
-                    out Dictionary<string, bool> _))
+                if (Helpers.EnableTokenPrivileges(
+                    new List<SE_PRIVILEGE_ID> { SE_PRIVILEGE_ID.SeDebugPrivilege },
+                    out Dictionary<SE_PRIVILEGE_ID, bool> _))
                 {
-                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[+] SeDebugPrivilege is enabled successfully.");
                 }
                 else
                 {
-                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[-] SeDebugPrivilege is not available.");
                     return false;
                 }
             }
@@ -78,17 +78,17 @@ namespace TokenDump.Library
 
             if (debug)
             {
-                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+                Console.WriteLine("[>] Trying to enable SeDebugPrivilege.");
 
-                if (Utilities.EnableTokenPrivileges(
-                    new List<string> { Win32Consts.SE_DEBUG_NAME },
-                    out Dictionary<string, bool> _))
+                if (Helpers.EnableTokenPrivileges(
+                    new List<SE_PRIVILEGE_ID> { SE_PRIVILEGE_ID.SeDebugPrivilege },
+                    out Dictionary<SE_PRIVILEGE_ID, bool> _))
                 {
-                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[+] SeDebugPrivilege is enabled successfully.");
                 }
                 else
                 {
-                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[-] SeDebugPrivilege is not available.");
                     return false;
                 }
             }
@@ -151,17 +151,17 @@ namespace TokenDump.Library
 
             if (debug)
             {
-                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+                Console.WriteLine("[>] Trying to enable SeDebugPrivilege.");
 
-                if (Utilities.EnableTokenPrivileges(
-                    new List<string> { Win32Consts.SE_DEBUG_NAME },
-                    out Dictionary<string, bool> _))
+                if (Helpers.EnableTokenPrivileges(
+                    new List<SE_PRIVILEGE_ID> { SE_PRIVILEGE_ID.SeDebugPrivilege },
+                    out Dictionary<SE_PRIVILEGE_ID, bool> _))
                 {
-                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[+] SeDebugPrivilege is enabled successfully.");
                 }
                 else
                 {
-                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[-] SeDebugPrivilege is not available.");
                     return false;
                 }
             }
@@ -244,17 +244,17 @@ namespace TokenDump.Library
 
             if (debug)
             {
-                Console.WriteLine("[>] Trying to enable {0}.", Win32Consts.SE_DEBUG_NAME);
+                Console.WriteLine("[>] Trying to enable SeDebugPrivilege.");
 
-                if (Utilities.EnableTokenPrivileges(
-                    new List<string> { Win32Consts.SE_DEBUG_NAME },
-                    out Dictionary<string, bool> _))
+                if (Helpers.EnableTokenPrivileges(
+                    new List<SE_PRIVILEGE_ID> { SE_PRIVILEGE_ID.SeDebugPrivilege },
+                    out Dictionary<SE_PRIVILEGE_ID, bool> _))
                 {
-                    Console.WriteLine("[+] {0} is enabled successfully.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[+] SeDebugPrivilege is enabled successfully.");
                 }
                 else
                 {
-                    Console.WriteLine("[-] {0} is not available.", Win32Consts.SE_DEBUG_NAME);
+                    Console.WriteLine("[-] SeDebugPrivilege is not available.");
                     return false;
                 }
             }
@@ -392,7 +392,7 @@ namespace TokenDump.Library
                     false,
                     out IntPtr hLinkedToken,
                     ref info,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> privs,
+                    out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privs,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> groups,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> restrictedGroups,
                     out Dictionary<string, SE_GROUP_ATTRIBUTES> capabilities,

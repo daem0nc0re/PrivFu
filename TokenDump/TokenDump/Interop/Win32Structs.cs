@@ -255,11 +255,29 @@ namespace TokenDump.Interop
         }
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Explicit, Size = 8, Pack = 4)]
     internal struct LUID
     {
+        [FieldOffset(0)]
         public int LowPart;
+        [FieldOffset(4)]
         public int HighPart;
+        [FieldOffset(0)]
+        public long QuadPart;
+
+        public LUID(int _low, int _high)
+        {
+            QuadPart = 0L;
+            LowPart = _low;
+            HighPart = _high;
+        }
+
+        public LUID(long _quad)
+        {
+            LowPart = 0;
+            HighPart = 0;
+            QuadPart = _quad;
+        }
 
         public long ToInt64()
         {
