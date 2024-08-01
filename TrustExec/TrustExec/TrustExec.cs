@@ -31,14 +31,12 @@ namespace TrustExec
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex.Message);
-
                 return;
             }
             catch (ArgumentException ex)
             {
                 options.GetHelp();
                 Console.WriteLine(ex.Message);
-
                 return;
             }
 
@@ -72,8 +70,6 @@ namespace TrustExec
                     catch (InvalidOperationException ex)
                     {
                         Console.WriteLine(ex.Message);
-
-                        return;
                     }
                     catch (ArgumentException ex)
                     {
@@ -82,10 +78,7 @@ namespace TrustExec
                         Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
                         Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
                         Console.WriteLine();
-
                         Console.WriteLine(ex.Message);
-
-                        return;
                     }
                 }
                 else if (string.Compare(options.GetValue("module"), "sid", opt) == 0)
@@ -111,15 +104,11 @@ namespace TrustExec
                     catch (InvalidOperationException ex)
                     {
                         Console.WriteLine(ex.Message);
-
-                        return;
                     }
                     catch (ArgumentException ex)
                     {
                         subOptions.GetHelp();
                         Console.WriteLine(ex.Message);
-
-                        return;
                     }
                 }
                 else

@@ -19,23 +19,37 @@ namespace TrustExec.Library
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new List<string> {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
+            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
             };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
-            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                else
+                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges.");
                 return false;
+            }
 
-            privs = new List<string> {
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Consts.SE_INCREASE_QUOTA_NAME
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
             };
 
             Console.WriteLine("[>] Trying to impersonate as smss.exe.");
 
-            if (!Utilities.ImpersonateAsSmss(privs))
+            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
             {
                 Console.WriteLine("[-] Failed to impersonation.");
                 return false;
@@ -103,23 +117,37 @@ namespace TrustExec.Library
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new List<string> {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
+            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
             };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
-            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                else
+                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges.");
                 return false;
+            }
 
-            privs = new List<string> {
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Consts.SE_INCREASE_QUOTA_NAME
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
             };
 
             Console.WriteLine("[>] Trying to impersonate as smss.exe.");
 
-            if (!Utilities.ImpersonateAsSmss(privs))
+            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
             {
                 Console.WriteLine("[-] Failed to impersonation.");
                 return false;
@@ -138,13 +166,13 @@ namespace TrustExec.Library
 
         public static bool RunTrustedInstallerProcess(string command, string extraSidsString, bool full)
         {
-            bool status;
+            bool bSuccess;
+            bool bIsImpersonated;
             string execute;
             string[] extraSidsArray;
-            var isImpersonated = false;
 
             if (string.IsNullOrEmpty(command))
-                execute = @"C:\Windows\System32\cmd.exe";
+                execute = Environment.GetEnvironmentVariable("COMSPEC");
             else
                 execute = command;
 
@@ -158,33 +186,41 @@ namespace TrustExec.Library
             do
             {
                 IntPtr hToken;
-                var privs = new List<string> {
-                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                    Win32Consts.SE_CREATE_TOKEN_NAME,
-                    Win32Consts.SE_INCREASE_QUOTA_NAME
+                var requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                    SE_PRIVILEGE_ID.SeDebugPrivilege,
+                    SE_PRIVILEGE_ID.SeImpersonatePrivilege
                 };
 
                 Console.WriteLine("[>] Trying to get SYSTEM.");
 
-                status = Utilities.EnableTokenPrivileges(
-                    WindowsIdentity.GetCurrent().Token,
-                    new List<string> { Win32Consts.SE_DEBUG_NAME, Win32Consts.SE_IMPERSONATE_NAME },
-                    out Dictionary<string, bool> adjustedPrivs);
+                bSuccess = Helpers.EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
-                if (!status)
+                foreach (var priv in adjustedPrivs)
                 {
-                    foreach (var priv in adjustedPrivs)
-                    {
-                        if (!priv.Value)
-                            Console.WriteLine("[-] {0} is not available.", priv.Key);
-                    }
-
-                    break;
+                    if (priv.Value)
+                        Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                    else
+                        Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
                 }
 
-                isImpersonated = Utilities.ImpersonateAsSmss(privs);
+                if (!bSuccess)
+                {
+                    Console.WriteLine("[-] Insufficient privileges.");
+                    return false;
+                }
 
-                if (!isImpersonated)
+                requiredPrivs = new List<SE_PRIVILEGE_ID>
+                {
+                    SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                    SE_PRIVILEGE_ID.SeCreateTokenPrivilege,
+                    SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
+                };
+                bIsImpersonated = Utilities.ImpersonateAsSmss(in requiredPrivs);
+
+                if (!bIsImpersonated)
                 {
                     Console.WriteLine("[-] Failed to impersonation.");
                     break;
@@ -205,10 +241,10 @@ namespace TrustExec.Library
 
                 Console.WriteLine("[>] Trying to create token assigned process.");
 
-                status = Utilities.CreateTokenAssignedProcess(hToken, execute);
+                bSuccess = Utilities.CreateTokenAssignedProcess(hToken, execute);
                 NativeMethods.CloseHandle(hToken);
 
-                if (!status)
+                if (!bSuccess)
                 {
                     var error = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create token assigned process.");
@@ -216,10 +252,10 @@ namespace TrustExec.Library
                 }
             } while (false);
 
-            if (isImpersonated)
+            if (bIsImpersonated)
                 NativeMethods.RevertToSelf();
 
-            return status;
+            return bSuccess;
         }
 
 
@@ -249,7 +285,7 @@ namespace TrustExec.Library
             }
 
             if (string.IsNullOrEmpty(command))
-                execute = @"C:\Windows\System32\cmd.exe";
+                execute = Environment.GetEnvironmentVariable("COMSPEC");
             else
                 execute = command;
 
@@ -262,23 +298,37 @@ namespace TrustExec.Library
 
             Console.WriteLine("[>] Trying to get SYSTEM.");
 
-            IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
-            var privs = new List<string> {
-                Win32Consts.SE_DEBUG_NAME,
-                Win32Consts.SE_IMPERSONATE_NAME
+            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
             };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
-            if (!Utilities.EnableTokenPrivileges(hCurrentToken, privs, out Dictionary<string, bool> _))
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                else
+                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges.");
                 return false;
+            }
 
-            privs = new List<string> {
-                Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                Win32Consts.SE_INCREASE_QUOTA_NAME
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
             };
 
             Console.WriteLine("[>] Trying to impersonate as smss.exe.");
 
-            if (!Utilities.ImpersonateAsSmss(privs))
+            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
             {
                 Console.WriteLine("[-] Failed to impersonation.");
                 return false;
@@ -298,7 +348,7 @@ namespace TrustExec.Library
                 return false;
 
             if (fullPrivilege)
-                Utilities.EnableAllTokenPrivileges(hToken, out Dictionary<string, bool> _);
+                Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
 
             Console.WriteLine("[>] Trying to create token assigned process.");
 

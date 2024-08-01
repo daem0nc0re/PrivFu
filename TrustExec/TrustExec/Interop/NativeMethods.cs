@@ -152,6 +152,15 @@ namespace TrustExec.Interop
          * ntdll.dll
          */
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtAdjustPrivilegesToken(
+            IntPtr TokenHandle,
+            BOOLEAN DisableAllPrivileges,
+            IntPtr /* PTOKEN_PRIVILEGES */ NewState,
+            uint BufferLength,
+            IntPtr /* out PTOKEN_PRIVILEGES */ PreviousState, // Optional
+            out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
@@ -160,7 +169,7 @@ namespace TrustExec.Interop
             out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS ZwCreateToken(
+        public static extern NTSTATUS NtCreateToken(
             out IntPtr TokenHandle,
             TokenAccessFlags DesiredAccess,
             ref OBJECT_ATTRIBUTES ObjectAttributes,
@@ -169,11 +178,17 @@ namespace TrustExec.Interop
             ref LARGE_INTEGER ExpirationTime,
             ref TOKEN_USER TokenUser,
             ref TOKEN_GROUPS TokenGroups,
-            ref TOKEN_PRIVILEGES TokenPrivileges,
+            IntPtr /* ref TOKEN_PRIVILEGES */ TokenPrivileges,
             ref TOKEN_OWNER TokenOwner,
             ref TOKEN_PRIMARY_GROUP TokenPrimaryGroup,
             ref TOKEN_DEFAULT_DACL TokenDefaultDacl,
             ref TOKEN_SOURCE TokenSource);
+
+        [DllImport("ntdll.dll")]
+        public static extern uint RtlNtStatusToDosError(NTSTATUS Status);
+
+        [DllImport("ntdll.dll", SetLastError = true)]
+        public static extern void RtlSetLastWin32Error(int dwErrCode);
 
         /*
          * sspicli.dll

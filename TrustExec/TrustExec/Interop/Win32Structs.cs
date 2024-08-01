@@ -59,11 +59,29 @@ namespace TrustExec.Interop
         public UNICODE_STRING AccountName;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Explicit, Size = 8, Pack = 4)]
     internal struct LUID
     {
+        [FieldOffset(0)]
         public int LowPart;
+        [FieldOffset(4)]
         public int HighPart;
+        [FieldOffset(0)]
+        public long QuadPart;
+
+        public LUID(int _low, int _high)
+        {
+            QuadPart = 0L;
+            LowPart = _low;
+            HighPart = _high;
+        }
+
+        public LUID(long _quad)
+        {
+            LowPart = 0;
+            HighPart = 0;
+            QuadPart = _quad;
+        }
 
         public long ToInt64()
         {
@@ -261,17 +279,11 @@ namespace TrustExec.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_PRIVILEGES
+    internal class TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 36)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public LUID_AND_ATTRIBUTES[] Privileges;
-
-        public TOKEN_PRIVILEGES(int privilegeCount)
-        {
-            PrivilegeCount = privilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[36];
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

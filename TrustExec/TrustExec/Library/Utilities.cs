@@ -133,8 +133,7 @@ namespace TrustExec.Library
                 }
 
                 tokenPrivileges.Privileges[idx].Attributes = (uint)(
-                    SE_PRIVILEGE_ATTRIBUTES.ENABLED |
-                    SE_PRIVILEGE_ATTRIBUTES.ENABLED_BY_DEFAULT);
+                    SE_PRIVILEGE_ATTRIBUTES.Enabled | SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault);
                 tokenPrivileges.Privileges[idx].Luid = luid;
             }
 
@@ -151,56 +150,47 @@ namespace TrustExec.Library
             NTSTATUS ntstatus;
             LUID authId = Win32Consts.SYSTEM_LUID;
             var tokenSource = new TOKEN_SOURCE("*SYSTEM*");
-            string[] privs;
+            var nPrivilegesOffset = Marshal.OffsetOf(typeof(TOKEN_PRIVILEGES), "Privileges").ToInt32();
+            var nPrivilegeSize = Marshal.SizeOf(typeof(LUID_AND_ATTRIBUTES));
+            var pTokenPrivileges = Marshal.AllocHGlobal(nPrivilegesOffset + nPrivilegeSize * 36);
+            var attribute = (int)(SE_PRIVILEGE_ATTRIBUTES.Enabled | SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault);
 
             if (full)
             {
-                privs = new string[] {
-                    Win32Consts.SE_CREATE_TOKEN_NAME,
-                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                    Win32Consts.SE_LOCK_MEMORY_NAME,
-                    Win32Consts.SE_INCREASE_QUOTA_NAME,
-                    Win32Consts.SE_MACHINE_ACCOUNT_NAME,
-                    Win32Consts.SE_TCB_NAME,
-                    Win32Consts.SE_SECURITY_NAME,
-                    Win32Consts.SE_TAKE_OWNERSHIP_NAME,
-                    Win32Consts.SE_LOAD_DRIVER_NAME,
-                    Win32Consts.SE_SYSTEM_PROFILE_NAME,
-                    Win32Consts.SE_SYSTEMTIME_NAME,
-                    Win32Consts.SE_PROFILE_SINGLE_PROCESS_NAME,
-                    Win32Consts.SE_INCREASE_BASE_PRIORITY_NAME,
-                    Win32Consts.SE_CREATE_PAGEFILE_NAME,
-                    Win32Consts.SE_CREATE_PERMANENT_NAME,
-                    Win32Consts.SE_BACKUP_NAME,
-                    Win32Consts.SE_RESTORE_NAME,
-                    Win32Consts.SE_SHUTDOWN_NAME,
-                    Win32Consts.SE_DEBUG_NAME,
-                    Win32Consts.SE_AUDIT_NAME,
-                    Win32Consts.SE_SYSTEM_ENVIRONMENT_NAME,
-                    Win32Consts.SE_CHANGE_NOTIFY_NAME,
-                    Win32Consts.SE_REMOTE_SHUTDOWN_NAME,
-                    Win32Consts.SE_UNDOCK_NAME,
-                    Win32Consts.SE_SYNC_AGENT_NAME,
-                    Win32Consts.SE_ENABLE_DELEGATION_NAME,
-                    Win32Consts.SE_MANAGE_VOLUME_NAME,
-                    Win32Consts.SE_IMPERSONATE_NAME,
-                    Win32Consts.SE_CREATE_GLOBAL_NAME,
-                    Win32Consts.SE_TRUSTED_CREDMAN_ACCESS_NAME,
-                    Win32Consts.SE_RELABEL_NAME,
-                    Win32Consts.SE_INCREASE_WORKING_SET_NAME,
-                    Win32Consts.SE_TIME_ZONE_NAME,
-                    Win32Consts.SE_CREATE_SYMBOLIC_LINK_NAME,
-                    Win32Consts.SE_DELEGATE_SESSION_USER_IMPERSONATE_NAME
-                };
+                int nPrivilegeCount = 0;
+                int nOffset = nPrivilegesOffset;
+
+                for (var id = SE_PRIVILEGE_ID.SeCreateTokenPrivilege; id < SE_PRIVILEGE_ID.MaximumCount; id++)
+                {
+                    Marshal.WriteInt64(pTokenPrivileges, nOffset, (long)id);
+                    Marshal.WriteInt32(pTokenPrivileges, nOffset + 8, attribute);
+                    nOffset += nPrivilegeSize;
+                    nPrivilegeCount++;
+                }
+
+                Marshal.WriteInt32(pTokenPrivileges, nPrivilegeCount);
             }
             else
             {
-                privs = new string[] {
-                    Win32Consts.SE_DEBUG_NAME,
-                    Win32Consts.SE_TCB_NAME,
-                    Win32Consts.SE_ASSIGNPRIMARYTOKEN_NAME,
-                    Win32Consts.SE_IMPERSONATE_NAME
+                int nPrivilegeCount = 0;
+                int nOffset = nPrivilegesOffset;
+                var requiredPrivs = new List<SE_PRIVILEGE_ID>
+                {
+                    SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                    SE_PRIVILEGE_ID.SeDebugPrivilege,
+                    SE_PRIVILEGE_ID.SeImpersonatePrivilege,
+                    SE_PRIVILEGE_ID.SeTcbPrivilege
                 };
+
+                foreach (var id in requiredPrivs)
+                {
+                    Marshal.WriteInt64(pTokenPrivileges, nOffset, (long)id);
+                    Marshal.WriteInt32(pTokenPrivileges, nOffset + 8, attribute);
+                    nOffset += nPrivilegeSize;
+                    nPrivilegeCount++;
+                }
+
+                Marshal.WriteInt32(pTokenPrivileges, nPrivilegeCount);
             }
 
             Console.WriteLine("[>] Trying to create an elevated {0} token.",
@@ -209,13 +199,6 @@ namespace TrustExec.Library
             NativeMethods.ConvertStringSidToSid(
                 Win32Consts.TRUSTED_INSTALLER_RID,
                 out IntPtr pTrustedInstaller);
-
-            if (!CreateTokenPrivileges(
-                privs,
-                out TOKEN_PRIVILEGES tokenPrivileges))
-            {
-                return IntPtr.Zero;
-            }
 
             IntPtr hCurrentToken = WindowsIdentity.GetCurrent().Token;
             IntPtr pTokenUser = Helpers.GetInformationFromToken(
@@ -237,7 +220,7 @@ namespace TrustExec.Library
             if (pTokenDefaultDacl == IntPtr.Zero)
             {
                 Console.WriteLine("[-] Failed to get current token information.");
-
+                Marshal.FreeHGlobal(pTokenPrivileges);
                 return IntPtr.Zero;
             }
 
@@ -259,9 +242,9 @@ namespace TrustExec.Library
 
             tokenGroups.Groups[tokenGroups.GroupCount].Sid = pTrustedInstaller;
             tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                SE_GROUP_ATTRIBUTES.Owner |
+                SE_GROUP_ATTRIBUTES.EnabledByDefault |
+                SE_GROUP_ATTRIBUTES.Enabled);
             tokenGroups.GroupCount++;
 
             for (var idx = 0; idx < extraSidsArray.Length; idx++)
@@ -278,8 +261,8 @@ namespace TrustExec.Library
                 {
                     tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
                     tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
-                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                        SE_GROUP_ATTRIBUTES.Mandatory |
+                        SE_GROUP_ATTRIBUTES.Enabled);
                     tokenGroups.GroupCount++;
                 }
                 else
@@ -298,7 +281,7 @@ namespace TrustExec.Library
             Marshal.StructureToPtr(sqos, pSqos, true);
             oa.SecurityQualityOfService = pSqos;
 
-            ntstatus = NativeMethods.ZwCreateToken(
+            ntstatus = NativeMethods.NtCreateToken(
                 out IntPtr hToken,
                 TokenAccessFlags.TOKEN_ALL_ACCESS,
                 ref oa,
@@ -307,7 +290,7 @@ namespace TrustExec.Library
                 ref expirationTime,
                 ref tokenUser,
                 ref tokenGroups,
-                ref tokenPrivileges,
+                pTokenPrivileges,
                 ref tokenOwner,
                 ref tokenPrimaryGroup,
                 ref tokenDefaultDacl,
@@ -318,6 +301,7 @@ namespace TrustExec.Library
             NativeMethods.LocalFree(pTokenOwner);
             NativeMethods.LocalFree(pTokenPrimaryGroup);
             NativeMethods.LocalFree(pTokenDefaultDacl);
+            Marshal.FreeHGlobal(pTokenPrivileges);
 
             if (ntstatus != Win32Consts.STATUS_SUCCESS)
             {
@@ -381,14 +365,14 @@ namespace TrustExec.Library
 
             tokenGroups.Groups[0].Sid = pAdminGroup;
             tokenGroups.Groups[0].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY);
+                SE_GROUP_ATTRIBUTES.Enabled |
+                SE_GROUP_ATTRIBUTES.EnabledByDefault |
+                SE_GROUP_ATTRIBUTES.Mandatory);
             tokenGroups.Groups[1].Sid = pTrustedInstaller;
             tokenGroups.Groups[1].Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED_BY_DEFAULT |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_OWNER);
+                SE_GROUP_ATTRIBUTES.Enabled |
+                SE_GROUP_ATTRIBUTES.EnabledByDefault |
+                SE_GROUP_ATTRIBUTES.Owner);
 
             for (var idx = 0; idx < extraSidsArray.Length; idx++)
             {
@@ -404,8 +388,8 @@ namespace TrustExec.Library
                 {
                     tokenGroups.Groups[tokenGroups.GroupCount].Sid = pExtraSid;
                     tokenGroups.Groups[tokenGroups.GroupCount].Attributes = (uint)(
-                        SE_GROUP_ATTRIBUTES.SE_GROUP_MANDATORY |
-                        SE_GROUP_ATTRIBUTES.SE_GROUP_ENABLED);
+                        SE_GROUP_ATTRIBUTES.Mandatory |
+                        SE_GROUP_ATTRIBUTES.Enabled);
                     tokenGroups.GroupCount++;
                 }
                 else
@@ -457,8 +441,8 @@ namespace TrustExec.Library
             var mandatoryLabel = new TOKEN_MANDATORY_LABEL();
             mandatoryLabel.Label.Sid = pSystemIntegrity;
             mandatoryLabel.Label.Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY |
-                SE_GROUP_ATTRIBUTES.SE_GROUP_INTEGRITY_ENABLED);
+                SE_GROUP_ATTRIBUTES.Integrity |
+                SE_GROUP_ATTRIBUTES.IntegrityEnabled);
 
             IntPtr pMandatoryLabel = Marshal.AllocHGlobal(Marshal.SizeOf(mandatoryLabel));
             Marshal.StructureToPtr(mandatoryLabel, pMandatoryLabel, true);
@@ -483,107 +467,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool EnableAllTokenPrivileges(
-            IntPtr hToken,
-            out Dictionary<string, bool> adjustedPrivs)
-        {
-            bool allEnabled;
-
-            do
-            {
-                var privsToEnable = new List<string>();
-                allEnabled = Helpers.GetTokenPrivileges(
-                    hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
-
-                if (!allEnabled)
-                {
-                    adjustedPrivs = new Dictionary<string, bool>();
-                    break;
-                }
-
-                foreach (var privName in availablePrivs.Keys)
-                    privsToEnable.Add(privName);
-
-                allEnabled = EnableTokenPrivileges(hToken, privsToEnable, out adjustedPrivs);
-            } while (false);
-
-            return allEnabled;
-        }
-
-
-        public static bool EnableTokenPrivileges(
-            IntPtr hToken,
-            List<string> requiredPrivs,
-            out Dictionary<string, bool> adjustedPrivs)
-        {
-            var allEnabled = true;
-            adjustedPrivs = new Dictionary<string, bool>();
-
-            do
-            {
-                if (requiredPrivs.Count == 0)
-                    break;
-
-                allEnabled = Helpers.GetTokenPrivileges(
-                    hToken,
-                    out Dictionary<string, SE_PRIVILEGE_ATTRIBUTES> availablePrivs);
-
-                if (!allEnabled)
-                    break;
-
-                foreach (var priv in requiredPrivs)
-                {
-                    adjustedPrivs.Add(priv, false);
-
-                    foreach (var available in availablePrivs)
-                    {
-                        if (Helpers.CompareIgnoreCase(available.Key, priv))
-                        {
-                            if ((available.Value & SE_PRIVILEGE_ATTRIBUTES.ENABLED) != 0)
-                            {
-                                adjustedPrivs[priv] = true;
-                            }
-                            else
-                            {
-                                IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
-
-                                if (NativeMethods.LookupPrivilegeValue(
-                                    null,
-                                    priv,
-                                    out tokenPrivileges.Privileges[0].Luid))
-                                {
-                                    tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.ENABLED;
-                                    Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
-
-                                    adjustedPrivs[priv] = NativeMethods.AdjustTokenPrivileges(
-                                        hToken,
-                                        false,
-                                        pTokenPrivileges,
-                                        Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
-                                        IntPtr.Zero,
-                                        out int _);
-                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
-                                }
-
-                                Marshal.FreeHGlobal(pTokenPrivileges);
-                            }
-
-                            break;
-                        }
-                    }
-
-                    if (!adjustedPrivs[priv])
-                        allEnabled = false;
-                }
-            } while (false);
-
-            return allEnabled;
-        }
-
-
-        public static bool ImpersonateAsSmss(List<string> privs)
+        public static bool ImpersonateAsSmss(in List<SE_PRIVILEGE_ID> privs)
         {
             int smss;
             var status = false;
@@ -628,7 +512,7 @@ namespace TrustExec.Library
                 if (!status)
                     break;
 
-                EnableTokenPrivileges(hDupToken, privs, out Dictionary<string, bool> _);
+                Helpers.EnableTokenPrivileges(hDupToken, privs, out Dictionary<SE_PRIVILEGE_ID, bool> _);
 
                 status = ImpersonateThreadToken(hDupToken);
                 NativeMethods.CloseHandle(hDupToken);
