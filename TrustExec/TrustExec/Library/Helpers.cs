@@ -39,12 +39,6 @@ namespace TrustExec.Library
         }
 
 
-        public static bool CompareIgnoreCase(string strA, string strB)
-        {
-            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
-        }
-
-
         public static bool ConvertAccountNameToSidString(
             ref string accountName,
             ref string domainName,
@@ -109,6 +103,52 @@ namespace TrustExec.Library
             }
 
             return status;
+        }
+
+
+        public static string ConvertSidToStringSid(IntPtr pSid)
+        {
+            var stringSidBuilder = new StringBuilder("S");
+            int nAuthorityCount = Marshal.ReadByte(pSid, 1);
+            long nAuthority = 0;
+            stringSidBuilder.AppendFormat("-{0}", Marshal.ReadByte(pSid));
+
+            for (var idx = 2; idx < 8; idx++)
+                nAuthority = (nAuthority << 8) | Marshal.ReadByte(pSid, idx);
+
+            stringSidBuilder.AppendFormat("-{0}", nAuthority);
+
+            for (var idx = 0; idx < nAuthorityCount; idx++)
+                stringSidBuilder.AppendFormat("-{0}", (uint)Marshal.ReadInt32(pSid, 8 + (idx * 4)));
+
+            return stringSidBuilder.ToString();
+        }
+
+
+        public static IntPtr ConvertStringSidToSid(string stringSid, out int nInfoLength)
+        {
+            var pInfoBuffer = IntPtr.Zero;
+            nInfoLength = 0;
+
+            if (Regex.IsMatch(stringSid, @"S(-\d){2,}", RegexOptions.IgnoreCase))
+            {
+                string[] stringSidArray = stringSid.Split('-');
+                byte nRevision = (byte)(Convert.ToInt64(stringSidArray[1], 10) & 0xFF);
+                byte nSubAuthorityCount = (byte)((stringSidArray.Length - 3) & 0xFF);
+                long nAuthority = Convert.ToInt64(stringSidArray[2], 10) & 0x0000FFFFFFFFFFFF;
+                nInfoLength = 8 + (nSubAuthorityCount * 4);
+                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                Marshal.WriteByte(pInfoBuffer, nRevision);
+                Marshal.WriteByte(pInfoBuffer, 1, nSubAuthorityCount);
+
+                for (var idx = 0; idx < 6; idx++)
+                    Marshal.WriteByte(pInfoBuffer, 7 - idx, (byte)((nAuthority >> (idx * 8)) & 0xFF));
+
+                for (var idx = 0; idx < nSubAuthorityCount; idx++)
+                    Marshal.WriteInt32(pInfoBuffer, 8 + (idx * 4), (int)(Convert.ToUInt32(stringSidArray[3 + idx], 10)));
+            }
+
+            return pInfoBuffer;
         }
 
 
@@ -248,6 +288,89 @@ namespace TrustExec.Library
         }
 
 
+        public static string GetCurrentLogonSessionSid()
+        {
+            int nDosErrorCode;
+            string stringSid = null;
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcessToken(
+                new IntPtr(-1),
+                ACCESS_MASK.TOKEN_QUERY,
+                out IntPtr hToken);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                GetTokenGroups(hToken, out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups);
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                NativeMethods.NtClose(hToken);
+
+                foreach (var group in tokenGroups)
+                {
+                    if ((group.Value & SE_GROUP_ATTRIBUTES.LogonId) != 0)
+                    {
+                        stringSid = group.Key;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            }
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return stringSid;
+        }
+
+
+        public static bool GetTokenGroups(
+            IntPtr hToken,
+            out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups)
+        {
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            IntPtr pInfoBuffer;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
+            tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
+
+            do
+            {
+                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenGroups,
+                    pInfoBuffer,
+                    nInfoLength,
+                    out nInfoLength);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    Marshal.FreeHGlobal(pInfoBuffer);
+            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var nGroupCount = Marshal.ReadInt32(pInfoBuffer);
+                var nGroupOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+
+                for (var idx = 0; idx < nGroupCount; idx++)
+                {
+                    var nEntryOffset = nGroupOffset + (idx * nUnitSize);
+                    var pSid = Marshal.ReadIntPtr(pInfoBuffer, nEntryOffset);
+                    var nAttribute = Marshal.ReadInt32(pInfoBuffer, nEntryOffset + IntPtr.Size);
+                    tokenGroups.Add(ConvertSidToStringSid(pSid), (SE_GROUP_ATTRIBUTES)nAttribute);
+                }
+
+                Marshal.FreeHGlobal(pInfoBuffer);
+            }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
         public static bool GetTokenPrivileges(
             IntPtr hToken,
             out Dictionary<SE_PRIVILEGE_ID, SE_PRIVILEGE_ATTRIBUTES> privileges)
@@ -286,7 +409,7 @@ namespace TrustExec.Library
         }
 
 
-        public static string[] ParseGroupSids(string extraSidsString)
+        public static List<string> ParseGroupSids(string extraSidsString)
         {
             var result = new List<string>();
             var sidArray = extraSidsString.Split(',');
@@ -343,7 +466,7 @@ namespace TrustExec.Library
                 }
             }
 
-            return result.ToArray();
+            return result;
         }
 
 
@@ -447,7 +570,7 @@ namespace TrustExec.Library
             {
                 foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
                 {
-                    if (CompareIgnoreCase(Path.GetFileName(module.FileName), "ntdll.dll"))
+                    if (string.Compare(Path.GetFileName(module.FileName), "ntdll.dll", true) == 0)
                     {
                         pNtdll = module.BaseAddress;
                         dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;

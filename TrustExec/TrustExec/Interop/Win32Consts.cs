@@ -18,26 +18,6 @@ namespace TrustExec.Interop
         public const int ERROR_BAD_LENGTH = 0x00000018;
         public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
 
-        // Well known LUID
-        public static readonly LUID ANONYMOUS_LOGON_LUID = LUID.FromInt64(0x3e6);
-        public static readonly LUID SYSTEM_LUID = LUID.FromInt64(0x3e7);
-
-        // Well known RID
-        public const string SECURITY_WORLD_RID = "S-1-1-0";
-        public const string SECURITY_AUTHENTICATED_USER_RID = "S-1-5-11";
-        public const string DOMAIN_ALIAS_RID_ADMINS = "S-1-5-32-544";
-        public const string DOMAIN_ALIAS_RID_USERS = "S-1-5-32-545";
-        public const string LOCAL_SYSTEM_RID = "S-1-5-18";
-        public const string TRUSTED_INSTALLER_RID = "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464";
-        public const string UNTRUSTED_MANDATORY_LEVEL = "S-1-16-0";
-        public const string LOW_MANDATORY_LEVEL = "S-1-16-4096";
-        public const string MEDIUM_MANDATORY_LEVEL = "S-1-16-8192";
-        public const string MEDIUM_PLUS_MANDATORY_LEVEL = "S-1-16-8448";
-        public const string HIGH_MANDATORY_LEVEL = "S-1-16-12288";
-        public const string SYSTEM_MANDATORY_LEVEL = "S-1-16-16384";
-        public const string PROTECTED_MANDATORY_LEVEL = "S-1-16-20480";
-        public const string SECURE_MANDATORY_LEVEL = "S-1-16-28672";
-
         // LogonType
         public const int LOGON32_LOGON_INTERACTIVE = 2;
         public const int LOGON32_LOGON_NETWORK = 3;
@@ -53,10 +33,6 @@ namespace TrustExec.Interop
         public const int LOGON32_PROVIDER_WINNT40 = 2;
         public const int LOGON32_PROVIDER_WINNT50 = 3;
         public const int LOGON32_PROVIDER_VIRTUAL = 4;
-
-        // ContextTrackingMode for SECURITY_QUALITY_OF_SERVICE
-        public const byte SECURITY_STATIC_TRACKING = 0;
-        public const byte SECURITY_DYNAMIC_TRACKING = 1;
 
         // Well known SID_IDENTIFIER_AUTHORITY
         public static readonly SID_IDENTIFIER_AUTHORITY SECURITY_NULL_SID_AUTHORITY = new SID_IDENTIFIER_AUTHORITY { Value = new byte[6] { 0, 0, 0, 0, 0, 0 } };

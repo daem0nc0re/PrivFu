@@ -14,7 +14,7 @@ namespace TrustExec.Handler
             {
                 options.GetHelp();
                 Console.WriteLine("Available Technique IDs:\n");
-                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
+                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag and --command option.");
                 Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
 
                 return;
@@ -48,13 +48,8 @@ namespace TrustExec.Handler
             {
                 if (techId == 0)
                 {
-                    if (Modules.RunTrustedInstallerProcess(
-                        null,
-                        options.GetValue("extra"),
-                        options.GetFlag("full")))
-                    {
+                    if (Modules.RunTrustedInstallerProcess(null, options.GetValue("extra")))
                         Console.WriteLine("[>] Exit.");
-                    }
                 }
                 else if (techId == 1)
                 {
@@ -91,13 +86,8 @@ namespace TrustExec.Handler
             {
                 if (techId == 0)
                 {
-                    if (Modules.RunTrustedInstallerProcess(
-                        options.GetValue("command"),
-                        options.GetValue("extra"),
-                        options.GetFlag("full")))
-                    {
+                    if (Modules.RunTrustedInstallerProcess(options.GetValue("command"), options.GetValue("extra")))
                         Console.WriteLine("[>] Exit.");
-                    }
                 }
                 else if (techId == 1)
                 {

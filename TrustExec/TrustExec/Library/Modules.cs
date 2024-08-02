@@ -164,12 +164,12 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcess(string command, string extraSidsString, bool full)
+        public static bool RunTrustedInstallerProcess(string command, string extraSidsString)
         {
             bool bSuccess;
             bool bIsImpersonated;
             string execute;
-            string[] extraSidsArray;
+            List<string> extraSidsArray;
 
             if (string.IsNullOrEmpty(command))
                 execute = Environment.GetEnvironmentVariable("COMSPEC");
@@ -177,7 +177,7 @@ namespace TrustExec.Library
                 execute = command;
 
             if (string.IsNullOrEmpty(extraSidsString))
-                extraSidsArray = new string[] { };
+                extraSidsArray = new List<string>();
             else
                 extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
 
@@ -194,9 +194,9 @@ namespace TrustExec.Library
                 Console.WriteLine("[>] Trying to get SYSTEM.");
 
                 bSuccess = Helpers.EnableTokenPrivileges(
-                WindowsIdentity.GetCurrent().Token,
-                in requiredPrivs,
-                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+                    WindowsIdentity.GetCurrent().Token,
+                    in requiredPrivs,
+                    out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
 
                 foreach (var priv in adjustedPrivs)
                 {
@@ -230,11 +230,7 @@ namespace TrustExec.Library
                     Console.WriteLine("[+] Impersonation is successful.");
                 }
 
-                hToken = Utilities.CreateTrustedInstallerToken(
-                    TOKEN_TYPE.TokenPrimary,
-                    SECURITY_IMPERSONATION_LEVEL.SecurityAnonymous,
-                    extraSidsArray,
-                    full);
+                hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, in extraSidsArray);
 
                 if (hToken == IntPtr.Zero)
                     break;
@@ -269,7 +265,7 @@ namespace TrustExec.Library
         {
             bool status;
             string execute;
-            string[] extraSidsArray;
+            List<string> extraSidsArray;
 
             if (string.IsNullOrEmpty(domain))
             {
@@ -292,7 +288,7 @@ namespace TrustExec.Library
             Console.WriteLine();
 
             if (string.IsNullOrEmpty(extraSidsString))
-                extraSidsArray = new string[] { };
+                extraSidsArray = new List<string>();
             else
                 extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
 
@@ -342,7 +338,7 @@ namespace TrustExec.Library
                 domain,
                 username,
                 domainRid,
-                extraSidsArray);
+                extraSidsArray.ToArray());
 
             if (hToken == IntPtr.Zero)
                 return false;

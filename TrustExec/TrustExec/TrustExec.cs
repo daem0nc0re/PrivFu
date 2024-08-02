@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using TrustExec.Handler;
+using TrustExec.Library;
+using TrustExec.Interop;
 
 namespace TrustExec
 {

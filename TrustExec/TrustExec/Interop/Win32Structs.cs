@@ -1,9 +1,36 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Security.AccessControl;
 using System.Text;
 
 namespace TrustExec.Interop
 {
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ACCESS_ALLOWED_ACE
+    {
+        public ACE_HEADER Header;
+        public ACCESS_MASK Mask;
+        public int SidStart;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ACE_HEADER
+    {
+        public ACE_TYPE AceType;
+        public ACE_FLAGS AceFlags;
+        public short AceSize;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct ACL
+    {
+        public ACL_REVISION AclRevision;
+        public byte Sbz1;
+        public short AclSize;
+        public short AceCount;
+        public short Sbz2;
+    }
+
     [StructLayout(LayoutKind.Explicit, Size = 8)]
     internal struct LARGE_INTEGER
     {
@@ -170,21 +197,8 @@ namespace TrustExec.Interop
     {
         public int Length;
         public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
-        public byte ContextTrackingMode;
-        public byte EffectiveOnly;
-
-        public SECURITY_QUALITY_OF_SERVICE(
-            SECURITY_IMPERSONATION_LEVEL _impersonationLevel,
-            byte _contextTrackingMode,
-            byte _effectiveOnly)
-        {
-            Length = 0;
-            ImpersonationLevel = _impersonationLevel;
-            ContextTrackingMode = _contextTrackingMode;
-            EffectiveOnly = _effectiveOnly;
-
-            Length = Marshal.SizeOf(this);
-        }
+        public SECURITY_CONTEXT_TRACKING_MODE ContextTrackingMode;
+        public BOOLEAN EffectiveOnly;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -265,11 +279,6 @@ namespace TrustExec.Interop
     internal struct TOKEN_OWNER
     {
         public IntPtr Owner; // PSID
-
-        public TOKEN_OWNER(IntPtr _owner)
-        {
-            Owner = _owner;
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

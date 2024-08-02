@@ -133,6 +133,52 @@ namespace TrustExec.Interop
         SECTION_ALL_ACCESS = 0x000F001F
     }
 
+    [Flags]
+    internal enum ACE_FLAGS : byte
+    {
+        None = 0x00,
+        ObjectInherit = 0x01,
+        ContainerInherit = 0x02,
+        NoPropagateInherit = 0x04,
+        InheritOnly = 0x08,
+        Inherited = 0x10,
+        FailedAccess = 0x40,
+        SuccessfulAccess = 0x80
+    }
+
+    internal enum ACL_REVISION : byte
+    {
+        ACL_REVISION = 2,
+        ACL_REVISION_DS = 4,
+    }
+
+    internal enum ACE_TYPE : byte
+    {
+        AccessAllowed,
+        AccessDenied,
+        SystemAudit,
+        SystemAlarm,
+        AccessAllowedCompound,
+        AccessAllowedObject,
+        AccessDeniedObject,
+        SystemAuditObject,
+        SystemAlarmObject,
+        AccessAllowedCallback,
+        AccessDeniedCallback,
+        AccessAllowedCallbackObject,
+        AccessDeniedCallbackObject,
+        SystemAuditCallback,
+        SystemAlarmCallback,
+        SystemAuditCallbackObject,
+        SystemAlarmCallbackObject,
+        SystemMandatoryLabel,
+        SystemResourceAttribute,
+        SystemScopedPolicyId,
+        SystemProcessTrustLabel,
+        SystemAccessFilter,
+        // ACCESS_MAX_MS_V5 = 0x15
+    }
+
     internal enum BOOLEAN : byte
     {
         FALSE,
@@ -180,10 +226,10 @@ namespace TrustExec.Interop
 
     internal enum SECURITY_IMPERSONATION_LEVEL
     {
-        SecurityAnonymous,
-        SecurityIdentification,
-        SecurityImpersonation,
-        SecurityDelegation
+        Anonymous,
+        Identification,
+        Impersonation,
+        Delegation
     }
 
     [Flags]
@@ -250,6 +296,12 @@ namespace TrustExec.Interop
         MaximumCount
     }
 
+    internal enum SECURITY_CONTEXT_TRACKING_MODE : byte
+    {
+        StaticTracking = 0,
+        DynamicTracking
+    }
+
     internal enum SID_NAME_USE
     {
         User = 1,
@@ -267,8 +319,8 @@ namespace TrustExec.Interop
 
     internal enum TOKEN_TYPE
     {
-        TokenPrimary = 1,
-        TokenImpersonation
+        Primary = 1,
+        Impersonation
     }
 
     [Flags]

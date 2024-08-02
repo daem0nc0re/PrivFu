@@ -139,6 +139,9 @@ namespace TrustExec.Interop
             out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtClose(IntPtr Handle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
@@ -149,18 +152,24 @@ namespace TrustExec.Interop
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtCreateToken(
             out IntPtr TokenHandle,
-            TokenAccessFlags DesiredAccess,
-            ref OBJECT_ATTRIBUTES ObjectAttributes,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes,
             TOKEN_TYPE TokenType,
-            ref LUID AuthenticationId,
-            ref LARGE_INTEGER ExpirationTime,
-            ref TOKEN_USER TokenUser,
-            ref TOKEN_GROUPS TokenGroups,
-            IntPtr /* ref TOKEN_PRIVILEGES */ TokenPrivileges,
-            ref TOKEN_OWNER TokenOwner,
-            ref TOKEN_PRIMARY_GROUP TokenPrimaryGroup,
-            ref TOKEN_DEFAULT_DACL TokenDefaultDacl,
-            ref TOKEN_SOURCE TokenSource);
+            in LUID AuthenticationId,
+            in LARGE_INTEGER ExpirationTime,
+            in TOKEN_USER TokenUser,
+            IntPtr /* in TOKEN_GROUPS */ TokenGroups,
+            IntPtr /* in TOKEN_PRIVILEGES */ TokenPrivileges,
+            in TOKEN_OWNER TokenOwner,
+            in TOKEN_PRIMARY_GROUP TokenPrimaryGroup,
+            in TOKEN_DEFAULT_DACL TokenDefaultDacl,
+            in TOKEN_SOURCE TokenSource);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtOpenProcessToken(
+            IntPtr ProcessHandle,
+            ACCESS_MASK DesiredAccess,
+            out IntPtr TokenHandle);
 
         [DllImport("ntdll.dll")]
         public static extern uint RtlNtStatusToDosError(NTSTATUS Status);
