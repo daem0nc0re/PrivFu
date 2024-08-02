@@ -98,7 +98,7 @@ namespace TrustExec.Library
             if (status)
             {
                 ConvertSidToAccountName(pSid, out accountName, out domainName, out peUse);
-                NativeMethods.ConvertSidToStringSid(pSid, out sidString);
+                sidString = ConvertSidToStringSid(pSid);
                 Marshal.FreeHGlobal(pSid);
             }
 

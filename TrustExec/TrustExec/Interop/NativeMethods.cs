@@ -11,9 +11,6 @@ namespace TrustExec.Interop
         /*
          * advapi32.dll
          */
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public static extern bool ConvertSidToStringSid(IntPtr pSid, out string strSid);
-
         [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
 
@@ -34,7 +31,7 @@ namespace TrustExec.Interop
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public extern static bool DuplicateTokenEx(
             IntPtr hExistingToken,
-            TokenAccessFlags dwDesiredAccess,
+            ACCESS_MASK dwDesiredAccess,
             IntPtr lpTokenAttributes,
             SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
             TOKEN_TYPE TokenType,
@@ -74,7 +71,7 @@ namespace TrustExec.Interop
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool OpenProcessToken(
             IntPtr ProcessHandle,
-            TokenAccessFlags DesiredAccess,
+            ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
 
         [DllImport("advapi32.dll", SetLastError = true)]
@@ -185,8 +182,8 @@ namespace TrustExec.Interop
             string lpszUsername,
             string lpszDomain,
             string lpszPassword,
-            int dwLogonType,
-            int dwLogonProvider,
+            LOGON_TYPE dwLogonType,
+            LOGON_PROVIDER dwLogonProvider,
             IntPtr pTokenGroups,
             out IntPtr phToken,
             IntPtr ppLogonSid,

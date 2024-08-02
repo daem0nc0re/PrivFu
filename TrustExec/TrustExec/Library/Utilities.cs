@@ -142,7 +142,7 @@ namespace TrustExec.Library
                 { "S-1-5-32-544", groupAttributes | SE_GROUP_ATTRIBUTES.Owner }, // BUILTIN\Administrators
                 { "S-1-5-32-545", groupAttributes }, // BUILTIN\Users
                 { "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464", groupAttributes }, // NT SERVICE\TrustedInstaller
-                { "S-1-16-16384", SE_GROUP_ATTRIBUTES.Integrity | SE_GROUP_ATTRIBUTES.IntegrityEnabled } // NT SERVICE\TrustedInstaller
+                { "S-1-16-16384", SE_GROUP_ATTRIBUTES.Integrity | SE_GROUP_ATTRIBUTES.IntegrityEnabled } // Mandatory Label\System Mandatory Level
             };
             var aces = new Dictionary<string, ACCESS_MASK>
             {
@@ -361,8 +361,8 @@ namespace TrustExec.Library
                 username,
                 domain,
                 null,
-                Win32Consts.LOGON32_LOGON_INTERACTIVE,
-                Win32Consts.LOGON32_PROVIDER_VIRTUAL,
+                LOGON_TYPE.Interactive,
+                LOGON_PROVIDER.Virtual,
                 pTokenGroups,
                 out IntPtr hToken,
                 IntPtr.Zero,
@@ -444,7 +444,7 @@ namespace TrustExec.Library
 
                 status = NativeMethods.OpenProcessToken(
                     hProcess,
-                    TokenAccessFlags.TOKEN_DUPLICATE,
+                    ACCESS_MASK.TOKEN_DUPLICATE,
                     out IntPtr hToken);
                 NativeMethods.CloseHandle(hProcess);
 
@@ -453,7 +453,7 @@ namespace TrustExec.Library
 
                 status = NativeMethods.DuplicateTokenEx(
                     hToken,
-                    TokenAccessFlags.MAXIMUM_ALLOWED,
+                    ACCESS_MASK.MAXIMUM_ALLOWED,
                     IntPtr.Zero,
                     SECURITY_IMPERSONATION_LEVEL.Impersonation,
                     TOKEN_TYPE.Primary,
