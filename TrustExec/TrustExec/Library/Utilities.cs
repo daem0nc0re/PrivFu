@@ -98,8 +98,8 @@ namespace TrustExec.Library
             if (status)
             {
                 NativeMethods.WaitForSingleObject(processInformation.hProcess, uint.MaxValue);
-                NativeMethods.CloseHandle(processInformation.hThread);
-                NativeMethods.CloseHandle(processInformation.hProcess);
+                NativeMethods.NtClose(processInformation.hThread);
+                NativeMethods.NtClose(processInformation.hProcess);
             }
 
             return status;
@@ -389,11 +389,14 @@ namespace TrustExec.Library
 
             hToken = linkedToken.LinkedToken;
 
-            var mandatoryLabel = new TOKEN_MANDATORY_LABEL();
-            mandatoryLabel.Label.Sid = pSystemIntegrity;
-            mandatoryLabel.Label.Attributes = (uint)(
-                SE_GROUP_ATTRIBUTES.Integrity |
-                SE_GROUP_ATTRIBUTES.IntegrityEnabled);
+            var mandatoryLabel = new TOKEN_MANDATORY_LABEL
+            {
+                Label = new SID_AND_ATTRIBUTES
+                {
+                    Sid = pSystemIntegrity,
+                    Attributes = (int)(SE_GROUP_ATTRIBUTES.Integrity | SE_GROUP_ATTRIBUTES.IntegrityEnabled)
+                }
+            };
 
             IntPtr pMandatoryLabel = Marshal.AllocHGlobal(Marshal.SizeOf(mandatoryLabel));
             Marshal.StructureToPtr(mandatoryLabel, pMandatoryLabel, true);
@@ -446,7 +449,7 @@ namespace TrustExec.Library
                     hProcess,
                     ACCESS_MASK.TOKEN_DUPLICATE,
                     out IntPtr hToken);
-                NativeMethods.CloseHandle(hProcess);
+                NativeMethods.NtClose(hProcess);
 
                 if (!status)
                     break;
@@ -458,7 +461,7 @@ namespace TrustExec.Library
                     SECURITY_IMPERSONATION_LEVEL.Impersonation,
                     TOKEN_TYPE.Primary,
                     out IntPtr hDupToken);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 if (!status)
                     break;
@@ -466,7 +469,7 @@ namespace TrustExec.Library
                 Helpers.EnableTokenPrivileges(hDupToken, privs, out Dictionary<SE_PRIVILEGE_ID, bool> _);
 
                 status = ImpersonateThreadToken(hDupToken);
-                NativeMethods.CloseHandle(hDupToken);
+                NativeMethods.NtClose(hDupToken);
             } while (false);
 
             return status;

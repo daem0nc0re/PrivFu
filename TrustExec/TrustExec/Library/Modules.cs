@@ -166,10 +166,11 @@ namespace TrustExec.Library
 
         public static bool RunTrustedInstallerProcess(string command, string extraSidsString)
         {
+            int nDosErrorCode;
             bool bSuccess;
-            bool bIsImpersonated;
             string execute;
             List<string> extraSidsArray;
+            var bIsImpersonated = false;
 
             if (string.IsNullOrEmpty(command))
                 execute = Environment.GetEnvironmentVariable("COMSPEC");
@@ -190,9 +191,6 @@ namespace TrustExec.Library
                     SE_PRIVILEGE_ID.SeDebugPrivilege,
                     SE_PRIVILEGE_ID.SeImpersonatePrivilege
                 };
-
-                Console.WriteLine("[>] Trying to get SYSTEM.");
-
                 bSuccess = Helpers.EnableTokenPrivileges(
                     WindowsIdentity.GetCurrent().Token,
                     in requiredPrivs,
@@ -209,7 +207,7 @@ namespace TrustExec.Library
                 if (!bSuccess)
                 {
                     Console.WriteLine("[-] Insufficient privileges.");
-                    return false;
+                    break;
                 }
 
                 requiredPrivs = new List<SE_PRIVILEGE_ID>
@@ -233,18 +231,23 @@ namespace TrustExec.Library
                 hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, in extraSidsArray);
 
                 if (hToken == IntPtr.Zero)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create token.");
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(nDosErrorCode, false));
                     break;
+                }
 
                 Console.WriteLine("[>] Trying to create token assigned process.");
 
                 bSuccess = Utilities.CreateTokenAssignedProcess(hToken, execute);
-                NativeMethods.CloseHandle(hToken);
+                NativeMethods.NtClose(hToken);
 
                 if (!bSuccess)
                 {
-                    var error = Marshal.GetLastWin32Error();
+                    nDosErrorCode = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create token assigned process.");
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(nDosErrorCode, false));
                 }
             } while (false);
 
@@ -349,7 +352,7 @@ namespace TrustExec.Library
             Console.WriteLine("[>] Trying to create token assigned process.");
 
             status = Utilities.CreateTokenAssignedProcess(hToken, execute);
-            NativeMethods.CloseHandle(hToken);
+            NativeMethods.NtClose(hToken);
 
             if (!status)
             {
