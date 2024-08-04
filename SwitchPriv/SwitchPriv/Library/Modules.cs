@@ -438,7 +438,7 @@ namespace SwitchPriv.Library
                 }
                 else if (privsToRemain.Count > 1)
                 {
-                    Console.WriteLine("[>] Trying to remove other than following priviliges.");
+                    Console.WriteLine("[>] Trying to remove privileges other than follows.");
 
                     foreach (var priv in privsToRemain)
                         Console.WriteLine("    [*] {0}", priv);
