@@ -1147,6 +1147,101 @@ SeTimeZonePrivilege Enabled
 [*] Done.
 ```
 
+You can use comma separated value to filter multiple privileges as follows:
+
+```
+PS C:\Dev> .\SwitchPriv.exe -p 24300 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 24300
+    [*] Process Name : powershell
+[+] Got 24 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            State
+========================================= =========================
+SeIncreaseQuotaPrivilege                  Disabled
+SeSecurityPrivilege                       Disabled
+SeTakeOwnershipPrivilege                  Disabled
+SeLoadDriverPrivilege                     Disabled
+SeSystemProfilePrivilege                  Disabled
+SeSystemtimePrivilege                     Disabled
+SeProfileSingleProcessPrivilege           Disabled
+SeIncreaseBasePriorityPrivilege           Disabled
+SeCreatePagefilePrivilege                 Disabled
+SeBackupPrivilege                         Disabled
+SeRestorePrivilege                        Disabled
+SeShutdownPrivilege                       Disabled
+SeDebugPrivilege                          Enabled
+SeSystemEnvironmentPrivilege              Disabled
+SeChangeNotifyPrivilege                   EnabledByDefault, Enabled
+SeRemoteShutdownPrivilege                 Disabled
+SeUndockPrivilege                         Disabled
+SeManageVolumePrivilege                   Disabled
+SeImpersonatePrivilege                    EnabledByDefault, Enabled
+SeCreateGlobalPrivilege                   EnabledByDefault, Enabled
+SeIncreaseWorkingSetPrivilege             Disabled
+SeTimeZonePrivilege                       Disabled
+SeCreateSymbolicLinkPrivilege             Disabled
+SeDelegateSessionUserImpersonatePrivilege Disabled
+
+[*] Integrity Level : High Mandatory Level
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 24300 -f rest,back,deb
+
+[>] Trying to remove all token privileges except one.
+    [*] Target PID   : 24300
+    [*] Process Name : powershell
+[>] Trying to remove privileges other than follows.
+    [*] SeBackupPrivilege
+    [*] SeRestorePrivilege
+    [*] SeDebugPrivilege
+[+] SeIncreaseQuotaPrivilege is removed successfully.
+[+] SeSecurityPrivilege is removed successfully.
+[+] SeTakeOwnershipPrivilege is removed successfully.
+[+] SeLoadDriverPrivilege is removed successfully.
+[+] SeSystemProfilePrivilege is removed successfully.
+[+] SeSystemtimePrivilege is removed successfully.
+[+] SeProfileSingleProcessPrivilege is removed successfully.
+[+] SeIncreaseBasePriorityPrivilege is removed successfully.
+[+] SeCreatePagefilePrivilege is removed successfully.
+[+] SeShutdownPrivilege is removed successfully.
+[+] SeSystemEnvironmentPrivilege is removed successfully.
+[+] SeChangeNotifyPrivilege is removed successfully.
+[+] SeRemoteShutdownPrivilege is removed successfully.
+[+] SeUndockPrivilege is removed successfully.
+[+] SeManageVolumePrivilege is removed successfully.
+[+] SeImpersonatePrivilege is removed successfully.
+[+] SeCreateGlobalPrivilege is removed successfully.
+[+] SeIncreaseWorkingSetPrivilege is removed successfully.
+[+] SeTimeZonePrivilege is removed successfully.
+[+] SeCreateSymbolicLinkPrivilege is removed successfully.
+[+] SeDelegateSessionUserImpersonatePrivilege is removed successfully.
+[*] Done.
+
+PS C:\Dev> .\SwitchPriv.exe -p 24300 -g
+
+[>] Trying to get available token privilege(s) for the target process.
+    [*] Target PID   : 24300
+    [*] Process Name : powershell
+[+] Got 3 token privilege(s).
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name            State
+========================= ========
+SeBackupPrivilege         Disabled
+SeRestorePrivilege        Disabled
+SeDebugPrivilege          Enabled
+
+[*] Integrity Level : High Mandatory Level
+[*] Done.
+```
+
 To enable, disable or remove all available token privileges, specify `all` as the value for `--enable`, `--disable` or `--remove` option:
 
 ```
