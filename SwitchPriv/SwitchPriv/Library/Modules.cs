@@ -366,11 +366,11 @@ namespace SwitchPriv.Library
         }
 
 
-        public static bool FilterTokenPrivilege(int pid, string privilegeName, bool asSystem)
+        public static bool FilterTokenPrivilege(int pid, string[] privileges, bool asSystem)
         {
             var bSuccess = false;
 
-            if (string.IsNullOrEmpty(privilegeName))
+            if (privileges.Length == 0)
             {
                 Console.WriteLine("[-] Privilege name is required.");
                 return false;
@@ -415,7 +415,18 @@ namespace SwitchPriv.Library
 
                 foreach (var priv in availablePrivs)
                 {
-                    if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                    var bRemain = false;
+
+                    foreach (var privilegeName in privileges)
+                    {
+                        if (priv.Key.ToString().IndexOf(privilegeName, StringComparison.OrdinalIgnoreCase) != -1)
+                        {
+                            bRemain = true;
+                            break;
+                        }
+                    }
+
+                    if (bRemain)
                         privsToRemain.Add(priv.Key);
                     else
                         privsToRemove.Add(priv.Key);
@@ -427,17 +438,30 @@ namespace SwitchPriv.Library
                 }
                 else if (privsToRemain.Count > 1)
                 {
-                    Console.WriteLine("[-] Cannot specify a unique privilege to remain.");
+                    Console.WriteLine("[>] Trying to remove other than following priviliges.");
 
                     foreach (var priv in privsToRemain)
                         Console.WriteLine("    [*] {0}", priv);
+
+                    bSuccess = Utilities.RemoveTokenPrivileges(
+                        hToken,
+                        in privsToRemove,
+                        out Dictionary<SE_PRIVILEGE_ID, bool> removedStatus);
+
+                    foreach (var priv in removedStatus)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is removed successfully.", priv.Key);
+                        else
+                            Console.WriteLine("[-] Failed to remove {0}.", priv.Key);
+                    }
                 }
                 else
                 {
                     Console.WriteLine("[>] Trying to remove all privileges except for {0}.", privsToRemain.First().ToString());
                     bSuccess = Utilities.RemoveTokenPrivileges(
                         hToken,
-                        privsToRemove,
+                        in privsToRemove,
                         out Dictionary<SE_PRIVILEGE_ID, bool> removedStatus);
 
                     foreach (var priv in removedStatus)

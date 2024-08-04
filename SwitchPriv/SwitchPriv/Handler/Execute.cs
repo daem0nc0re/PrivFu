@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using SwitchPriv.Library;
 
 namespace SwitchPriv.Handler
@@ -69,10 +70,27 @@ namespace SwitchPriv.Handler
             {
                 privilege = options.GetValue("filter");
 
-                if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
-                    Console.WriteLine("[!] Specifies only one privilege at a time for this option.");
+                if (privilege.Contains(","))
+                {
+                    var privs = privilege.Split(',');
+                    var privsToRemain = new List<string>();
+
+                    for (var idx = 0; idx < privs.Length; idx++)
+                    {
+                        if (!string.IsNullOrEmpty(privs[idx]))
+                            privsToRemain.Add(privs[idx]);
+                    }
+
+                    Modules.FilterTokenPrivilege(pid, privsToRemain.ToArray(), asSystem);
+                }
+                else if (string.Compare(privilege, "All", StringComparison.OrdinalIgnoreCase) == 0)
+                {
+                    Console.WriteLine("[-] To remove all privileges, use -r option.");
+                }
                 else
-                    Modules.FilterTokenPrivilege(pid, privilege, asSystem);
+                {
+                    Modules.FilterTokenPrivilege(pid, new string[] { privilege }, asSystem);
+                }
             }
             else if (!string.IsNullOrEmpty(options.GetValue("remove")))
             {
