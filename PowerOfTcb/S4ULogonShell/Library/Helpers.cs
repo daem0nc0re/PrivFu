@@ -309,6 +309,8 @@ namespace S4ULogonShell.Library
                 }
             }
 
+            NativeMethods.WTSFreeMemory(pSessionInfo);
+
             if (nGuiSessionId == -1)
                 NativeMethods.RtlSetLastWin32Error(1168); // ERROR_NOT_FOUND
 

@@ -35,6 +35,8 @@ extern "C"
                     break;
                 }
             }
+
+            ::WTSFreeMemory(pSessionInfo);
         }
 
         if (nDesktopSessionId == -1)
