@@ -146,7 +146,7 @@ The filter works with forward matching and case insensitive:
 ```
 
 
-### getriv Command
+### getpriv Command
 This command is to list token privileges of a specific process:
 
 ```
