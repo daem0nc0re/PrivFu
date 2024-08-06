@@ -11,7 +11,7 @@ For example, following token factors class can be manipulated with SeTcbPrivileg
 * Integrity Level (downgrade operation does not require SeTcbPrivilege)
 
 More information is available from [SystemInformer's code](https://github.com/winsiderss/systeminformer/blob/master/phnt/include/ntseapi.h).
-Addutionally, SeTcbPrivilege allows to create special logon token and new SID maping with LSA family APIs.
+Additionally, SeTcbPrivilege allows to create special logon token and new SID maping with LSA family APIs.
 To use these token, `SeAssignPrimaryTokenPrivilege` or `SeImpersonateToken` are required.
 But Secondary Logon service overrides some elements in new process token with caller's primary token's ones (for example, session ID), so `SeAssignPrimaryTokenPrivilege` and `CreateProcessAsUser` API are preferred to create a token specified process.
 
