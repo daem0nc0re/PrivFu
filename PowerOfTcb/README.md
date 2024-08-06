@@ -211,32 +211,20 @@ PS C:\Dev> whoami /groups
 GROUP INFORMATION
 -----------------
 
-Group Name                                                    Type             SID
-                      Attributes
+Group Name                                                    Type             SID                                                            Attributes
 ============================================================= ================ ============================================================== ===============================================================
-Everyone                                                      Well-known group S-1-1-0
-                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Local account and member of Administrators group Well-known group S-1-5-114
-                      Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                                        Alias            S-1-5-32-544
-                      Mandatory group, Enabled by default, Enabled group, Group owner
-BUILTIN\Users                                                 Alias            S-1-5-32-545
-                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\NETWORK                                          Well-known group S-1-5-2
-                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users                              Well-known group S-1-5-11
-                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\This Organization                                Well-known group S-1-5-15
-                      Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Local account                                    Well-known group S-1-5-113
-                      Mandatory group, Enabled by default, Enabled group
+Everyone                                                      Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Local account and member of Administrators group Well-known group S-1-5-114                                                      Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                                        Alias            S-1-5-32-544                                                   Mandatory group, Enabled by default, Enabled group, Group owner
+BUILTIN\Users                                                 Alias            S-1-5-32-545                                                   Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NETWORK                                          Well-known group S-1-5-2                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users                              Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization                                Well-known group S-1-5-15                                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Local account                                    Well-known group S-1-5-113                                                      Mandatory group, Enabled by default, Enabled group
 Mandatory Label\System Mandatory Level                        Label            S-1-16-16384
-
-NT AUTHORITY\LOCAL SERVICE                                    Well-known group S-1-5-19
-                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\LOCAL SERVICE                                    Well-known group S-1-5-19                                                       Mandatory group, Enabled by default, Enabled group
 NT SERVICE\TrustedInstaller                                   Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\NTLM Authentication                              Well-known group S-1-5-64-10
-                      Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\NTLM Authentication                              Well-known group S-1-5-64-10                                                    Mandatory group, Enabled by default, Enabled group
 ```
 
 When set `-n` flag, it will try create new console:
