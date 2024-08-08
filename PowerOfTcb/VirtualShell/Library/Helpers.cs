@@ -37,14 +37,14 @@ namespace VirtualShell.Library
                     out IntPtr pResult);
                 nMappingErrorCode = (LSA_SID_NAME_MAPPING_OPERATION_ERROR)Marshal.ReadInt32(pResult);
                 NativeMethods.LsaFreeMemory(pResult);
+                Marshal.FreeHGlobal(pInfoBuffer);
+                Marshal.FreeHGlobal(pNewSid);
 
                 if (!string.IsNullOrEmpty(domainName))
                     addInput.DomainName.Dispose();
 
                 if (!string.IsNullOrEmpty(accountName))
                     addInput.AccountName.Dispose();
-
-                Marshal.FreeHGlobal(pInfoBuffer);
 
                 if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.Success)
                     nDosErrorCode = 0;
@@ -54,8 +54,6 @@ namespace VirtualShell.Library
                     nDosErrorCode = 0x522; // ERROR_PRIVILEGE_NOT_HELD (SeTcbPrivilege is required)
                 else
                     nDosErrorCode = 0x57; // ERROR_INVALID_PARAMETER
-
-                Marshal.FreeHGlobal(pNewSid);
             }
             else
             {
@@ -751,14 +749,13 @@ namespace VirtualShell.Library
                     out IntPtr pResult);
                 nMappingErrorCode = (LSA_SID_NAME_MAPPING_OPERATION_ERROR)Marshal.ReadInt32(pResult);
                 NativeMethods.LsaFreeMemory(pResult);
+                Marshal.FreeHGlobal(pInfoBuffer);
 
                 if (!string.IsNullOrEmpty(domainName))
                     removeInput.DomainName.Dispose();
 
                 if (!string.IsNullOrEmpty(accountName))
                     removeInput.AccountName.Dispose();
-
-                Marshal.FreeHGlobal(pInfoBuffer);
 
                 if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.Success)
                     nDosErrorCode = 0;
