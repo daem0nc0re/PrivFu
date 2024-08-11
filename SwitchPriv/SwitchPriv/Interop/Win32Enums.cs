@@ -289,8 +289,7 @@ namespace SwitchPriv.Interop
 
     internal enum SID_NAME_USE
     {
-        Undefined = 0,
-        User,
+        User = 1,
         Group,
         Domain,
         Alias,

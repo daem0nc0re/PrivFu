@@ -110,7 +110,7 @@ namespace SwitchPriv.Library
         public static bool GetTokenIntegrityLevel(
             IntPtr hToken,
             out string stringSid,
-            out string accountName,
+            out string labelName,
             out SID_NAME_USE sidType)
         {
             var nInfoLength = 0x400u;
@@ -122,15 +122,15 @@ namespace SwitchPriv.Library
                 nInfoLength,
                 out uint _);
             stringSid = null;
-            accountName = null;
-            sidType = SID_NAME_USE.Undefined;
+            labelName = null;
+            sidType = SID_NAME_USE.Unknown;
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 var info = (TOKEN_MANDATORY_LABEL)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(TOKEN_MANDATORY_LABEL));
-                GetSidAccountName(info.Label.Sid, out stringSid, out accountName, out sidType);
+                GetSidAccountName(info.Label.Sid, out stringSid, out labelName, out sidType);
             }
 
             Marshal.FreeHGlobal(pInfoBuffer);

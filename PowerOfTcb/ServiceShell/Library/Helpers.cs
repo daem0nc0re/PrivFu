@@ -542,7 +542,7 @@ namespace ServiceShell.Library
                 out uint _);
             stringSid = null;
             accountName = null;
-            sidType = SID_NAME_USE.Undefined;
+            sidType = SID_NAME_USE.Unknown;
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
