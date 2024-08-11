@@ -90,22 +90,33 @@ namespace VirtualShell.Library
             var pInfoBuffer = IntPtr.Zero;
             nInfoLength = 0;
 
-            if (Regex.IsMatch(stringSid, @"^S(-\d+){2,}$", RegexOptions.IgnoreCase))
+            try
             {
-                string[] stringSidArray = stringSid.Split('-');
-                byte nRevision = (byte)(Convert.ToInt64(stringSidArray[1], 10) & 0xFF);
-                byte nSubAuthorityCount = (byte)((stringSidArray.Length - 3) & 0xFF);
-                long nAuthority = Convert.ToInt64(stringSidArray[2], 10) & 0x0000FFFFFFFFFFFF;
-                nInfoLength = 8 + (nSubAuthorityCount * 4);
-                pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
-                Marshal.WriteByte(pInfoBuffer, nRevision);
-                Marshal.WriteByte(pInfoBuffer, 1, nSubAuthorityCount);
+                if (Regex.IsMatch(stringSid, @"^S(-\d+){2,}$", RegexOptions.IgnoreCase))
+                {
+                    string[] stringSidArray = stringSid.Split('-');
+                    byte nRevision = (byte)(Convert.ToInt64(stringSidArray[1], 10) & 0xFF);
+                    byte nSubAuthorityCount = (byte)((stringSidArray.Length - 3) & 0xFF);
+                    long nAuthority = Convert.ToInt64(stringSidArray[2], 10) & 0x0000FFFFFFFFFFFF;
+                    nInfoLength = 8 + (nSubAuthorityCount * 4);
+                    pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                    Marshal.WriteByte(pInfoBuffer, nRevision);
+                    Marshal.WriteByte(pInfoBuffer, 1, nSubAuthorityCount);
 
-                for (var idx = 0; idx < 6; idx++)
-                    Marshal.WriteByte(pInfoBuffer, 7 - idx, (byte)((nAuthority >> (idx * 8)) & 0xFF));
+                    for (var idx = 0; idx < 6; idx++)
+                        Marshal.WriteByte(pInfoBuffer, 7 - idx, (byte)((nAuthority >> (idx * 8)) & 0xFF));
 
-                for (var idx = 0; idx < nSubAuthorityCount; idx++)
-                    Marshal.WriteInt32(pInfoBuffer, 8 + (idx * 4), (int)(Convert.ToUInt32(stringSidArray[3 + idx], 10)));
+                    for (var idx = 0; idx < nSubAuthorityCount; idx++)
+                        Marshal.WriteInt32(pInfoBuffer, 8 + (idx * 4), (int)(Convert.ToUInt32(stringSidArray[3 + idx], 10)));
+                }
+            }
+            catch
+            {
+                if (pInfoBuffer != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(pInfoBuffer);
+                    pInfoBuffer = IntPtr.Zero;
+                }
             }
 
             return pInfoBuffer;
