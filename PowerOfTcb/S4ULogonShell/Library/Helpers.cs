@@ -37,7 +37,7 @@ namespace S4ULogonShell.Library
             var pInfoBuffer = IntPtr.Zero;
             nInfoLength = 0;
 
-            if (Regex.IsMatch(stringSid, @"S(-\d){2,}", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(stringSid, @"^S(-\d+){2,}$", RegexOptions.IgnoreCase))
             {
                 string[] stringSidArray = stringSid.Split('-');
                 byte nRevision = (byte)(Convert.ToInt64(stringSidArray[1], 10) & 0xFF);
