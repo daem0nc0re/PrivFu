@@ -143,6 +143,7 @@ namespace VirtualShell.Library
             in List<SE_PRIVILEGE_ID> requiredPrivs,
             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
         {
+            bool bSuccess;
             IntPtr hImpersonationToken;
 
             hImpersonationToken = Helpers.GetWinlogonToken(TOKEN_TYPE.Impersonation);
@@ -162,8 +163,10 @@ namespace VirtualShell.Library
                 hImpersonationToken,
                 in requiredPrivs,
                 out adjustedPrivs);
+            bSuccess = Helpers.ImpersonateThreadToken(new IntPtr(-2), hImpersonationToken);
+            NativeMethods.NtClose(hImpersonationToken);
 
-            return Helpers.ImpersonateThreadToken(new IntPtr(-2), hImpersonationToken);
+            return bSuccess;
         }
     }
 }
