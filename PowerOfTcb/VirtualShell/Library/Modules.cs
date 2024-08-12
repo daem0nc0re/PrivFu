@@ -114,7 +114,7 @@ namespace VirtualShell.Library
                 }
                 else
                 {
-                    Console.WriteLine(@"[+] A virtual domain {0} is created successfully (SID : {1}).", virtualDomainName, domainSid);
+                    Console.WriteLine(@"[+] A virtual domain {0} is created successfully (SID: {1}).", virtualDomainName, domainSid);
                     bDomainExists = true;
                     bSuccess = Helpers.AddSidMapping(virtualDomainName, virtualAccountName, accountSid);
 
@@ -125,7 +125,7 @@ namespace VirtualShell.Library
                     }
                     else
                     {
-                        Console.WriteLine(@"[+] A virtual account {0}\{1} is created successfully (SID : {2}).",
+                        Console.WriteLine(@"[+] A virtual account {0}\{1} is created successfully (SID: {2}).",
                             virtualDomainName,
                             virtualAccountName,
                             accountSid);

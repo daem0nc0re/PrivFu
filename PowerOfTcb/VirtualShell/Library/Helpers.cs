@@ -116,6 +116,7 @@ namespace VirtualShell.Library
                 {
                     Marshal.FreeHGlobal(pInfoBuffer);
                     pInfoBuffer = IntPtr.Zero;
+                    nInfoLength = 0;
                 }
             }
 
