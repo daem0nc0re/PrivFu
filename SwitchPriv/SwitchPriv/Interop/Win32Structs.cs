@@ -138,6 +138,15 @@ namespace SwitchPriv.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct SECURITY_QUALITY_OF_SERVICE
+    {
+        public int Length;
+        public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+        public BOOLEAN /* SECURITY_CONTEXT_TRACKING_MODE */ ContextTrackingMode;
+        public BOOLEAN EffectiveOnly;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct SID_AND_ATTRIBUTES
     {
         public IntPtr Sid; // PSID

@@ -166,77 +166,31 @@ namespace SwitchPriv.Library
 
         public static bool ImpersonateAsSmss()
         {
-            return ImpersonateAsSmss(new List<SE_PRIVILEGE_ID> { });
-        }
-
-
-        public static bool ImpersonateAsSmss(List<SE_PRIVILEGE_ID> privs)
-        {
-            int smss;
+            int nSmssId;
+            IntPtr hToken;
             var bSuccess = false;
+            var requiredPrivs = new List<SE_PRIVILEGE_ID> { SE_PRIVILEGE_ID.SeDebugPrivilege };
 
             try
             {
-                smss = (Process.GetProcessesByName("smss")[0]).Id;
+                nSmssId = Process.GetProcessesByName("smss")[0].Id;
             }
             catch
             {
+                NativeMethods.RtlSetLastWin32Error(5); // ERROR_ACCESS_DENIED
                 return false;
             }
 
-            do
+            hToken = Helpers.GetProcessToken(nSmssId, TOKEN_TYPE.Impersonation);
+
+            if (hToken != IntPtr.Zero)
             {
-                IntPtr hToken = OpenProcessToken(smss, ACCESS_MASK.TOKEN_DUPLICATE);
-
-                if (hToken == IntPtr.Zero)
-                    break;
-
-                bSuccess = NativeMethods.DuplicateTokenEx(
-                    hToken,
-                    ACCESS_MASK.MAXIMUM_ALLOWED,
-                    IntPtr.Zero,
-                    SECURITY_IMPERSONATION_LEVEL.Impersonation,
-                    TOKEN_TYPE.TokenImpersonation,
-                    out IntPtr hDupToken);
+                EnableTokenPrivileges(in requiredPrivs, out Dictionary<SE_PRIVILEGE_ID, bool> _);
+                bSuccess = Helpers.ImpersonateThreadToken(new IntPtr(-2), hToken);
                 NativeMethods.NtClose(hToken);
-
-                if (!bSuccess)
-                    break;
-
-                EnableTokenPrivileges(hDupToken, privs, out Dictionary<SE_PRIVILEGE_ID, bool> _);
-                bSuccess = ImpersonateThreadToken(hDupToken);
-                NativeMethods.NtClose(hDupToken);
-            } while (false);
-
-            return bSuccess;
-        }
-
-
-        public static bool ImpersonateThreadToken(IntPtr hImpersonationToken)
-        {
-            IntPtr pImpersonationLevel = Marshal.AllocHGlobal(4);
-            bool status = NativeMethods.ImpersonateLoggedOnUser(hImpersonationToken);
-
-            if (status)
-            {
-                NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                    WindowsIdentity.GetCurrent().Token,
-                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
-                    pImpersonationLevel,
-                    4u,
-                    out uint _);
-                status = (ntstatus == Win32Consts.STATUS_SUCCESS);
-
-                if (status)
-                {
-                    var level = Marshal.ReadInt32(pImpersonationLevel);
-                    status = (level >= (int)SECURITY_IMPERSONATION_LEVEL.Impersonation);
-                }
             }
 
-            Marshal.FreeHGlobal(pImpersonationLevel);
-
-            return status;
+            return bSuccess;
         }
 
 

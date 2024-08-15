@@ -12,18 +12,6 @@ namespace SwitchPriv.Interop
          * advapi32.dll
          */
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        public extern static bool DuplicateTokenEx(
-            IntPtr hExistingToken,
-            ACCESS_MASK dwDesiredAccess,
-            IntPtr lpTokenAttributes,
-            SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
-            TOKEN_TYPE TokenType,
-            out IntPtr phNewToken);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
-
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool LookupAccountSid(
             string strSystemName,
             IntPtr pSid,
@@ -32,9 +20,6 @@ namespace SwitchPriv.Interop
             StringBuilder pReferencedDomainName,
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
-
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool RevertToSelf();
 
         /*
          * kernel32.dll
@@ -62,6 +47,18 @@ namespace SwitchPriv.Interop
             out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtClose(IntPtr Handle);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtDuplicateToken(
+            IntPtr ExistingTokenHandle,
+            ACCESS_MASK DesiredAccess,
+            in OBJECT_ATTRIBUTES ObjectAttributes,
+            BOOLEAN EffectiveOnly,
+            TOKEN_TYPE TokenType,
+            out IntPtr NewTokenHandle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenProcess(
             out IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
@@ -73,9 +70,6 @@ namespace SwitchPriv.Interop
             IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern int NtQueryInformationProcess(
@@ -92,6 +86,13 @@ namespace SwitchPriv.Interop
             IntPtr TokenInformation,
             uint TokenInformationLength,
             out uint ReturnLength);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtSetInformationThread(
+            IntPtr ThreadHandle,
+            THREADINFOCLASS ThreadInformationClass,
+            IntPtr ThreadInformation,
+            uint ThreadInformationLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtSetInformationToken(

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using SwitchPriv.Interop;
 
@@ -53,6 +54,68 @@ namespace SwitchPriv.Library
             Marshal.FreeHGlobal(pInfoBuffer);
 
             return ppid;
+        }
+
+
+        public static IntPtr GetProcessToken(int pid, TOKEN_TYPE tokenType)
+        {
+            NTSTATUS ntstatus;
+            var hDupToken = IntPtr.Zero;
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var nContextSize = Marshal.SizeOf(typeof(SECURITY_QUALITY_OF_SERVICE));
+            var context = new SECURITY_QUALITY_OF_SERVICE
+            {
+                Length = nContextSize,
+                ImpersonationLevel = SECURITY_IMPERSONATION_LEVEL.Impersonation
+            };
+            var pContextBuffer = Marshal.AllocHGlobal(nContextSize);
+            Marshal.StructureToPtr(context, pContextBuffer, true);
+
+            if (tokenType == TOKEN_TYPE.Impersonation)
+                objectAttributes.SecurityQualityOfService = pContextBuffer;
+
+            do
+            {
+                ntstatus = NativeMethods.NtOpenProcess(
+                    out IntPtr hProcess,
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    ACCESS_MASK.TOKEN_DUPLICATE,
+                    out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtDuplicateToken(
+                    hToken,
+                    ACCESS_MASK.MAXIMUM_ALLOWED,
+                    in objectAttributes,
+                    BOOLEAN.FALSE,
+                    tokenType,
+                    out hDupToken);
+                NativeMethods.NtClose(hToken);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    hDupToken = IntPtr.Zero;
+            } while (false);
+
+            ntstatus = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(ntstatus);
+            Marshal.FreeHGlobal(pContextBuffer);
+
+            return hDupToken;
         }
 
 
@@ -195,6 +258,80 @@ namespace SwitchPriv.Library
                 return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
             else
                 return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
+        }
+
+
+        public static bool ImpersonateThreadToken(IntPtr hThread, IntPtr hToken)
+        {
+            NTSTATUS ntstatus;
+            int nDosErrorCode;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            var bSuccess = false;
+            Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Zero);
+
+            do
+            {
+                SECURITY_IMPERSONATION_LEVEL originalLevel;
+                SECURITY_IMPERSONATION_LEVEL grantedLevel;
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pInfoBuffer,
+                    4u,
+                    out uint _);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+                else
+                    originalLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pInfoBuffer);
+
+                Marshal.WriteIntPtr(pInfoBuffer, hToken);
+                ntstatus = NativeMethods.NtSetInformationThread(
+                    hThread,
+                    THREADINFOCLASS.ThreadImpersonationToken,
+                    pInfoBuffer,
+                    (uint)IntPtr.Size);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                NativeMethods.NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pInfoBuffer,
+                    4u,
+                    out uint _);
+                grantedLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pInfoBuffer);
+                bSuccess = (grantedLevel == originalLevel);
+
+                if (bSuccess)
+                    ntstatus = Win32Consts.STATUS_PRIVILEGE_NOT_HELD;
+            } while (false);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError((int)ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return bSuccess;
+        }
+
+
+        public static bool RevertThreadToken(IntPtr hThread)
+        {
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            var pInfoBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Zero);
+            ntstatus = NativeMethods.NtSetInformationThread(
+                hThread,
+                THREADINFOCLASS.ThreadImpersonationToken,
+                pInfoBuffer,
+                (uint)IntPtr.Size);
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 

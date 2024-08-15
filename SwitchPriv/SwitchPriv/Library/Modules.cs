@@ -80,7 +80,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -180,7 +180,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -258,7 +258,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -358,7 +358,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -477,7 +477,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (asSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -578,7 +578,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -588,7 +588,7 @@ namespace SwitchPriv.Library
 
         private static bool GetSystem()
         {
-            var status = false;
+            var bSuccess = false;
             var requiredPrivs = new List<SE_PRIVILEGE_ID> {
                 SE_PRIVILEGE_ID.SeDebugPrivilege,
                 SE_PRIVILEGE_ID.SeImpersonatePrivilege
@@ -608,15 +608,15 @@ namespace SwitchPriv.Library
             }
             else
             {
-                status = Utilities.ImpersonateAsSmss();
+                bSuccess = Utilities.ImpersonateAsSmss();
 
-                if (status)
+                if (bSuccess)
                     Console.WriteLine("[+] Got SYSTEM privilege.");
                 else
                     Console.WriteLine("[-] Failed to impersonate as smss.exe.");
             }
 
-            return status;
+            return bSuccess;
         }
 
 
@@ -687,7 +687,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -778,7 +778,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -875,7 +875,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
@@ -958,7 +958,7 @@ namespace SwitchPriv.Library
             } while (false);
 
             if (bAsSystem)
-                NativeMethods.RevertToSelf();
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             Console.WriteLine("[*] Done.");
 
