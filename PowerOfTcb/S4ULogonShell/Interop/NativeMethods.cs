@@ -109,6 +109,9 @@ namespace S4ULogonShell.Interop
             out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtClose(IntPtr Handle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtDuplicateToken(
             IntPtr ExistingTokenHandle,
             ACCESS_MASK DesiredAccess,
@@ -129,9 +132,6 @@ namespace S4ULogonShell.Interop
             IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtClose(IntPtr Handle);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
