@@ -189,6 +189,14 @@ namespace S4ULogonShell.Interop
         MaxJobObjectInfoClass = 50
     }
 
+    [Flags]
+    internal enum LOGON_FLAGS : uint
+    {
+        NONE = 0x00000000,
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
+    }
+
     internal enum LOGON_PROVIDER
     {
         Default = 0,
@@ -207,14 +215,6 @@ namespace S4ULogonShell.Interop
         Unlock,
         NetworkClearText,
         NewCredentials
-    }
-
-    [Flags]
-    internal enum LOGON_FLAGS : uint
-    {
-        NONE = 0x00000000,
-        LOGON_WITH_PROFILE = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
     internal enum MSV1_0_LOGON_SUBMIT_TYPE

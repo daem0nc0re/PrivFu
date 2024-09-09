@@ -77,6 +77,14 @@ namespace VirtualShell.Interop
         TRUE
     }
 
+    [Flags]
+    internal enum LOGON_FLAGS : uint
+    {
+        NONE = 0x00000000,
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
+    }
+
     internal enum LOGON_PROVIDER
     {
         Default = 0,
@@ -95,14 +103,6 @@ namespace VirtualShell.Interop
         Unlock,
         NetworkClearText,
         NewCredentials
-    }
-
-    [Flags]
-    internal enum LOGON_FLAGS : uint
-    {
-        NONE = 0x00000000,
-        LOGON_WITH_PROFILE = 0x00000001,
-        LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
     internal enum LSA_SID_NAME_MAPPING_OPERATION_ERROR
