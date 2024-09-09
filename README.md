@@ -2277,73 +2277,41 @@ I ported it to C# and rebuilt it as a tool.
 Most of operations require administrative privilege (`SeDebugPrivilege`, `SeImpersonatePrivilege` and High Mandatory Level):
 
 ```
-C:\dev>TrustExec.exe
+PS C:\Dev> .\TrustExec.exe
 
-TrustExec - Tool to investigate TrustedInstaller capability.
+TrustExec - Tool to create TrustedInstaller process.
 
 Usage: TrustExec.exe [Options]
 
-        -h, --help   : Displays this help message.
-        -m, --module : Specifies module name.
+        -h, --help        : Displays this help message.
+        -n, --new-console : Flag to create new console.
+        -m, --method      : Specifies method ID.
+        -c, --command     : Specifies command to execute. Default is cmd.exe.
 
-Available Modules:
-
-    + exec - Run process as "NT SERVICE\TrustedInstaller".
-    + sid  - Add or remove virtual account's SID.
-
-[*] To see help for each modules, specify "-m <Module> -h" as arguments.
-```
-
-### exec Module
-This module is to execute process as TrustedInstaller group account:
-
-```
-C:\dev>TrustExec.exe -m exec -h
-
-TrustExec - Help for "exec" command.
-
-Usage: TrustExec.exe -m exec [Options]
-
-        -h, --help      : Displays this help message.
-        -s, --shell     : Flag for interactive shell.
-        -f, --full      : Flag to enable all available privileges.
-        -t, --technique : Specifies technique ID. Default ID is 0.
-        -c, --command   : Specifies command to execute.
-        -d, --domain    : Specifies domain name to add. Default value is "DefaultDomain".
-        -u, --username  : Specifies username to add. Default value is "DefaultUser".
-        -i, --id        : Specifies RID for virtual domain. Default value is "110".
-        -e, --extra     : Specifies extra group SID(s) to add.
-
-Available Technique IDs:
-
-        + 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.
-        + 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.
+[!] -m option is required.
 ```
 
 For this module, 2 techniques are implemeted.
-We can specfy technique with `-t` option.
-If you set `0` or don't set value for `-t` option, `TrustExec` will try to create `TrustedInstaller` process with create token technique.
-To get interactive shell, set `-s` flag. 
+We can specfy a method with `-m` option.
+If you set `-m` option to `0`, this tool try to get `TrustedInstaller` token with `NtCreateToken`:
 
 ```
-C:\dev>TrustExec.exe -m exec -s
+PS C:\Dev> .\TrustExec.exe -m 0 -c powershell
 
-[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeCreateTokenPrivilege is enabled successfully.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 3360
-[+] Impersonation is successful.
-[>] Trying to create an elevated primary token.
-[+] An elevated primary token is created successfully.
-[>] Trying to create a token assigned process.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Impersonation as smss.exe is successful.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully for current thread.
+[+] SeCreateTokenPrivilege is enabled successfully for current thread.
+[+] SeImpersonatePrivilege is enabled successfully for current thread.
+[+] Got a TrustedInstaller token (Handle = 0xE8).
+[+] Got a token assigned process (PID: 2832).
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-Microsoft Windows [Version 10.0.19043.1526]
-(c) Microsoft Corporation. All rights reserved.
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
 
-C:\dev>whoami /user
+PS C:\Dev> whoami /user
 
 USER INFORMATION
 ----------------
@@ -2351,242 +2319,7 @@ USER INFORMATION
 User Name           SID
 =================== ========
 nt authority\system S-1-5-18
-
-C:\dev>whoami /groups | findstr /i trusted
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
-
-C:\dev>whoami /priv
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                Description                               State
-============================= ========================================= =======
-SeAssignPrimaryTokenPrivilege Replace a process level token             Enabled
-SeTcbPrivilege                Act as part of the operating system       Enabled
-SeDebugPrivilege              Debug programs                            Enabled
-SeImpersonatePrivilege        Impersonate a client after authentication Enabled
-```
-
-If you want to add extra group account to token for new process, use `-e` option as follows:
-
-```
-C:\dev>TrustExec.exe -m exec -s -e S-1-5-20
-
-[>] Parsing group SID(s).
-[+] "NT AUTHORITY\NETWORK SERVICE" is added as an extra group.
-    |-> SID  : S-1-5-20
-    |-> Type : SidTypeWellKnownGroup
-[>] Trying to get SYSTEM.
-[>] Trying to impersonate as smss.exe.
-[+] SeCreateTokenPrivilege is enabled successfully.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 4392
-[+] Impersonation is successful.
-[>] Trying to create an elevated primary token.
-[+] An elevated primary token is created successfully.
-[>] Trying to create a token assigned process.
-
-Microsoft Windows [Version 10.0.22000.318]
-(c) Microsoft Corporation. All rights reserved.
-
-C:\dev>whoami /groups
-
-GROUP INFORMATION
------------------
-
-Group Name                             Type             SID                                                            Attributes
-====================================== ================ ============================================================== ==================================================
-BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Enabled by default, Enabled group, Group owner
-Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
-Mandatory Label\System Mandatory Level Label            S-1-16-16384
-
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
-NT AUTHORITY\NETWORK SERVICE           Well-known group S-1-5-20                                                       Mandatory group, Enabled by default, Enabled group
-```
-
-To add multiple groups, specifies SIDs as comma separated value:
-
-```
-C:\dev>TrustExec.exe -m exec -s -e S-1-5-20,S-1-5-32-551
-
-[>] Parsing group SID(s).
-[+] "NT AUTHORITY\NETWORK SERVICE" is added as an extra group.
-    |-> SID  : S-1-5-20
-    |-> Type : SidTypeWellKnownGroup
-[+] "BUILTIN\Backup Operators" is added as an extra group.
-    |-> SID  : S-1-5-32-551
-    |-> Type : SidTypeAlias
-[>] Trying to get SYSTEM.
-[>] Trying to impersonate as smss.exe.
-[+] SeCreateTokenPrivilege is enabled successfully.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 3104
-[+] Impersonation is successful.
-[>] Trying to create an elevated primary token.
-[+] An elevated primary token is created successfully.
-[>] Trying to create a token assigned process.
-
-Microsoft Windows [Version 10.0.22000.318]
-(c) Microsoft Corporation. All rights reserved.
-
-C:\dev>whoami /groups
-
-GROUP INFORMATION
------------------
-
-Group Name                             Type             SID                                                            Attributes
-====================================== ================ ============================================================== ==================================================
-BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Enabled by default, Enabled group, Group owner
-Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
-Mandatory Label\System Mandatory Level Label            S-1-16-16384
-
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
-NT AUTHORITY\NETWORK SERVICE           Well-known group S-1-5-20                                                       Mandatory group, Enabled by default, Enabled group
-BUILTIN\Backup Operators               Alias            S-1-5-32-551                                                   Mandatory group, Enabled by default, Enabled group
-```
-
-If you set `1` for `-t` option, `TrustExec` will try to create `TrustedInstaller` process with virtual account technique.
-This technique creates a virtual accound to impersonate as TrustedInstaller group account as a side effect.
-If you don't specify domain name (`-d` option), username (`-u`) and RID (`-i` option), this module create a virtual account `DefaultDomain\DefaultUser`.
-Default SID for domain is `S-1-5-110` and for user is `S-1-5-110-110`:
-
-```
-C:\dev>TrustExec.exe -m exec -s -t 1
-
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 2616
-[+] Impersonation is successful.
-[>] Trying to generate token group information.
-[>] Trying to add virtual domain and user.
-    |-> Domain   : DefaultDomain (SID : S-1-5-110)
-    |-> Username : DefaultUser (SID : S-1-5-110-110)
-[+] Added virtual domain and user.
-[>] Trying to logon as DefaultDomain\DefaultUser.
-[>] Trying to create a token assigned process.
-
-Microsoft Windows [Version 10.0.18362.30]
-(c) 2019 Microsoft Corporation. All rights reserved.
-
-C:\dev>whoami /user
-
-USER INFORMATION
-----------------
-
-User Name                 SID
-========================= =============
-defaultdomain\defaultuser S-1-5-110-110
-
-C:\dev>whoami /groups | findstr /i trusted
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
-
-C:\dev>exit
-
-[>] Exit.
-[!] Added virtual domain and user are not removed automatically.
-    |-> To remove added virtual user SID   : TrustExec.exe -m sid -r -d DefaultDomain -u DefaultUser
-    |-> To remove added virtual domain SID : TrustExec.exe -m sid -r -d DefaultDomain
-```
-
-You can change domain name and username, use `-d` option and `-u` option.
-To change domain RID, use `-i` option as follows:
-
-```
-C:\dev>TrustExec.exe -m exec -s -d VirtualDomain -u VirtualAdmin -i 92 -t 1
-
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 3612
-[+] Impersonation is successful.
-[>] Trying to generate token group information.
-[>] Trying to add virtual domain and user.
-    |-> Domain   : VirtualDomain (SID : S-1-5-92)
-    |-> Username : VirtualAdmin (SID : S-1-5-92-110)
-[+] Added virtual domain and user.
-[>] Trying to logon as VirtualDomain\VirtualAdmin.
-[>] Trying to create a token assigned process.
-
-Microsoft Windows [Version 10.0.18362.30]
-(c) 2019 Microsoft Corporation. All rights reserved.
-
-C:\dev>whoami /user
-
-USER INFORMATION
-----------------
-
-User Name                  SID
-========================== ============
-virtualdomain\virtualadmin S-1-5-92-110
-```
-
-If you want to execute single command, use `-c` option without `-s` flag as follows:
-
-```
-C:\dev>TrustExec.exe -m exec -c "whoami /user & whoami /priv"
-
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeCreateTokenPrivilege is enabled successfully.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 1464
-[+] Impersonation is successful.
-[>] Trying to create an elevated primary token.
-[+] An elevated primary token is created successfully.
-[>] Trying to create a token assigned process.
-
-
-USER INFORMATION
-----------------
-
-User Name           SID
-=================== ========
-nt authority\system S-1-5-18
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                Description                               State
-============================= ========================================= =======
-SeAssignPrimaryTokenPrivilege Replace a process level token             Enabled
-SeTcbPrivilege                Act as part of the operating system       Enabled
-SeDebugPrivilege              Debug programs                            Enabled
-SeImpersonatePrivilege        Impersonate a client after authentication Enabled
-
-[>] Exit.
-```
-
-If you want to enable all available privileges, set `-f` flag as follows:
-
-```
-C:\dev>TrustExec.exe -m exec -c "whoami /priv" -f
-
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeCreateTokenPrivilege is enabled successfully.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 2526
-[+] Impersonation is successful.
-[>] Trying to create an elevated primary token.
-[+] An elevated primary token is created successfully.
-[>] Trying to create a token assigned process.
-
+PS C:\Dev> whoami /priv
 
 PRIVILEGES INFORMATION
 ----------------------
@@ -2628,134 +2361,109 @@ SeIncreaseWorkingSetPrivilege             Increase a process working set        
 SeTimeZonePrivilege                       Change the time zone                                               Enabled
 SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
 SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+PS C:\Dev> whoami /groups
 
-[>] Exit.
+GROUP INFORMATION
+-----------------
+
+Group Name                             Type             SID                                                            Attributes
+====================================== ================ ============================================================== ===============================================================
+Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
+LOCAL                                  Well-known group S-1-2-0                                                        Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                          Well-known group S-1-2-1                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                   Well-known group S-1-5-6                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Mandatory group, Enabled by default, Enabled group, Group owner
+BUILTIN\Users                          Alias            S-1-5-32-545                                                   Mandatory group, Enabled by default, Enabled group
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Mandatory group, Enabled by default, Enabled group
+Mandatory Label\System Mandatory Level Label            S-1-16-16384
 ```
 
-Added domain and username by virtual account technique are not removed automatically.
-If you want to remove them, run the `sid` module as shown in the last output.
-
-
-### sid Module
-This module is to manage virtual account created by this tool:
+When `-m` option is set `1`, this tool try to get `TrustedInstaller` process with virtual logon technique:
 
 ```
-C:\dev>TrustExec.exe -m sid -h
+PS C:\Dev> .\TrustExec.exe -m 1 -c powershell
 
-TrustExec - Help for "sid" command.
-
-Usage: TrustExec.exe -m sid [Options]
-
-        -h, --help     : Displays this help message.
-        -a, --add      : Flag to add virtual account's SID.
-        -r, --remove   : Flag to remove virtual account's SID.
-        -d, --domain   : Specifies domain name to add or remove. Default value is null.
-        -u, --username : Specifies username to add or remove. Default value is null.
-        -i, --id       : Specifies RID for virtual domain to add. Default value is "110".
-        -s, --sid      : Specifies SID to lookup.
-        -l, --lookup   : Flag to lookup SID or account name in local system.
-```
-
-To lookup SID, set `-l` flag. If you want to lookup domain or username from SID, specify SID with `-s` option as follows:
-
-```
-C:\dev>TrustExec.exe -m sid -l -s S-1-5-18
-
-[*] Result:
-    |-> Account Name : nt authority\system
-    |-> SID          : S-1-5-18
-    |-> Account Type : SidTypeWellKnownGroup
-```
-
-If you want to lookup SID from domain name, specify domain name with `-d` option as follows:
-
-```
-C:\dev>TrustExec.exe -m sid -l -d contoso
-
-[*] Result:
-    |-> Account Name : contoso
-    |-> SID          : S-1-5-21-3654360273-254804765-2004310818
-    |-> Account Type : SidTypeDomain
-```
-
-If you want to lookup SID from domain name and username, specify domain name with `-d` option and username with `-u` option as follows:
-
-```
-C:\dev>TrustExec.exe -m sid -l -d contoso -u david
-
-[*] Result:
-    |-> Account Name : contoso\david
-    |-> SID          : S-1-5-21-3654360273-254804765-2004310818-1104
-    |-> Account Type : SidTypeUser
-```
-
-To remove virutal account, set `-r` flag.
-Domain name to remove is specified with `-d` option, username is specified with `-u` option:
-
-```
-C:\dev>TrustExec.exe -m sid -r -d defaultdomain -u defaultuser
-
-[>] Trying to get SYSTEM.
 [+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 2568
-[+] Impersonation is successful.
-[>] Trying to remove SID.
-    |-> Domain   : defaultdomain
-    |-> Username : defaultuser
-[*] SID : S-1-5-110-110.
-[+] Requested SID is removed successfully.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Impersonation as smss.exe is successful.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully for current thread.
+[+] SeImpersonatePrivilege is enabled successfully for current thread.
+[+] SeTcbPrivilege is enabled successfully for current thread.
+[+] A virtual domain VirtualDomain is created successfully (SID: S-1-5-110).
+[+] A virtual account VirtualDomain\VirtualAdmin is created successfully (SID: S-1-5-110-500).
+[+] Got a virtual logon token (Handle = 0x308).
+[+] Got a token assigned process (PID: 10384).
+[+] VirtualDomain domain is removed successfully.
+Windows PowerShell
+Copyright (C) Microsoft Corporation. All rights reserved.
 
+Install the latest PowerShell for new features and improvements! https://aka.ms/PSWindows
 
-C:\dev>TrustExec.exe -m sid -r -d defaultdomain
+PS C:\Dev> whoami /user
 
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 4696
-[+] Impersonation is successful.
-[>] Trying to remove SID.
-    |-> Domain   : defaultdomain
-[*] SID : S-1-5-110.
-[+] Requested SID is removed successfully.
+USER INFORMATION
+----------------
+
+User Name                  SID
+========================== =============
+virtualdomain\virtualadmin S-1-5-110-500
+PS C:\Dev> whoami /priv
+
+PRIVILEGES INFORMATION
+----------------------
+
+Privilege Name                            Description                                                        State
+========================================= ================================================================== =======
+SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Enabled
+SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
+SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
+SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
+SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
+SeSystemProfilePrivilege                  Profile system performance                                         Enabled
+SeSystemtimePrivilege                     Change the system time                                             Enabled
+SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
+SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
+SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
+SeBackupPrivilege                         Back up files and directories                                      Enabled
+SeRestorePrivilege                        Restore files and directories                                      Enabled
+SeShutdownPrivilege                       Shut down the system                                               Enabled
+SeDebugPrivilege                          Debug programs                                                     Enabled
+SeAuditPrivilege                          Generate security audits                                           Enabled
+SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
+SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
+SeRemoteShutdownPrivilege                 Force shutdown from a remote system                                Enabled
+SeUndockPrivilege                         Remove computer from docking station                               Enabled
+SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
+SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
+SeCreateGlobalPrivilege                   Create global objects                                              Enabled
+SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
+SeTimeZonePrivilege                       Change the time zone                                               Enabled
+SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
+SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+PS C:\Dev> whoami /groups
+
+GROUP INFORMATION
+-----------------
+
+Group Name                             Type             SID                                                            Attributes
+====================================== ================ ============================================================== ==================================================
+Mandatory Label\System Mandatory Level Label            S-1-16-16384
+
+Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
+BUILTIN\Performance Log Users          Alias            S-1-5-32-559                                                   Mandatory group, Enabled by default, Enabled group
+BUILTIN\Users                          Alias            S-1-5-32-545                                                   Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\INTERACTIVE               Well-known group S-1-5-4                                                        Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                          Well-known group S-1-2-1                                                        Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\This Organization         Well-known group S-1-5-15                                                       Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\LOCAL SERVICE             Well-known group S-1-5-19                                                       Mandatory group, Enabled by default, Enabled group
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Mandatory group, Enabled by default, Enabled group
+                                       Unknown SID type S-1-5-110-0                                                    Mandatory group, Enabled by default, Enabled group
 ```
 
-> __WARNING__ Deleted SIDs may appear to remain until rebooting the OS.
-
-
-If you want add domain or user SID, set `-a` flag as follows:
-
-```
-C:\dev>TrustExec.exe -m sid -a -d virtualworld -u virtualadmin -i 97
-
-[>] Trying to get SYSTEM.
-[+] SeDebugPrivilege is enabled successfully.
-[>] Trying to impersonate as smss.exe.
-[+] SeAssignPrimaryTokenPrivilege is enabled successfully.
-[+] SeIncreaseQuotaPrivilege is enabled successfully.
-[>] Trying to impersonate thread token.
-    |-> Current Thread ID : 3628
-[+] Impersonation is successful.
-[>] Trying to add virtual domain and user.
-    |-> Domain   : virtualworld (SID : S-1-5-97)
-    |-> Username : virtualadmin (SID : S-1-5-97-110)
-[+] Added virtual domain and user.
-
-C:\dev>TrustExec.exe -m sid -l -s S-1-5-97
-
-[*] Result : virtualworld (SID : S-1-5-97)
-
-
-C:\dev>TrustExec.exe -m sid -l -s S-1-5-97-110
-
-[*] Result : virtualworld\virtualadmin (SID : S-1-5-97-110)
-```
+If you want to create process with new console, set `-n` flag.
 
 
 ## UserRightsUtil
