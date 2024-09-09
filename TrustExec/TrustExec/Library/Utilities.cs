@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text.RegularExpressions;
 using TrustExec.Interop;
 
@@ -22,7 +21,7 @@ namespace TrustExec.Library
             var startupInfo = new STARTUPINFO
             {
                 cb = Marshal.SizeOf(typeof(STARTUPINFO)),
-                wShowWindow = SHOW_WINDOW_FLAGS.SW_SHOW,
+                wShowWindow = bNewConsole ? SHOW_WINDOW_FLAGS.SW_SHOW : SHOW_WINDOW_FLAGS.SW_HIDE,
                 lpDesktop = @"Winsta0\Default"
             };
             var flags = PROCESS_CREATION_FLAGS.CREATE_BREAKAWAY_FROM_JOB | PROCESS_CREATION_FLAGS.CREATE_SUSPENDED;

@@ -283,18 +283,6 @@ namespace TrustExec.Interop
     };
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_LINKED_TOKEN
-    {
-        public IntPtr LinkedToken;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_MANDATORY_LABEL
-    {
-        public SID_AND_ATTRIBUTES Label;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_OWNER
     {
         public IntPtr Owner; // PSID
