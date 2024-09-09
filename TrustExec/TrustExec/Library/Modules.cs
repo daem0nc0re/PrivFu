@@ -8,362 +8,346 @@ namespace TrustExec.Library
 {
     internal class Modules
     {
-        public static bool AddVirtualAccount(string domain, string username, int domainRid)
-        {
-            if (string.IsNullOrEmpty(domain))
-            {
-                Console.WriteLine("[!] Domain name is not specified.");
-
-                return false;
-            }
-
-            Console.WriteLine("[>] Trying to get SYSTEM.");
-
-            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
-                SE_PRIVILEGE_ID.SeDebugPrivilege,
-                SE_PRIVILEGE_ID.SeImpersonatePrivilege
-            };
-            bool bSuccess = Helpers.EnableTokenPrivileges(
-                WindowsIdentity.GetCurrent().Token,
-                in requiredPrivs,
-                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
-
-            foreach (var priv in adjustedPrivs)
-            {
-                if (priv.Value)
-                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
-                else
-                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
-            }
-
-            if (!bSuccess)
-            {
-                Console.WriteLine("[-] Insufficient privileges.");
-                return false;
-            }
-
-            requiredPrivs = new List<SE_PRIVILEGE_ID> {
-                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
-                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
-            };
-
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
-
-            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-            }
-
-            bool status = Utilities.AddVirtualAccount(domain, username, domainRid);
-            NativeMethods.RevertToSelf();
-
-            return status;
-        }
-
-
-        public static bool LookupSid(string domain, string username, string sid)
-        {
-            var status = false;
-            var peUse = SID_NAME_USE.Unknown;
-
-            if ((!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username)) && !string.IsNullOrEmpty(sid))
-                Console.WriteLine("[!] Username or domain name should not be specified with SID at a time.");
-            else if (!string.IsNullOrEmpty(domain) || !string.IsNullOrEmpty(username))
-                status = Helpers.ConvertAccountNameToSidString(ref username, ref domain, out sid, out peUse);
-            else if (!string.IsNullOrEmpty(sid))
-                status = Helpers.ConvertSidStringToAccountName(ref sid, out username, out domain, out peUse);
-            else
-                Console.WriteLine("[!] SID, domain name or username to lookup is required.");
-
-            if (status)
-            {
-                string accountName;
-
-                if (!string.IsNullOrEmpty(domain) && !string.IsNullOrEmpty(username))
-                    accountName = string.Format(@"{0}\{1}", domain, username);
-                else if (!string.IsNullOrEmpty(username))
-                    accountName = username;
-                else if (!string.IsNullOrEmpty(domain))
-                    accountName = domain;
-                else
-                    accountName = "N/A";
-
-                Console.WriteLine("[*] Result:");
-                Console.WriteLine("    [*] Account Name : {0}", accountName);
-                Console.WriteLine("    [*] SID          : {0}", sid  ?? "N/A");
-                Console.WriteLine("    [*] Account Type : {0}", peUse.ToString());
-            }
-            else
-            {
-                Console.WriteLine("[*] No result.");
-            }
-
-            return status;
-        }
-
-
-        public static bool RemoveVirtualAccount(string domain, string username)
-        {
-            if (string.IsNullOrEmpty(domain))
-            {
-                Console.WriteLine("[!] Domain name is not specified.");
-                return false;
-            }
-
-            Console.WriteLine("[>] Trying to get SYSTEM.");
-
-            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
-                SE_PRIVILEGE_ID.SeDebugPrivilege,
-                SE_PRIVILEGE_ID.SeImpersonatePrivilege
-            };
-            bool bSuccess = Helpers.EnableTokenPrivileges(
-                WindowsIdentity.GetCurrent().Token,
-                in requiredPrivs,
-                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
-
-            foreach (var priv in adjustedPrivs)
-            {
-                if (priv.Value)
-                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
-                else
-                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
-            }
-
-            if (!bSuccess)
-            {
-                Console.WriteLine("[-] Insufficient privileges.");
-                return false;
-            }
-
-            requiredPrivs = new List<SE_PRIVILEGE_ID> {
-                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
-                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
-            };
-
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
-
-            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
-            {
-                Console.WriteLine("[-] Failed to impersonation.");
-                return false;
-            }
-            else
-            {
-                Console.WriteLine("[+] Impersonation is successful.");
-            }
-
-            bool status = Utilities.RemoveVirtualAccount(domain, username);
-            NativeMethods.RevertToSelf();
-
-            return status;
-        }
-
-
-        public static bool RunTrustedInstallerProcess(string command, string extraSidsString)
+        public static bool RunTrustedInstallerProcess(string command, bool bNewConsole)
         {
             int nDosErrorCode;
-            bool bSuccess;
-            string execute;
-            List<string> extraSidsArray;
-            var bIsImpersonated = false;
-
-            if (string.IsNullOrEmpty(command))
-                execute = Environment.GetEnvironmentVariable("COMSPEC");
-            else
-                execute = command;
-
-            if (string.IsNullOrEmpty(extraSidsString))
-                extraSidsArray = new List<string>();
-            else
-                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
-
-            Console.WriteLine();
-
-            do
+            bool bReverted = false;
+            var requiredPrivs = new List<SE_PRIVILEGE_ID>
             {
-                IntPtr hToken;
-                var requiredPrivs = new List<SE_PRIVILEGE_ID> {
-                    SE_PRIVILEGE_ID.SeDebugPrivilege,
-                    SE_PRIVILEGE_ID.SeImpersonatePrivilege
-                };
-                bSuccess = Helpers.EnableTokenPrivileges(
-                    WindowsIdentity.GetCurrent().Token,
-                    in requiredPrivs,
-                    out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
+            };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+            nDosErrorCode = Marshal.GetLastWin32Error();
 
-                foreach (var priv in adjustedPrivs)
-                {
-                    if (priv.Value)
-                        Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
-                    else
-                        Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
-                }
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
+                else
+                    Console.WriteLine("[-] Failed to enable {0}.", priv.Key);
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                return false;
+            }
+
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeCreateTokenPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
+            };
+
+            if (bNewConsole)
+                requiredPrivs.Add(SE_PRIVILEGE_ID.SeTcbPrivilege);
+
+            bSuccess = Utilities.ImpersonateAsSmss(
+                in requiredPrivs,
+                out adjustedPrivs);
+
+            if (!bSuccess)
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonate as smss.exe (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation as smss.exe is successful.");
+                bSuccess = adjustedPrivs[SE_PRIVILEGE_ID.SeCreateTokenPrivilege];
+                bSuccess &= (adjustedPrivs[SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege] ||
+                    adjustedPrivs[SE_PRIVILEGE_ID.SeImpersonatePrivilege]);
+
+                if (bNewConsole)
+                    bSuccess &= adjustedPrivs[SE_PRIVILEGE_ID.SeTcbPrivilege];
 
                 if (!bSuccess)
                 {
-                    Console.WriteLine("[-] Insufficient privileges.");
-                    break;
-                }
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] Failed to enable {0} for current thread.", priv.Key);
+                    }
 
-                requiredPrivs = new List<SE_PRIVILEGE_ID>
-                {
-                    SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
-                    SE_PRIVILEGE_ID.SeCreateTokenPrivilege,
-                    SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
-                };
-                bIsImpersonated = Utilities.ImpersonateAsSmss(in requiredPrivs);
-
-                if (!bIsImpersonated)
-                {
-                    Console.WriteLine("[-] Failed to impersonation.");
-                    break;
+                    Helpers.RevertThreadToken(new IntPtr(-2));
                 }
                 else
                 {
-                    Console.WriteLine("[+] Impersonation is successful.");
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is enabled successfully for current thread.", priv.Key);
+                    }
                 }
+            }
 
-                hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, in extraSidsArray);
+            if (!bSuccess)
+                return false;
+
+            do
+            {
+                var extraSids = new List<string>();
+                var hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, extraSids);
 
                 if (hToken == IntPtr.Zero)
                 {
                     nDosErrorCode = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to create token.");
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(nDosErrorCode, false));
+                    Console.WriteLine("[-] Failed to create a TrustedInstaller token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                    bSuccess = false;
                     break;
                 }
+                else
+                {
+                    Console.WriteLine("[+] Got a TrustedInstaller token (Handle = 0x{0}).", hToken.ToString("X"));
+                    Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
 
-                Console.WriteLine("[>] Trying to create token assigned process.");
+                    if (bNewConsole)
+                    {
+                        var nSessionId = Helpers.GetGuiSessionId();
+                        Helpers.SetTokenSessionId(hToken, nSessionId);
+                    }
+                }
 
-                bSuccess = Utilities.CreateTokenAssignedProcess(hToken, execute);
+                bSuccess = Utilities.CreateTokenAssignedSuspendedProcess(
+                    hToken,
+                    command,
+                    ref bNewConsole,
+                    out PROCESS_INFORMATION processInfo);
                 NativeMethods.NtClose(hToken);
 
                 if (!bSuccess)
                 {
                     nDosErrorCode = Marshal.GetLastWin32Error();
-                    Console.WriteLine("[-] Failed to create token assigned process.");
-                    Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(nDosErrorCode, false));
+                    Console.WriteLine("[-] Failed to create a token assined process (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a token assigned process (PID: {0}).", processInfo.dwProcessId);
+                    bReverted = Helpers.RevertThreadToken(new IntPtr(-2));
+                    NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
+
+                    if (!bNewConsole)
+                        NativeMethods.NtWaitForSingleObject(processInfo.hProcess, false, IntPtr.Zero);
+
+                    NativeMethods.NtClose(processInfo.hThread);
+                    NativeMethods.NtClose(processInfo.hProcess);
                 }
             } while (false);
 
-            if (bIsImpersonated)
-                NativeMethods.RevertToSelf();
+            if (!bReverted)
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
             return bSuccess;
         }
 
 
-        public static bool RunTrustedInstallerProcessWithVirtualLogon(
-            string domain,
-            string username,
-            int domainRid,
-            string command,
-            string extraSidsString,
-            bool fullPrivilege)
+        public static bool RunTrustedInstallerProcessWithVirtualLogon(string command, bool bNewConsole)
         {
-            bool status;
-            string execute;
-            List<string> extraSidsArray;
-
-            if (string.IsNullOrEmpty(domain))
+            int nDosErrorCode;
+            bool bReverted = false;
+            bool bDomainExists = false;
+            var virtualDomainName = "VirtualDomain";
+            var requiredPrivs = new List<SE_PRIVILEGE_ID>
             {
-                Console.WriteLine("[!] Domain name is not specified.");
-
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(username))
-            {
-                Console.WriteLine("[!] Username is not specified.");
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(command))
-                execute = Environment.GetEnvironmentVariable("COMSPEC");
-            else
-                execute = command;
-
-            Console.WriteLine();
-
-            if (string.IsNullOrEmpty(extraSidsString))
-                extraSidsArray = new List<string>();
-            else
-                extraSidsArray = Helpers.ParseGroupSids(extraSidsString);
-
-            Console.WriteLine("[>] Trying to get SYSTEM.");
-
-            var requiredPrivs = new List<SE_PRIVILEGE_ID> {
                 SE_PRIVILEGE_ID.SeDebugPrivilege,
                 SE_PRIVILEGE_ID.SeImpersonatePrivilege
             };
             bool bSuccess = Helpers.EnableTokenPrivileges(
-                WindowsIdentity.GetCurrent().Token,
                 in requiredPrivs,
                 out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+            nDosErrorCode = Marshal.GetLastWin32Error();
 
             foreach (var priv in adjustedPrivs)
             {
                 if (priv.Value)
-                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key.ToString());
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
                 else
-                    Console.WriteLine("[-] Failed to enabled {0}.", priv.Key.ToString());
+                    Console.WriteLine("[-] Failed to enable {0}.", priv.Key);
             }
 
             if (!bSuccess)
             {
-                Console.WriteLine("[-] Insufficient privileges.");
+                Console.WriteLine("[-] Insufficient privileges (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
                 return false;
             }
 
             requiredPrivs = new List<SE_PRIVILEGE_ID> {
                 SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
-                SE_PRIVILEGE_ID.SeIncreaseQuotaPrivilege
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege,
+                SE_PRIVILEGE_ID.SeTcbPrivilege
             };
+            bSuccess = Utilities.ImpersonateAsSmss(
+                in requiredPrivs,
+                out adjustedPrivs);
 
-            Console.WriteLine("[>] Trying to impersonate as smss.exe.");
-
-            if (!Utilities.ImpersonateAsSmss(in requiredPrivs))
+            if (!bSuccess)
             {
-                Console.WriteLine("[-] Failed to impersonation.");
-                return false;
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonate as smss.exe (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
             }
             else
             {
-                Console.WriteLine("[+] Impersonation is successful.");
+                Console.WriteLine("[+] Impersonation as smss.exe is successful.");
+                bSuccess = adjustedPrivs[SE_PRIVILEGE_ID.SeTcbPrivilege];
+                bSuccess &= (adjustedPrivs[SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege] ||
+                    adjustedPrivs[SE_PRIVILEGE_ID.SeImpersonatePrivilege]);
+
+                if (!bSuccess)
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] Failed to enable {0} for current thread.", priv.Key);
+                    }
+
+                    Helpers.RevertThreadToken(new IntPtr(-2));
+                }
+                else
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is enabled successfully for current thread.", priv.Key);
+                    }
+                }
             }
 
-            IntPtr hToken = Utilities.CreateTrustedInstallerTokenWithVirtualLogon(
-                domain,
-                username,
-                domainRid,
-                extraSidsArray.ToArray());
-
-            if (hToken == IntPtr.Zero)
+            if (!bSuccess)
                 return false;
 
-            if (fullPrivilege)
-                Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
-
-            Console.WriteLine("[>] Trying to create token assigned process.");
-
-            status = Utilities.CreateTokenAssignedProcess(hToken, execute);
-            NativeMethods.NtClose(hToken);
-
-            if (!status)
+            do
             {
-                var error = Marshal.GetLastWin32Error();
-                Console.WriteLine("[-] Failed to create token assigned process.");
-                Console.WriteLine("    |-> {0}", Helpers.GetWin32ErrorMessage(error, false));
+                IntPtr hToken;
+                var virtualAccountName = "VirtualAdmin";
+                var domainSid = "S-1-5-110";
+                var accountSid = string.Format("{0}-500", domainSid);
+                var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
+                {
+                    {
+                        // BUILTIN\Administrators
+                        "S-1-5-32-544",
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    },
+                    {
+                        // NT AUTHORITY\LOCAL SERVICE
+                        "S-1-5-19",
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    },
+                    {
+                        // NT SERVICE\TrustedInstaller
+                        "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    }
+                };
+                bSuccess = Helpers.AddSidMapping(virtualDomainName, null, domainSid);
+
+                if (!bSuccess)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a LocalService token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine(@"[+] A virtual domain {0} is created successfully (SID: {1}).", virtualDomainName, domainSid);
+                    bDomainExists = true;
+                    bSuccess = Helpers.AddSidMapping(virtualDomainName, virtualAccountName, accountSid);
+
+                    if (!bSuccess)
+                    {
+                        nDosErrorCode = Marshal.GetLastWin32Error();
+                        Console.WriteLine("[-] Failed to create a LocalService token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                    }
+                    else
+                    {
+                        Console.WriteLine(@"[+] A virtual account {0}\{1} is created successfully (SID: {2}).",
+                            virtualDomainName,
+                            virtualAccountName,
+                            accountSid);
+                    }
+                }
+
+                if (!bSuccess)
+                    break;
+
+                hToken = Utilities.GetVirtualLogonToken(virtualAccountName, virtualDomainName, in tokenGroups);
+
+                if (hToken == IntPtr.Zero)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a virtual logon token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                    bSuccess = false;
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a virtual logon token (Handle = 0x{0}).", hToken.ToString("X"));
+                    Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
+
+                    if (bNewConsole)
+                    {
+                        var nSessionId = Helpers.GetGuiSessionId();
+                        Helpers.SetTokenSessionId(hToken, nSessionId);
+                    }
+                }
+
+                bSuccess = Utilities.CreateTokenAssignedSuspendedProcess(
+                    hToken,
+                    command,
+                    ref bNewConsole,
+                    out PROCESS_INFORMATION processInfo);
+                NativeMethods.NtClose(hToken);
+
+                if (!bSuccess)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a token assined process (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a token assigned process (PID: {0}).", processInfo.dwProcessId);
+
+                    if (Helpers.RemoveSidMapping(virtualDomainName, null))
+                    {
+                        bDomainExists = false;
+                        Console.WriteLine("[+] {0} domain is removed successfully.", virtualDomainName);
+                    }
+                    else
+                    {
+                        nDosErrorCode = Marshal.GetLastWin32Error();
+                        Console.WriteLine("[-] Failed to remove {0} domain (Error = 0x{0}).", virtualDomainName, nDosErrorCode.ToString("X8"));
+                    }
+
+                    bReverted = Helpers.RevertThreadToken(new IntPtr(-2));
+                    NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
+
+                    if (!bNewConsole)
+                        NativeMethods.NtWaitForSingleObject(processInfo.hProcess, false, IntPtr.Zero);
+
+                    NativeMethods.NtClose(processInfo.hThread);
+                    NativeMethods.NtClose(processInfo.hProcess);
+                }
+            } while (false);
+
+            if (!bSuccess && bDomainExists)
+            {
+                if (Helpers.RemoveSidMapping(virtualDomainName, null))
+                {
+                    Console.WriteLine("[+] {0} domain is removed successfully.", virtualDomainName);
+                }
+                else
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to remove {0} domain (Error = 0x{0}).", virtualDomainName, nDosErrorCode.ToString("X8"));
+                }
             }
 
-            NativeMethods.RevertToSelf();
+            if (!bReverted)
+                Helpers.RevertThreadToken(new IntPtr(-2));
 
-            return status;
+            return bSuccess;
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using TrustExec.Interop;
@@ -13,29 +14,56 @@ namespace TrustExec.Library
 
     internal class Helpers
     {
-        public static NTSTATUS AddSidMapping(string domain, string username, IntPtr pSid)
+        public static bool AddSidMapping(string domainName, string accountName, string newSid)
         {
-            NTSTATUS ntstatus;
-            var input = new LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT { Sid = pSid };
-            IntPtr pInputBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(input));
+            int nDosErrorCode;
+            IntPtr pNewSid = ConvertStringSidToSid(newSid, out int _);
+            var addInput = new LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT { Sid = pNewSid };
 
-            if (!string.IsNullOrEmpty(domain))
-                input.DomainName = new UNICODE_STRING(domain);
+            if (!string.IsNullOrEmpty(domainName))
+                addInput.DomainName = new UNICODE_STRING(domainName);
 
-            if (!string.IsNullOrEmpty(username))
-                input.AccountName = new UNICODE_STRING(username);
+            if (!string.IsNullOrEmpty(accountName))
+                addInput.AccountName = new UNICODE_STRING(accountName);
 
-            Marshal.StructureToPtr(input, pInputBuffer, false);
-            ntstatus = NativeMethods.LsaManageSidNameMapping(
-                LSA_SID_NAME_MAPPING_OPERATION_TYPE.Add,
-                pInputBuffer,
-                out IntPtr pOutputBuffer);
-            Marshal.FreeHGlobal(pInputBuffer);
+            if ((!string.IsNullOrEmpty(domainName) || !string.IsNullOrEmpty(accountName)) && (pNewSid != IntPtr.Zero))
+            {
+                LSA_SID_NAME_MAPPING_OPERATION_ERROR nMappingErrorCode;
+                var nInfoLength = Marshal.SizeOf(typeof(LSA_SID_NAME_MAPPING_OPERATION_ADD_INPUT));
+                var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                Marshal.StructureToPtr(addInput, pInfoBuffer, false);
+                NativeMethods.LsaManageSidNameMapping(
+                    LSA_SID_NAME_MAPPING_OPERATION_TYPE.Add,
+                    pInfoBuffer,
+                    out IntPtr pResult);
+                nMappingErrorCode = (LSA_SID_NAME_MAPPING_OPERATION_ERROR)Marshal.ReadInt32(pResult);
+                NativeMethods.LsaFreeMemory(pResult);
+                Marshal.FreeHGlobal(pInfoBuffer);
+                Marshal.FreeHGlobal(pNewSid);
 
-            if (pOutputBuffer != IntPtr.Zero)
-                NativeMethods.LsaFreeMemory(pOutputBuffer);
+                if (!string.IsNullOrEmpty(domainName))
+                    addInput.DomainName.Dispose();
 
-            return ntstatus;
+                if (!string.IsNullOrEmpty(accountName))
+                    addInput.AccountName.Dispose();
+
+                if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.Success)
+                    nDosErrorCode = 0;
+                else if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.NameCollision)
+                    nDosErrorCode = 0;
+                else if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.NonMappingError)
+                    nDosErrorCode = 0x522; // ERROR_PRIVILEGE_NOT_HELD (SeTcbPrivilege is required)
+                else
+                    nDosErrorCode = 0x57; // ERROR_INVALID_PARAMETER
+            }
+            else
+            {
+                nDosErrorCode = 0x57; // ERROR_INVALID_PARAMETER
+            }
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (nDosErrorCode == 0);
         }
 
 
@@ -226,6 +254,17 @@ namespace TrustExec.Library
 
 
         public static bool EnableTokenPrivileges(
+            in List<SE_PRIVILEGE_ID> requiredPrivs,
+            out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
+        {
+            return EnableTokenPrivileges(
+                WindowsIdentity.GetCurrent().Token,
+                in requiredPrivs,
+                out adjustedPrivs);
+        }
+
+
+        public static bool EnableTokenPrivileges(
             IntPtr hToken,
             in List<SE_PRIVILEGE_ID> privsToEnable,
             out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs)
@@ -335,6 +374,68 @@ namespace TrustExec.Library
         }
 
 
+        public static IntPtr GetProcessToken(int pid, TOKEN_TYPE tokenType)
+        {
+            NTSTATUS ntstatus;
+            var hDupToken = IntPtr.Zero;
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var nContextSize = Marshal.SizeOf(typeof(SECURITY_QUALITY_OF_SERVICE));
+            var context = new SECURITY_QUALITY_OF_SERVICE
+            {
+                Length = nContextSize,
+                ImpersonationLevel = SECURITY_IMPERSONATION_LEVEL.Impersonation
+            };
+            var pContextBuffer = Marshal.AllocHGlobal(nContextSize);
+            Marshal.StructureToPtr(context, pContextBuffer, true);
+
+            if (tokenType == TOKEN_TYPE.Impersonation)
+                objectAttributes.SecurityQualityOfService = pContextBuffer;
+
+            do
+            {
+                ntstatus = NativeMethods.NtOpenProcess(
+                    out IntPtr hProcess,
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    ACCESS_MASK.TOKEN_DUPLICATE,
+                    out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtDuplicateToken(
+                    hToken,
+                    ACCESS_MASK.MAXIMUM_ALLOWED,
+                    in objectAttributes,
+                    BOOLEAN.FALSE,
+                    tokenType,
+                    out hDupToken);
+                NativeMethods.NtClose(hToken);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    hDupToken = IntPtr.Zero;
+            } while (false);
+
+            ntstatus = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(ntstatus);
+            Marshal.FreeHGlobal(pContextBuffer);
+
+            return hDupToken;
+        }
+
+
         public static bool GetTokenGroups(
             IntPtr hToken,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups)
@@ -421,64 +522,58 @@ namespace TrustExec.Library
         }
 
 
-        public static List<string> ParseGroupSids(string extraSidsString)
+        public static bool ImpersonateThreadToken(IntPtr hThread, IntPtr hToken)
         {
-            var result = new List<string>();
-            var sidArray = extraSidsString.Split(',');
-            var regexSid = new Regex(
-                @"^S-1(-\d+)+$",
-                RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            string accountName;
-            string sid;
+            NTSTATUS ntstatus;
+            int nDosErrorCode;
+            IntPtr pInfoBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            var bSuccess = false;
+            Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Zero);
 
-            Console.WriteLine("[>] Parsing group SID(s).");
-
-            for (var idx = 0; idx < sidArray.Length; idx++)
+            do
             {
-                sid = sidArray[idx].Trim();
+                SECURITY_IMPERSONATION_LEVEL originalLevel;
+                SECURITY_IMPERSONATION_LEVEL grantedLevel;
+                ntstatus = NativeMethods.NtQueryInformationToken(
+                    hToken,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pInfoBuffer,
+                    4u,
+                    out uint _);
 
-                if (!regexSid.IsMatch(sid))
-                {
-                    Console.WriteLine("[!] {0} is invalid format. Ignored.", sid);
-                    continue;
-                }
-
-                if (ConvertSidStringToAccountName(
-                    ref sid,
-                    out string account,
-                    out string domain,
-                    out SID_NAME_USE peUse))
-                {
-                    if (!string.IsNullOrEmpty(account) && !string.IsNullOrEmpty(domain))
-                        accountName = string.Format(@"{0}\{1}", domain, account);
-                    else if (!string.IsNullOrEmpty(account))
-                        accountName = account;
-                    else if (!string.IsNullOrEmpty(domain))
-                        accountName = domain;
-                    else
-                        continue;
-                }
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
                 else
-                {
-                    continue;
-                }
+                    originalLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pInfoBuffer);
 
-                if (peUse == SID_NAME_USE.Alias || peUse == SID_NAME_USE.WellKnownGroup)
-                {
-                    result.Add(sid);
-                    Console.WriteLine("[+] \"{0}\" is added as an extra group.", accountName);
-                    Console.WriteLine("    |-> SID  : {0}", sid);
-                    Console.WriteLine("    |-> Type : {0}", peUse);
-                }
-                else
-                {
-                    Console.WriteLine("[-] \"{0}\" is not group account. Ignored.", accountName);
-                    Console.WriteLine("    |-> SID  : {0}", sid);
-                    Console.WriteLine("    |-> Type : {0}", peUse);
-                }
-            }
+                Marshal.WriteIntPtr(pInfoBuffer, hToken);
+                ntstatus = NativeMethods.NtSetInformationThread(
+                    hThread,
+                    THREADINFOCLASS.ThreadImpersonationToken,
+                    pInfoBuffer,
+                    (uint)IntPtr.Size);
 
-            return result;
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                NativeMethods.NtQueryInformationToken(
+                    WindowsIdentity.GetCurrent().Token,
+                    TOKEN_INFORMATION_CLASS.TokenImpersonationLevel,
+                    pInfoBuffer,
+                    4u,
+                    out uint _);
+                grantedLevel = (SECURITY_IMPERSONATION_LEVEL)Marshal.ReadInt32(pInfoBuffer);
+                bSuccess = (grantedLevel == originalLevel);
+
+                if (bSuccess)
+                    ntstatus = Win32Consts.STATUS_PRIVILEGE_NOT_HELD;
+            } while (false);
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError((int)ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return bSuccess;
         }
 
 
@@ -542,31 +637,111 @@ namespace TrustExec.Library
         }
 
 
-        public static IntPtr GetInformationFromToken(
-            IntPtr hToken,
-            TOKEN_INFORMATION_CLASS tokenInfoClass)
+        public static string GetExplorerLogonSessionSid()
         {
-            bool status;
-            int error;
-            int length = 4;
-            IntPtr buffer;
+            NTSTATUS ntstatus;
+            int nDosErrorCode = 0;
+            string stringSid = null;
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID();
+
+            try
+            {
+                var nExplorerPid = Process.GetProcessesByName("explorer")[0].Id;
+                clientId.UniqueProcess = new IntPtr(nExplorerPid);
+            }
+            catch
+            {
+                NativeMethods.RtlSetLastWin32Error(0x490); // ERROR_NOT_FOUND
+                return null;
+            }
 
             do
             {
-                buffer = Marshal.AllocHGlobal(length);
-                ZeroMemory(buffer, length);
-                status = NativeMethods.GetTokenInformation(
-                    hToken, tokenInfoClass, buffer, length, out length);
-                error = Marshal.GetLastWin32Error();
+                ntstatus = NativeMethods.NtOpenProcess(
+                    out IntPtr hProcess,
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
 
-                if (!status)
-                    Marshal.FreeHGlobal(buffer);
-            } while (!status && (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER || error == Win32Consts.ERROR_BAD_LENGTH));
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
 
-            if (!status)
-                return IntPtr.Zero;
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    ACCESS_MASK.TOKEN_QUERY,
+                    out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
 
-            return buffer;
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                GetTokenGroups(hToken, out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups);
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                NativeMethods.NtClose(hToken);
+
+                foreach (var group in tokenGroups)
+                {
+                    if ((group.Value & SE_GROUP_ATTRIBUTES.LogonId) != 0)
+                    {
+                        stringSid = group.Key;
+                        break;
+                    }
+                }
+            } while (false);
+
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return stringSid;
+        }
+
+
+        internal static int GetGuiSessionId()
+        {
+            int nGuiSessionId = -1;
+            bool bSuccess = NativeMethods.WTSEnumerateSessionsW(
+                IntPtr.Zero,
+                0,
+                1,
+                out IntPtr pSessionInfo,
+                out int nCount);
+
+            if (!bSuccess)
+                return -1;
+
+            for (var idx = 0; idx < nCount; idx++)
+            {
+                IntPtr pInfoBuffer;
+                int nOffset = Marshal.SizeOf(typeof(WTS_SESSION_INFOW)) * idx;
+
+                if (Environment.Is64BitProcess)
+                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt64() + nOffset);
+                else
+                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt32() + nOffset);
+
+                var info = (WTS_SESSION_INFOW)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(WTS_SESSION_INFOW));
+
+                if (info.State == WTS_CONNECTSTATE_CLASS.Active)
+                {
+                    nGuiSessionId = info.SessionId;
+                    break;
+                }
+            }
+
+            NativeMethods.WTSFreeMemory(pSessionInfo);
+
+            if (nGuiSessionId == -1)
+                NativeMethods.RtlSetLastWin32Error(1168); // ERROR_NOT_FOUND
+
+            return nGuiSessionId;
         }
 
 
@@ -607,36 +782,92 @@ namespace TrustExec.Library
         }
 
 
-        public static NTSTATUS RemoveSidMapping(string domain, string username)
+        public static bool RemoveSidMapping(string domainName, string accountName)
         {
-            NTSTATUS ntstatus;
-            var input = new LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
-            IntPtr pInputBuffer = Marshal.AllocHGlobal(Marshal.SizeOf(input));
+            int nDosErrorCode;
+            var removeInput = new LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT();
 
-            if (!string.IsNullOrEmpty(domain))
-                input.DomainName = new UNICODE_STRING(domain);
+            if (!string.IsNullOrEmpty(domainName))
+                removeInput.DomainName = new UNICODE_STRING(domainName);
 
-            if (!string.IsNullOrEmpty(username))
-                input.AccountName = new UNICODE_STRING(username);
+            if (!string.IsNullOrEmpty(accountName))
+                removeInput.AccountName = new UNICODE_STRING(accountName);
 
-            Marshal.StructureToPtr(input, pInputBuffer, false);
-            ntstatus = NativeMethods.LsaManageSidNameMapping(
-                LSA_SID_NAME_MAPPING_OPERATION_TYPE.Remove,
-                pInputBuffer,
-                out IntPtr output);
-            Marshal.FreeHGlobal(pInputBuffer);
+            if ((!string.IsNullOrEmpty(domainName) || !string.IsNullOrEmpty(accountName)))
+            {
+                LSA_SID_NAME_MAPPING_OPERATION_ERROR nMappingErrorCode;
+                var nInfoLength = Marshal.SizeOf(typeof(LSA_SID_NAME_MAPPING_OPERATION_REMOVE_INPUT));
+                var pInfoBuffer = Marshal.AllocHGlobal(nInfoLength);
+                Marshal.StructureToPtr(removeInput, pInfoBuffer, false);
+                NativeMethods.LsaManageSidNameMapping(
+                    LSA_SID_NAME_MAPPING_OPERATION_TYPE.Remove,
+                    pInfoBuffer,
+                    out IntPtr pResult);
+                nMappingErrorCode = (LSA_SID_NAME_MAPPING_OPERATION_ERROR)Marshal.ReadInt32(pResult);
+                NativeMethods.LsaFreeMemory(pResult);
+                Marshal.FreeHGlobal(pInfoBuffer);
 
-            if (output != IntPtr.Zero)
-                NativeMethods.LsaFreeMemory(output);
+                if (!string.IsNullOrEmpty(domainName))
+                    removeInput.DomainName.Dispose();
 
-            return ntstatus;
+                if (!string.IsNullOrEmpty(accountName))
+                    removeInput.AccountName.Dispose();
+
+                if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.Success)
+                    nDosErrorCode = 0;
+                else if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.DomainSidPrefixMismatch)
+                    nDosErrorCode = 0;
+                else if (nMappingErrorCode == LSA_SID_NAME_MAPPING_OPERATION_ERROR.NonMappingError)
+                    nDosErrorCode = 0x522; // ERROR_PRIVILEGE_NOT_HELD (SeTcbPrivilege is required)
+                else
+                    nDosErrorCode = 0x57; // ERROR_INVALID_PARAMETER
+            }
+            else
+            {
+                nDosErrorCode = 0x57; // ERROR_INVALID_PARAMETER
+            }
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (nDosErrorCode == 0);
         }
 
 
-        public static void ZeroMemory(IntPtr buffer, int size)
+        public static bool RevertThreadToken(IntPtr hThread)
         {
-            var nullBytes = new byte[size];
-            Marshal.Copy(nullBytes, 0, buffer, size);
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            var pInfoBuffer = Marshal.AllocHGlobal(IntPtr.Size);
+            Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Zero);
+            ntstatus = NativeMethods.NtSetInformationThread(
+                hThread,
+                THREADINFOCLASS.ThreadImpersonationToken,
+                pInfoBuffer,
+                (uint)IntPtr.Size);
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static bool SetTokenSessionId(IntPtr hToken, int nSessionId)
+        {
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            var pInfoBuffer = Marshal.AllocHGlobal(4);
+            Marshal.WriteInt32(pInfoBuffer, nSessionId);
+            ntstatus = NativeMethods.NtSetInformationToken(
+                hToken,
+                TOKEN_INFORMATION_CLASS.TokenSessionId,
+                pInfoBuffer,
+                4u);
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Text;
 
 namespace TrustExec.Interop
 {
+    using SIZE_T = UIntPtr;
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct ACCESS_ALLOWED_ACE
     {
@@ -29,6 +30,13 @@ namespace TrustExec.Interop
         public short AclSize;
         public short AceCount;
         public short Sbz2;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CLIENT_ID
+    {
+        public IntPtr UniqueProcess;
+        public IntPtr UniqueThread;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 8)]
@@ -193,6 +201,17 @@ namespace TrustExec.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
+    internal struct QUOTA_LIMITS
+    {
+        public SIZE_T PagedPoolLimit;
+        public SIZE_T NonPagedPoolLimit;
+        public SIZE_T MinimumWorkingSetSize;
+        public SIZE_T MaximumWorkingSetSize;
+        public SIZE_T PagefileLimit;
+        public LARGE_INTEGER TimeLimit;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     internal struct SECURITY_QUALITY_OF_SERVICE
     {
         public int Length;
@@ -220,7 +239,7 @@ namespace TrustExec.Interop
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
     internal struct STARTUPINFO
     {
         public int cb;
@@ -235,7 +254,7 @@ namespace TrustExec.Interop
         public int dwYCountChars;
         public int dwFillAttribute;
         public int dwFlags;
-        public short wShowWindow;
+        public SHOW_WINDOW_FLAGS wShowWindow;
         public short cbReserved2;
         public IntPtr lpReserved2;
         public IntPtr hStdInput;
@@ -356,5 +375,13 @@ namespace TrustExec.Interop
             else
                 return Marshal.PtrToStringUni(buffer, Length / 2);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct WTS_SESSION_INFOW
+    {
+        public int SessionId;
+        public string WinStationName;
+        public WTS_CONNECTSTATE_CLASS State;
     }
 }

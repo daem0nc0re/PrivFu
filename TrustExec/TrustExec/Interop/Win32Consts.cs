@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net.NetworkInformation;
 
 namespace TrustExec.Interop
 {

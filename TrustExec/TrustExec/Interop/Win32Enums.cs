@@ -119,11 +119,12 @@ namespace TrustExec.Interop
         FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
     }
 
-    internal enum LSA_SID_NAME_MAPPING_OPERATION_TYPE
+    [Flags]
+    internal enum LOGON_FLAGS : uint
     {
-        Add,
-        Remove,
-        AddMultiple
+        NONE = 0x00000000,
+        LOGON_WITH_PROFILE = 0x00000001,
+        LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
     internal enum LOGON_PROVIDER
@@ -146,25 +147,59 @@ namespace TrustExec.Interop
         NewCredentials
     }
 
-    [Flags]
-    internal enum ProcessCreationFlags : uint
+    internal enum LSA_SID_NAME_MAPPING_OPERATION_ERROR
     {
+        Success,
+        NonMappingError,
+        NameCollision,
+        SidCollision,
+        DomainNotFound,
+        DomainSidPrefixMismatch = 6,
+        MappingNotFound = 7
+    }
+
+    internal enum LSA_SID_NAME_MAPPING_OPERATION_TYPE
+    {
+        Add,
+        Remove,
+        AddMultiple
+    }
+
+    [Flags]
+    internal enum PROCESS_CREATION_FLAGS : uint
+    {
+        NONE = 0x00000000,
         DEBUG_PROCESS = 0x00000001,
         DEBUG_ONLY_THIS_PROCESS = 0x00000002,
         CREATE_SUSPENDED = 0x00000004,
         DETACHED_PROCESS = 0x00000008,
         CREATE_NEW_CONSOLE = 0x00000010,
+        NORMAL_PRIORITY_CLASS = 0x00000020,
+        IDLE_PRIORITY_CLASS = 0x00000040,
+        HIGH_PRIORITY_CLASS = 0x00000080,
+        REALTIME_PRIORITY_CLASS = 0x00000100,
         CREATE_NEW_PROCESS_GROUP = 0x00000200,
         CREATE_UNICODE_ENVIRONMENT = 0x00000400,
         CREATE_SEPARATE_WOW_VDM = 0x00000800,
         CREATE_SHARED_WOW_VDM = 0x00001000,
+        CREATE_FORCEDOS = 0x00002000,
+        BELOW_NORMAL_PRIORITY_CLASS = 0x00004000,
+        ABOVE_NORMAL_PRIORITY_CLASS = 0x00008000,
         INHERIT_PARENT_AFFINITY = 0x00010000,
+        INHERIT_CALLER_PRIORITY = 0x00020000, // Deprecated
         CREATE_PROTECTED_PROCESS = 0x00040000,
         EXTENDED_STARTUPINFO_PRESENT = 0x00080000,
+        PROCESS_MODE_BACKGROUND_BEGIN = 0x00100000,
+        PROCESS_MODE_BACKGROUND_END = 0x00200000,
+        CREATE_SECURE_PROCESS = 0x00400000,
         CREATE_BREAKAWAY_FROM_JOB = 0x01000000,
         CREATE_PRESERVE_CODE_AUTHZ_LEVEL = 0x02000000,
         CREATE_DEFAULT_ERROR_MODE = 0x04000000,
         CREATE_NO_WINDOW = 0x08000000,
+        PROFILE_USER = 0x10000000,
+        PROFILE_KERNEL = 0x20000000,
+        PROFILE_SERVER = 0x40000000,
+        CREATE_IGNORE_SYSTEM_DEFAULT = 0x80000000
     }
 
     internal enum SECURITY_IMPERSONATION_LEVEL
@@ -245,6 +280,26 @@ namespace TrustExec.Interop
         DynamicTracking
     }
 
+    [Flags]
+    internal enum SHOW_WINDOW_FLAGS : ushort
+    {
+        SW_HIDE = 0,
+        SW_SHOWNORMAL = 1,
+        SW_NORMAL = 1,
+        SW_SHOWMINIMIZED = 2,
+        SW_SHOWMAXIMIZED = 3,
+        SW_MAXIMIZE = 3,
+        SW_SHOWNOACTIVATE = 4,
+        SW_SHOW = 5,
+        SW_MINIMIZE = 6,
+        SW_SHOWMINNOACTIVE = 7,
+        SW_SHOWNA = 8,
+        SW_RESTORE = 9,
+        SW_SHOWDEFAULT = 10,
+        SW_FORCEMINIMIZE = 11,
+        SW_MAX = 11
+    }
+
     internal enum SID_NAME_USE
     {
         User = 1,
@@ -258,6 +313,71 @@ namespace TrustExec.Interop
         Computer,
         Label,
         LogonSession
+    }
+
+    internal enum THREADINFOCLASS
+    {
+        ThreadBasicInformation, // q: THREAD_BASIC_INFORMATION
+        ThreadTimes, // q: KERNEL_USER_TIMES
+        ThreadPriority, // s: KPRIORITY (requires SeIncreaseBasePriorityPrivilege)
+        ThreadBasePriority, // s: KPRIORITY
+        ThreadAffinityMask, // s: KAFFINITY
+        ThreadImpersonationToken, // s: HANDLE
+        ThreadDescriptorTableEntry, // q: DESCRIPTOR_TABLE_ENTRY (or WOW64_DESCRIPTOR_TABLE_ENTRY)
+        ThreadEnableAlignmentFaultFixup, // s: BOOLEAN
+        ThreadEventPair,
+        ThreadQuerySetWin32StartAddress, // q: ULONG_PTR
+        ThreadZeroTlsCell, // s: ULONG // TlsIndex // 10
+        ThreadPerformanceCount, // q: LARGE_INTEGER
+        ThreadAmILastThread, // q: ULONG
+        ThreadIdealProcessor, // s: ULONG
+        ThreadPriorityBoost, // qs: ULONG
+        ThreadSetTlsArrayAddress, // s: ULONG_PTR // Obsolete
+        ThreadIsIoPending, // q: ULONG
+        ThreadHideFromDebugger, // q: BOOLEAN; s: void
+        ThreadBreakOnTermination, // qs: ULONG
+        ThreadSwitchLegacyState, // s: void // NtCurrentThread // NPX/FPU
+        ThreadIsTerminated, // q: ULONG // 20
+        ThreadLastSystemCall, // q: THREAD_LAST_SYSCALL_INFORMATION
+        ThreadIoPriority, // qs: IO_PRIORITY_HINT (requires SeIncreaseBasePriorityPrivilege)
+        ThreadCycleTime, // q: THREAD_CYCLE_TIME_INFORMATION
+        ThreadPagePriority, // qs: PAGE_PRIORITY_INFORMATION
+        ThreadActualBasePriority, // s: LONG (requires SeIncreaseBasePriorityPrivilege)
+        ThreadTebInformation, // q: THREAD_TEB_INFORMATION (requires THREAD_GET_CONTEXT + THREAD_SET_CONTEXT)
+        ThreadCSwitchMon, // Obsolete
+        ThreadCSwitchPmu,
+        ThreadWow64Context, // qs: WOW64_CONTEXT, ARM_NT_CONTEXT since 20H1
+        ThreadGroupInformation, // qs: GROUP_AFFINITY // 30
+        ThreadUmsInformation, // q: THREAD_UMS_INFORMATION // Obsolete
+        ThreadCounterProfiling, // q: BOOLEAN; s: THREAD_PROFILING_INFORMATION?
+        ThreadIdealProcessorEx, // qs: PROCESSOR_NUMBER; s: previous PROCESSOR_NUMBER on return
+        ThreadCpuAccountingInformation, // q: BOOLEAN; s: HANDLE (NtOpenSession) // NtCurrentThread // since WIN8
+        ThreadSuspendCount, // q: ULONG // since WINBLUE
+        ThreadHeterogeneousCpuPolicy, // q: KHETERO_CPU_POLICY // since THRESHOLD
+        ThreadContainerId, // q: GUID
+        ThreadNameInformation, // qs: THREAD_NAME_INFORMATION
+        ThreadSelectedCpuSets,
+        ThreadSystemThreadInformation, // q: SYSTEM_THREAD_INFORMATION // 40
+        ThreadActualGroupAffinity, // q: GROUP_AFFINITY // since THRESHOLD2
+        ThreadDynamicCodePolicyInfo, // q: ULONG; s: ULONG (NtCurrentThread)
+        ThreadExplicitCaseSensitivity, // qs: ULONG; s: 0 disables, otherwise enables
+        ThreadWorkOnBehalfTicket, // RTL_WORK_ON_BEHALF_TICKET_EX
+        ThreadSubsystemInformation, // q: SUBSYSTEM_INFORMATION_TYPE // since REDSTONE2
+        ThreadDbgkWerReportActive, // s: ULONG; s: 0 disables, otherwise enables
+        ThreadAttachContainer, // s: HANDLE (job object) // NtCurrentThread
+        ThreadManageWritesToExecutableMemory, // MANAGE_WRITES_TO_EXECUTABLE_MEMORY // since REDSTONE3
+        ThreadPowerThrottlingState, // POWER_THROTTLING_THREAD_STATE // since REDSTONE3 (set), WIN11 22H2 (query)
+        ThreadWorkloadClass, // THREAD_WORKLOAD_CLASS // since REDSTONE5 // 50
+        ThreadCreateStateChange, // since WIN11
+        ThreadApplyStateChange,
+        ThreadStrongerBadHandleChecks, // since 22H1
+        ThreadEffectiveIoPriority, // q: IO_PRIORITY_HINT
+        ThreadEffectivePagePriority, // q: ULONG
+        ThreadUpdateLockOwnership, // since 24H2
+        ThreadSchedulerSharedDataSlot, // SCHEDULER_SHARED_DATA_SLOT_INFORMATION
+        ThreadTebInformationAtomic, // THREAD_TEB_INFORMATION
+        ThreadIndexInformation, // THREAD_INDEX_INFORMATION
+        MaxThreadInfoClass
     }
 
     internal enum TOKEN_TYPE
@@ -297,5 +417,19 @@ namespace TrustExec.Interop
         TokenMandatoryPolicy,
         TokenLogonSid,
         MaxTokenInfoClass
+    }
+
+    internal enum WTS_CONNECTSTATE_CLASS
+    {
+        Active,
+        Connected,
+        ConnectQuery,
+        Shadow,
+        Disconnected,
+        Idle,
+        Listen,
+        Reset,
+        Down,
+        Init
     }
 }
