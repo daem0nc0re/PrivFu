@@ -1,13 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using TrustExec.Interop;
 
 namespace TrustExec.Library
 {
     internal class Modules
     {
+        public static bool LookupAccountSid(string accountName, string strSid)
+        {
+            bool bSuccess = false;
+
+            if (!string.IsNullOrEmpty(accountName) && !string.IsNullOrEmpty(strSid))
+            {
+                Console.WriteLine("[-] Account name and SID cannot be specified at a time.");
+            }
+            else if (string.IsNullOrEmpty(accountName) && string.IsNullOrEmpty(strSid))
+            {
+                Console.WriteLine("[-] No imput.");
+            }
+            else
+            {
+                SID_NAME_USE sidType;
+
+                if (!string.IsNullOrEmpty(accountName))
+                    bSuccess = Helpers.ConvertAccountNameToSid(ref accountName, out strSid, out sidType);
+                else
+                    bSuccess = Helpers.ConvertSidToAccountName(ref strSid, out accountName, out sidType);
+
+                if (bSuccess)
+                {
+                    Console.WriteLine("[*] Account Name : {0}", accountName);
+                    Console.WriteLine("[*] Account SID  : {0}", strSid);
+                    Console.WriteLine("[*] Account Type : {0}", sidType.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("[-] Failed to lookup \"{0}\".", string.IsNullOrEmpty(accountName) ? strSid : accountName);
+                }
+            }
+
+            return bSuccess;
+        }
+
+
         public static bool RunTrustedInstallerProcess(string command, bool bNewConsole)
         {
             int nDosErrorCode;

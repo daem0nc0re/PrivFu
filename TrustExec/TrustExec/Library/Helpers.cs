@@ -67,70 +67,103 @@ namespace TrustExec.Library
         }
 
 
-        public static bool ConvertAccountNameToSidString(
+        public static bool ConvertAccountNameToSid(
             ref string accountName,
-            ref string domainName,
-            out string sidString,
-            out SID_NAME_USE peUse)
+            out string strSid,
+            out SID_NAME_USE sidType)
         {
-            int error;
-            bool status;
-            string nameToLookup;
-            int nSidSize = 0;
-            int nReferencedDomainNameLength = 255;
-            var referencedDomainName = new StringBuilder();
-            var pSid = IntPtr.Zero;
-            sidString = null;
-            peUse = SID_NAME_USE.Unknown;
+            int nSidLength = 256;
+            int nDomainLength = 256;
+            var domainBuilder = new StringBuilder(nDomainLength);
+            IntPtr pSid = Marshal.AllocHGlobal(nSidLength);
+            bool bSuccess = NativeMethods.LookupAccountName(
+                null,
+                accountName,
+                pSid,
+                ref nSidLength,
+                domainBuilder,
+                ref nDomainLength,
+                out SID_NAME_USE _);
+            strSid = null;
+            sidType = SID_NAME_USE.Unknown;
 
-            if (!string.IsNullOrEmpty(domainName) && domainName.Trim() == ".")
-                domainName = Environment.MachineName;
-            else if (!string.IsNullOrEmpty(accountName) && accountName.Trim() == ".")
-                accountName = Environment.MachineName;
-
-            if (!string.IsNullOrEmpty(accountName) && !string.IsNullOrEmpty(domainName))
-                nameToLookup = string.Format(@"{0}\{1}", domainName, accountName);
-            else if (!string.IsNullOrEmpty(accountName))
-                nameToLookup = accountName;
-            else if (!string.IsNullOrEmpty(domainName))
-                nameToLookup = domainName;
-            else
-                return false;
-
-            do
+            if (bSuccess)
             {
-                referencedDomainName.Capacity = nReferencedDomainNameLength;
-                status = NativeMethods.LookupAccountName(
-                    null,
-                    nameToLookup,
-                    pSid,
-                    ref nSidSize,
-                    referencedDomainName,
-                    ref nReferencedDomainNameLength,
-                    out peUse);
-                error = Marshal.GetLastWin32Error();
-
-                if (!status)
-                {
-                    if (pSid != IntPtr.Zero)
-                        Marshal.FreeHGlobal(pSid);
-
-                    if (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER)
-                        pSid = Marshal.AllocHGlobal(nSidSize);
-
-                    referencedDomainName.Clear();
-                    peUse = SID_NAME_USE.Unknown;
-                }
-            } while (error == Win32Consts.ERROR_INSUFFICIENT_BUFFER);
-
-            if (status)
-            {
-                ConvertSidToAccountName(pSid, out accountName, out domainName, out peUse);
-                sidString = ConvertSidToStringSid(pSid);
-                Marshal.FreeHGlobal(pSid);
+                strSid = ConvertSidToStringSid(pSid);
+                bSuccess = ConvertSidToAccountName(pSid, out accountName, out sidType);
             }
 
-            return status;
+            return bSuccess;
+        }
+
+
+        public static bool ConvertSidToAccountName(
+            ref string strSid,
+            out string accountName,
+            out SID_NAME_USE sidType)
+        {
+            var bSuccess = false;
+            IntPtr pSid = ConvertStringSidToSid(strSid, out int _);
+            strSid.ToUpper();
+
+            if (pSid != IntPtr.Zero)
+            {
+                bSuccess = ConvertSidToAccountName(pSid, out accountName, out sidType);
+                Marshal.FreeHGlobal(pSid);
+            }
+            else
+            {
+                accountName = null;
+                sidType = SID_NAME_USE.Unknown;
+            }
+
+            return bSuccess;
+        }
+
+
+        public static bool ConvertSidToAccountName(
+            IntPtr pSid,
+            out string accountName,
+            out SID_NAME_USE sidType)
+        {
+            var nNameLength = 256;
+            var nDomainLength = 256;
+            var nameBuilder = new StringBuilder(nNameLength);
+            var domainBuilder = new StringBuilder(nDomainLength);
+            bool bSuccess = NativeMethods.LookupAccountSid(
+                null,
+                pSid,
+                nameBuilder,
+                ref nNameLength,
+                domainBuilder,
+                ref nDomainLength,
+                out sidType);
+            accountName = null;
+
+            if (bSuccess)
+            {
+                if ((nNameLength > 0) && (nDomainLength > 0))
+                {
+                    if (string.Compare(nameBuilder.ToString(), domainBuilder.ToString(), true) == 0)
+                        accountName = nameBuilder.ToString();
+                    else
+                        accountName = string.Format(@"{0}\{1}", domainBuilder.ToString(), nameBuilder.ToString());
+                }
+                else if (nNameLength > 0)
+                {
+                    accountName = nameBuilder.ToString();
+                }
+                else if (nDomainLength > 0)
+                {
+                    accountName = domainBuilder.ToString();
+                }
+            }
+            else
+            {
+                sidType = SID_NAME_USE.Unknown;
+            }
+
+            return bSuccess;
         }
 
 
@@ -455,6 +488,7 @@ namespace TrustExec.Library
                     domainBuilder,
                     ref nDomainLength,
                     out sidType);
+                Marshal.FreeHGlobal(pSid);
 
                 if (!bSuccess)
                     sidType = SID_NAME_USE.Unknown;

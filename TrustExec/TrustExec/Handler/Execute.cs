@@ -12,7 +12,7 @@ namespace TrustExec.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-                Console.WriteLine("Available Method IDs:\n");
+                Console.WriteLine("Available Method IDs for -x option:\n");
                 Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag and --command option.");
                 Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
 
@@ -31,23 +31,34 @@ namespace TrustExec.Handler
 
             Console.WriteLine();
 
-            if (nMethodId == 0)
+            if (options.GetFlag("exec"))
             {
-                if (Modules.RunTrustedInstallerProcess(options.GetValue("command"), options.GetFlag("new-console")))
-                    Console.WriteLine("[>] Exit.");
+                if (nMethodId == 0)
+                {
+                    if (Modules.RunTrustedInstallerProcess(options.GetValue("command"), options.GetFlag("new-console")))
+                        Console.WriteLine("[>] Exit.");
+                }
+                else if (nMethodId == 1)
+                {
+                    if (Modules.RunTrustedInstallerProcessWithVirtualLogon(options.GetValue("command"), options.GetFlag("new-console")))
+                        Console.WriteLine("[>] Exit.");
+                }
+                else
+                {
+                    options.GetHelp();
+                    Console.WriteLine("Available Method IDs:\v");
+                    Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
+                    Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
+                    Console.WriteLine("\n[!] Invalid technique ID.");
+                }
             }
-            else if (nMethodId == 1)
+            else if (options.GetFlag("lookup"))
             {
-                if (Modules.RunTrustedInstallerProcessWithVirtualLogon(options.GetValue("command"), options.GetFlag("new-console")))
-                    Console.WriteLine("[>] Exit.");
+                Modules.LookupAccountSid(options.GetValue("account"), options.GetValue("sid"));
             }
             else
             {
-                options.GetHelp();
-                Console.WriteLine("Available Method IDs:\v");
-                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
-                Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
-                Console.WriteLine("\n[!] Invalid technique ID.");
+                Console.WriteLine("[-] No valid options. Try -h option.");
             }
 
             Console.WriteLine();
