@@ -224,24 +224,7 @@ namespace TrustExec.Library
                 var virtualAccountName = "VirtualAdmin";
                 var domainSid = "S-1-5-110";
                 var accountSid = string.Format("{0}-500", domainSid);
-                var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
-                {
-                    {
-                        // BUILTIN\Administrators
-                        "S-1-5-32-544",
-                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
-                    },
-                    {
-                        // NT AUTHORITY\LOCAL SERVICE
-                        "S-1-5-19",
-                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
-                    },
-                    {
-                        // NT SERVICE\TrustedInstaller
-                        "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
-                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
-                    }
-                };
+                var extraGroupSids = new List<string>();
                 bSuccess = Helpers.AddSidMapping(virtualDomainName, null, domainSid);
 
                 if (!bSuccess)
@@ -272,7 +255,7 @@ namespace TrustExec.Library
                 if (!bSuccess)
                     break;
 
-                hToken = Utilities.GetVirtualLogonToken(virtualAccountName, virtualDomainName, in tokenGroups);
+                hToken = Utilities.GetTrustedInstallerTokenWithVirtualLogon(virtualAccountName, virtualDomainName, in extraGroupSids);
 
                 if (hToken == IntPtr.Zero)
                 {

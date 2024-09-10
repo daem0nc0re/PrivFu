@@ -436,6 +436,34 @@ namespace TrustExec.Library
         }
 
 
+        public static SID_NAME_USE GetSidType(string strSid)
+        {
+            IntPtr pSid = ConvertStringSidToSid(strSid, out int _);
+            var sidType = SID_NAME_USE.Unknown;
+
+            if (pSid != IntPtr.Zero)
+            {
+                var nNameLength = 256;
+                var nDomainLength = 256;
+                var nameBuilder = new StringBuilder(nNameLength);
+                var domainBuilder = new StringBuilder(nDomainLength);
+                bool bSuccess = NativeMethods.LookupAccountSid(
+                    null,
+                    pSid,
+                    nameBuilder,
+                    ref nNameLength,
+                    domainBuilder,
+                    ref nDomainLength,
+                    out sidType);
+
+                if (!bSuccess)
+                    sidType = SID_NAME_USE.Unknown;
+            }
+
+            return sidType;
+        }
+
+
         public static bool GetTokenGroups(
             IntPtr hToken,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups)

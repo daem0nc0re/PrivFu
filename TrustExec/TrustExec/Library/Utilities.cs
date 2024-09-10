@@ -86,7 +86,7 @@ namespace TrustExec.Library
             var pSqos = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(SECURITY_QUALITY_OF_SERVICE)));
             var groupAttributes = SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory;
             var logonSessionSid = Helpers.GetCurrentLogonSessionSid();
-            var groups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
+            var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
             {
                 { "S-1-1-0", groupAttributes }, // Everyone
                 { "S-1-2-0", groupAttributes }, // LOCAL
@@ -116,18 +116,31 @@ namespace TrustExec.Library
             Marshal.StructureToPtr(sqos, pSqos, true);
 
             if (!string.IsNullOrEmpty(logonSessionSid))
-                groups.Add(logonSessionSid, groupAttributes | SE_GROUP_ATTRIBUTES.LogonId);
+                tokenGroups.Add(logonSessionSid, groupAttributes | SE_GROUP_ATTRIBUTES.LogonId);
 
             foreach (var sid in extraGroupSids)
             {
                 if (Regex.IsMatch(sid, @"^S(-\d+){2,}$", RegexOptions.IgnoreCase))
-                    groups.Add(sid.ToUpper(), groupAttributes);
+                    tokenGroups.Add(sid.ToUpper(), groupAttributes);
             }
 
-            pTokenGroups = Marshal.AllocHGlobal(nGroupOffset + (nGroupSize * groups.Count));
+            foreach (var strSid in extraGroupSids)
+            {
+                SID_NAME_USE sidType = Helpers.GetSidType(strSid);
+
+                if (!tokenGroups.ContainsKey(strSid) &&
+                    ((sidType == SID_NAME_USE.WellKnownGroup) || (sidType == SID_NAME_USE.Alias) || (sidType == SID_NAME_USE.Group)))
+                {
+                    tokenGroups.Add(
+                        strSid,
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory);
+                }
+            }
+
+            pTokenGroups = Marshal.AllocHGlobal(nGroupOffset + (nGroupSize * tokenGroups.Count));
             nOffset = nGroupOffset;
 
-            foreach (var group in groups)
+            foreach (var group in tokenGroups)
             {
                 groupSids.Add(group.Key, Helpers.ConvertStringSidToSid(group.Key, out int _));
                 Marshal.WriteIntPtr(pTokenGroups, nOffset, groupSids[group.Key]);
@@ -135,7 +148,7 @@ namespace TrustExec.Library
                 nOffset += nGroupSize;
             }
 
-            Marshal.WriteInt32(pTokenGroups, groups.Count);
+            Marshal.WriteInt32(pTokenGroups, tokenGroups.Count);
             nOffset = nPrivilegesOffset;
 
             for (var id = SE_PRIVILEGE_ID.SeCreateTokenPrivilege; id < SE_PRIVILEGE_ID.MaximumCount; id++)
@@ -228,22 +241,53 @@ namespace TrustExec.Library
         }
 
 
-        public static IntPtr GetVirtualLogonToken(
+        public static IntPtr GetTrustedInstallerTokenWithVirtualLogon(
             string username,
             string domain,
-            in Dictionary<string, SE_GROUP_ATTRIBUTES> extraTokenGroups)
+            in List<string> extraGroupSids)
         {
             // When set pTokenGroups of LogonUserExExW, it must contain entry for logon SID,
             // otherwise LogonUserExExW will be failed with ERROR_NOT_ENOUGH_MEMORY or some error.
             bool bSuccess;
             int nDosErrorCode = 0;
             var hToken = IntPtr.Zero;
+            var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
+            {
+                {
+                    // BUILTIN\Administrators
+                    "S-1-5-32-544",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT AUTHORITY\LOCAL SERVICE
+                    "S-1-5-19",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT SERVICE\TrustedInstaller
+                    "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                }
+            };
             string sessionSid = Helpers.GetCurrentLogonSessionSid();
 
             // If failed to get current process logon session SID, try to get logon session SID
             // from explorer.exe process.
             if (string.IsNullOrEmpty(sessionSid))
                 sessionSid = Helpers.GetExplorerLogonSessionSid();
+
+            foreach (var strSid in extraGroupSids)
+            {
+                SID_NAME_USE sidType = Helpers.GetSidType(strSid);
+
+                if (!tokenGroups.ContainsKey(strSid) &&
+                    ((sidType == SID_NAME_USE.WellKnownGroup) || (sidType == SID_NAME_USE.Alias) || (sidType == SID_NAME_USE.Group)))
+                {
+                    tokenGroups.Add(
+                        strSid,
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory);
+                }
+            }
 
             if (!string.IsNullOrEmpty(sessionSid))
             {
@@ -254,7 +298,7 @@ namespace TrustExec.Library
                     SE_GROUP_ATTRIBUTES.EnabledByDefault |
                     SE_GROUP_ATTRIBUTES.LogonId |
                     SE_GROUP_ATTRIBUTES.Mandatory;
-                var nGroupCount = 1 + extraTokenGroups.Count;
+                var nGroupCount = 1 + tokenGroups.Count;
                 var nTokenGroupsLength = nGroupOffset + (nUnitSize * nGroupCount);
                 var pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsLength);
                 var nEntryOffset = nGroupOffset;
@@ -267,7 +311,7 @@ namespace TrustExec.Library
                 Marshal.WriteInt32(pTokenGroups, nEntryOffset + IntPtr.Size, (int)attributes);
                 nEntryOffset += nUnitSize;
 
-                foreach (var group in extraTokenGroups)
+                foreach (var group in tokenGroups)
                 {
                     pSids.Add(group.Key, Helpers.ConvertStringSidToSid(group.Key, out int _));
                     Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[group.Key]);
