@@ -12,9 +12,10 @@ namespace TrustExec.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-                Console.WriteLine("Available Method IDs for -x option:\n");
-                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag and --command option.");
-                Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
+                Console.WriteLine("Available Method IDs:\v");
+                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
+                Console.WriteLine("\t+ 1 - Leverages virtual logon.");
+                Console.WriteLine("\t+ 2 - Leverages service logon.\n");
 
                 return;
             }
@@ -43,12 +44,18 @@ namespace TrustExec.Handler
                     if (Modules.RunTrustedInstallerProcessWithVirtualLogon(options.GetValue("command"), options.GetFlag("new-console")))
                         Console.WriteLine("[>] Exit.");
                 }
+                else if (nMethodId == 2)
+                {
+                    if (Modules.RunTrustedInstallerProcessWithServiceLogon(options.GetValue("command"), options.GetFlag("new-console")))
+                        Console.WriteLine("[>] Exit.");
+                }
                 else
                 {
                     options.GetHelp();
                     Console.WriteLine("Available Method IDs:\v");
-                    Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege. Uses only --shell flag, --full flag and --command option.");
-                    Console.WriteLine("\t+ 1 - Leverages virtual logon. This technique creates virtual domain and account as a side effect.");
+                    Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
+                    Console.WriteLine("\t+ 1 - Leverages virtual logon.");
+                    Console.WriteLine("\t+ 2 - Leverages service logon.");
                     Console.WriteLine("\n[!] Invalid technique ID.");
                 }
             }

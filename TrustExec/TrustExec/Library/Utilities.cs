@@ -241,6 +241,119 @@ namespace TrustExec.Library
         }
 
 
+        public static IntPtr GetTrustedInstallerTokenWithServiceLogon(
+            string username,
+            string domain,
+            in List<string> extraGroupSids)
+        {
+            // When set pTokenGroups of LogonUserExExW, it must contain entry for logon SID,
+            // otherwise LogonUserExExW will be failed with ERROR_NOT_ENOUGH_MEMORY or some error.
+            bool bSuccess;
+            int nDosErrorCode = 0;
+            var hToken = IntPtr.Zero;
+            var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
+            {
+                {
+                    // BUILTIN\Administrators
+                    "S-1-5-32-544",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT AUTHORITY\LOCAL SERVICE
+                    "S-1-5-19",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT SERVICE\TrustedInstaller
+                    "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                }
+            };
+            string sessionSid = Helpers.GetCurrentLogonSessionSid();
+
+            // If failed to get current process logon session SID, try to get logon session SID
+            // from explorer.exe process.
+            if (string.IsNullOrEmpty(sessionSid))
+                sessionSid = Helpers.GetExplorerLogonSessionSid();
+
+            foreach (var strSid in extraGroupSids)
+            {
+                SID_NAME_USE sidType = Helpers.GetSidType(strSid);
+
+                if (!tokenGroups.ContainsKey(strSid) &&
+                    ((sidType == SID_NAME_USE.WellKnownGroup) || (sidType == SID_NAME_USE.Alias) || (sidType == SID_NAME_USE.Group)))
+                {
+                    tokenGroups.Add(
+                        strSid,
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(sessionSid))
+            {
+                var nGroupOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                var pSids = new Dictionary<string, IntPtr>();
+                var attributes = SE_GROUP_ATTRIBUTES.Enabled |
+                    SE_GROUP_ATTRIBUTES.EnabledByDefault |
+                    SE_GROUP_ATTRIBUTES.LogonId |
+                    SE_GROUP_ATTRIBUTES.Mandatory;
+                var nGroupCount = 1 + tokenGroups.Count;
+                var nTokenGroupsLength = nGroupOffset + (nUnitSize * nGroupCount);
+                var pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsLength);
+                var nEntryOffset = nGroupOffset;
+                Marshal.WriteInt32(pTokenGroups, nGroupCount);
+                pSids.Add(sessionSid, Helpers.ConvertStringSidToSid(sessionSid, out int _));
+
+                // In TOKEN_GROUPS buffer, logon session SID entry must be placed before extra 
+                // group SIDs, otherwise LogonUserExExW will be failed with ERROR_ACCESS_DENIED.
+                Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[sessionSid]);
+                Marshal.WriteInt32(pTokenGroups, nEntryOffset + IntPtr.Size, (int)attributes);
+                nEntryOffset += nUnitSize;
+
+                foreach (var group in tokenGroups)
+                {
+                    pSids.Add(group.Key, Helpers.ConvertStringSidToSid(group.Key, out int _));
+                    Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[group.Key]);
+                    Marshal.WriteInt32(pTokenGroups, nEntryOffset + IntPtr.Size, (int)group.Value);
+                    nEntryOffset += nUnitSize;
+                }
+
+                bSuccess = NativeMethods.LogonUserExExW(
+                    username,
+                    domain,
+                    null,
+                    LOGON_TYPE.Service,
+                    LOGON_PROVIDER.Default,
+                    pTokenGroups,
+                    out hToken,
+                    out IntPtr _,
+                    out IntPtr _,
+                    out int _,
+                    out QUOTA_LIMITS _);
+
+                if (!bSuccess)
+                {
+                    hToken = IntPtr.Zero;
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                }
+
+                Marshal.FreeHGlobal(pTokenGroups);
+
+                foreach (var pSid in pSids.Values)
+                    Marshal.FreeHGlobal(pSid);
+            }
+            else
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+            }
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return hToken;
+        }
+
+
         public static IntPtr GetTrustedInstallerTokenWithVirtualLogon(
             string username,
             string domain,
