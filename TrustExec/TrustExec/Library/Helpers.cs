@@ -639,66 +639,6 @@ namespace TrustExec.Library
         }
 
 
-        public static bool ConvertSidStringToAccountName(
-            ref string sid,
-            out string accountName,
-            out string domainName,
-            out SID_NAME_USE peUse)
-        {
-            var status = false;
-            sid = sid.ToUpper();
-
-            if (NativeMethods.ConvertStringSidToSid(sid, out IntPtr pSid))
-            {
-                status = ConvertSidToAccountName(pSid, out accountName, out domainName, out peUse);
-                NativeMethods.LocalFree(pSid);
-            }
-            else
-            {
-                accountName = null;
-                domainName = null;
-                peUse = SID_NAME_USE.Unknown;
-            }
-
-            return status;
-        }
-
-
-        public static bool ConvertSidToAccountName(
-            IntPtr pSid,
-            out string accountName,
-            out string domainName,
-            out SID_NAME_USE sidType)
-        {
-            int nAccountNameLength = 255;
-            int nDomainNameLength = 255;
-            var accountNameBuilder = new StringBuilder(nAccountNameLength);
-            var domainNameBuilder = new StringBuilder(nDomainNameLength);
-            bool status = NativeMethods.LookupAccountSid(
-                null,
-                pSid,
-                accountNameBuilder,
-                ref nAccountNameLength,
-                domainNameBuilder,
-                ref nDomainNameLength,
-                out sidType);
-
-            if (status)
-            {
-                accountName = accountNameBuilder.ToString();
-                domainName = domainNameBuilder.ToString();
-            }
-            else
-            {
-                accountName = null;
-                domainName = null;
-                sidType = SID_NAME_USE.Unknown;
-            }
-
-            return status;
-        }
-
-
         public static string GetExplorerLogonSessionSid()
         {
             NTSTATUS ntstatus;
@@ -804,43 +744,6 @@ namespace TrustExec.Library
                 NativeMethods.RtlSetLastWin32Error(1168); // ERROR_NOT_FOUND
 
             return nGuiSessionId;
-        }
-
-
-        public static string GetWin32ErrorMessage(int code, bool isNtStatus)
-        {
-            int nReturnedLength;
-            int nSizeMesssage = 256;
-            var message = new StringBuilder(nSizeMesssage);
-            var dwFlags = FormatMessageFlags.FORMAT_MESSAGE_FROM_SYSTEM;
-            var pNtdll = IntPtr.Zero;
-
-            if (isNtStatus)
-            {
-                foreach (ProcessModule module in Process.GetCurrentProcess().Modules)
-                {
-                    if (string.Compare(Path.GetFileName(module.FileName), "ntdll.dll", true) == 0)
-                    {
-                        pNtdll = module.BaseAddress;
-                        dwFlags |= FormatMessageFlags.FORMAT_MESSAGE_FROM_HMODULE;
-                        break;
-                    }
-                }
-            }
-
-            nReturnedLength = NativeMethods.FormatMessage(
-                dwFlags,
-                pNtdll,
-                code,
-                0,
-                message,
-                nSizeMesssage,
-                IntPtr.Zero);
-
-            if (nReturnedLength == 0)
-                return string.Format("[ERROR] Code 0x{0}", code.ToString("X8"));
-            else
-                return string.Format("[ERROR] Code 0x{0} : {1}", code.ToString("X8"), message.ToString().Trim());
         }
 
 

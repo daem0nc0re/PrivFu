@@ -11,9 +11,6 @@ namespace TrustExec.Interop
         /*
          * advapi32.dll
          */
-        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool ConvertStringSidToSid(string StringSid, out IntPtr pSid);
-
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool CreateProcessAsUser(
             IntPtr hToken,
@@ -68,22 +65,6 @@ namespace TrustExec.Interop
             LSA_SID_NAME_MAPPING_OPERATION_TYPE OperationType,
             IntPtr OperationInput,
             out IntPtr OperationOutput);
-
-        /*
-         * kenel32.dll
-         */
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern int FormatMessage(
-            FormatMessageFlags dwFlags,
-            IntPtr lpSource,
-            int dwMessageId,
-            int dwLanguageId,
-            StringBuilder lpBuffer,
-            int nSize,
-            IntPtr Arguments);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr LocalFree(IntPtr hMem);
 
         /*
          * ntdll.dll
