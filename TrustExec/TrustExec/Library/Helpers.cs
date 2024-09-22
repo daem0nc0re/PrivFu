@@ -372,6 +372,187 @@ namespace TrustExec.Library
         }
 
 
+        public static string GetCurrentDomainName()
+        {
+            bool bSuccess;
+            int nDosErrorCode;
+            int nNameLength = 255;
+            string domainName = Environment.UserDomainName;
+            var nameBuilder = new StringBuilder(nNameLength);
+
+            do
+            {
+                bSuccess = NativeMethods.GetComputerNameEx(
+                    COMPUTER_NAME_FORMAT.DnsDomain,
+                    nameBuilder,
+                    ref nNameLength);
+                nDosErrorCode = Marshal.GetLastWin32Error();
+
+                if (!bSuccess)
+                {
+                    nameBuilder.Clear();
+                    nameBuilder.Capacity = nNameLength;
+                }
+            } while (nDosErrorCode == Win32Consts.ERROR_MORE_DATA);
+
+            if (bSuccess && (nNameLength > 0))
+                domainName = nameBuilder.ToString();
+
+            return domainName;
+        }
+
+
+        public static string GetExplorerLogonSessionSid()
+        {
+            NTSTATUS ntstatus;
+            int nDosErrorCode = 0;
+            string stringSid = null;
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID();
+
+            try
+            {
+                var nExplorerPid = Process.GetProcessesByName("explorer")[0].Id;
+                clientId.UniqueProcess = new IntPtr(nExplorerPid);
+            }
+            catch
+            {
+                NativeMethods.RtlSetLastWin32Error(0x490); // ERROR_NOT_FOUND
+                return null;
+            }
+
+            do
+            {
+                ntstatus = NativeMethods.NtOpenProcess(
+                    out IntPtr hProcess,
+                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    ACCESS_MASK.TOKEN_QUERY,
+                    out IntPtr hToken);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                GetTokenGroups(hToken, out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups);
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                NativeMethods.NtClose(hToken);
+
+                foreach (var group in tokenGroups)
+                {
+                    if ((group.Value & SE_GROUP_ATTRIBUTES.LogonId) != 0)
+                    {
+                        stringSid = group.Key;
+                        break;
+                    }
+                }
+            } while (false);
+
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return stringSid;
+        }
+
+
+        internal static int GetGuiSessionId()
+        {
+            int nGuiSessionId = -1;
+            bool bSuccess = NativeMethods.WTSEnumerateSessionsW(
+                IntPtr.Zero,
+                0,
+                1,
+                out IntPtr pSessionInfo,
+                out int nCount);
+
+            if (!bSuccess)
+                return -1;
+
+            for (var idx = 0; idx < nCount; idx++)
+            {
+                IntPtr pInfoBuffer;
+                int nOffset = Marshal.SizeOf(typeof(WTS_SESSION_INFOW)) * idx;
+
+                if (Environment.Is64BitProcess)
+                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt64() + nOffset);
+                else
+                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt32() + nOffset);
+
+                var info = (WTS_SESSION_INFOW)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(WTS_SESSION_INFOW));
+
+                if (info.State == WTS_CONNECTSTATE_CLASS.Active)
+                {
+                    nGuiSessionId = info.SessionId;
+                    break;
+                }
+            }
+
+            NativeMethods.WTSFreeMemory(pSessionInfo);
+
+            if (nGuiSessionId == -1)
+                NativeMethods.RtlSetLastWin32Error(1168); // ERROR_NOT_FOUND
+
+            return nGuiSessionId;
+        }
+
+
+        public static bool GetLocalAccounts(out Dictionary<string, bool> localAccounts)
+        {
+            bool bSuccess;
+            int nDosErrorCode;
+            int nEntrySize = Marshal.SizeOf(typeof(USER_INFO_1));
+            int nMaximumLength = nEntrySize * 0x100;
+            localAccounts = new Dictionary<string, bool>();
+
+            nDosErrorCode = NativeMethods.NetUserEnum(
+                null,
+                1,
+                USER_INFO_FILTER.NORMAL_ACCOUNT,
+                out IntPtr pDataBuffer,
+                nMaximumLength,
+                out int nEntries,
+                out int _,
+                IntPtr.Zero);
+            bSuccess = (nDosErrorCode == Win32Consts.ERROR_SUCCESS);
+
+            if (bSuccess)
+            {
+                IntPtr pEntry;
+                bool available;
+
+                for (var idx = 0; idx < nEntries; idx++)
+                {
+                    if (Environment.Is64BitProcess)
+                        pEntry = new IntPtr(pDataBuffer.ToInt64() + (idx * nEntrySize));
+                    else
+                        pEntry = new IntPtr(pDataBuffer.ToInt32() + (idx * nEntrySize));
+
+                    var entry = (USER_INFO_1)Marshal.PtrToStructure(pEntry, typeof(USER_INFO_1));
+                    available = !((entry.usri1_flags & (USER_FLAGS.UF_ACCOUNTDISABLE | USER_FLAGS.UF_LOCKOUT)) != 0);
+                    localAccounts.Add(entry.usri1_name, available);
+                }
+
+                NativeMethods.NetApiBufferFree(pDataBuffer);
+            }
+
+            return bSuccess;
+        }
+
+
         public static string GetCurrentLogonSessionSid()
         {
             int nDosErrorCode;
@@ -636,114 +817,6 @@ namespace TrustExec.Library
             NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
 
             return bSuccess;
-        }
-
-
-        public static string GetExplorerLogonSessionSid()
-        {
-            NTSTATUS ntstatus;
-            int nDosErrorCode = 0;
-            string stringSid = null;
-            var objectAttributes = new OBJECT_ATTRIBUTES
-            {
-                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
-            };
-            var clientId = new CLIENT_ID();
-
-            try
-            {
-                var nExplorerPid = Process.GetProcessesByName("explorer")[0].Id;
-                clientId.UniqueProcess = new IntPtr(nExplorerPid);
-            }
-            catch
-            {
-                NativeMethods.RtlSetLastWin32Error(0x490); // ERROR_NOT_FOUND
-                return null;
-            }
-
-            do
-            {
-                ntstatus = NativeMethods.NtOpenProcess(
-                    out IntPtr hProcess,
-                    ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                    in objectAttributes,
-                    in clientId);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    break;
-
-                ntstatus = NativeMethods.NtOpenProcessToken(
-                    hProcess,
-                    ACCESS_MASK.TOKEN_QUERY,
-                    out IntPtr hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    break;
-
-                GetTokenGroups(hToken, out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups);
-                nDosErrorCode = Marshal.GetLastWin32Error();
-                NativeMethods.NtClose(hToken);
-
-                foreach (var group in tokenGroups)
-                {
-                    if ((group.Value & SE_GROUP_ATTRIBUTES.LogonId) != 0)
-                    {
-                        stringSid = group.Key;
-                        break;
-                    }
-                }
-            } while (false);
-
-            if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-
-            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-
-            return stringSid;
-        }
-
-
-        internal static int GetGuiSessionId()
-        {
-            int nGuiSessionId = -1;
-            bool bSuccess = NativeMethods.WTSEnumerateSessionsW(
-                IntPtr.Zero,
-                0,
-                1,
-                out IntPtr pSessionInfo,
-                out int nCount);
-
-            if (!bSuccess)
-                return -1;
-
-            for (var idx = 0; idx < nCount; idx++)
-            {
-                IntPtr pInfoBuffer;
-                int nOffset = Marshal.SizeOf(typeof(WTS_SESSION_INFOW)) * idx;
-
-                if (Environment.Is64BitProcess)
-                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt64() + nOffset);
-                else
-                    pInfoBuffer = new IntPtr(pSessionInfo.ToInt32() + nOffset);
-
-                var info = (WTS_SESSION_INFOW)Marshal.PtrToStructure(
-                    pInfoBuffer,
-                    typeof(WTS_SESSION_INFOW));
-
-                if (info.State == WTS_CONNECTSTATE_CLASS.Active)
-                {
-                    nGuiSessionId = info.SessionId;
-                    break;
-                }
-            }
-
-            NativeMethods.WTSFreeMemory(pSessionInfo);
-
-            if (nGuiSessionId == -1)
-                NativeMethods.RtlSetLastWin32Error(1168); // ERROR_NOT_FOUND
-
-            return nGuiSessionId;
         }
 
 

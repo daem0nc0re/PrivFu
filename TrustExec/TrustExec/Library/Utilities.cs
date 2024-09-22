@@ -241,6 +241,167 @@ namespace TrustExec.Library
         }
 
 
+        public static bool GetS4uLogonAccount(
+            out string upn,
+            out string domain,
+            out LSA_STRING pkgName,
+            out TOKEN_SOURCE tokenSource)
+        {
+            int nDosErrorCode = 0;
+            bool bSuccess = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
+            upn = null;
+            domain = null;
+            pkgName = new LSA_STRING();
+            tokenSource = new TOKEN_SOURCE();
+
+            if (bSuccess)
+            {
+                foreach (var account in localAccounts)
+                {
+                    if (account.Value)
+                    {
+                        upn = account.Key;
+                        domain = Environment.MachineName;
+                        pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                        tokenSource = new TOKEN_SOURCE("User32");
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(upn))
+                {
+                    var fqdn = Helpers.GetCurrentDomainName();
+
+                    if (string.Compare(fqdn, Environment.MachineName, true) != 0)
+                    {
+                        upn = Environment.UserName;
+                        domain = fqdn;
+                        pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
+                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                    }
+                    else
+                    {
+                        bSuccess = false;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(upn))
+                    nDosErrorCode = 0x490; // ERROR_NOT_FOUND
+            }
+            else
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+            }
+
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return bSuccess;
+        }
+
+
+        public static IntPtr GetS4uLogonToken(
+            string upn,
+            string domain,
+            in LSA_STRING pkgName,
+            in TOKEN_SOURCE tokenSource,
+            in Dictionary<string, SE_GROUP_ATTRIBUTES> extraTokenGroups)
+        {
+            int nDosErrorCode;
+            NTSTATUS ntstatus;
+            var hS4ULogonToken = IntPtr.Zero;
+            var logonProcessName = new LSA_STRING("User32LogonProcess");
+            string sessionSid = Helpers.GetCurrentLogonSessionSid();
+
+            if (string.IsNullOrEmpty(sessionSid))
+                sessionSid = Helpers.GetExplorerLogonSessionSid();
+
+            if (string.IsNullOrEmpty(sessionSid))
+                return IntPtr.Zero;
+
+            ntstatus = NativeMethods.LsaRegisterLogonProcess(in logonProcessName, out IntPtr hLsa, out uint _);
+
+            if (ntstatus != Win32Consts.STATUS_SUCCESS)
+            {
+                nDosErrorCode = NativeMethods.LsaNtStatusToWinError(ntstatus);
+                NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+                return IntPtr.Zero;
+            }
+
+            do
+            {
+                ntstatus = NativeMethods.LsaLookupAuthenticationPackage(hLsa, in pkgName, out uint nAuthPkg);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    break;
+
+                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.S4ULogon, 0, upn, domain))
+                {
+                    var originName = new LSA_STRING("S4U");
+                    var nGroupOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
+                    var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
+                    var pSids = new Dictionary<string, IntPtr>();
+                    var attributes = SE_GROUP_ATTRIBUTES.Enabled |
+                        SE_GROUP_ATTRIBUTES.EnabledByDefault |
+                        SE_GROUP_ATTRIBUTES.LogonId |
+                        SE_GROUP_ATTRIBUTES.Mandatory;
+                    var nGroupCount = 1 + extraTokenGroups.Count;
+                    var nTokenGroupsLength = nGroupOffset + (nUnitSize * nGroupCount);
+                    var pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsLength);
+                    var nEntryOffset = nGroupOffset;
+                    var phToken = Marshal.AllocHGlobal(IntPtr.Size);
+                    Marshal.WriteInt32(pTokenGroups, nGroupCount);
+
+                    if (!string.IsNullOrEmpty(sessionSid))
+                    {
+                        pSids.Add(sessionSid, Helpers.ConvertStringSidToSid(sessionSid, out int _));
+                        Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[sessionSid]);
+                        Marshal.WriteInt32(pTokenGroups, nEntryOffset + IntPtr.Size, (int)attributes);
+                        nEntryOffset += nUnitSize;
+                    }
+
+                    foreach (var group in extraTokenGroups)
+                    {
+                        pSids.Add(group.Key, Helpers.ConvertStringSidToSid(group.Key, out int _));
+                        Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[group.Key]);
+                        Marshal.WriteInt32(pTokenGroups, nEntryOffset + IntPtr.Size, (int)group.Value);
+                        nEntryOffset += nUnitSize;
+                    }
+
+                    ntstatus = NativeMethods.LsaLogonUser(
+                        hLsa,
+                        in originName,
+                        SECURITY_LOGON_TYPE.Network,
+                        nAuthPkg,
+                        msv.Buffer,
+                        (uint)msv.Length,
+                        pTokenGroups,
+                        in tokenSource,
+                        out IntPtr ProfileBuffer,
+                        out uint ProfileBufferLength,
+                        out LUID LogonId,
+                        phToken,
+                        out QUOTA_LIMITS Quotas,
+                        out NTSTATUS SubStatus);
+
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                        hS4ULogonToken = Marshal.ReadIntPtr(phToken);
+
+                    foreach (var pSid in pSids.Values)
+                        Marshal.FreeHGlobal(pSid);
+
+                    Marshal.FreeHGlobal(pTokenGroups);
+                    Marshal.FreeHGlobal(phToken);
+                }
+            } while (false);
+
+            nDosErrorCode = NativeMethods.LsaNtStatusToWinError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+            NativeMethods.LsaDeregisterLogonProcess(hLsa);
+
+            return hS4ULogonToken;
+        }
+
+
         public static IntPtr GetTrustedInstallerTokenWithServiceLogon(
             string username,
             string domain,

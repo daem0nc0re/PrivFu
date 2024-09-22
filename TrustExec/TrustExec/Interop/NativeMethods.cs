@@ -66,6 +66,36 @@ namespace TrustExec.Interop
             IntPtr OperationInput,
             out IntPtr OperationOutput);
 
+        [DllImport("advapi32.dll")]
+        public static extern int LsaNtStatusToWinError(NTSTATUS Status);
+
+        /*
+         * kernel32.dll
+         */
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool GetComputerNameEx(
+            COMPUTER_NAME_FORMAT NameType,
+            StringBuilder lpBuffer,
+            ref int nSize);
+
+        /*
+         * netapi32.dll
+         */
+        [DllImport("netapi32.dll")]
+        public static extern int NetApiBufferFree(IntPtr Buffer);
+
+        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)]
+        public static extern int NetUserEnum(
+            string servername,
+            int level,
+            USER_INFO_FILTER filter,
+            out IntPtr bufptr,
+            int prefmaxlen,
+            out int entriesread,
+            out int totalentries,
+            IntPtr resume_handle);
+
         /*
          * ntdll.dll
          */
@@ -157,6 +187,41 @@ namespace TrustExec.Interop
 
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern void RtlSetLastWin32Error(int dwErrCode);
+
+        /*
+         * secur32.dll
+         */
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaDeregisterLogonProcess(IntPtr LsaHandle);
+
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaLogonUser(
+            IntPtr LsaHandle,
+            in LSA_STRING OriginName,
+            SECURITY_LOGON_TYPE LogonType,
+            uint AuthenticationPackage,
+            IntPtr AuthenticationInformation,
+            uint AuthenticationInformationLength,
+            IntPtr /* in TOKEN_GROUPS */ LocalGroups,
+            in TOKEN_SOURCE SourceContext,
+            out IntPtr ProfileBuffer,
+            out uint ProfileBufferLength,
+            out LUID LogonId,
+            IntPtr Token, // [out] PHANDLE
+            out QUOTA_LIMITS Quotas,
+            out NTSTATUS SubStatus);
+
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaLookupAuthenticationPackage(
+            IntPtr LsaHandle,
+            in LSA_STRING PackageName,
+            out uint AuthenticationPackage);
+
+        [DllImport("secur32.dll")]
+        public static extern NTSTATUS LsaRegisterLogonProcess(
+            in LSA_STRING LogonProcessName, // Arbitrary string such as "User32LogonProcess"
+            out IntPtr LsaHandle,
+            out uint /* LSA_OPERATIONAL_MODE */ SecurityMode); // Reserved parameter
 
         /*
          * sspicli.dll

@@ -14,7 +14,14 @@ namespace TrustExec.Interop
         public static readonly NTSTATUS STATUS_PRIVILEGE_NOT_HELD = Convert.ToInt32("0xC0000061", 16);
 
         // Win32Error
+        public const int ERROR_SUCCESS = 0;
         public const int ERROR_BAD_LENGTH = 0x00000018;
         public const int ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
+        public const int ERROR_MORE_DATA = 0x000000EA;
+
+        // LSA Package Names
+        public const string MSV1_0_PACKAGE_NAME = "MICROSOFT_AUTHENTICATION_PACKAGE_V1_0";
+        public const string MICROSOFT_KERBEROS_NAME = "Kerberos";
+        public const string NEGOSSP_NAME = "Negotiate";
     }
 }

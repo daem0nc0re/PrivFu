@@ -108,6 +108,19 @@ namespace TrustExec.Interop
         TRUE
     }
 
+    internal enum COMPUTER_NAME_FORMAT
+    {
+        NetBIOS,
+        DnsHostname,
+        DnsDomain,
+        DnsFullyQualified,
+        PhysicalNetBIOS,
+        PhysicalDnsHostname,
+        PhysicalDnsDomain,
+        PhysicalDnsFullyQualified,
+        Max
+    }
+
     [Flags]
     internal enum LOGON_FLAGS : uint
     {
@@ -154,6 +167,19 @@ namespace TrustExec.Interop
         AddMultiple
     }
 
+    internal enum MSV1_0_LOGON_SUBMIT_TYPE
+    {
+        InteractiveLogon = 2,
+        Lm20Logon,
+        NetworkLogon,
+        SubAuthLogon,
+        WorkstationUnlockLogon = 7,
+        S4ULogon = 12,
+        VirtualLogon = 82,
+        NoElevationLogon = 83,
+        LuidLogon = 84
+    }
+
     [Flags]
     internal enum PROCESS_CREATION_FLAGS : uint
     {
@@ -189,14 +215,6 @@ namespace TrustExec.Interop
         PROFILE_KERNEL = 0x20000000,
         PROFILE_SERVER = 0x40000000,
         CREATE_IGNORE_SYSTEM_DEFAULT = 0x80000000
-    }
-
-    internal enum SECURITY_IMPERSONATION_LEVEL
-    {
-        Anonymous,
-        Identification,
-        Impersonation,
-        Delegation
     }
 
     [Flags]
@@ -267,6 +285,31 @@ namespace TrustExec.Interop
     {
         StaticTracking = 0,
         DynamicTracking
+    }
+
+    internal enum SECURITY_IMPERSONATION_LEVEL
+    {
+        Anonymous,
+        Identification,
+        Impersonation,
+        Delegation
+    }
+
+    internal enum SECURITY_LOGON_TYPE
+    {
+        UndefinedLogonType = 0,
+        Interactive = 2,
+        Network,
+        Batch,
+        Service,
+        Proxy,
+        Unlock,
+        NetworkCleartext,
+        NewCredentials,
+        RemoteInteractive,
+        CachedInteractive,
+        CachedRemoteInteractive,
+        CachedUnlock
     }
 
     [Flags]
@@ -406,6 +449,52 @@ namespace TrustExec.Interop
         TokenMandatoryPolicy,
         TokenLogonSid,
         MaxTokenInfoClass
+    }
+
+    [Flags]
+    internal enum USER_FLAGS : uint
+    {
+        UF_SCRIPT = 0x00000001,
+        UF_ACCOUNTDISABLE = 0x00000002,
+        UF_HOMEDIR_REQUIRED = 0x00000008,
+        UF_LOCKOUT = 0x00000010,
+        UF_PASSWD_NOTREQD = 0x00000020,
+        UF_PASSWD_CANT_CHANGE = 0x00000040,
+        UF_ENCRYPTED_TEXT_PASSWORD_ALLOWED = 0x00000080,
+        UF_TEMP_DUPLICATE_ACCOUNT = 0x00000100,
+        UF_NORMAL_ACCOUNT = 0x00000200,
+        UF_INTERDOMAIN_TRUST_ACCOUNT = 0x00000800,
+        UF_WORKSTATION_TRUST_ACCOUNT = 0x00001000,
+        UF_SERVER_TRUST_ACCOUNT = 0x00002000,
+        UF_DONT_EXPIRE_PASSWD = 0x00010000,
+        UF_MNS_LOGON_ACCOUNT = 0x00020000,
+        UF_SMARTCARD_REQUIRED = 0x00040000,
+        UF_TRUSTED_FOR_DELEGATION = 0x00080000,
+        UF_NOT_DELEGATED = 0x00100000,
+        UF_USE_DES_KEY_ONLY = 0x00200000,
+        UF_DONT_REQUIRE_PREAUTH = 0x00400000,
+        UF_PASSWORD_EXPIRED = 0x00800000,
+        UF_TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x01000000,
+        UF_NO_AUTH_DATA_REQUIRED = 0x02000000,
+        UF_PARTIAL_SECRETS_ACCOUNT = 0x04000000,
+        UF_USE_AES_KEYS = 0x08000000
+    }
+
+    internal enum USER_INFO_FILTER
+    {
+        INTERDOMAIN_TRUST_ACCOUNT = 0x8,
+        NORMAL_ACCOUNT = 0x2,
+        PROXY_ACCOUNT = 0x4,
+        SERVER_TRUST_ACCOUNT = 0x20,
+        TEMP_DUPLICATE_ACCOUNT = 0x1,
+        WORKSTATION_TRUST_ACCOUNT = 0x10
+    }
+
+    internal enum USER_PRIVS
+    {
+        GUEST,
+        USER,
+        ADMIN
     }
 
     internal enum WTS_CONNECTSTATE_CLASS
