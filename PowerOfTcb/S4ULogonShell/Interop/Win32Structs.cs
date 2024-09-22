@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace S4ULogonShell.Interop
 {
@@ -14,42 +11,6 @@ namespace S4ULogonShell.Interop
     {
         public IntPtr UniqueProcess;
         public IntPtr UniqueThread;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct IO_COUNTERS
-    {
-        public ulong ReadOperationCount;
-        public ulong WriteOperationCount;
-        public ulong OtherOperationCount;
-        public ulong ReadTransferCount;
-        public ulong WriteTransferCount;
-        public ulong OtherTransferCount;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct JOBOBJECT_BASIC_LIMIT_INFORMATION
-    {
-        public LARGE_INTEGER PerProcessUserTimeLimit;
-        public LARGE_INTEGER PerJobUserTimeLimit;
-        public JOB_OBJECT_LIMIT LimitFlags;
-        public SIZE_T MinimumWorkingSetSize;
-        public SIZE_T MaximumWorkingSetSize;
-        public int ActiveProcessLimit;
-        public UIntPtr Affinity;
-        public int PriorityClass;
-        public int SchedulingClass;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-    {
-        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
-        public IO_COUNTERS IoInfo;
-        public SIZE_T ProcessMemoryLimit;
-        public SIZE_T JobMemoryLimit;
-        public SIZE_T PeakProcessMemoryUsed;
-        public SIZE_T PeakJobMemoryUsed;
     }
 
     [StructLayout(LayoutKind.Explicit)]

@@ -79,114 +79,15 @@ namespace S4ULogonShell.Interop
 
     internal enum COMPUTER_NAME_FORMAT
     {
-        ComputerNameNetBIOS,
-        ComputerNameDnsHostname,
-        ComputerNameDnsDomain,
-        ComputerNameDnsFullyQualified,
-        ComputerNamePhysicalNetBIOS,
-        ComputerNamePhysicalDnsHostname,
-        ComputerNamePhysicalDnsDomain,
-        ComputerNamePhysicalDnsFullyQualified,
-        ComputerNameMax
-    }
-
-    internal enum ERROR_CONTROL
-    {
-        IGNORE,
-        NORMAL,
-        SEVERE,
-        CRITICAL
-    }
-
-    [Flags]
-    internal enum FormatMessageFlags : uint
-    {
-        FORMAT_MESSAGE_ALLOCATE_BUFFER = 0x00000100,
-        FORMAT_MESSAGE_IGNORE_INSERTS = 0x00000200,
-        FORMAT_MESSAGE_FROM_STRING = 0x00000400,
-        FORMAT_MESSAGE_FROM_HMODULE = 0x00000800,
-        FORMAT_MESSAGE_FROM_SYSTEM = 0x00001000,
-        FORMAT_MESSAGE_ARGUMENT_ARRAY = 0x00002000
-    }
-
-    [Flags]
-    internal enum JOB_OBJECT_LIMIT : uint
-    {
-        WORKINGSET = 0x00000001,
-        PROCESS_TIME = 0x00000002,
-        JOB_TIME = 0x00000004,
-        ACTIVE_PROCESS = 0x00000008,
-        AFFINITY = 0x00000010,
-        PRIORITY_CLASS = 0x00000020,
-        PRESERVE_JOB_TIME = 0x00000040,
-        SCHEDULING_CLASS = 0x00000080,
-        PROCESS_MEMORY = 0x00000100,
-        JOB_MEMORY = 0x00000200,
-        DIE_ON_UNHANDLED_EXCEPTION = 0x00000400,
-        BREAKAWAY_OK = 0x00000800,
-        SILENT_BREAKAWAY_OK = 0x00001000,
-        KILL_ON_JOB_CLOSE = 0x00002000,
-        SUBSET_AFFINITY = 0x00004000,
-        JOB_MEMORY_LOW = 0x00008000,
-        JOB_READ_BYTES = 0x00010000,
-        JOB_WRITE_BYTES = 0x00020000,
-        RATE_CONTROL = 0x00040000,
-        IO_RATE_CONTROL = 0x00080000,
-        NET_RATE_CONTROL = 0x00100000
-    }
-
-    internal enum JOBOBJECTINFOCLASS
-    {
-        JobObjectBasicAccountingInformation = 1, // JOBOBJECT_BASIC_ACCOUNTING_INFORMATION
-        JobObjectBasicLimitInformation = 2, // JOBOBJECT_BASIC_LIMIT_INFORMATION
-        JobObjectBasicProcessIdList = 3, // JOBOBJECT_BASIC_PROCESS_ID_LIST
-        JobObjectBasicUIRestrictions = 4, // JOBOBJECT_BASIC_UI_RESTRICTIONS
-        JobObjectSecurityLimitInformation = 5, // JOBOBJECT_SECURITY_LIMIT_INFORMATION
-        JobObjectEndOfJobTimeInformation = 6, // JOBOBJECT_END_OF_JOB_TIME_INFORMATION
-        JobObjectAssociateCompletionPortInformation = 7, // JOBOBJECT_ASSOCIATE_COMPLETION_PORT
-        JobObjectBasicAndIoAccountingInformation = 8, // JOBOBJECT_BASIC_AND_IO_ACCOUNTING_INFORMATION
-        JobObjectExtendedLimitInformation = 9, // JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-        JobObjectJobSetInformation = 10, // JOBOBJECT_JOBSET_INFORMATION
-        JobObjectGroupInformation = 11, // USHORT
-        JobObjectNotificationLimitInformation = 12, // JOBOBJECT_NOTIFICATION_LIMIT_INFORMATION
-        JobObjectLimitViolationInformation = 13, // JOBOBJECT_LIMIT_VIOLATION_INFORMATION
-        JobObjectGroupInformationEx = 14, // GROUP_AFFINITY (ARRAY)
-        JobObjectCpuRateControlInformation = 15, // JOBOBJECT_CPU_RATE_CONTROL_INFORMATION
-        JobObjectCompletionFilter = 16,
-        JobObjectCompletionCounter = 17,
-        JobObjectFreezeInformation = 18, // JOBOBJECT_FREEZE_INFORMATION
-        JobObjectExtendedAccountingInformation = 19, // JOBOBJECT_EXTENDED_ACCOUNTING_INFORMATION
-        JobObjectWakeInformation = 20, // JOBOBJECT_WAKE_INFORMATION
-        JobObjectBackgroundInformation = 21,
-        JobObjectSchedulingRankBiasInformation = 22,
-        JobObjectTimerVirtualizationInformation = 23,
-        JobObjectCycleTimeNotification = 24,
-        JobObjectClearEvent = 25,
-        JobObjectInterferenceInformation = 26, // JOBOBJECT_INTERFERENCE_INFORMATION
-        JobObjectClearPeakJobMemoryUsed = 27,
-        JobObjectMemoryUsageInformation = 28, // JOBOBJECT_MEMORY_USAGE_INFORMATION // JOBOBJECT_MEMORY_USAGE_INFORMATION_V2
-        JobObjectSharedCommit = 29,
-        JobObjectContainerId = 30,
-        JobObjectIoRateControlInformation = 31,
-        JobObjectNetRateControlInformation = 32, // JOBOBJECT_NET_RATE_CONTROL_INFORMATION
-        JobObjectNotificationLimitInformation2 = 33, // JOBOBJECT_NOTIFICATION_LIMIT_INFORMATION_2
-        JobObjectLimitViolationInformation2 = 34, // JOBOBJECT_LIMIT_VIOLATION_INFORMATION_2
-        JobObjectCreateSilo = 35,
-        JobObjectSiloBasicInformation = 36, // SILOOBJECT_BASIC_INFORMATION
-        JobObjectSiloRootDirectory = 37, // SILOOBJECT_ROOT_DIRECTORY
-        JobObjectServerSiloBasicInformation = 38, // SERVERSILO_BASIC_INFORMATION
-        JobObjectServerSiloUserSharedData = 39, // SILO_USER_SHARED_DATA
-        JobObjectServerSiloInitialize = 40,
-        JobObjectServerSiloRunningState = 41,
-        JobObjectIoAttribution = 42,
-        JobObjectMemoryPartitionInformation = 43,
-        JobObjectContainerTelemetryId = 44,
-        JobObjectSiloSystemRoot = 45,
-        JobObjectEnergyTrackingState = 46, // JOBOBJECT_ENERGY_TRACKING_STATE
-        JobObjectThreadImpersonationInformation = 47,
-        JobObjectIoPriorityLimit = 48,
-        JobObjectPagePriorityLimit = 49,
-        MaxJobObjectInfoClass = 50
+        NetBIOS,
+        DnsHostname,
+        DnsDomain,
+        DnsFullyQualified,
+        PhysicalNetBIOS,
+        PhysicalDnsHostname,
+        PhysicalDnsDomain,
+        PhysicalDnsFullyQualified,
+        Max
     }
 
     [Flags]
@@ -197,37 +98,17 @@ namespace S4ULogonShell.Interop
         LOGON_NETCREDENTIALS_ONLY = 0x00000002
     }
 
-    internal enum LOGON_PROVIDER
-    {
-        Default = 0,
-        Winnt35,
-        Winnt40,
-        Winnt50,
-        Virtual
-    }
-
-    internal enum LOGON_TYPE
-    {
-        Interactive = 2,
-        Network,
-        Batch,
-        Service,
-        Unlock,
-        NetworkClearText,
-        NewCredentials
-    }
-
     internal enum MSV1_0_LOGON_SUBMIT_TYPE
     {
-        MsV1_0InteractiveLogon = 2,
-        MsV1_0Lm20Logon,
-        MsV1_0NetworkLogon,
-        MsV1_0SubAuthLogon,
-        MsV1_0WorkstationUnlockLogon = 7,
-        MsV1_0S4ULogon = 12,
-        MsV1_0VirtualLogon = 82,
-        MsV1_0NoElevationLogon = 83,
-        MsV1_0LuidLogon = 84
+        InteractiveLogon = 2,
+        Lm20Logon,
+        NetworkLogon,
+        SubAuthLogon,
+        WorkstationUnlockLogon = 7,
+        S4ULogon = 12,
+        VirtualLogon = 82,
+        NoElevationLogon = 83,
+        LuidLogon = 84
     }
 
     [Flags]
@@ -242,32 +123,6 @@ namespace S4ULogonShell.Interop
         OBJ_KERNEL_HANDLE = 0x00000200,
         OBJ_FORCE_ACCESS_CHECK = 0x00000400,
         OBJ_VALID_ATTRIBUTES = 0x000007f2
-    }
-
-    [Flags]
-    internal enum PIPE_ACCESS : uint
-    {
-        INBOUND = 0x00000001,
-        OUTBOUND = 0x00000002,
-        DUPLEX = 0x00000003,
-        WRITE_DAC = 0x00040000,
-        WRITE_OWNER = 0x00080000,
-        FILE_FLAG_FIRST_PIPE_INSTANCE = 0x00080000,
-        ACCESS_SYSTEM_SECURITY = 0x01000000,
-        FILE_FLAG_OVERLAPPED = 0x40000000,
-        FILE_FLAG_WRITE_THROUGH = 0x80000000
-    }
-
-    internal enum PIPE_MODE
-    {
-        PIPE_WAIT = 0x00000000,
-        PIPE_NOWAIT = 0x00000001,
-        PIPE_READMODE_BYTE = 0x00000000,
-        PIPE_READMODE_MESSAGE = 0x00000002,
-        PIPE_TYPE_BYTE = 0x00000000,
-        PIPE_TYPE_MESSAGE = 0x00000004,
-        PIPE_ACCEPT_REMOTE_CLIENTS = 0x00000000,
-        PIPE_REJECT_REMOTE_CLIENTS = 0x00000008
     }
 
     [Flags]
@@ -396,17 +251,6 @@ namespace S4ULogonShell.Interop
         CachedUnlock
     }
 
-    internal enum SERVICE_TYPE
-    {
-        KERNEL_DRIVER = 0x00000001,
-        FILE_SYSTEM_DRIVER = 0x00000002,
-        ADAPTER = 0x00000004,
-        RECOGNIZER_DRIVER = 0x00000008,
-        WIN32_OWN_PROCESS = 0x00000010,
-        WIN32_SHARE_PROCESS = 0x00000020,
-        INTERACTIVE_PROCESS = 0x00000100,
-    }
-
     [Flags]
     internal enum SHOW_WINDOW_FLAGS : ushort
     {
@@ -440,15 +284,6 @@ namespace S4ULogonShell.Interop
         Computer,
         Label,
         LogonSession
-    }
-
-    internal enum START_TYPE
-    {
-        BOOT_START,
-        SYSTEM_START,
-        AUTO_START,
-        DEMAND_START,
-        DISABLED
     }
 
     internal enum THREADINFOCLASS

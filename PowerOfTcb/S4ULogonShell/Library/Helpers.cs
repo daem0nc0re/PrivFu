@@ -168,7 +168,7 @@ namespace S4ULogonShell.Library
             do
             {
                 bSuccess = NativeMethods.GetComputerNameEx(
-                    COMPUTER_NAME_FORMAT.ComputerNameDnsDomain,
+                    COMPUTER_NAME_FORMAT.DnsDomain,
                     nameBuilder,
                     ref nNameLength);
                 nDosErrorCode = Marshal.GetLastWin32Error();

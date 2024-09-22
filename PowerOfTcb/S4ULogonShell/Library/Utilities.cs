@@ -152,7 +152,7 @@ namespace S4ULogonShell.Library
                 if (ntstatus != Win32Consts.STATUS_SUCCESS)
                     break;
 
-                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.MsV1_0S4ULogon, 0, upn, domain))
+                using (var msv = new MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE.S4ULogon, 0, upn, domain))
                 {
                     var originName = new LSA_STRING("S4U");
                     var nGroupOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
