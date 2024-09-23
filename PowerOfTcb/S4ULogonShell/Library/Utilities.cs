@@ -66,49 +66,50 @@ namespace S4ULogonShell.Library
             out TOKEN_SOURCE tokenSource)
         {
             int nDosErrorCode = 0;
-            bool bSuccess = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
+            var bSuccess = false;
+            var fqdn = Helpers.GetCurrentDomainName();
             upn = null;
             domain = null;
             pkgName = new LSA_STRING();
             tokenSource = new TOKEN_SOURCE();
 
-            if (bSuccess)
+            if (string.Compare(fqdn, Environment.MachineName, true) != 0)
             {
-                foreach (var account in localAccounts)
-                {
-                    if (account.Value)
-                    {
-                        upn = account.Key;
-                        domain = Environment.MachineName;
-                        pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-                        tokenSource = new TOKEN_SOURCE("User32");
-                        break;
-                    }
-                }
+                upn = Environment.UserName;
+                domain = fqdn;
+                pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
+                tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                bSuccess = true;
+            }
 
-                if (string.IsNullOrEmpty(upn))
-                {
-                    var fqdn = Helpers.GetCurrentDomainName();
+            if (!bSuccess)
+            {
+                bSuccess = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
 
-                    if (string.Compare(fqdn, Environment.MachineName, true) != 0)
+                if (bSuccess)
+                {
+                    foreach (var account in localAccounts)
                     {
-                        upn = Environment.UserName;
-                        domain = fqdn;
-                        pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
-                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                        if (account.Value)
+                        {
+                            upn = account.Key;
+                            domain = Environment.MachineName;
+                            pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                            tokenSource = new TOKEN_SOURCE("User32");
+                            break;
+                        }
                     }
-                    else
+
+                    if (string.IsNullOrEmpty(upn))
                     {
+                        nDosErrorCode = 0x490; // ERROR_NOT_FOUND
                         bSuccess = false;
                     }
                 }
-
-                if (string.IsNullOrEmpty(upn))
-                    nDosErrorCode = 0x490; // ERROR_NOT_FOUND
-            }
-            else
-            {
-                nDosErrorCode = Marshal.GetLastWin32Error();
+                else
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                }
             }
 
             NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
