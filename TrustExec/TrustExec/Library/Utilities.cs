@@ -248,49 +248,50 @@ namespace TrustExec.Library
             out TOKEN_SOURCE tokenSource)
         {
             int nDosErrorCode = 0;
-            bool bSuccess = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
+            var bSuccess = false;
+            var fqdn = Helpers.GetCurrentDomainName();
             upn = null;
             domain = null;
             pkgName = new LSA_STRING();
             tokenSource = new TOKEN_SOURCE();
 
-            if (bSuccess)
+            if (string.Compare(fqdn, Environment.MachineName, true) != 0)
             {
-                foreach (var account in localAccounts)
-                {
-                    if (account.Value)
-                    {
-                        upn = account.Key;
-                        domain = Environment.MachineName;
-                        pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
-                        tokenSource = new TOKEN_SOURCE("User32");
-                        break;
-                    }
-                }
+                upn = Environment.UserName;
+                domain = fqdn;
+                pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
+                tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                bSuccess = true;
+            }
 
-                if (string.IsNullOrEmpty(upn))
-                {
-                    var fqdn = Helpers.GetCurrentDomainName();
+            if (!bSuccess)
+            {
+                bSuccess = Helpers.GetLocalAccounts(out Dictionary<string, bool> localAccounts);
 
-                    if (string.Compare(fqdn, Environment.MachineName, true) != 0)
+                if (bSuccess)
+                {
+                    foreach (var account in localAccounts)
                     {
-                        upn = Environment.UserName;
-                        domain = fqdn;
-                        pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
-                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                        if (account.Value)
+                        {
+                            upn = account.Key;
+                            domain = Environment.MachineName;
+                            pkgName = new LSA_STRING(Win32Consts.MSV1_0_PACKAGE_NAME);
+                            tokenSource = new TOKEN_SOURCE("User32");
+                            break;
+                        }
                     }
-                    else
+
+                    if (string.IsNullOrEmpty(upn))
                     {
+                        nDosErrorCode = 0x490; // ERROR_NOT_FOUND
                         bSuccess = false;
                     }
                 }
-
-                if (string.IsNullOrEmpty(upn))
-                    nDosErrorCode = 0x490; // ERROR_NOT_FOUND
-            }
-            else
-            {
-                nDosErrorCode = Marshal.GetLastWin32Error();
+                else
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                }
             }
 
             NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
@@ -299,17 +300,35 @@ namespace TrustExec.Library
         }
 
 
-        public static IntPtr GetS4uLogonToken(
+        public static IntPtr GetTrustedInstallerTokenWithS4uLogon(
             string upn,
             string domain,
             in LSA_STRING pkgName,
             in TOKEN_SOURCE tokenSource,
-            in Dictionary<string, SE_GROUP_ATTRIBUTES> extraTokenGroups)
+            in List<string> extraGroupSids)
         {
             int nDosErrorCode;
             NTSTATUS ntstatus;
             var hS4ULogonToken = IntPtr.Zero;
             var logonProcessName = new LSA_STRING("User32LogonProcess");
+            var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
+            {
+                {
+                    // BUILTIN\Administrators
+                    "S-1-5-32-544",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT AUTHORITY\LOCAL SERVICE
+                    "S-1-5-19",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                },
+                {
+                    // NT SERVICE\TrustedInstaller
+                    "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                }
+            };
             string sessionSid = Helpers.GetCurrentLogonSessionSid();
 
             if (string.IsNullOrEmpty(sessionSid))
@@ -317,6 +336,19 @@ namespace TrustExec.Library
 
             if (string.IsNullOrEmpty(sessionSid))
                 return IntPtr.Zero;
+
+            foreach (var strSid in extraGroupSids)
+            {
+                SID_NAME_USE sidType = Helpers.GetSidType(strSid);
+
+                if (!tokenGroups.ContainsKey(strSid) &&
+                    ((sidType == SID_NAME_USE.WellKnownGroup) || (sidType == SID_NAME_USE.Alias) || (sidType == SID_NAME_USE.Group)))
+                {
+                    tokenGroups.Add(
+                        strSid,
+                        SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory);
+                }
+            }
 
             ntstatus = NativeMethods.LsaRegisterLogonProcess(in logonProcessName, out IntPtr hLsa, out uint _);
 
@@ -344,7 +376,7 @@ namespace TrustExec.Library
                         SE_GROUP_ATTRIBUTES.EnabledByDefault |
                         SE_GROUP_ATTRIBUTES.LogonId |
                         SE_GROUP_ATTRIBUTES.Mandatory;
-                    var nGroupCount = 1 + extraTokenGroups.Count;
+                    var nGroupCount = 1 + tokenGroups.Count;
                     var nTokenGroupsLength = nGroupOffset + (nUnitSize * nGroupCount);
                     var pTokenGroups = Marshal.AllocHGlobal(nTokenGroupsLength);
                     var nEntryOffset = nGroupOffset;
@@ -359,7 +391,7 @@ namespace TrustExec.Library
                         nEntryOffset += nUnitSize;
                     }
 
-                    foreach (var group in extraTokenGroups)
+                    foreach (var group in tokenGroups)
                     {
                         pSids.Add(group.Key, Helpers.ConvertStringSidToSid(group.Key, out int _));
                         Marshal.WriteIntPtr(pTokenGroups, nEntryOffset, pSids[group.Key]);

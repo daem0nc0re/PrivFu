@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 using TrustExec.Interop;
 
 namespace TrustExec.Library
@@ -81,9 +82,7 @@ namespace TrustExec.Library
             if (bNewConsole)
                 requiredPrivs.Add(SE_PRIVILEGE_ID.SeTcbPrivilege);
 
-            bSuccess = Utilities.ImpersonateAsSmss(
-                in requiredPrivs,
-                out adjustedPrivs);
+            bSuccess = Utilities.ImpersonateAsSmss(in requiredPrivs, out adjustedPrivs);
 
             if (!bSuccess)
             {
@@ -180,6 +179,157 @@ namespace TrustExec.Library
         }
 
 
+        public static bool RunTrustedInstallerProcessWithS4ULogon(string command, bool bNewConsole)
+        {
+            int nDosErrorCode;
+            bool bReverted = false;
+            var requiredPrivs = new List<SE_PRIVILEGE_ID>
+            {
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
+            };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+            nDosErrorCode = Marshal.GetLastWin32Error();
+
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
+                else
+                    Console.WriteLine("[-] Failed to enable {0}.", priv.Key);
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                return false;
+            }
+
+            bSuccess = Utilities.GetS4uLogonAccount(
+                    out string upn,
+                    out string domain,
+                    out LSA_STRING pkgName,
+                    out TOKEN_SOURCE tokenSource);
+
+            if (!bSuccess)
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to get S4U logon information (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+            }
+            else
+            {
+                string accountName;
+                string tokenSourceName = Encoding.ASCII.GetString(tokenSource.SourceName);
+
+                if (string.Compare(tokenSourceName, "User32", true) < 0)
+                    accountName = string.Format("{0}@{1}", upn, domain);
+                else
+                    accountName = string.Format(@"{0}\{1}", domain, upn);
+
+                Console.WriteLine("[*] S4U logon account is \"{0}\" (Package: {1}).", accountName, pkgName.ToString());
+            }
+
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege,
+                SE_PRIVILEGE_ID.SeTcbPrivilege
+            };
+            bSuccess = Utilities.ImpersonateAsSmss(in requiredPrivs, out adjustedPrivs);
+
+            if (!bSuccess)
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonate as smss.exe (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation as smss.exe is successful.");
+                bSuccess = adjustedPrivs[SE_PRIVILEGE_ID.SeTcbPrivilege];
+                bSuccess &= (adjustedPrivs[SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege] ||
+                    adjustedPrivs[SE_PRIVILEGE_ID.SeImpersonatePrivilege]);
+
+                if (!bSuccess)
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] Failed to enable {0} for current thread.", priv.Key);
+                    }
+
+                    Helpers.RevertThreadToken(new IntPtr(-2));
+                }
+                else
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is enabled successfully for current thread.", priv.Key);
+                    }
+                }
+            }
+
+            if (!bSuccess)
+                return false;
+
+            do
+            {
+                var extraGroupSids = new List<string>();
+                IntPtr hToken = Utilities.GetTrustedInstallerTokenWithS4uLogon(upn, domain, in pkgName, in tokenSource, in extraGroupSids);
+
+                if (hToken == IntPtr.Zero)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a S4U logon token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                    bSuccess = false;
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a S4U logon token (Handle = 0x{0}).", hToken.ToString("X"));
+                    Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
+
+                    if (bNewConsole)
+                    {
+                        var nSessionId = Helpers.GetGuiSessionId();
+                        Helpers.SetTokenSessionId(hToken, nSessionId);
+                    }
+                }
+
+                bSuccess = Utilities.CreateTokenAssignedSuspendedProcess(
+                    hToken,
+                    command,
+                    ref bNewConsole,
+                    out PROCESS_INFORMATION processInfo);
+                NativeMethods.NtClose(hToken);
+
+                if (!bSuccess)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a token assined process (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a token assigned process (PID: {0}).", processInfo.dwProcessId);
+                    bReverted = Helpers.RevertThreadToken(new IntPtr(-2));
+                    NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
+
+                    if (!bNewConsole)
+                        NativeMethods.NtWaitForSingleObject(processInfo.hProcess, false, IntPtr.Zero);
+
+                    NativeMethods.NtClose(processInfo.hThread);
+                    NativeMethods.NtClose(processInfo.hProcess);
+                }
+            } while (false);
+
+            if (!bReverted)
+                Helpers.RevertThreadToken(new IntPtr(-2));
+
+            return bSuccess;
+        }
+
+
         public static bool RunTrustedInstallerProcessWithServiceLogon(string command, bool bNewConsole)
         {
             int nDosErrorCode;
@@ -213,9 +363,7 @@ namespace TrustExec.Library
                 SE_PRIVILEGE_ID.SeImpersonatePrivilege,
                 SE_PRIVILEGE_ID.SeTcbPrivilege
             };
-            bSuccess = Utilities.ImpersonateAsSmss(
-                in requiredPrivs,
-                out adjustedPrivs);
+            bSuccess = Utilities.ImpersonateAsSmss(in requiredPrivs, out adjustedPrivs);
 
             if (!bSuccess)
             {
@@ -344,9 +492,7 @@ namespace TrustExec.Library
                 SE_PRIVILEGE_ID.SeImpersonatePrivilege,
                 SE_PRIVILEGE_ID.SeTcbPrivilege
             };
-            bSuccess = Utilities.ImpersonateAsSmss(
-                in requiredPrivs,
-                out adjustedPrivs);
+            bSuccess = Utilities.ImpersonateAsSmss(in requiredPrivs, out adjustedPrivs);
 
             if (!bSuccess)
             {
