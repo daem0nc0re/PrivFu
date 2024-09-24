@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using TrustExec.Interop;
 
@@ -288,6 +289,204 @@ namespace TrustExec.Library
                 else
                 {
                     Console.WriteLine("[+] Got a S4U logon token (Handle = 0x{0}).", hToken.ToString("X"));
+                    Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
+
+                    if (bNewConsole)
+                    {
+                        var nSessionId = Helpers.GetGuiSessionId();
+                        Helpers.SetTokenSessionId(hToken, nSessionId);
+                    }
+                }
+
+                bSuccess = Utilities.CreateTokenAssignedSuspendedProcess(
+                    hToken,
+                    command,
+                    ref bNewConsole,
+                    out PROCESS_INFORMATION processInfo);
+                NativeMethods.NtClose(hToken);
+
+                if (!bSuccess)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to create a token assined process (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a token assigned process (PID: {0}).", processInfo.dwProcessId);
+                    bReverted = Helpers.RevertThreadToken(new IntPtr(-2));
+                    NativeMethods.NtResumeThread(processInfo.hThread, out uint _);
+
+                    if (!bNewConsole)
+                        NativeMethods.NtWaitForSingleObject(processInfo.hProcess, false, IntPtr.Zero);
+
+                    NativeMethods.NtClose(processInfo.hThread);
+                    NativeMethods.NtClose(processInfo.hProcess);
+                }
+            } while (false);
+
+            if (!bReverted)
+                Helpers.RevertThreadToken(new IntPtr(-2));
+
+            return bSuccess;
+        }
+
+
+        public static bool RunTrustedInstallerProcessWithService(string command, bool bNewConsole)
+        {
+            int nDosErrorCode;
+            bool bReverted = false;
+            var requiredPrivs = new List<SE_PRIVILEGE_ID>
+            {
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege
+            };
+            bool bSuccess = Helpers.EnableTokenPrivileges(
+                in requiredPrivs,
+                out Dictionary<SE_PRIVILEGE_ID, bool> adjustedPrivs);
+            nDosErrorCode = Marshal.GetLastWin32Error();
+
+            foreach (var priv in adjustedPrivs)
+            {
+                if (priv.Value)
+                    Console.WriteLine("[+] {0} is enabled successfully.", priv.Key);
+                else
+                    Console.WriteLine("[-] Failed to enable {0}.", priv.Key);
+            }
+
+            if (!bSuccess)
+            {
+                Console.WriteLine("[-] Insufficient privileges (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                return false;
+            }
+
+            requiredPrivs = new List<SE_PRIVILEGE_ID> {
+                SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege,
+                SE_PRIVILEGE_ID.SeDebugPrivilege,
+                SE_PRIVILEGE_ID.SeImpersonatePrivilege,
+                SE_PRIVILEGE_ID.SeTcbPrivilege
+            };
+            bSuccess = Utilities.ImpersonateAsSmss(in requiredPrivs, out adjustedPrivs);
+
+            if (!bSuccess)
+            {
+                nDosErrorCode = Marshal.GetLastWin32Error();
+                Console.WriteLine("[-] Failed to impersonate as smss.exe (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+            }
+            else
+            {
+                Console.WriteLine("[+] Impersonation as smss.exe is successful.");
+                bSuccess = adjustedPrivs[SE_PRIVILEGE_ID.SeTcbPrivilege];
+                bSuccess &= (adjustedPrivs[SE_PRIVILEGE_ID.SeAssignPrimaryTokenPrivilege] ||
+                    adjustedPrivs[SE_PRIVILEGE_ID.SeImpersonatePrivilege]);
+
+                if (!bSuccess)
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (!priv.Value)
+                            Console.WriteLine("[-] Failed to enable {0} for current thread.", priv.Key);
+                    }
+
+                    Helpers.RevertThreadToken(new IntPtr(-2));
+                }
+                else
+                {
+                    foreach (var priv in adjustedPrivs)
+                    {
+                        if (priv.Value)
+                            Console.WriteLine("[+] {0} is enabled successfully for current thread.", priv.Key);
+                    }
+                }
+            }
+
+            if (!bSuccess)
+                return false;
+
+            do
+            {
+                int pid;
+                IntPtr hToken;
+
+                try
+                {
+                    using(var query = new ServiceQuery())
+                    {
+                        var nPidOffset = Marshal.OffsetOf(typeof(SERVICE_STATUS_PROCESS), "dwProcessId").ToInt32();
+                        var serviceName = "TrustedInstaller";
+                        IntPtr pInfoBuffer = query.GetServiceStatus(serviceName);
+
+                        if (pInfoBuffer == IntPtr.Zero)
+                        {
+                            nDosErrorCode = Marshal.GetLastWin32Error();
+                            Console.WriteLine("[-] Failed to get status of {0} service (Error = 0x{1}).",
+                                serviceName,
+                                nDosErrorCode.ToString("X8"));
+                            break;
+                        }
+                        else
+                        {
+                            pid = Marshal.ReadInt32(pInfoBuffer, nPidOffset);
+                            Marshal.FreeHGlobal(pInfoBuffer);
+                        }
+
+                        if (pid <= 0)
+                        {
+                            nDosErrorCode = Marshal.GetLastWin32Error();
+                            Console.WriteLine("[>] {0} service is not running. Trying to start {0} service.", serviceName);
+                            bSuccess = query.StartService(serviceName);
+
+                            if (!bSuccess)
+                            {
+                                nDosErrorCode = Marshal.GetLastWin32Error();
+                                Console.WriteLine("[-] Failed to start {0} servce (Error = 0x{1}).",
+                                    serviceName,
+                                    nDosErrorCode.ToString("X8"));
+                                break;
+                            }
+                            else
+                            {
+                                pInfoBuffer = query.GetServiceStatus(serviceName);
+
+                                if (pInfoBuffer == IntPtr.Zero)
+                                {
+                                    Console.WriteLine("[-] Failed to get status of {0} service.", serviceName);
+                                    break;
+                                }
+                                else
+                                {
+                                    pid = Marshal.ReadInt32(pInfoBuffer, nPidOffset);
+                                    Marshal.FreeHGlobal(pInfoBuffer);
+                                }
+
+                                if (pid <= 0)
+                                {
+                                    Console.WriteLine("[-] Failed to get PID of {0} service process.", serviceName);
+                                    break;
+                                }
+                            }
+                        }
+
+                        Console.WriteLine("[*] PID of {0} service is {1}.", serviceName, pid);
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine("[-] Failed to query service manager.");
+                    break;
+                }
+
+                hToken = Helpers.GetProcessToken(pid, TOKEN_TYPE.Primary);
+
+                if (hToken == IntPtr.Zero)
+                {
+                    nDosErrorCode = Marshal.GetLastWin32Error();
+                    Console.WriteLine("[-] Failed to duplicate a service token (Error = 0x{0}).", nDosErrorCode.ToString("X8"));
+                    bSuccess = false;
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("[+] Got a service token (Handle = 0x{0}).", hToken.ToString("X"));
                     Helpers.EnableAllTokenPrivileges(hToken, out Dictionary<SE_PRIVILEGE_ID, bool> _);
 
                     if (bNewConsole)

@@ -53,6 +53,7 @@
     <Compile Include="Interop\Win32Structs.cs" />
     <Compile Include="Library\Helpers.cs" />
     <Compile Include="Library\Modules.cs" />
+    <Compile Include="Library\ServiceQuery.cs" />
     <Compile Include="Library\Utilities.cs" />
     <Compile Include="TrustExec.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

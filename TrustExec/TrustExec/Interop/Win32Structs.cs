@@ -39,6 +39,22 @@ namespace TrustExec.Interop
         public IntPtr UniqueThread;
     }
 
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct ENUM_SERVICE_STATUS_PROCESSW
+    {
+        public string lpServiceName;
+        public string lpDisplayName;
+        public SERVICE_STATUS_PROCESS ServiceStatusProcess;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct ENUM_SERVICE_STATUSW
+    {
+        public string lpServiceName;
+        public string lpDisplayName;
+        public SERVICE_STATUS ServiceStatus;
+    }
+
     [StructLayout(LayoutKind.Explicit, Size = 8)]
     internal struct LARGE_INTEGER
     {
@@ -324,6 +340,20 @@ namespace TrustExec.Interop
         public int dwThreadId;
     }
 
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct QUERY_SERVICE_CONFIGW
+    {
+        public SERVICE_TYPE dwServiceType;
+        public START_TYPE dwStartType;
+        public ERROR_CONTROL dwErrorControl;
+        public string lpBinaryPathName;
+        public string lpLoadOrderGroup;
+        public int dwTagId;
+        public string lpDependencies;
+        public string lpServiceStartName;
+        public string lpDisplayName;
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct QUOTA_LIMITS
     {
@@ -342,6 +372,33 @@ namespace TrustExec.Interop
         public SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
         public SECURITY_CONTEXT_TRACKING_MODE ContextTrackingMode;
         public BOOLEAN EffectiveOnly;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SERVICE_STATUS
+    {
+        public SERVICE_TYPE dwServiceType;
+        public SERVICE_CURRENT_STATE dwCurrentState;
+        public SERVICE_ACCEPTED_CONTROLS dwControlsAccepted;
+        public int dwWin32ExitCode;
+        public int dwServiceSpecificExitCode;
+        public int dwCheckPoint;
+        public int dwWaitHint;
+    }
+
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct SERVICE_STATUS_PROCESS
+    {
+        public SERVICE_TYPE dwServiceType;
+        public SERVICE_CURRENT_STATE dwCurrentState;
+        public SERVICE_ACCEPTED_CONTROLS dwControlsAccepted;
+        public int dwWin32ExitCode;
+        public int dwServiceSpecificExitCode;
+        public int dwCheckPoint;
+        public int dwWaitHint;
+        public int dwProcessId;
+        public SERVICE_FLAG dwServiceFlags;
     }
 
     [StructLayout(LayoutKind.Sequential)]

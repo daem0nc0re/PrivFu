@@ -16,7 +16,8 @@ namespace TrustExec.Handler
                 Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
                 Console.WriteLine("\t+ 1 - Leverages virtual logon.");
                 Console.WriteLine("\t+ 2 - Leverages service logon.");
-                Console.WriteLine("\t+ 3 - Leverages S4U logon.\n");
+                Console.WriteLine("\t+ 3 - Leverages S4U logon.");
+                Console.WriteLine("\t+ 4 - Leverages TrustedInstaller service.\n");
 
                 return;
             }
@@ -55,6 +56,11 @@ namespace TrustExec.Handler
                     if (Modules.RunTrustedInstallerProcessWithS4ULogon(options.GetValue("command"), options.GetFlag("new-console")))
                         Console.WriteLine("[>] Exit.");
                 }
+                else if (nMethodId == 4)
+                {
+                    if (Modules.RunTrustedInstallerProcessWithService(options.GetValue("command"), options.GetFlag("new-console")))
+                        Console.WriteLine("[>] Exit.");
+                }
                 else
                 {
                     options.GetHelp();
@@ -63,6 +69,7 @@ namespace TrustExec.Handler
                     Console.WriteLine("\t+ 1 - Leverages virtual logon.");
                     Console.WriteLine("\t+ 2 - Leverages service logon.");
                     Console.WriteLine("\t+ 3 - Leverages S4U logon.");
+                    Console.WriteLine("\t+ 4 - Leverages TrustedInstaller service.");
                     Console.WriteLine("\n[!] Invalid technique ID.");
                 }
             }

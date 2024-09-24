@@ -37,6 +37,27 @@ namespace TrustExec.Interop
         TOKEN_READ = 0x00020008,
         TOKEN_WRITE = 0x000200E0,
 
+        // Service Control Manager
+        SC_MANAGER_CONNECT = 0x00000001,
+        SC_MANAGER_CREATE_SERVICE = 0x00000002,
+        SC_MANAGER_ENUMERATE_SERVICE = 0x00000004,
+        SC_MANAGER_LOCK = 0x00000008,
+        SC_MANAGER_QUERY_LOCK_STATUS = 0x00000010,
+        SC_MANAGER_MODIFY_BOOT_CONFIG = 0x00000020,
+        SC_MANAGER_ALL_ACCESS = 0x000F003F,
+
+        // Service
+        SERVICE_QUERY_CONFIG = 0x00000001,
+        SERVICE_CHANGE_CONFIG = 0x00000002,
+        SERVICE_QUERY_STATUS = 0x00000004,
+        SERVICE_ENUMERATE_DEPENDENTS = 0x00000008,
+        SERVICE_START = 0x00000010,
+        SERVICE_STOP = 0x00000020,
+        SERVICE_PAUSE_CONTINUE = 0x00000040,
+        SERVICE_INTERROGATE = 0x00000080,
+        SERVICE_USER_DEFINED_CONTROL = 0x00000100,
+        SERVICE_ALL_ACCESS = 0x000F01FF,
+
         // Standard and Generic Rights
         DELETE = 0x00010000,
         READ_CONTROL = 0x00020000,
@@ -119,6 +140,14 @@ namespace TrustExec.Interop
         PhysicalDnsDomain,
         PhysicalDnsFullyQualified,
         Max
+    }
+
+    internal enum ERROR_CONTROL
+    {
+        IGNORE,
+        NORMAL,
+        SEVERE,
+        CRITICAL
     }
 
     [Flags]
@@ -217,6 +246,16 @@ namespace TrustExec.Interop
         CREATE_IGNORE_SYSTEM_DEFAULT = 0x80000000
     }
 
+    internal enum SC_ENUM_TYPE
+    {
+        PROCESS_INFO
+    }
+
+    internal enum SC_STATUS_TYPE
+    {
+        PROCESS_INFO = 0
+    }
+
     [Flags]
     internal enum SE_GROUP_ATTRIBUTES : uint
     {
@@ -295,6 +334,24 @@ namespace TrustExec.Interop
         Delegation
     }
 
+    [Flags]
+    internal enum SECURITY_INFORMATION : uint
+    {
+        OWNER_SECURITY_INFORMATION = 0x00000001,
+        GROUP_SECURITY_INFORMATION = 0x00000002,
+        DACL_SECURITY_INFORMATION = 0x00000004,
+        SACL_SECURITY_INFORMATION = 0x00000008,
+        LABEL_SECURITY_INFORMATION = 0x00000010,
+        ATTRIBUTE_SECURITY_INFORMATION = 0x00000020,
+        SCOPE_SECURITY_INFORMATION = 0x00000040,
+        PROCESS_TRUST_LABEL_SECURITY_INFORMATION = 0x00000080,
+        BACKUP_SECURITY_INFORMATION = 0x00010000,
+        UNPROTECTED_SACL_SECURITY_INFORMATION = 0x10000000,
+        UNPROTECTED_DACL_SECURITY_INFORMATION = 0x20000000,
+        PROTECTED_SACL_SECURITY_INFORMATION = 0x40000000,
+        PROTECTED_DACL_SECURITY_INFORMATION = 0x80000000
+    }
+
     internal enum SECURITY_LOGON_TYPE
     {
         UndefinedLogonType = 0,
@@ -310,6 +367,69 @@ namespace TrustExec.Interop
         CachedInteractive,
         CachedRemoteInteractive,
         CachedUnlock
+    }
+
+    [Flags]
+    internal enum SERVICE_ACCEPTED_CONTROLS : uint
+    {
+        NONE = 0x00000000,
+        STOP = 0x00000001,
+        PAUSE_CONTINUE = 0x00000002,
+        SHUTDOWN = 0x00000004,
+        PARAMCHANGE = 0x00000008,
+        NETBINDCHANGE = 0x00000010,
+        HARDWAREPROFILECHANGE = 0x00000020,
+        POWEREVENT = 0x00000040,
+        SESSIONCHANGE = 0x00000080,
+        PRESHUTDOWN = 0x00000100,
+        TIMECHANGE = 0x00000200,
+        TRIGGEREVENT = 0x00000400,
+        USERMODEREBOOT = 0x00000800
+    }
+
+    internal enum SERVICE_CURRENT_STATE
+    {
+        STOPPED = 1,
+        START_PENDING,
+        STOP_PENDING,
+        RUNNING,
+        CONTINUE_PENDING,
+        PAUSE_PENDING,
+        PAUSED
+    }
+
+    [Flags]
+    internal enum SERVICE_FLAG : uint
+    {
+        NONE = 0x00000000,
+        RUNS_IN_SYSTEM_PROCESS = 0x00000001
+    }
+
+    internal enum SERVICE_STATE
+    {
+        ACTIVE = 1,
+        INACTIVE,
+        STATE_ALL
+    }
+
+    [Flags]
+    internal enum SERVICE_TYPE : uint
+    {
+        KERNEL_DRIVER = 0x00000001,
+        FILE_SYSTEM_DRIVER = 0x00000002,
+        ADAPTER = 0x00000004,
+        RECOGNIZER_DRIVER = 0x00000008,
+        DRIVER = 0x0000000B,
+        WIN32_OWN_PROCESS = 0x00000010,
+        WIN32_SHARE_PROCESS = 0x00000020,
+        WIN32 = 0x00000030,
+        USER_SERVICE = 0x00000040,
+        USER_OWN_PROCESS = 0x00000050,
+        USER_SHARE_PROCESS = 0x00000060,
+        USERSERVICE_INSTANCE = 0x00000080,
+        INTERACTIVE_PROCESS = 0x00000100,
+        PKG_SERVICE = 0x00000200,
+        ALL = 0x000003FF
     }
 
     [Flags]
@@ -345,6 +465,15 @@ namespace TrustExec.Interop
         Computer,
         Label,
         LogonSession
+    }
+
+    internal enum START_TYPE
+    {
+        BOOT_START,
+        SYSTEM_START,
+        AUTO_START,
+        DEMAND_START,
+        DISABLED
     }
 
     internal enum THREADINFOCLASS

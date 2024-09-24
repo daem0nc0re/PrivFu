@@ -11,6 +11,9 @@ namespace TrustExec.Interop
         /*
          * advapi32.dll
          */
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool CloseServiceHandle(IntPtr hSCObject);
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool CreateProcessAsUser(
             IntPtr hToken,
@@ -36,6 +39,19 @@ namespace TrustExec.Interop
             string lpCurrentDirectory,
             in STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool EnumServicesStatusExW(
+            IntPtr hSCManager,
+            SC_ENUM_TYPE InfoLevel,
+            SERVICE_TYPE dwServiceType,
+            SERVICE_STATE dwServiceState,
+            IntPtr /* LPENUM_SERVICE_STATUS_PROCESS */ lpServices,
+            int cbBufSize,
+            out int pcbBytesNeeded,
+            out int lpServicesReturned,
+            ref int lpResumeHandle,
+            string pszGroupName);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool LookupAccountName(
@@ -68,6 +84,47 @@ namespace TrustExec.Interop
 
         [DllImport("advapi32.dll")]
         public static extern int LsaNtStatusToWinError(NTSTATUS Status);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr OpenSCManager(
+            string lpMachineName,
+            string lpDatabaseName,
+            ACCESS_MASK dwDesiredAccess);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern IntPtr OpenService(
+            IntPtr hSCManager,
+            string lpServiceName,
+            ACCESS_MASK dwDesiredAccess);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool QueryServiceConfigW(
+            IntPtr hService,
+            IntPtr /* LPQUERY_SERVICE_CONFIGW */ lpServiceConfig,
+            int cbBufSize,
+            out int pcbBytesNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool QueryServiceObjectSecurity(
+            IntPtr hService,
+            SECURITY_INFORMATION dwSecurityInformation,
+            IntPtr /* out PSECURITY_DESCRIPTOR */ lpSecurityDescriptor,
+            int cbBufSize,
+            out int pcbBytesNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool QueryServiceStatusEx(
+            IntPtr hService,
+            SC_STATUS_TYPE InfoLevel,
+            IntPtr lpBuffer,
+            int cbBufSize,
+            out int pcbBytesNeeded);
+
+        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool StartServiceW(
+            IntPtr hService,
+            int dwNumServiceArgs,
+            in string[] lpServiceArgVectors);
 
         /*
          * kernel32.dll
