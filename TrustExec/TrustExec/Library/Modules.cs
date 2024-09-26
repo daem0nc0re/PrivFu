@@ -46,7 +46,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcess(string command, bool bNewConsole)
+        public static bool RunTrustedInstallerProcess(string command, bool bNewConsole, in List<string> extraGroupSids)
         {
             int nDosErrorCode;
             bool bReverted = false;
@@ -125,8 +125,7 @@ namespace TrustExec.Library
 
             do
             {
-                var extraSids = new List<string>();
-                var hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, extraSids);
+                var hToken = Utilities.CreateTrustedInstallerToken(TOKEN_TYPE.Primary, extraGroupSids);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -180,7 +179,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcessWithS4ULogon(string command, bool bNewConsole)
+        public static bool RunTrustedInstallerProcessWithS4ULogon(string command, bool bNewConsole, in List<string> extraGroupSids)
         {
             int nDosErrorCode;
             bool bReverted = false;
@@ -276,7 +275,6 @@ namespace TrustExec.Library
 
             do
             {
-                var extraGroupSids = new List<string>();
                 IntPtr hToken = Utilities.GetTrustedInstallerTokenWithS4uLogon(upn, domain, in pkgName, in tokenSource, in extraGroupSids);
 
                 if (hToken == IntPtr.Zero)
@@ -546,7 +544,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcessWithServiceLogon(string command, bool bNewConsole)
+        public static bool RunTrustedInstallerProcessWithServiceLogon(string command, bool bNewConsole, in List<string> extraGroupSids)
         {
             int nDosErrorCode;
             bool bReverted = false;
@@ -618,7 +616,6 @@ namespace TrustExec.Library
 
             do
             {
-                var extraGroupSids = new List<string>();
                 IntPtr hToken = Utilities.GetTrustedInstallerTokenWithServiceLogon("LOCAL SERVICE", "NT AUTHORITY", in extraGroupSids);
 
                 if (hToken == IntPtr.Zero)
@@ -673,7 +670,7 @@ namespace TrustExec.Library
         }
 
 
-        public static bool RunTrustedInstallerProcessWithVirtualLogon(string command, bool bNewConsole)
+        public static bool RunTrustedInstallerProcessWithVirtualLogon(string command, bool bNewConsole, in List<string> extraGroupSids)
         {
             int nDosErrorCode;
             bool bReverted = false;
@@ -751,7 +748,6 @@ namespace TrustExec.Library
                 var virtualAccountName = "VirtualAdmin";
                 var domainSid = "S-1-5-110";
                 var accountSid = string.Format("{0}-500", domainSid);
-                var extraGroupSids = new List<string>();
                 bSuccess = Helpers.AddSidMapping(virtualDomainName, null, domainSid);
 
                 if (!bSuccess)

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using TrustExec.Handler;
 
+using System.Text;
+using System.Text.RegularExpressions;
+
 namespace TrustExec
 {
     internal class TrustExec
@@ -21,6 +24,7 @@ namespace TrustExec
                 options.AddFlag(false, "x", "exec", "Flag to execute command.");
                 options.AddParameter(false, "a", "account", null, "Specifies account name to lookup.");
                 options.AddParameter(false, "c", "command", command, "Specifies command to execute. Default is cmd.exe.");
+                options.AddParameter(false, "e", "extra", null, "Specifies command to execute. Default is cmd.exe.");
                 options.AddParameter(false, "m", "method", "0", "Specifies method ID. Default is 0 (NtCreateToken method).");
                 options.AddParameter(false, "s", "sid", null, "Specifies SID to lookup.");
                 options.AddExclusive(exclusive);
