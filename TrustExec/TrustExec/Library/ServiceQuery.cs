@@ -133,7 +133,7 @@ namespace TrustExec.Library
                     Marshal.FreeHGlobal(pSecurityDescriptor);
                     pSecurityDescriptor = IntPtr.Zero;
                 }
-            } while (!bSuccess && (Marshal.GetLastWin32Error() == Win32Consts.ERROR_INSUFFICIENT_BUFFER));
+            } while (!bSuccess && (Marshal.GetLastWin32Error() == ERROR_INSUFFICIENT_BUFFER));
 
             NativeMethods.CloseServiceHandle(hService);
 
