@@ -404,13 +404,13 @@ namespace TrustExec.Library
 
             do
             {
-                int pid;
-                IntPtr hToken;
+                var hToken = IntPtr.Zero;
 
                 try
                 {
                     using(var query = new ServiceQuery())
                     {
+                        int pid;
                         var nPidOffset = Marshal.OffsetOf(typeof(SERVICE_STATUS_PROCESS), "dwProcessId").ToInt32();
                         var serviceName = "TrustedInstaller";
                         IntPtr pInfoBuffer = query.GetServiceStatus(serviceName);
@@ -449,7 +449,9 @@ namespace TrustExec.Library
 
                                 if (pInfoBuffer == IntPtr.Zero)
                                 {
-                                    Console.WriteLine("[-] Failed to get status of {0} service.", serviceName);
+                                    Console.WriteLine("[-] Failed to get status of {0} service (Error = 0x{1}).",
+                                        serviceName,
+                                        nDosErrorCode.ToString("X8"));
                                     break;
                                 }
                                 else
@@ -463,10 +465,27 @@ namespace TrustExec.Library
                                     Console.WriteLine("[-] Failed to get PID of {0} service process.", serviceName);
                                     break;
                                 }
+                                else
+                                {
+                                    Console.WriteLine("[+] {0} service is started successfully (PID: {1}).", serviceName, pid);
+                                }
+
+                                hToken = Helpers.GetProcessToken(pid, TOKEN_TYPE.Primary);
+                                bSuccess = query.StopService(serviceName);
+                                nDosErrorCode = Marshal.GetLastWin32Error();
+
+                                if (!bSuccess)
+                                {
+                                    Console.WriteLine("[-] Failed to stop {0} service (Error = 0x{1}).",
+                                        serviceName,
+                                        nDosErrorCode.ToString("X8"));
+                                }
+                                else
+                                {
+                                    Console.WriteLine("[+] {0} service is stopped successfully.", serviceName);
+                                }
                             }
                         }
-
-                        Console.WriteLine("[*] PID of {0} service is {1}.", serviceName, pid);
                     }
                 }
                 catch
@@ -474,8 +493,6 @@ namespace TrustExec.Library
                     Console.WriteLine("[-] Failed to query service manager.");
                     break;
                 }
-
-                hToken = Helpers.GetProcessToken(pid, TOKEN_TYPE.Primary);
 
                 if (hToken == IntPtr.Zero)
                 {

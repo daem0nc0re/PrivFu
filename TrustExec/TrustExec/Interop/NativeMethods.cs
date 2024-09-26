@@ -28,6 +28,13 @@ namespace TrustExec.Interop
             in STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool ControlService(
+            IntPtr hService,
+            SERVICE_CONTROL dwControl,
+            out SERVICE_STATUS lpServiceStatus);
+
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool CreateProcessWithTokenW(
             IntPtr hToken,

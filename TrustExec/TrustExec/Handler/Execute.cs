@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using TrustExec.Library;
 
 namespace TrustExec.Handler
@@ -12,13 +13,7 @@ namespace TrustExec.Handler
             if (options.GetFlag("help"))
             {
                 options.GetHelp();
-                Console.WriteLine("Available Method IDs:\v");
-                Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
-                Console.WriteLine("\t+ 1 - Leverages virtual logon.");
-                Console.WriteLine("\t+ 2 - Leverages service logon.");
-                Console.WriteLine("\t+ 3 - Leverages S4U logon.");
-                Console.WriteLine("\t+ 4 - Leverages TrustedInstaller service.\n");
-
+                Console.WriteLine(GetExtraHelpMessage());
                 return;
             }
 
@@ -38,39 +33,29 @@ namespace TrustExec.Handler
             {
                 if (nMethodId == 0)
                 {
-                    if (Modules.RunTrustedInstallerProcess(options.GetValue("command"), options.GetFlag("new-console")))
-                        Console.WriteLine("[>] Exit.");
+                    Modules.RunTrustedInstallerProcess(options.GetValue("command"), options.GetFlag("new-console"));
                 }
                 else if (nMethodId == 1)
                 {
-                    if (Modules.RunTrustedInstallerProcessWithVirtualLogon(options.GetValue("command"), options.GetFlag("new-console")))
-                        Console.WriteLine("[>] Exit.");
+                    Modules.RunTrustedInstallerProcessWithVirtualLogon(options.GetValue("command"), options.GetFlag("new-console"));
                 }
                 else if (nMethodId == 2)
                 {
-                    if (Modules.RunTrustedInstallerProcessWithServiceLogon(options.GetValue("command"), options.GetFlag("new-console")))
-                        Console.WriteLine("[>] Exit.");
+                    Modules.RunTrustedInstallerProcessWithServiceLogon(options.GetValue("command"), options.GetFlag("new-console"));
                 }
                 else if (nMethodId == 3)
                 {
-                    if (Modules.RunTrustedInstallerProcessWithS4ULogon(options.GetValue("command"), options.GetFlag("new-console")))
-                        Console.WriteLine("[>] Exit.");
+                    Modules.RunTrustedInstallerProcessWithS4ULogon(options.GetValue("command"), options.GetFlag("new-console"));
                 }
                 else if (nMethodId == 4)
                 {
-                    if (Modules.RunTrustedInstallerProcessWithService(options.GetValue("command"), options.GetFlag("new-console")))
-                        Console.WriteLine("[>] Exit.");
+                    Modules.RunTrustedInstallerProcessWithService(options.GetValue("command"), options.GetFlag("new-console"));
                 }
                 else
                 {
                     options.GetHelp();
-                    Console.WriteLine("Available Method IDs:\v");
-                    Console.WriteLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
-                    Console.WriteLine("\t+ 1 - Leverages virtual logon.");
-                    Console.WriteLine("\t+ 2 - Leverages service logon.");
-                    Console.WriteLine("\t+ 3 - Leverages S4U logon.");
-                    Console.WriteLine("\t+ 4 - Leverages TrustedInstaller service.");
-                    Console.WriteLine("\n[!] Invalid technique ID.");
+                    Console.WriteLine(GetExtraHelpMessage());
+                    Console.WriteLine("[!] Invalid technique ID.");
                 }
             }
             else if (options.GetFlag("lookup"))
@@ -83,6 +68,20 @@ namespace TrustExec.Handler
             }
 
             Console.WriteLine();
+        }
+
+
+        private static string GetExtraHelpMessage()
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("Available Method IDs:\v");
+            builder.AppendLine("\t+ 0 - Leverages SeCreateTokenPrivilege.");
+            builder.AppendLine("\t+ 1 - Leverages virtual logon.");
+            builder.AppendLine("\t+ 2 - Leverages service logon.");
+            builder.AppendLine("\t+ 3 - Leverages S4U logon.");
+            builder.AppendLine("\t+ 4 - Leverages TrustedInstaller service.");
+
+            return builder.ToString();
         }
     }
 }

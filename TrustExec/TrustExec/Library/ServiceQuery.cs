@@ -257,6 +257,7 @@ namespace TrustExec.Library
             return pInfoBuffer;
         }
 
+
         public bool StartService(string serviceName)
         {
             bool bSuccess;
@@ -292,6 +293,24 @@ namespace TrustExec.Library
             }
 
             NativeMethods.CloseServiceHandle(hService);
+
+            return bSuccess;
+        }
+
+
+        public bool StopService(string serviceName)
+        {
+            var bSuccess = false;
+            IntPtr hService = NativeMethods.OpenService(
+                this.hSCObject,
+                serviceName,
+                ACCESS_MASK.SERVICE_STOP);
+
+            if (hService != IntPtr.Zero)
+            {
+                bSuccess = NativeMethods.ControlService(hService, SERVICE_CONTROL.STOP, out SERVICE_STATUS _);
+                NativeMethods.CloseServiceHandle(hService);
+            }
 
             return bSuccess;
         }
