@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using TrustExec.Handler;
 
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace TrustExec
 {
     internal class TrustExec

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using System.Text;
 using TrustExec.Interop;
 
@@ -19,7 +18,7 @@ namespace TrustExec.Library
             }
             else if (string.IsNullOrEmpty(accountName) && string.IsNullOrEmpty(strSid))
             {
-                Console.WriteLine("[-] No imput.");
+                Console.WriteLine("[-] No input.");
             }
             else
             {

@@ -2284,20 +2284,33 @@ TrustExec - Tool to create TrustedInstaller process.
 Usage: TrustExec.exe [Options]
 
         -h, --help        : Displays this help message.
-        -n, --new-console : Flag to create new console.
-        -m, --method      : Specifies method ID.
+        -l, --lookup      : Flag to lookup account name or SID.
+        -n, --new-console : Flag to create new console. Use with -x flag.
+        -x, --exec        : Flag to execute command.
+        -a, --account     : Specifies account name to lookup.
         -c, --command     : Specifies command to execute. Default is cmd.exe.
+        -e, --extra       : Specifies command to execute. Default is cmd.exe.
+        -m, --method      : Specifies method ID. Default is 0 (NtCreateToken method).
+        -s, --sid         : Specifies SID to lookup.
 
-[!] -m option is required.
+Available Method IDs:
+
+        + 0 - Leverages NtCreateToken syscall.
+        + 1 - Leverages virtual logon.
+        + 2 - Leverages service logon.
+        + 3 - Leverages S4U logon.
+        + 4 - Leverages TrustedInstaller service.
 ```
 
 For this module, 2 techniques are implemeted.
 We can specfy a method with `-m` option.
-If you set `-m` option to `0`, this tool try to get `TrustedInstaller` token with `NtCreateToken`:
+The value for `-m` option can be a integer from `0` to `4`.
+For example, if you set `-m` option to `0`, this tool try to get `TrustedInstaller` token with `NtCreateToken`:
 
 ```
-PS C:\Dev> .\TrustExec.exe -m 0 -c powershell
+PS C:\Dev> .\TrustExec.exe -m 0 -x -c powershell
 
+[*] NtCreateToken syscall method is selected.
 [+] SeDebugPrivilege is enabled successfully.
 [+] SeImpersonatePrivilege is enabled successfully.
 [+] Impersonation as smss.exe is successful.
@@ -2379,11 +2392,12 @@ NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-34185
 Mandatory Label\System Mandatory Level Label            S-1-16-16384
 ```
 
-When `-m` option is set `1`, this tool try to get `TrustedInstaller` process with virtual logon technique:
+If you want to create process with new console, set `-n` flag as follows:
 
 ```
-PS C:\Dev> .\TrustExec.exe -m 1 -c powershell
+PS C:\Dev> .\TrustExec.exe -m 1 -x -c powershell -n
 
+[*] Virtual logon method is selected.
 [+] SeDebugPrivilege is enabled successfully.
 [+] SeImpersonatePrivilege is enabled successfully.
 [+] Impersonation as smss.exe is successful.
@@ -2392,9 +2406,27 @@ PS C:\Dev> .\TrustExec.exe -m 1 -c powershell
 [+] SeTcbPrivilege is enabled successfully for current thread.
 [+] A virtual domain VirtualDomain is created successfully (SID: S-1-5-110).
 [+] A virtual account VirtualDomain\VirtualAdmin is created successfully (SID: S-1-5-110-500).
-[+] Got a virtual logon token (Handle = 0x308).
-[+] Got a token assigned process (PID: 10384).
+[+] Got a virtual logon token (Handle = 0xEC).
+[+] Got a token assigned process (PID: 23836).
 [+] VirtualDomain domain is removed successfully.
+```
+
+Each methods other than TrustedInstaller service method (ID for `-m` option is `4`) accept extra group SIDs with `-e` option.
+The value format for `-e` option must be SDDL SID string.
+For SID string separator, you can use comma as follows:
+
+```
+PS C:\Dev> .\TrustExec.exe -m 0 -x -c powershell -e S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736,S-1-5-32-551
+
+[*] NtCreateToken syscall method is selected.
+[+] SeDebugPrivilege is enabled successfully.
+[+] SeImpersonatePrivilege is enabled successfully.
+[+] Impersonation as smss.exe is successful.
+[+] SeAssignPrimaryTokenPrivilege is enabled successfully for current thread.
+[+] SeCreateTokenPrivilege is enabled successfully for current thread.
+[+] SeImpersonatePrivilege is enabled successfully for current thread.
+[+] Got a TrustedInstaller token (Handle = 0x30C).
+[+] Got a token assigned process (PID: 17500).
 Windows PowerShell
 Copyright (C) Microsoft Corporation. All rights reserved.
 
@@ -2405,65 +2437,55 @@ PS C:\Dev> whoami /user
 USER INFORMATION
 ----------------
 
-User Name                  SID
-========================== =============
-virtualdomain\virtualadmin S-1-5-110-500
-PS C:\Dev> whoami /priv
-
-PRIVILEGES INFORMATION
-----------------------
-
-Privilege Name                            Description                                                        State
-========================================= ================================================================== =======
-SeAssignPrimaryTokenPrivilege             Replace a process level token                                      Enabled
-SeIncreaseQuotaPrivilege                  Adjust memory quotas for a process                                 Enabled
-SeSecurityPrivilege                       Manage auditing and security log                                   Enabled
-SeTakeOwnershipPrivilege                  Take ownership of files or other objects                           Enabled
-SeLoadDriverPrivilege                     Load and unload device drivers                                     Enabled
-SeSystemProfilePrivilege                  Profile system performance                                         Enabled
-SeSystemtimePrivilege                     Change the system time                                             Enabled
-SeProfileSingleProcessPrivilege           Profile single process                                             Enabled
-SeIncreaseBasePriorityPrivilege           Increase scheduling priority                                       Enabled
-SeCreatePagefilePrivilege                 Create a pagefile                                                  Enabled
-SeBackupPrivilege                         Back up files and directories                                      Enabled
-SeRestorePrivilege                        Restore files and directories                                      Enabled
-SeShutdownPrivilege                       Shut down the system                                               Enabled
-SeDebugPrivilege                          Debug programs                                                     Enabled
-SeAuditPrivilege                          Generate security audits                                           Enabled
-SeSystemEnvironmentPrivilege              Modify firmware environment values                                 Enabled
-SeChangeNotifyPrivilege                   Bypass traverse checking                                           Enabled
-SeRemoteShutdownPrivilege                 Force shutdown from a remote system                                Enabled
-SeUndockPrivilege                         Remove computer from docking station                               Enabled
-SeManageVolumePrivilege                   Perform volume maintenance tasks                                   Enabled
-SeImpersonatePrivilege                    Impersonate a client after authentication                          Enabled
-SeCreateGlobalPrivilege                   Create global objects                                              Enabled
-SeIncreaseWorkingSetPrivilege             Increase a process working set                                     Enabled
-SeTimeZonePrivilege                       Change the time zone                                               Enabled
-SeCreateSymbolicLinkPrivilege             Create symbolic links                                              Enabled
-SeDelegateSessionUserImpersonatePrivilege Obtain an impersonation token for another user in the same session Enabled
+User Name           SID
+=================== ========
+nt authority\system S-1-5-18
 PS C:\Dev> whoami /groups
 
 GROUP INFORMATION
 -----------------
 
-Group Name                             Type             SID                                                            Attributes
-====================================== ================ ============================================================== ==================================================
+Group Name                             Type             SID
+Attributes
+====================================== ================ =============================================================== ===============================================================
+Everyone                               Well-known group S-1-1-0
+Mandatory group, Enabled by default, Enabled group
+LOCAL                                  Well-known group S-1-2-0
+Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                          Well-known group S-1-2-1
+Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                   Well-known group S-1-5-6
+Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11
+Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators               Alias            S-1-5-32-551
+Mandatory group, Enabled by default, Enabled group
+BUILTIN\Administrators                 Alias            S-1-5-32-544
+Mandatory group, Enabled by default, Enabled group, Group owner
+BUILTIN\Users                          Alias            S-1-5-32-545
+Mandatory group, Enabled by default, Enabled group
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464  Mandatory group, Enabled by default, Enabled group
 Mandatory Label\System Mandatory Level Label            S-1-16-16384
 
-Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
-BUILTIN\Performance Log Users          Alias            S-1-5-32-559                                                   Mandatory group, Enabled by default, Enabled group
-BUILTIN\Users                          Alias            S-1-5-32-545                                                   Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\INTERACTIVE               Well-known group S-1-5-4                                                        Mandatory group, Enabled by default, Enabled group
-CONSOLE LOGON                          Well-known group S-1-2-1                                                        Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\This Organization         Well-known group S-1-5-15                                                       Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\LOCAL SERVICE             Well-known group S-1-5-19                                                       Mandatory group, Enabled by default, Enabled group
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Mandatory group, Enabled by default, Enabled group
-                                       Unknown SID type S-1-5-110-0                                                    Mandatory group, Enabled by default, Enabled group
+NT SERVICE\WinDefend                   Well-known group S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736 Mandatory group, Enabled by default, Enabled group
 ```
 
-If you want to create process with new console, set `-n` flag.
+To resolve account SID, set `-l` flag and `-a` option with account name as follows:
+
+```
+PS C:\Dev> .\TrustExec.exe -l -a "nt service\windefend"
+
+[*] Account Name : NT SERVICE\WinDefend
+[*] Account SID  : S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736
+[*] Account Type : WellKnownGroup
+
+PS C:\Dev> .\TrustExec.exe -l -a users
+
+[*] Account Name : BUILTIN\Users
+[*] Account SID  : S-1-5-32-545
+[*] Account Type : Alias
+```
+
 
 
 ## UserRightsUtil
