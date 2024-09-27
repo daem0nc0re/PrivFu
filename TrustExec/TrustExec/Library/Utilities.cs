@@ -84,19 +84,19 @@ namespace TrustExec.Library
             };
             var privAttributes = (int)(SE_PRIVILEGE_ATTRIBUTES.Enabled | SE_PRIVILEGE_ATTRIBUTES.EnabledByDefault);
             var pSqos = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(SECURITY_QUALITY_OF_SERVICE)));
-            var groupAttributes = SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory;
+            var groupAttributes = SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault;
             var logonSessionSid = Helpers.GetCurrentLogonSessionSid();
             var tokenGroups = new Dictionary<string, SE_GROUP_ATTRIBUTES>
             {
-                { "S-1-1-0", groupAttributes }, // Everyone
-                { "S-1-2-0", groupAttributes }, // LOCAL
-                { "S-1-2-1", groupAttributes }, // CONSOLE LOGON
-                { "S-1-5-6", groupAttributes }, // NT AUTHORITY\SERVICE
-                { "S-1-5-11", groupAttributes }, // NT AUTHORITY\Authenticated Users
-                { "S-1-5-18", groupAttributes }, // NT AUTHORITY\SYSTEM
+                { "S-1-1-0", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // Everyone
+                { "S-1-2-0", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // LOCAL
+                { "S-1-2-1", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // CONSOLE LOGON
+                { "S-1-5-6", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // NT AUTHORITY\SERVICE
+                { "S-1-5-11", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // NT AUTHORITY\Authenticated Users
+                { "S-1-5-18", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // NT AUTHORITY\SYSTEM
                 { "S-1-5-32-544", groupAttributes | SE_GROUP_ATTRIBUTES.Owner }, // BUILTIN\Administrators
-                { "S-1-5-32-545", groupAttributes }, // BUILTIN\Users
-                { "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464", groupAttributes }, // NT SERVICE\TrustedInstaller
+                { "S-1-5-32-545", groupAttributes | SE_GROUP_ATTRIBUTES.Mandatory }, // BUILTIN\Users
+                { "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464", groupAttributes | SE_GROUP_ATTRIBUTES.Owner }, // NT SERVICE\TrustedInstaller
                 { "S-1-16-16384", SE_GROUP_ATTRIBUTES.Integrity | SE_GROUP_ATTRIBUTES.IntegrityEnabled } // Mandatory Label\System Mandatory Level
             };
             var aces = new Dictionary<string, ACCESS_MASK>
@@ -316,7 +316,7 @@ namespace TrustExec.Library
                 {
                     // BUILTIN\Administrators
                     "S-1-5-32-544",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 },
                 {
                     // NT AUTHORITY\LOCAL SERVICE
@@ -326,7 +326,7 @@ namespace TrustExec.Library
                 {
                     // NT SERVICE\TrustedInstaller
                     "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 }
             };
             string sessionSid = Helpers.GetCurrentLogonSessionSid();
@@ -449,7 +449,7 @@ namespace TrustExec.Library
                 {
                     // BUILTIN\Administrators
                     "S-1-5-32-544",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 },
                 {
                     // NT AUTHORITY\LOCAL SERVICE
@@ -459,7 +459,7 @@ namespace TrustExec.Library
                 {
                     // NT SERVICE\TrustedInstaller
                     "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 }
             };
             string sessionSid = Helpers.GetCurrentLogonSessionSid();
@@ -562,7 +562,7 @@ namespace TrustExec.Library
                 {
                     // BUILTIN\Administrators
                     "S-1-5-32-544",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 },
                 {
                     // NT AUTHORITY\LOCAL SERVICE
@@ -572,7 +572,7 @@ namespace TrustExec.Library
                 {
                     // NT SERVICE\TrustedInstaller
                     "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464",
-                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Mandatory
+                    SE_GROUP_ATTRIBUTES.Enabled | SE_GROUP_ATTRIBUTES.EnabledByDefault | SE_GROUP_ATTRIBUTES.Owner
                 }
             };
             string sessionSid = Helpers.GetCurrentLogonSessionSid();
