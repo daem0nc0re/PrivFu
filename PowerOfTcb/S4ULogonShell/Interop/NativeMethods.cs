@@ -40,6 +40,16 @@ namespace S4ULogonShell.Interop
             StringBuilder lpBuffer,
             ref int nSize);
 
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool LookupAccountName(
+            string lpSystemName,
+            string lpAccountName,
+            IntPtr Sid,
+            ref int cbSid,
+            StringBuilder ReferencedDomainName,
+            ref int cchReferencedDomainName,
+            out SID_NAME_USE peUse);
+
         [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool LookupAccountSid(
             string lpSystemName,

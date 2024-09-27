@@ -13,6 +13,82 @@ namespace S4ULogonShell.Library
 
     internal class Helpers
     {
+        public static bool ConvertAccountNameToSid(
+            ref string accountName,
+            out string strSid,
+            out SID_NAME_USE sidType)
+        {
+            int nSidLength = 256;
+            int nDomainLength = 256;
+            var domainBuilder = new StringBuilder(nDomainLength);
+            IntPtr pSid = Marshal.AllocHGlobal(nSidLength);
+            bool bSuccess = NativeMethods.LookupAccountName(
+                null,
+                accountName,
+                pSid,
+                ref nSidLength,
+                domainBuilder,
+                ref nDomainLength,
+                out SID_NAME_USE _);
+            strSid = null;
+            sidType = SID_NAME_USE.Unknown;
+
+            if (bSuccess)
+            {
+                strSid = ConvertSidToStringSid(pSid);
+                bSuccess = ConvertSidToAccountName(pSid, out accountName, out sidType);
+            }
+
+            return bSuccess;
+        }
+
+
+        public static bool ConvertSidToAccountName(
+            IntPtr pSid,
+            out string accountName,
+            out SID_NAME_USE sidType)
+        {
+            var nNameLength = 256;
+            var nDomainLength = 256;
+            var nameBuilder = new StringBuilder(nNameLength);
+            var domainBuilder = new StringBuilder(nDomainLength);
+            bool bSuccess = NativeMethods.LookupAccountSid(
+                null,
+                pSid,
+                nameBuilder,
+                ref nNameLength,
+                domainBuilder,
+                ref nDomainLength,
+                out sidType);
+            accountName = null;
+
+            if (bSuccess)
+            {
+                if ((nNameLength > 0) && (nDomainLength > 0))
+                {
+                    if (string.Compare(nameBuilder.ToString(), domainBuilder.ToString(), true) == 0)
+                        accountName = nameBuilder.ToString();
+                    else
+                        accountName = string.Format(@"{0}\{1}", domainBuilder.ToString(), nameBuilder.ToString());
+                }
+                else if (nNameLength > 0)
+                {
+                    accountName = nameBuilder.ToString();
+                }
+                else if (nDomainLength > 0)
+                {
+                    accountName = domainBuilder.ToString();
+                }
+            }
+            else
+            {
+                sidType = SID_NAME_USE.Unknown;
+            }
+
+            return bSuccess;
+        }
+
+
         public static string ConvertSidToStringSid(IntPtr pSid)
         {
             var stringSidBuilder = new StringBuilder("S");

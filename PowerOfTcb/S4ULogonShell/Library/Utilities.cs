@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using S4ULogonShell.Interop;
 
 namespace S4ULogonShell.Library
@@ -75,11 +76,26 @@ namespace S4ULogonShell.Library
 
             if (string.Compare(fqdn, Environment.MachineName, true) != 0)
             {
-                upn = Environment.UserName;
-                domain = fqdn;
-                pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
-                tokenSource = new TOKEN_SOURCE("NtLmSsp");
-                bSuccess = true;
+                var accountName = string.Format(@"{0}\{1}", domain, upn);
+                bSuccess = Helpers.ConvertAccountNameToSid(
+                    ref accountName,
+                    out string strSid,
+                    out SID_NAME_USE _);
+
+                if (bSuccess)
+                {
+                    if (Regex.IsMatch(strSid, @"^S-1-5-21(-\d+)+$", RegexOptions.IgnoreCase))
+                    {
+                        upn = Environment.UserName;
+                        domain = fqdn;
+                        pkgName = new LSA_STRING(Win32Consts.NEGOSSP_NAME);
+                        tokenSource = new TOKEN_SOURCE("NtLmSsp");
+                    }
+                    else
+                    {
+                        bSuccess = false;
+                    }
+                }
             }
 
             if (!bSuccess)
