@@ -2380,15 +2380,15 @@ GROUP INFORMATION
 -----------------
 
 Group Name                             Type             SID                                                            Attributes
-====================================== ================ ============================================================== ===============================================================
+====================================== ================ ============================================================== ==================================================
 Everyone                               Well-known group S-1-1-0                                                        Mandatory group, Enabled by default, Enabled group
 LOCAL                                  Well-known group S-1-2-0                                                        Mandatory group, Enabled by default, Enabled group
 CONSOLE LOGON                          Well-known group S-1-2-1                                                        Mandatory group, Enabled by default, Enabled group
 NT AUTHORITY\SERVICE                   Well-known group S-1-5-6                                                        Mandatory group, Enabled by default, Enabled group
 NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                       Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Mandatory group, Enabled by default, Enabled group, Group owner
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                   Enabled by default, Enabled group, Group owner
 BUILTIN\Users                          Alias            S-1-5-32-545                                                   Mandatory group, Enabled by default, Enabled group
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Mandatory group, Enabled by default, Enabled group
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464 Enabled by default, Enabled group, Group owner
 Mandatory Label\System Mandatory Level Label            S-1-16-16384
 ```
 
@@ -2434,40 +2434,22 @@ Install the latest PowerShell for new features and improvements! https://aka.ms/
 
 PS C:\Dev> whoami /user
 
-USER INFORMATION
-----------------
-
-User Name           SID
-=================== ========
-nt authority\system S-1-5-18
-PS C:\Dev> whoami /groups
-
 GROUP INFORMATION
 -----------------
 
-Group Name                             Type             SID
-Attributes
-====================================== ================ =============================================================== ===============================================================
-Everyone                               Well-known group S-1-1-0
-Mandatory group, Enabled by default, Enabled group
-LOCAL                                  Well-known group S-1-2-0
-Mandatory group, Enabled by default, Enabled group
-CONSOLE LOGON                          Well-known group S-1-2-1
-Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\SERVICE                   Well-known group S-1-5-6
-Mandatory group, Enabled by default, Enabled group
-NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11
-Mandatory group, Enabled by default, Enabled group
-BUILTIN\Backup Operators               Alias            S-1-5-32-551
-Mandatory group, Enabled by default, Enabled group
-BUILTIN\Administrators                 Alias            S-1-5-32-544
-Mandatory group, Enabled by default, Enabled group, Group owner
-BUILTIN\Users                          Alias            S-1-5-32-545
-Mandatory group, Enabled by default, Enabled group
-NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464  Mandatory group, Enabled by default, Enabled group
-Mandatory Label\System Mandatory Level Label            S-1-16-16384
-
-NT SERVICE\WinDefend                   Well-known group S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736 Mandatory group, Enabled by default, Enabled group
+Group Name                             Type             SID                                                             Attributes
+====================================== ================ =============================================================== ==================================================
+Everyone                               Well-known group S-1-1-0                                                         Mandatory group, Enabled by default, Enabled group
+LOCAL                                  Well-known group S-1-2-0                                                         Mandatory group, Enabled by default, Enabled group
+CONSOLE LOGON                          Well-known group S-1-2-1                                                         Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\SERVICE                   Well-known group S-1-5-6                                                         Mandatory group, Enabled by default, Enabled group
+NT AUTHORITY\Authenticated Users       Well-known group S-1-5-11                                                        Mandatory group, Enabled by default, Enabled group
+BUILTIN\Backup Operators               Alias            S-1-5-32-551                                                    Enabled by default, Enabled group
+BUILTIN\Administrators                 Alias            S-1-5-32-544                                                    Enabled by default, Enabled group, Group owner
+BUILTIN\Users                          Alias            S-1-5-32-545                                                    Mandatory group, Enabled by default, Enabled group
+NT SERVICE\TrustedInstaller            Well-known group S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464  Enabled by default, Enabled group, Group owner
+Mandatory Label\System Mandatory Level Label            S-1-16-16384                                                    
+NT SERVICE\WinDefend                   Well-known group S-1-5-80-1913148863-3492339771-4165695881-2087618961-4109116736 Enabled by default, Enabled group
 ```
 
 To resolve account SID, set `-l` flag and `-a` option with account name as follows:
