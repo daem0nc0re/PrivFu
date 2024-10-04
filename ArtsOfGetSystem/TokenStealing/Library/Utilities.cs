@@ -92,7 +92,10 @@ namespace TokenStealing.Library
                             else
                             {
                                 IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+                                var tokenPrivileges = new TOKEN_PRIVILEGES {
+                                    PrivilegeCount = 1,
+                                    Privileges = new LUID_AND_ATTRIBUTES[1]
+                                };
 
                                 if (NativeMethods.LookupPrivilegeValue(
                                     null,

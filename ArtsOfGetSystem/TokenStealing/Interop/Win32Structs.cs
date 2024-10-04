@@ -101,18 +101,6 @@ namespace TokenStealing.Interop
         public int PrivilegeCount;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public LUID_AND_ATTRIBUTES[] Privileges;
-
-        public TOKEN_PRIVILEGES()
-        {
-            PrivilegeCount = 0;
-            Privileges = new LUID_AND_ATTRIBUTES[1];
-        }
-
-        public TOKEN_PRIVILEGES(int nPrivilegeCount)
-        {
-            PrivilegeCount = nPrivilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[1];
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
