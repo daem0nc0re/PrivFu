@@ -200,17 +200,6 @@ namespace TokenAssignor.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct THREAD_BASIC_INFORMATION
-    {
-        public NTSTATUS ExitStatus;
-        public IntPtr TebBaseAddress;
-        public CLIENT_ID ClientId;
-        public UIntPtr /* KAFFINITY */ AffinityMask;
-        public int /* KPRIORITY */ Priority;
-        public int /* KPRIORITY */ BasePriority;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;

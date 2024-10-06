@@ -48,16 +48,6 @@ namespace ServiceShell.Interop
             out int pdwProfileLength,
             out QUOTA_LIMITS pQuotaLimits);
 
-        [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool LookupAccountSid(
-            string lpSystemName,
-            IntPtr Sid,
-            StringBuilder Name,
-            ref int cchName,
-            StringBuilder ReferencedDomainName,
-            ref int cchReferencedDomainName,
-            out SID_NAME_USE peUse);
-
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtAdjustPrivilegesToken(
             IntPtr TokenHandle,

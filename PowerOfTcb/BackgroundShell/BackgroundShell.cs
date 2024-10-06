@@ -1,5 +1,4 @@
-﻿using System;
-using BackgroundShell.Library;
+﻿using BackgroundShell.Library;
 
 namespace BackgroundShell
 {

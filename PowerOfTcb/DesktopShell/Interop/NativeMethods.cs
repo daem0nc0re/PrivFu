@@ -56,42 +56,10 @@ namespace DesktopShell.Interop
             out IntPtr NewTokenHandle);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtGetNextThread(
-            IntPtr ProcessHandle,
-            IntPtr ThreadHandle,
-            ACCESS_MASK DesiredAccess,
-            uint HandleAttributes,
-            uint Flags,
-            out IntPtr NewThreadHandle);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtOpenProcess(
-            out IntPtr ProcessHandle,
-            ACCESS_MASK DesiredAccess,
-            in OBJECT_ATTRIBUTES ObjectAttributes,
-            in CLIENT_ID ClientId);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenProcessToken(
             IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtQueryInformationProcess(
-            IntPtr ProcessHandle,
-            PROCESSINFOCLASS ProcessInformationClass,
-            IntPtr pProcessInformation,
-            uint ProcessInformationLength,
-            out uint ReturnLength);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtQueryInformationThread(
-            IntPtr ThreadHandle,
-            THREADINFOCLASS ThreadInformationClass,
-            IntPtr ThreadInformation,
-            uint ThreadInformationLength,
-            out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
@@ -110,37 +78,11 @@ namespace DesktopShell.Interop
             out uint NumberOfBytesReaded);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtResumeThread(
-            IntPtr ThreadHandle,
-            out uint SuspendCount);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtSetInformationProcess(
-            IntPtr ProcessHandle,
-            PROCESSINFOCLASS ProcessInformationClass,
-            IntPtr ProcessInformation,
-            uint ProcessInformationLength);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtSetInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
             IntPtr TokenInformation,
             uint TokenInformationLength);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtTerminateProcess(IntPtr ProcessHandle, NTSTATUS ExitStatus);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtWriteVirtualMemory(
-            IntPtr ProcessHandle,
-            IntPtr BaseAddress,
-            IntPtr Buffer,
-            uint NumberOfBytesToWrite,
-            out uint NumberOfBytesWritten);
-
-        [DllImport("ntdll.dll")]
-        public static extern int RtlGetActiveConsoleId();
 
         [DllImport("ntdll.dll")]
         public static extern uint RtlNtStatusToDosError(NTSTATUS Status);

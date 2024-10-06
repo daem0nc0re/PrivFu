@@ -113,36 +113,12 @@ namespace DesktopShell.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct PROCESS_ACCESS_TOKEN
-    {
-        public IntPtr Token;
-        public IntPtr Thread;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct PROCESS_BASIC_INFORMATION
-    {
-        public NTSTATUS ExitStatus;
-        public IntPtr PebBaseAddress;
-        public UIntPtr AffinityMask;
-        public int BasePriority;
-        public UIntPtr UniqueProcessId;
-        public UIntPtr InheritedFromUniqueProcessId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct PROCESS_INFORMATION
     {
         public IntPtr hProcess;
         public IntPtr hThread;
         public int dwProcessId;
         public int dwThreadId;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct PROCESS_SESSION_INFORMATION
-    {
-        public uint SessionId;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -166,17 +142,6 @@ namespace DesktopShell.Interop
         public IntPtr hStdInput;
         public IntPtr hStdOutput;
         public IntPtr hStdError;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct THREAD_BASIC_INFORMATION
-    {
-        public NTSTATUS ExitStatus;
-        public IntPtr TebBaseAddress;
-        public CLIENT_ID ClientId;
-        public UIntPtr /* KAFFINITY */ AffinityMask;
-        public int /* KPRIORITY */ Priority;
-        public int /* KPRIORITY */ BasePriority;
     }
 
     [StructLayout(LayoutKind.Sequential)]

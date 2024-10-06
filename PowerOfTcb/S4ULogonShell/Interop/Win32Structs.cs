@@ -367,12 +367,6 @@ namespace S4ULogonShell.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_USER
-    {
-        public SID_AND_ATTRIBUTES User;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct UNICODE_STRING : IDisposable
     {
         public ushort Length;

@@ -219,12 +219,6 @@ namespace ServiceShell.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct TOKEN_USER
-    {
-        public SID_AND_ATTRIBUTES User;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;

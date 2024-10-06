@@ -282,25 +282,6 @@ namespace BackgroundShell.Library
         }
 
 
-        public static bool RevertThreadToken()
-        {
-            int nDosErrorCode;
-            NTSTATUS ntstatus;
-            var pInfoBuffer = Marshal.AllocHGlobal(IntPtr.Size);
-            Marshal.WriteIntPtr(pInfoBuffer, IntPtr.Zero);
-            ntstatus = NativeMethods.NtSetInformationThread(
-                new IntPtr(-2),
-                THREADINFOCLASS.ThreadImpersonationToken,
-                pInfoBuffer,
-                (uint)IntPtr.Size);
-            Marshal.FreeHGlobal(pInfoBuffer);
-            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
         public static bool SetTokenSessionId(IntPtr hToken, int nSessionId)
         {
             int nDosErrorCode;

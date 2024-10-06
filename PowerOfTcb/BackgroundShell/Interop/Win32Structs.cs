@@ -138,13 +138,6 @@ namespace BackgroundShell.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal struct PROCESS_ACCESS_TOKEN
-    {
-        public IntPtr Token;
-        public IntPtr Thread;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal struct PROCESS_INFORMATION
     {
         public IntPtr hProcess;
@@ -183,17 +176,6 @@ namespace BackgroundShell.Interop
         public IntPtr hStdInput;
         public IntPtr hStdOutput;
         public IntPtr hStdError;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct THREAD_BASIC_INFORMATION
-    {
-        public NTSTATUS ExitStatus;
-        public IntPtr TebBaseAddress;
-        public CLIENT_ID ClientId;
-        public UIntPtr /* KAFFINITY */ AffinityMask;
-        public int /* KPRIORITY */ Priority;
-        public int /* KPRIORITY */ BasePriority;
     }
 
     [StructLayout(LayoutKind.Sequential)]

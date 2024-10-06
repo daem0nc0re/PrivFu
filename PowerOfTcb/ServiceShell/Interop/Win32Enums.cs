@@ -22,21 +22,6 @@ namespace ServiceShell.Interop
         PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
         PROCESS_ALL_ACCESS = 0x001F0FFF,
 
-        // For Thread
-        THREAD_TERMINATE = 0x00000001,
-        THREAD_SUSPEND_RESUME = 0x00000002,
-        THREAD_GET_CONTEXT = 0x00000008,
-        THREAD_SET_CONTEXT = 0x00000010,
-        THREAD_QUERY_INFORMATION = 0x00000040,
-        THREAD_SET_INFORMATION = 0x00000020,
-        THREAD_SET_THREAD_TOKEN = 0x00000080,
-        THREAD_IMPERSONATE = 0x00000100,
-        THREAD_DIRECT_IMPERSONATION = 0x00000200,
-        THREAD_SET_LIMITED_INFORMATION = 0x00000400,
-        THREAD_QUERY_LIMITED_INFORMATION = 0x00000800,
-        THREAD_RESUME = 0x00001000,
-        THREAD_ALL_ACCESS = 0x001FFFFF,
-
         // For Token
         TOKEN_ASSIGN_PRIMARY = 0x00000001,
         TOKEN_DUPLICATE = 0x00000002,
@@ -246,21 +231,6 @@ namespace ServiceShell.Interop
         SW_SHOWDEFAULT = 10,
         SW_FORCEMINIMIZE = 11,
         SW_MAX = 11
-    }
-
-    internal enum SID_NAME_USE
-    {
-        User = 1,
-        Group,
-        Domain,
-        Alias,
-        WellKnownGroup,
-        DeletedAccount,
-        Invalid,
-        Unknown,
-        Computer,
-        Label,
-        LogonSession
     }
 
     internal enum THREADINFOCLASS

@@ -476,35 +476,6 @@ namespace VirtualShell.Library
         }
 
 
-        public static bool GetProcessUser(
-            IntPtr hProcess,
-            out string stringSid,
-            out string accountName,
-            out SID_NAME_USE sidType)
-        {
-            var bSuccess = false;
-            NTSTATUS ntstatus = NativeMethods.NtOpenProcessToken(
-                hProcess,
-                ACCESS_MASK.TOKEN_QUERY,
-                out IntPtr hToken);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                bSuccess = GetTokenUser(hToken, out stringSid, out accountName, out sidType);
-            }
-            else
-            {
-                int nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-                NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-                stringSid = null;
-                accountName = null;
-                sidType = SID_NAME_USE.Unknown;
-            }
-
-            return bSuccess;
-        }
-
-
         public static bool GetTokenGroups(
             IntPtr hToken,
             out Dictionary<string, SE_GROUP_ATTRIBUTES> tokenGroups)
@@ -584,80 +555,6 @@ namespace VirtualShell.Library
             }
 
             nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-            Marshal.FreeHGlobal(pInfoBuffer);
-
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
-        public static bool GetTokenUser(
-            IntPtr hToken,
-            out string stringSid,
-            out string accountName,
-            out SID_NAME_USE sidType)
-        {
-            int nDosErrorCode;
-            var pInfoBuffer = Marshal.AllocHGlobal(0x400);
-            NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
-                hToken,
-                TOKEN_INFORMATION_CLASS.TokenUser,
-                pInfoBuffer,
-                0x100u,
-                out uint _);
-            stringSid = null;
-            accountName = null;
-            sidType = SID_NAME_USE.Unknown;
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                bool bSuccess;
-                long nAuthority = 0;
-                var info = (TOKEN_USER)Marshal.PtrToStructure(pInfoBuffer, typeof(TOKEN_USER));
-                var nSubAuthorityCount = (int)Marshal.ReadByte(info.User.Sid, 1);
-                var stringSidBuilder = new StringBuilder("S-1");
-                var nameBuilder = new StringBuilder(255);
-                var domainBuilder = new StringBuilder(255);
-                int nNameLength = 255;
-                int nDomainLength = 255;
-
-                for (int idx = 0; idx < 6; idx++)
-                {
-                    nAuthority <<= 8;
-                    nAuthority |= (long)Marshal.ReadByte(info.User.Sid, 2 + idx);
-                }
-
-                stringSidBuilder.AppendFormat("-{0}", nAuthority);
-
-                for (int idx = 0; idx < nSubAuthorityCount; idx++)
-                    stringSidBuilder.AppendFormat("-{0}", Marshal.ReadInt32(info.User.Sid, 8 + (idx * 4)));
-
-                stringSid = stringSidBuilder.ToString();
-                bSuccess = NativeMethods.LookupAccountSid(
-                    null,
-                    info.User.Sid,
-                    nameBuilder,
-                    ref nNameLength,
-                    domainBuilder,
-                    ref nDomainLength,
-                    out sidType);
-                nDosErrorCode = Marshal.GetLastWin32Error();
-
-                if (bSuccess)
-                {
-                    if ((nNameLength > 0) && (nDomainLength > 0))
-                        accountName = string.Format(@"{0}\{1}", domainBuilder.ToString(), nameBuilder.ToString());
-                    else if (nNameLength > 0)
-                        accountName = nameBuilder.ToString();
-                    else if (nDomainLength > 0)
-                        accountName = domainBuilder.ToString();
-                }
-            }
-            else
-            {
-                nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-            }
-
             NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
             Marshal.FreeHGlobal(pInfoBuffer);
 

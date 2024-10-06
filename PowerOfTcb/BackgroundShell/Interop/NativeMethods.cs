@@ -56,21 +56,6 @@ namespace BackgroundShell.Interop
             out IntPtr TokenHandle);
 
         [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtOpenThread(
-            out IntPtr ThreadHandle,
-            ACCESS_MASK DesiredAccess,
-            in OBJECT_ATTRIBUTES ObjectAttributes,
-            in CLIENT_ID ClientId);
-
-        [DllImport("ntdll.dll")]
-        public static extern NTSTATUS NtQueryInformationThread(
-            IntPtr ThreadHandle,
-            THREADINFOCLASS ThreadInformationClass,
-            IntPtr ThreadInformation,
-            uint ThreadInformationLength,
-            out uint ReturnLength);
-
-        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtQueryInformationToken(
             IntPtr TokenHandle,
             TOKEN_INFORMATION_CLASS TokenInformationClass,
