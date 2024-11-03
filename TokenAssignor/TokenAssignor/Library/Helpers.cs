@@ -297,7 +297,7 @@ namespace TokenAssignor.Library
                 stringSidBuilder.AppendFormat("-{0}", nAuthority);
 
                 for (int idx = 0; idx < nSubAuthorityCount; idx++)
-                    stringSidBuilder.AppendFormat("-{0}", Marshal.ReadInt32(info.User.Sid, 8 + (idx * 4)));
+                    stringSidBuilder.AppendFormat("-{0}", (uint)Marshal.ReadInt32(info.User.Sid, 8 + (idx * 4)));
 
                 stringSid = stringSidBuilder.ToString();
                 bSuccess = NativeMethods.LookupAccountSid(
