@@ -11,6 +11,7 @@ namespace TrustExec.Library
         public static bool LookupAccountSid(string accountName, string strSid)
         {
             bool bSuccess = false;
+            strSid = strSid.ToUpper();
 
             if (!string.IsNullOrEmpty(accountName) && !string.IsNullOrEmpty(strSid))
             {
