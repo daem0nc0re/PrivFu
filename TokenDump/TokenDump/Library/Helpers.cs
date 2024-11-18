@@ -276,7 +276,7 @@ namespace TokenDump.Library
             var status = false;
             var objectAttributes = new OBJECT_ATTRIBUTES(
                 rootKey,
-                OBJECT_ATTRIBUTES_FLAGS.OBJ_CASE_INSENSITIVE);
+                OBJECT_ATTRIBUTES_FLAGS.CaseInsensitive);
             NTSTATUS ntstatus = NativeMethods.NtOpenKey(
                 out IntPtr hKey,
                 ACCESS_MASK.KEY_READ,
@@ -475,7 +475,7 @@ namespace TokenDump.Library
             IntPtr pInfoBuffer;
             bool status;
             string rootPath = @"\GLOBAL??";
-            var objectFlags = OBJECT_ATTRIBUTES_FLAGS.OBJ_CASE_INSENSITIVE;
+            var objectFlags = OBJECT_ATTRIBUTES_FLAGS.CaseInsensitive;
             var nInfoLength = 0x800u;
             var objectAttributes = new OBJECT_ATTRIBUTES(rootPath, objectFlags);
             var symLinks = new List<string>();

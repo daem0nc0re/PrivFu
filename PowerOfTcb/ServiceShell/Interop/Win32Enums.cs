@@ -93,7 +93,11 @@ namespace ServiceShell.Interop
     [Flags]
     internal enum OBJECT_ATTRIBUTES_FLAGS : uint
     {
+        None = 0x00000000,
+        ProtectClose = 0x00000001,
         Inherit = 0x00000002,
+        AuditObjectClose = 0x00000004,
+        NoEightsUpgrade = 0x00000008,
         Permanent = 0x00000010,
         Exclusive = 0x00000020,
         CaseInsensitive = 0x00000040,
@@ -101,7 +105,9 @@ namespace ServiceShell.Interop
         OpenLink = 0x00000100,
         KernelHandle = 0x00000200,
         ForceAccessCheck = 0x00000400,
-        ValidAttributes = 0x000007F2
+        IgnoreImpersonatedDevicemap = 0x00000800,
+        DontReparse = 0x00001000,
+        ValieAttributes = 0x00001FF2
     }
 
     [Flags]
