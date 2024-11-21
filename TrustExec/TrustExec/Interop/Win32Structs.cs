@@ -286,11 +286,11 @@ namespace TrustExec.Interop
         public int Length;
         public IntPtr RootDirectory;
         private IntPtr objectName;
-        public uint Attributes;
+        public OBJECT_ATTRIBUTES_FLAGS Attributes;
         public IntPtr SecurityDescriptor;
         public IntPtr SecurityQualityOfService;
 
-        public OBJECT_ATTRIBUTES(string name, uint attrs)
+        public OBJECT_ATTRIBUTES(string name, OBJECT_ATTRIBUTES_FLAGS attrs)
         {
             Length = 0;
             RootDirectory = IntPtr.Zero;

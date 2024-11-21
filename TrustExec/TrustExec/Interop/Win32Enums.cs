@@ -210,6 +210,26 @@ namespace TrustExec.Interop
     }
 
     [Flags]
+    internal enum OBJECT_ATTRIBUTES_FLAGS : uint
+    {
+        None = 0x00000000,
+        ProtectClose = 0x00000001,
+        Inherit = 0x00000002,
+        AuditObjectClose = 0x00000004,
+        NoEightsUpgrade = 0x00000008,
+        Permanent = 0x00000010,
+        Exclusive = 0x00000020,
+        CaseInsensitive = 0x00000040,
+        OpenIf = 0x00000080,
+        OpenLink = 0x00000100,
+        KernelHandle = 0x00000200,
+        ForceAccessCheck = 0x00000400,
+        IgnoreImpersonatedDevicemap = 0x00000800,
+        DontReparse = 0x00001000,
+        ValieAttributes = 0x00001FF2
+    }
+
+    [Flags]
     internal enum PROCESS_CREATION_FLAGS : uint
     {
         NONE = 0x00000000,
