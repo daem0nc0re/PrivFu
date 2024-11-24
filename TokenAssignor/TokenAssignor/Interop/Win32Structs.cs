@@ -4,8 +4,6 @@ using System.Text;
 
 namespace TokenAssignor.Interop
 {
-    using NTSTATUS = Int32;
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct CLIENT_ID
     {

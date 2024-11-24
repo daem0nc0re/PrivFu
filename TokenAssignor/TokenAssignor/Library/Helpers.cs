@@ -200,6 +200,9 @@ namespace TokenAssignor.Library
                 hProcess,
                 ACCESS_MASK.TOKEN_QUERY,
                 out IntPtr hToken);
+            stringSid = null;
+            accountName = null;
+            sidType = SID_NAME_USE.Unknown;
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
@@ -207,9 +210,6 @@ namespace TokenAssignor.Library
             }
             else
             {
-                stringSid = null;
-                accountName = null;
-                sidType = SID_NAME_USE.Unknown;
                 int nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
                 NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
             }
