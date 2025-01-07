@@ -4,6 +4,8 @@ using System.Text;
 
 namespace SwitchPriv.Interop
 {
+    using NTSTATUS = Int32;
+
     [StructLayout(LayoutKind.Sequential)]
     internal struct CLIENT_ID
     {
@@ -151,6 +153,17 @@ namespace SwitchPriv.Interop
     {
         public IntPtr Sid; // PSID
         public uint Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct THREAD_BASIC_INFORMATION
+    {
+        public NTSTATUS ExitStatus;
+        public IntPtr /* PTEB */ TebBaseAddress;
+        public CLIENT_ID ClientId;
+        public UIntPtr /* KAFFINITY */ AffinityMask;
+        public int /* KPRIORITY */ Priority;
+        public int /* KPRIORITY */ BasePriority;
     }
 
     [StructLayout(LayoutKind.Sequential)]

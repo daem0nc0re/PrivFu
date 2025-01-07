@@ -57,6 +57,76 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool GetProcessThreads(int pid, out List<int> tids)
+        {
+            var bSuccess = false;
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
+                ACCESS_MASK.PROCESS_QUERY_INFORMATION,
+                in objectAttributes,
+                in clientId);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                bSuccess = GetProcessThreads(hProcess, out tids);
+            else
+                tids = new List<int>();
+
+            return bSuccess;
+        }
+
+
+        public static bool GetProcessThreads(IntPtr hProcess, out List<int> tids)
+        {
+            NTSTATUS ntstatus;
+            var hThread = IntPtr.Zero;
+            tids = new List<int>();
+
+            do
+            {
+                ntstatus = NativeMethods.NtGetNextThread(
+                    hProcess,
+                    hThread,
+                    ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                    OBJECT_ATTRIBUTES_FLAGS.None,
+                    0u,
+                    out IntPtr hNextThread);
+
+                if (hThread != IntPtr.Zero)
+                    NativeMethods.NtClose(hThread);
+
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                {
+                    var nInfoLength = (uint)Marshal.SizeOf(typeof(THREAD_BASIC_INFORMATION));
+                    var pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+                    ntstatus = NativeMethods.NtQueryInformationThread(
+                        hNextThread,
+                        THREADINFOCLASS.ThreadBasicInformation,
+                        pInfoBuffer,
+                        nInfoLength,
+                        out uint _);
+                    hThread = hNextThread;
+
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                    {
+                        var info = (THREAD_BASIC_INFORMATION)Marshal.PtrToStructure(
+                            pInfoBuffer,
+                            typeof(THREAD_BASIC_INFORMATION));
+                        tids.Add(info.ClientId.UniqueThread.ToInt32());
+                    }
+
+                    Marshal.FreeHGlobal(pInfoBuffer);
+                }
+            } while (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+            return (tids.Count > 0);
+        }
+
+
         public static IntPtr GetProcessToken(int pid, TOKEN_TYPE tokenType)
         {
             NTSTATUS ntstatus;
@@ -347,7 +417,7 @@ namespace SwitchPriv.Library
             outputBuilder.Append("    * 3 : MEDIUM_PLUS_MANDATORY_LEVEL\n");
             outputBuilder.Append("    * 4 : HIGH_MANDATORY_LEVEL\n");
             outputBuilder.Append("    * 5 : SYSTEM_MANDATORY_LEVEL\n");
-            outputBuilder.Append("    * 6 : PROTECTED_MANDATORY_LEVEL\n");
+            outputBuilder.Append("    * 6 : PROTECTED_MANDATORY_LEVEL\n\n");
             outputBuilder.Append("Example :\n\n");
             outputBuilder.Append("    * Down a specific process' integrity level to Low.\n\n");
             outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -s 1\n\n", AppDomain.CurrentDomain.FriendlyName);

@@ -10,6 +10,7 @@ namespace SwitchPriv.Interop
 
         // NtStatus
         public const NTSTATUS STATUS_SUCCESS = 0;
+        public static readonly NTSTATUS STATUS_INFO_LENGTH_MISMATCH = Convert.ToInt32("0xC0000004", 16);
         public static readonly NTSTATUS STATUS_PRIVILEGE_NOT_HELD = Convert.ToInt32("0xC0000061", 16);
 
         // Win32Error

@@ -8,7 +8,7 @@ namespace SwitchPriv
     {
         static void Main(string[] args)
         {
-            CommandLineParser options = new CommandLineParser();
+            var options = new CommandLineParser();
             var exclusive = new List<string> { "disable", "enable", "filter", "get", "integrity", "remove", "search" };
 
             try
@@ -32,15 +32,11 @@ namespace SwitchPriv
             catch (InvalidOperationException ex)
             {
                 Console.WriteLine(ex.Message);
-
-                return;
             }
             catch (ArgumentException ex)
             {
                 options.GetHelp();
                 Console.WriteLine(ex.Message);
-
-                return;
             }
         }
     }

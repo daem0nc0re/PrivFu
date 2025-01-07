@@ -59,11 +59,28 @@ namespace SwitchPriv.Interop
             out IntPtr NewTokenHandle);
 
         [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtGetNextThread(
+            IntPtr ProcessHandle,
+            IntPtr ThreadHandle,
+            ACCESS_MASK DesiredAccess,
+            OBJECT_ATTRIBUTES_FLAGS HandleAttributes,
+            uint Flags, // Reserved. Must be zero.
+            out IntPtr NewThreadHandle);
+
+        [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenProcess(
             out IntPtr ProcessHandle,
             ACCESS_MASK DesiredAccess,
             in OBJECT_ATTRIBUTES ObjectAttributes,
             in CLIENT_ID ClientId);
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationThread(
+            IntPtr ThreadHandle,
+            THREADINFOCLASS ThreadInformationClass,
+            IntPtr ThreadInformation,
+            uint ThreadInformationLength,
+            out uint ReturnLength);
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS NtOpenProcessToken(
