@@ -72,9 +72,15 @@ namespace SwitchPriv.Library
                 in clientId);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
                 bSuccess = GetProcessThreads(hProcess, out tids);
+            }
             else
+            {
+                var nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+                NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
                 tids = new List<int>();
+            }
 
             return bSuccess;
         }
@@ -83,6 +89,7 @@ namespace SwitchPriv.Library
         public static bool GetProcessThreads(IntPtr hProcess, out List<int> tids)
         {
             NTSTATUS ntstatus;
+            int nDosErrorCode;
             var hThread = IntPtr.Zero;
             tids = new List<int>();
 
@@ -122,6 +129,12 @@ namespace SwitchPriv.Library
                     Marshal.FreeHGlobal(pInfoBuffer);
                 }
             } while (ntstatus == Win32Consts.STATUS_SUCCESS);
+
+            if (ntstatus == Win32Consts.STATUS_NO_MORE_ENTRIES)
+                ntstatus = Win32Consts.STATUS_SUCCESS;
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
 
             return (tids.Count > 0);
         }
@@ -237,6 +250,35 @@ namespace SwitchPriv.Library
             }
 
             return bSuccess;
+        }
+
+
+        public static int GetThreadProcessId(IntPtr hThread)
+        {
+            int nDosErrorCode;
+            var nThreadPid = -1;
+            var nInfoLength = (uint)Marshal.SizeOf(typeof(THREAD_BASIC_INFORMATION));
+            var pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
+            NTSTATUS ntstatus = NativeMethods.NtQueryInformationThread(
+                hThread,
+                THREADINFOCLASS.ThreadBasicInformation,
+                pInfoBuffer,
+                nInfoLength,
+                out uint _);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                var info = (THREAD_BASIC_INFORMATION)Marshal.PtrToStructure(
+                    pInfoBuffer,
+                    typeof(THREAD_BASIC_INFORMATION));
+                nThreadPid = info.ClientId.UniqueProcess.ToInt32();
+            }
+
+            Marshal.FreeHGlobal(pInfoBuffer);
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return nThreadPid;
         }
 
 
