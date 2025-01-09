@@ -164,6 +164,57 @@ namespace SwitchPriv.Library
         }
 
 
+        public static bool GetProcessThreadInformation(
+            int pid,
+            out Dictionary<int, bool> threadAccessible,
+            out Dictionary<int, bool> impoersonateStatus,
+            out Dictionary<int, string> impersonateUser)
+        {
+            bool bSuccess = Helpers.GetProcessThreads(
+                pid,
+                out List<int> threadIds);
+            threadAccessible = new Dictionary<int, bool>();
+            impoersonateStatus = new Dictionary<int, bool>();
+            impersonateUser = new Dictionary<int, string>();
+
+            if (!bSuccess)
+                return false;
+
+            foreach (var threadId in threadIds)
+            {
+                var objectAttributes = new OBJECT_ATTRIBUTES
+                {
+                    Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+                };
+                var clientId = new CLIENT_ID { UniqueThread = new IntPtr(threadId) };
+                NTSTATUS ntstatus = NativeMethods.NtOpenThread(
+                    out IntPtr hThread,
+                    ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                    in objectAttributes,
+                    in clientId);
+                threadAccessible.Add(threadId, false);
+                impoersonateStatus.Add(threadId, false);
+                impersonateUser.Add(threadId, null);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    continue;
+
+                ntstatus = NativeMethods.NtOpenThreadToken(
+                    hThread,
+                    ACCESS_MASK.TOKEN_QUERY,
+                    BOOLEAN.FALSE,
+                    out IntPtr hToken);
+
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                {
+                    impoersonateStatus[threadId] = true;
+                }
+            }
+
+            return bSuccess;
+        }
+
+
         public static bool ImpersonateAsSmss()
         {
             int nSmssId;
@@ -284,6 +335,41 @@ namespace SwitchPriv.Library
                     tokenAccessMask,
                     out hToken);
                 NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    hToken = IntPtr.Zero;
+            }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return hToken;
+        }
+
+
+        public static IntPtr OpenThreadToken(int tid, ACCESS_MASK tokenAccessMask)
+        {
+            int nDosErrorCode;
+            var hToken = IntPtr.Zero;
+            var objectAttrbutes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueThread = new IntPtr(tid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenThread(
+                out IntPtr hThread,
+                ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                in objectAttrbutes,
+                in clientId);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                ntstatus = NativeMethods.NtOpenThreadToken(
+                    hThread,
+                    tokenAccessMask,
+                    BOOLEAN.FALSE,
+                    out hToken);
+                NativeMethods.NtClose(hThread);
 
                 if (ntstatus != Win32Consts.STATUS_SUCCESS)
                     hToken = IntPtr.Zero;
