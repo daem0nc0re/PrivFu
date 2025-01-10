@@ -8,6 +8,7 @@ namespace TokenDump.Handler
         public static void Run(CommandLineParser options)
         {
             int pid = 0;
+            int tid = 0;
             string account = options.GetValue("account");
             bool debug = options.GetFlag("debug");
 
@@ -45,6 +46,19 @@ namespace TokenDump.Handler
                 }
             }
 
+            if (!string.IsNullOrEmpty(options.GetValue("tid")))
+            {
+                try
+                {
+                    tid = Convert.ToInt32(options.GetValue("tid"), 10);
+                }
+                catch
+                {
+                    Console.WriteLine("\n[!] Failed to parse TID value.\n");
+                    return;
+                }
+            }
+
             Console.WriteLine();
 
             do
@@ -60,47 +74,26 @@ namespace TokenDump.Handler
                 }
                 else if (options.GetFlag("scan"))
                 {
-                    int tid;
                     IntPtr hObject;
 
-                    if (pid > 0)
+                    if (string.IsNullOrEmpty(options.GetValue("value")))
                     {
-                        if (string.IsNullOrEmpty(options.GetValue("value")))
-                        {
-                            hObject = IntPtr.Zero;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                hObject = new IntPtr(Convert.ToInt32(options.GetValue("value"), 16));
-                            }
-                            catch
-                            {
-                                Console.WriteLine("[!] Failed to parse handle value.");
-                                break;
-                            }
-                        }
-
-                        if (string.IsNullOrEmpty(options.GetValue("tid")))
-                        {
-                            tid = 0;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                tid = Convert.ToInt32(options.GetValue("tid"), 10);
-                            }
-                            catch
-                            {
-                                Console.WriteLine("[!] Failed to parse TID value.");
-                                break;
-                            }
-                        }
-
-                        Modules.GetVerboseTokenInformation(pid, tid, hObject, debug);
+                        hObject = IntPtr.Zero;
                     }
+                    else
+                    {
+                        try
+                        {
+                            hObject = new IntPtr(Convert.ToInt32(options.GetValue("value"), 16));
+                        }
+                        catch
+                        {
+                            Console.WriteLine("[!] Failed to parse handle value.");
+                            break;
+                        }
+                    }
+
+                    Modules.GetVerboseTokenInformation(pid, tid, hObject, debug);
                 }
                 else
                 {

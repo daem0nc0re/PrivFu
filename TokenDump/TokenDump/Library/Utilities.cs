@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using TokenDump.Interop;
@@ -373,7 +372,7 @@ namespace TokenDump.Library
                 var imageFilePath = Helpers.ConvertDevicePathToDriveLetter(info.ImageFilePath);
 
                 outputBuilder.AppendFormat("ImageFilePath       : {0}\n", imageFilePath ?? "N/A");
-                outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine);
+                outputBuilder.AppendFormat("CommandLine         : {0}\n", info.CommandLine ?? "N/A");
             }
 
             outputBuilder.AppendFormat("Token User          : {0} (SID: {1})\n", info.TokenUserName, info.TokenUserSid);
@@ -398,8 +397,7 @@ namespace TokenDump.Library
             {
                 outputBuilder.AppendFormat("AppContainer Name   : {0}\n", info.AppContainerName ?? "N/A");
                 outputBuilder.AppendFormat("AppContainer SID    : {0}\n", info.AppContainerSid ?? "N/A");
-                outputBuilder.AppendFormat(
-                    "AppContainer Number : {0}\n",
+                outputBuilder.AppendFormat("AppContainer Number : {0}\n",
                     (info.AppContainerNumber == uint.MaxValue) ? "N/A" : info.AppContainerNumber.ToString());
             }
 
@@ -409,15 +407,14 @@ namespace TokenDump.Library
             if (BitConverter.ToInt64(info.TokenSource.SourceName, 0) == 0L)
             {
                 outputBuilder.AppendFormat("Token Source        : N/A\n");
-                outputBuilder.AppendFormat("Token Source ID     : N/A\n");
+                outputBuilder.AppendFormat("Token Source ID     : N/A\n\n");
             }
             else
             {
                 outputBuilder.AppendFormat("Token Source        : {0}\n", Encoding.ASCII.GetString(info.TokenSource.SourceName));
-                outputBuilder.AppendFormat("Token Source ID     : 0x{0}\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
+                outputBuilder.AppendFormat("Token Source ID     : 0x{0}\n\n", info.TokenSource.SourceIdentifier.ToInt64().ToString("X16"));
             }
 
-            outputBuilder.Append("\n");
             outputBuilder.Append(ParseTokenPrivilegesTableToString(privs));
             outputBuilder.Append(ParseTokenGroupsTableToString(groups));
 

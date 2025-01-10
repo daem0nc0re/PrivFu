@@ -220,9 +220,10 @@ namespace TokenDump.Interop
     [Flags]
     internal enum DUPLICATE_OPTION_FLAGS : uint
     {
-        CLOSE_SOURCE = 0x00000001,
-        SAME_ACCESS = 0x00000002,
-        SAME_ATTRIBUTES = 0x00000004
+        None = 0x000000000,
+        CloseSource = 0x00000001,
+        SameAccess = 0x00000002,
+        SameAttributes = 0x00000004
     }
 
     internal enum FWPM_SESSION_FLAGS : uint

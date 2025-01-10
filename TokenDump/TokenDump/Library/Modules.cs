@@ -231,18 +231,56 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetVerboseTokenInformation(int pid, int tid, IntPtr hObject, bool debug)
+        public static bool GetVerboseTokenInformation(int pid, int tid, IntPtr hObject, bool bDebug)
         {
-            IntPtr hProcess;
             var hThread = IntPtr.Zero;
             var info = new VerboseTokenInformation { ProcessId = pid, ThreadId = tid, Handle = hObject };
-            var status = false;
-            var accessMask = ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION;
+            var bSuccess = false;
 
-            if (hObject != IntPtr.Zero)
-                accessMask |= ACCESS_MASK.PROCESS_DUP_HANDLE;
+            if ((pid != 0) && (tid != 0))
+            {
+                Console.WriteLine("[-] PID and TID must not be specified at once.");
+                return false;
+            }
+            else if ((info.ProcessId == 0) && (info.ThreadId == 0))
+            {
+                Console.WriteLine("[-] Missing PID or TID.");
+                return false;
+            }
+            else if ((info.Handle != IntPtr.Zero) && (info.ProcessId == 0))
+            {
+                Console.WriteLine("[-] Missing handle source PID.");
+                return false;
+            }
 
-            if (debug)
+            if (info.Handle != IntPtr.Zero)
+            {
+                bSuccess = Helpers.GetSystemHandles(
+                    "Token",
+                    out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles);
+
+                if (bSuccess && handles.ContainsKey(pid))
+                {
+                    bSuccess = false;
+
+                    foreach (var handle in handles[pid])
+                    {
+                        if (new IntPtr(handle.HandleValue) == info.Handle)
+                        {
+                            bSuccess = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!bSuccess)
+                {
+                    Console.WriteLine("[-] No specified token handle belong to the specifed process.");
+                    return false;
+                }
+            }
+
+            if (bDebug)
             {
                 Console.WriteLine("[>] Trying to enable SeDebugPrivilege.");
 
@@ -270,115 +308,34 @@ namespace TokenDump.Library
             {
                 IntPtr hToken;
 
-                if (info.ThreadId == 0)
+                if (info.Handle != IntPtr.Zero)
                 {
-                    hProcess = NativeMethods.OpenProcess(accessMask, false, info.ProcessId);
-                }
-                else
-                {
-                    status = Helpers.OpenRemoteThread(
+                    hToken = Helpers.DuplicateHandleFromProcess(
                         info.ProcessId,
-                        info.ThreadId,
-                        ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                        ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
-                        out hProcess,
-                        out hThread);
-
-                    if (!status)
-                        break;
-                }
-
-                if (hProcess == IntPtr.Zero)
-                {
-                    if (Marshal.GetLastWin32Error() == Win32Consts.ERROR_INVALID_PARAMETER)
-                        Console.WriteLine("[-] Specified PID is not found.");
-                    else if (Marshal.GetLastWin32Error() == Win32Consts.ERROR_ACCESS_DENIED)
-                        Console.WriteLine("[-] Access is denied.");
-                    else if (info.ThreadId == 0)
-                        Console.WriteLine("[-] Failed to open the target process.");
-                    else
-                        Console.WriteLine("[-] Failed to open the target thread.");
-
-                    break;
-                }
-                else
-                {
-                    info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
-                    info.CommandLine = Helpers.GetProcessCommandLine(hProcess);
-
-                    if (string.IsNullOrEmpty(info.ImageFilePath))
-                        break;
-                    else
-                        info.ProcessName = Path.GetFileName(info.ImageFilePath);
-
-                    if (string.IsNullOrEmpty(info.CommandLine))
-                        info.CommandLine = "N/A";
-                }
-
-                if (info.ThreadId != 0)
-                {
-                    status = NativeMethods.OpenThreadToken(
-                        hThread,
-                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
-                        false,
-                        out hToken);
-
-                    if (!status)
-                    {
-                        status = NativeMethods.OpenThreadToken(
-                            hThread,
-                            ACCESS_MASK.TOKEN_QUERY,
-                            false,
-                            out hToken);
-
-                        if (!status)
-                            hToken = IntPtr.Zero;
-                    }
-                }
-                else if (info.Handle == IntPtr.Zero)
-                {
-                    status = NativeMethods.OpenProcessToken(
-                        hProcess,
-                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
-                        out hToken);
-
-                    if (!status)
-                    {
-                        status = NativeMethods.OpenProcessToken(
-                            hProcess,
-                            ACCESS_MASK.TOKEN_QUERY,
-                            out hToken);
-
-                        if (!status)
-                            hToken = IntPtr.Zero;
-                    }
-                }
-                else
-                {
-                    NTSTATUS ntstatus = NativeMethods.NtDuplicateObject(
-                        hProcess,
                         info.Handle,
-                        new IntPtr(-1),
-                        out hToken,
+                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE);
+
+                    if (hToken == IntPtr.Zero)
+                        hToken = Helpers.DuplicateHandleFromProcess(info.ProcessId, info.Handle, ACCESS_MASK.TOKEN_QUERY);
+                }
+                else if (info.ThreadId != 0)
+                {
+                    hToken = Helpers.GetThreadToken(
+                        info.ThreadId,
                         ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
-                        0u,
-                        0);
+                        out info.ProcessId);
 
-                    if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    {
-                        ntstatus = NativeMethods.NtDuplicateObject(
-                            hProcess,
-                            info.Handle,
-                            new IntPtr(-1),
-                            out hToken,
-                            ACCESS_MASK.TOKEN_QUERY,
-                            0u,
-                            0);
-                        status = (ntstatus == Win32Consts.STATUS_SUCCESS);
+                    if (hToken == IntPtr.Zero)
+                        hToken = Helpers.GetThreadToken(info.ThreadId, ACCESS_MASK.TOKEN_QUERY, out info.ProcessId);
+                }
+                else
+                {
+                    hToken = Helpers.GetProcessToken(
+                        info.ProcessId,
+                        ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE);
 
-                        if (!status)
-                            hToken = IntPtr.Zero;
-                    }
+                    if (hToken == IntPtr.Zero)
+                        hToken = Helpers.GetProcessToken(info.ProcessId, ACCESS_MASK.TOKEN_QUERY);
                 }
 
                 if (hToken == IntPtr.Zero)
@@ -386,8 +343,33 @@ namespace TokenDump.Library
                     Console.WriteLine("[-] Failed to get the specifiled token handle.");
                     break;
                 }
+                else
+                {
+                    var objectAttributes = new OBJECT_ATTRIBUTES()
+                    {
+                        Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+                    };
+                    var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(info.ProcessId) };
+                    NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                        out IntPtr hProcess,
+                        ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                        in objectAttributes,
+                        in clientId);
 
-                status = Utilities.GetVerboseTokenInformation(
+                    if (ntstatus == Win32Consts.STATUS_SUCCESS)
+                    {
+                        info.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
+                        info.CommandLine = Helpers.GetProcessCommandLine(hProcess);
+                        NativeMethods.NtClose(hProcess);
+                    }
+
+                    if (string.IsNullOrEmpty(info.ImageFilePath))
+                        break;
+                    else
+                        info.ProcessName = Path.GetFileName(info.ImageFilePath);
+                }
+
+                bSuccess = Utilities.GetVerboseTokenInformation(
                     hToken,
                     false,
                     out IntPtr hLinkedToken,
@@ -400,14 +382,14 @@ namespace TokenDump.Library
                 info.SecurityAttributesBuffer = Helpers.GetTokenSecurityAttributes(hToken);
                 NativeMethods.NtClose(hToken);
 
-                if (status)
+                if (bSuccess)
                 {
                     Utilities.DumpVerboseTokenInformation(info, privs, groups, restrictedGroups, capabilities, acl);
 
                     if (hLinkedToken != IntPtr.Zero)
                     {
                         info.IsLinkedToken = true;
-                        status = Utilities.GetVerboseTokenInformation(
+                        bSuccess = Utilities.GetVerboseTokenInformation(
                             hLinkedToken,
                             false,
                             out IntPtr _,
@@ -418,30 +400,23 @@ namespace TokenDump.Library
                             out capabilities,
                             out acl);
 
-                        if (status)
+                        if (bSuccess)
                             Utilities.DumpVerboseTokenInformation(info, privs, groups, restrictedGroups, capabilities, acl);
 
                         NativeMethods.NtClose(hLinkedToken);
                     }
-                }
-                else
-                {
-                    Console.WriteLine("[-] Failed to get access.");
                 }
 
                 if (info.SecurityAttributesBuffer != IntPtr.Zero)
                     Marshal.FreeHGlobal(info.SecurityAttributesBuffer);
             } while (false);
 
-            if (hProcess != IntPtr.Zero)
-                NativeMethods.NtClose(hProcess);
-
-            if (!status)
+            if (!bSuccess)
                 Console.WriteLine("[-] Failed to dump token information.");
 
             Console.WriteLine("[*] Done.");
 
-            return status;
+            return bSuccess;
         }
     }
 }

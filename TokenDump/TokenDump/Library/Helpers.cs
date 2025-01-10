@@ -25,6 +25,9 @@ namespace TokenDump.Library
             var devicePathRegex = new Regex(@"^\\Device\\[^\\]+", RegexOptions.IgnoreCase);
             var driveLetterRegex = new Regex(@"^\\GLOBAL\?\?\\[^:]+:", RegexOptions.IgnoreCase);
 
+            if (string.IsNullOrEmpty(convertedPath))
+                return null;
+
             if (!devicePathRegex.IsMatch(devicePath))
                 return null;
 
@@ -182,6 +185,44 @@ namespace TokenDump.Library
             }
 
             return status;
+        }
+
+
+        public static IntPtr DuplicateHandleFromProcess(int pid, IntPtr hObject, ACCESS_MASK accessMask)
+        {
+            int nDosErrorCode;
+            var hDupHandle = IntPtr.Zero;
+            var objectAttributes = new OBJECT_ATTRIBUTES()
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
+                ACCESS_MASK.PROCESS_DUP_HANDLE,
+                in objectAttributes,
+                in clientId);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                ntstatus = NativeMethods.NtDuplicateObject(
+                    hProcess,
+                    hObject,
+                    new IntPtr(-1),
+                    out hDupHandle,
+                    accessMask,
+                    OBJECT_ATTRIBUTES_FLAGS.None,
+                    DUPLICATE_OPTION_FLAGS.SameAttributes);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus !=  Win32Consts.STATUS_SUCCESS)
+                    hDupHandle = IntPtr.Zero;
+            }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return hDupHandle;
         }
 
 
@@ -705,6 +746,40 @@ namespace TokenDump.Library
         }
 
 
+        public static IntPtr GetProcessToken(int pid, ACCESS_MASK tokenAccessMask)
+        {
+            int nDosErrorCode;
+            var hToken = IntPtr.Zero;
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
+                ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
+                in objectAttributes,
+                in clientId);
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                ntstatus = NativeMethods.NtOpenProcessToken(
+                    hProcess,
+                    tokenAccessMask,
+                    out hToken);
+                NativeMethods.NtClose(hProcess);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    hToken = IntPtr.Zero;
+            }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return hToken;
+        }
+
+
         public static bool GetSystemHandles(
             string typeName,
             out Dictionary<int, List<SYSTEM_HANDLE_TABLE_ENTRY_INFO>> handles)
@@ -884,6 +959,44 @@ namespace TokenDump.Library
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
+        }
+
+
+        public static IntPtr GetThreadToken(int tid, ACCESS_MASK tokenAccessMask, out int pid)
+        {
+            int nDosErrorCode;
+            var hToken = IntPtr.Zero;
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueThread = new IntPtr(tid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenThread(
+                out IntPtr hThread,
+                ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
+                in objectAttributes,
+                in clientId);
+            pid = 0;
+
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
+            {
+                ntstatus = NativeMethods.NtOpenThreadToken(
+                    hThread,
+                    tokenAccessMask,
+                    BOOLEAN.FALSE,
+                    out hToken);
+                GetThreadBasicInformation(hThread, out THREAD_BASIC_INFORMATION tbi);
+                pid = tbi.ClientId.UniqueProcess.ToInt32();
+                NativeMethods.NtClose(hThread);
+
+                if (ntstatus != Win32Consts.STATUS_SUCCESS)
+                    hToken = IntPtr.Zero;
+            }
+
+            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
+            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
+
+            return hToken;
         }
 
 
