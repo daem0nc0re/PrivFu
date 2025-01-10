@@ -325,7 +325,7 @@ namespace TokenDump.Library
                         ACCESS_MASK.TOKEN_QUERY | ACCESS_MASK.TOKEN_QUERY_SOURCE,
                         out info.ProcessId);
 
-                    if (hToken == IntPtr.Zero)
+                    if ((hToken == IntPtr.Zero) && (Marshal.GetLastWin32Error() != 0x000003F0)) // ERROR_NO_TOKEN
                         hToken = Helpers.GetThreadToken(info.ThreadId, ACCESS_MASK.TOKEN_QUERY, out info.ProcessId);
                 }
                 else
@@ -340,7 +340,16 @@ namespace TokenDump.Library
 
                 if (hToken == IntPtr.Zero)
                 {
-                    Console.WriteLine("[-] Failed to get the specifiled token handle.");
+                    if ((info.ThreadId != 0) && (Marshal.GetLastWin32Error() == 0x000003F0))
+                    {
+                        Console.WriteLine("[-] The specified thread has no impersonation token. Check process token (PID = {0}).",
+                            (info.ProcessId != 0) ? info.ProcessId.ToString() : "N/A");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[-] Failed to get the specifiled token handle.");
+                    }
+
                     break;
                 }
                 else
