@@ -101,12 +101,12 @@ namespace TokenDump.Library
             {
                 foreach (var handleInfo in handles)
                 {
-                    var status = Utilities.GetBriefThreadTokenInformation(
+                    bool bSuccess = Utilities.GetBriefThreadTokenInformation(
                         handleInfo.Key,
                         handleInfo.Value,
                         out List<BriefTokenInformation> info);
 
-                    if (status)
+                    if (bSuccess)
                         dumpedInfo.AddRange(info);
 
                     info.Clear();

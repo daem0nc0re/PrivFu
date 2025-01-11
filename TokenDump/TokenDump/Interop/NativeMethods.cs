@@ -28,12 +28,6 @@ namespace TokenDump.Interop
             ref int cchReferencedDomainName,
             out SID_NAME_USE peUse);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool OpenProcessToken(
-            IntPtr ProcessHandle,
-            ACCESS_MASK DesiredAccess,
-            out IntPtr TokenHandle);
-
         /*
          * kernel32.dll
          */

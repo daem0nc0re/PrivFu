@@ -438,19 +438,25 @@ namespace TokenDump.Library
             List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> handles,
             out List<BriefTokenInformation> info)
         {
-            IntPtr hProcess = NativeMethods.OpenProcess(
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
                 ACCESS_MASK.PROCESS_DUP_HANDLE | ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                pid);
+                in objectAttributes,
+                in clientId);
             info = new List<BriefTokenInformation>();
 
-            if (hProcess != IntPtr.Zero)
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 var uniqueThreads = new List<int>();
 
                 foreach (var entry in handles)
                 {
-                    var ntstatus = NativeMethods.NtDuplicateObject(
+                    ntstatus = NativeMethods.NtDuplicateObject(
                         hProcess,
                         new IntPtr(entry.HandleValue),
                         new IntPtr(-1),
@@ -519,17 +525,23 @@ namespace TokenDump.Library
             List<SYSTEM_HANDLE_TABLE_ENTRY_INFO> handles,
             out List<BriefTokenInformation> info)
         {
-            IntPtr hProcess = NativeMethods.OpenProcess(
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
                 ACCESS_MASK.PROCESS_DUP_HANDLE | ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                pid);
+                in objectAttributes,
+                in clientId);
             info = new List<BriefTokenInformation>();
 
-            if (hProcess != IntPtr.Zero)
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
                 foreach (var entry in handles)
                 {
-                    var ntstatus = NativeMethods.NtDuplicateObject(
+                    ntstatus = NativeMethods.NtDuplicateObject(
                         hProcess,
                         new IntPtr(entry.HandleValue),
                         new IntPtr(-1),
