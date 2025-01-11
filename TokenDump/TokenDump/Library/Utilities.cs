@@ -8,6 +8,8 @@ using TokenDump.Interop;
 
 namespace TokenDump.Library
 {
+    using NTSTATUS = Int32;
+
     internal class Utilities
     {
         public static void DumpBriefHandleInformation(
@@ -583,17 +585,18 @@ namespace TokenDump.Library
                 ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
                 false,
                 pid);
-            var status = false;
+            var bSuccess = false;
             info = new BriefTokenInformation { ProcessId = pid };
 
             if (hProcess != IntPtr.Zero)
             {
-                status = NativeMethods.OpenProcessToken(
+                NTSTATUS ntstatus = NativeMethods.NtOpenProcessToken(
                     hProcess,
                     ACCESS_MASK.TOKEN_QUERY,
                     out IntPtr hToken);
+                bSuccess = (ntstatus == Win32Consts.STATUS_SUCCESS);
 
-                if (status)
+                if (bSuccess)
                 {
                     var tokenUserSid = Helpers.GetTokenUserSid(hToken);
 
@@ -610,14 +613,9 @@ namespace TokenDump.Library
                     info.IsAppContainer = Helpers.IsTokenAppContainer(hToken);
 
                     if (string.IsNullOrEmpty(info.ImageFilePath))
-                    {
                         info = new BriefTokenInformation();
-                        status = false;
-                    }
                     else
-                    {
                         info.ProcessName = Path.GetFileName(info.ImageFilePath);
-                    }
 
                     NativeMethods.NtClose(hToken);
                 }
@@ -625,7 +623,7 @@ namespace TokenDump.Library
                 NativeMethods.NtClose(hProcess);
             }
 
-            return status;
+            return bSuccess;
         }
 
 
