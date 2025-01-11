@@ -34,13 +34,6 @@ namespace TokenDump.Interop
             ACCESS_MASK DesiredAccess,
             out IntPtr TokenHandle);
 
-        [DllImport("advapi32.dll", SetLastError = true)]
-        public static extern bool OpenThreadToken(
-            IntPtr ThreadHandle,
-            ACCESS_MASK DesiredAccess,
-            bool OpenAsSelf,
-            out IntPtr TokenHandle);
-
         /*
          * kernel32.dll
          */

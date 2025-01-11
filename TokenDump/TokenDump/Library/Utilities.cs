@@ -460,7 +460,7 @@ namespace TokenDump.Library
                     if (ntstatus == Win32Consts.STATUS_SUCCESS)
                     {
                         var data = new BriefTokenInformation();
-                        bool status = Helpers.GetThreadBasicInformation(
+                        bool bSuccess = Helpers.GetThreadBasicInformation(
                             hDupObject,
                             out THREAD_BASIC_INFORMATION tbi);
                         data.ImageFilePath = Helpers.GetProcessImageFilePath(hProcess);
@@ -477,18 +477,17 @@ namespace TokenDump.Library
                             data.ProcessName = Path.GetFileName(data.ImageFilePath);
                         }
 
-                        if (status && !uniqueThreads.Contains(data.ThreadId) && (data.ProcessId == pid))
+                        if (bSuccess && !uniqueThreads.Contains(data.ThreadId) && (data.ProcessId == pid))
                         {
                             uniqueThreads.Add(data.ThreadId);
-
-                            status = NativeMethods.OpenThreadToken(
+                            ntstatus = NativeMethods.NtOpenThreadToken(
                                 hDupObject,
                                 ACCESS_MASK.TOKEN_QUERY,
-                                false,
+                                BOOLEAN.FALSE,
                                 out IntPtr hToken);
                             NativeMethods.NtClose(hDupObject);
 
-                            if (status)
+                            if (ntstatus == Win32Consts.STATUS_SUCCESS)
                             {
                                 var sid = Helpers.GetTokenUserSid(hToken);
                                 data.SessionId = Helpers.GetTokenSessionId(hToken);
