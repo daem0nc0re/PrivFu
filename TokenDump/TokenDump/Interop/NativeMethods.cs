@@ -34,12 +34,6 @@ namespace TokenDump.Interop
         [DllImport("kernel32.dll")]
         public static extern IntPtr LocalFree(IntPtr hMem);
 
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern IntPtr OpenProcess(
-            ACCESS_MASK dwDesiredAccess,
-            bool bInheritHandle,
-            int dwProcessId);
-
         /*
          * kernelbase.dll
          */

@@ -593,22 +593,26 @@ namespace TokenDump.Library
             int pid,
             out BriefTokenInformation info)
         {
-            IntPtr hProcess = NativeMethods.OpenProcess(
+            var objectAttributes = new OBJECT_ATTRIBUTES
+            {
+                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
+            };
+            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
+            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
+                out IntPtr hProcess,
                 ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                false,
-                pid);
-            var bSuccess = false;
+                in objectAttributes,
+                in clientId);
             info = new BriefTokenInformation { ProcessId = pid };
 
-            if (hProcess != IntPtr.Zero)
+            if (ntstatus == Win32Consts.STATUS_SUCCESS)
             {
-                NTSTATUS ntstatus = NativeMethods.NtOpenProcessToken(
+                ntstatus = NativeMethods.NtOpenProcessToken(
                     hProcess,
                     ACCESS_MASK.TOKEN_QUERY,
                     out IntPtr hToken);
-                bSuccess = (ntstatus == Win32Consts.STATUS_SUCCESS);
 
-                if (bSuccess)
+                if (ntstatus == Win32Consts.STATUS_SUCCESS)
                 {
                     var tokenUserSid = Helpers.GetTokenUserSid(hToken);
 
@@ -635,7 +639,7 @@ namespace TokenDump.Library
                 NativeMethods.NtClose(hProcess);
             }
 
-            return bSuccess;
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 
