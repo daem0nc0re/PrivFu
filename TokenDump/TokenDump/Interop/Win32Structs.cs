@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -108,26 +107,6 @@ namespace TokenDump.Interop
         public IntPtr UniqueThread;
     }
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct FWPM_DISPLAY_DATA0
-    {
-        public string name;
-        public string description;
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct FWPM_SESSION0
-    {
-        public Guid sessionKey;
-        public FWPM_DISPLAY_DATA0 displayData;
-        public FWPM_SESSION_FLAGS flags;
-        public uint txnWaitTimeoutInMSec;
-        public int processId;
-        public IntPtr /* PSID */ sid;
-        public string username;
-        public bool kernelMode;
-    }
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct GENERIC_MAPPING
     {
@@ -210,48 +189,6 @@ namespace TokenDump.Interop
                 Low = (int)(value),
                 High = (int)((value >> 32))
             };
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct LSA_LAST_INTER_LOGON_INFO
-    {
-        public LARGE_INTEGER LastSuccessfulLogon;
-        public LARGE_INTEGER LastFailedLogon;
-        public uint FailedAttemptCountSinceLastSuccessfulLogon;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct LSA_UNICODE_STRING : IDisposable
-    {
-        public ushort Length;
-        public ushort MaximumLength;
-        private IntPtr buffer;
-
-        public LSA_UNICODE_STRING(string s)
-        {
-            Length = (ushort)(s.Length * 2);
-            MaximumLength = (ushort)(Length + 2);
-            buffer = Marshal.StringToHGlobalUni(s);
-        }
-
-        public void Dispose()
-        {
-            Marshal.FreeHGlobal(buffer);
-            buffer = IntPtr.Zero;
-        }
-
-        public void SetBuffer(IntPtr _buffer)
-        {
-            buffer = _buffer;
-        }
-
-        public override string ToString()
-        {
-            if ((Length == 0) || (buffer == IntPtr.Zero))
-                return null;
-            else
-                return Marshal.PtrToStringUni(buffer, Length / 2);
         }
     }
 
@@ -395,57 +332,6 @@ namespace TokenDump.Interop
         public uint NumberOfTypes;
         // OBJECT_TYPE_INFORMATION data entries are here.
         // Offset for OBJECT_TYPE_INFORMATION entries is IntPtr.Size
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct SEC_WINNT_AUTH_IDENTITY_W
-    {
-        public string User;
-        public uint UserLength;
-        public string Domain;
-        public uint DomainLength;
-        public string Password;
-        public uint PasswordLength;
-        public SEC_WINNT_AUTH_IDENTITY_FLAGS Flags;
-
-        public SEC_WINNT_AUTH_IDENTITY_W(string user, string domain, string password)
-        {
-            User = user;
-            UserLength = (uint)user.Length;
-            Domain = domain;
-            DomainLength = (uint)domain.Length;
-            Password = password;
-            PasswordLength = (uint)password.Length;
-            Flags = SEC_WINNT_AUTH_IDENTITY_FLAGS.UNICODE;
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct SECURITY_LOGON_SESSION_DATA
-    {
-        public uint Size;
-        public LUID LogonId;
-        public LSA_UNICODE_STRING UserName;
-        public LSA_UNICODE_STRING LogonDomain;
-        public LSA_UNICODE_STRING AuthenticationPackage;
-        public uint LogonType;
-        public uint Session;
-        public IntPtr /* PSID */ Sid;
-        public LARGE_INTEGER LogonTime;
-        public LSA_UNICODE_STRING LogonServer;
-        public LSA_UNICODE_STRING DnsDomainName;
-        public LSA_UNICODE_STRING Upn;
-        public uint UserFlags;
-        public LSA_LAST_INTER_LOGON_INFO LastLogonInfo;
-        public LSA_UNICODE_STRING LogonScript;
-        public LSA_UNICODE_STRING ProfilePath;
-        public LSA_UNICODE_STRING HomeDirectory;
-        public LSA_UNICODE_STRING HomeDirectoryDrive;
-        public LARGE_INTEGER LogoffTime;
-        public LARGE_INTEGER KickOffTime;
-        public LARGE_INTEGER PasswordLastSet;
-        public LARGE_INTEGER PasswordCanChange;
-        public LARGE_INTEGER PasswordMustChange;
     }
 
     [StructLayout(LayoutKind.Sequential)]

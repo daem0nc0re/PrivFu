@@ -1437,58 +1437,6 @@ namespace TokenDump.Library
         }
 
 
-        public static bool GetTokenLogonSid(
-            IntPtr hToken,
-            out Dictionary<string, SE_GROUP_ATTRIBUTES> logonSids)
-        {
-            NTSTATUS ntstatus;
-            IntPtr pInfoBuffer;
-            var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_GROUPS));
-            logonSids = new Dictionary<string, SE_GROUP_ATTRIBUTES>();
-
-            do
-            {
-                pInfoBuffer = Marshal.AllocHGlobal((int)nInfoLength);
-                ntstatus = NativeMethods.NtQueryInformationToken(
-                    hToken,
-                    TOKEN_INFORMATION_CLASS.TokenLogonSid,
-                    pInfoBuffer,
-                    nInfoLength,
-                    out nInfoLength);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    Marshal.FreeHGlobal(pInfoBuffer);
-            } while (ntstatus == Win32Consts.STATUS_BUFFER_TOO_SMALL);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                IntPtr pEntry;
-                var nGroupCount = Marshal.ReadInt32(pInfoBuffer);
-                var nGroupsOffset = Marshal.OffsetOf(typeof(TOKEN_GROUPS), "Groups").ToInt32();
-                var nUnitSize = Marshal.SizeOf(typeof(SID_AND_ATTRIBUTES));
-
-                for (var idx = 0; idx < nGroupCount; idx++)
-                {
-                    if (Environment.Is64BitProcess)
-                        pEntry = new IntPtr(pInfoBuffer.ToInt64() + nGroupsOffset + (nUnitSize * idx));
-                    else
-                        pEntry = new IntPtr(pInfoBuffer.ToInt32() + nGroupsOffset + (nUnitSize * idx));
-
-                    var entry = (SID_AND_ATTRIBUTES)Marshal.PtrToStructure(
-                        pEntry,
-                        typeof(SID_AND_ATTRIBUTES));
-
-                    NativeMethods.ConvertSidToStringSid(entry.Sid, out string stringSid);
-                    logonSids.Add(stringSid, (SE_GROUP_ATTRIBUTES)entry.Attributes);
-                }
-
-                Marshal.FreeHGlobal(pInfoBuffer);
-            }
-
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
         public static bool GetTokenMandatoryPolicy(IntPtr hToken, out TOKEN_MANDATORY_POLICY_FLAGS policy)
         {
             var nInfoLength = (uint)Marshal.SizeOf(typeof(TOKEN_MANDATORY_POLICY));

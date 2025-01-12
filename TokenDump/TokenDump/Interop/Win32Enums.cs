@@ -226,12 +226,6 @@ namespace TokenDump.Interop
         SameAttributes = 0x00000004
     }
 
-    internal enum FWPM_SESSION_FLAGS : uint
-    {
-        DYNAMIC = 0x00000001,
-        RESERVED = 0x10000000
-    }
-
     internal enum KEY_INFORMATION_CLASS
     {
         KeyBasicInformation, // KEY_BASIC_INFORMATION
@@ -458,12 +452,6 @@ namespace TokenDump.Interop
         SeCreateSymbolicLinkPrivilege,
         SeDelegateSessionUserImpersonatePrivilege,
         MaximumCount
-    }
-
-    internal enum SEC_WINNT_AUTH_IDENTITY_FLAGS : uint
-    {
-        ANSI = 0x00000001,
-        UNICODE = 0x00000002
     }
 
     internal enum SECURITY_IMPERSONATION_LEVEL
@@ -876,15 +864,6 @@ namespace TokenDump.Interop
         InheritOnce = 0x0080,
         ValidFlags = 0x000000FF,
         CustomFlags = 0xFFFF0000
-    }
-
-    internal enum TOKEN_SECURITY_ATTRIBUTE_OPERATION
-    {
-        None,
-        ReplaceAll,
-        Add,
-        Delete,
-        Replace
     }
 
     internal enum TOKEN_SECURITY_ATTRIBUTE_TYPE : ushort
