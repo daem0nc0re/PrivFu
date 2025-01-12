@@ -200,16 +200,5 @@ namespace TokenDump.Interop
 
         [DllImport("ntdll.dll", SetLastError = true)]
         public static extern void RtlSetLastWin32Error(int dwErrCode);
-
-        /*
-         * secur32.dll
-         */
-        [DllImport("secur32.dll")]
-        public static extern NTSTATUS LsaGetLogonSessionData(
-            in LUID LogonId, // in LUID
-            out IntPtr /* PSECURITY_LOGON_SESSION_DATA* */ ppLogonSessionData);
-
-        [DllImport("secur32.dll")]
-        public static extern NTSTATUS LsaFreeReturnBuffer(IntPtr Buffer);
     }
 }

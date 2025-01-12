@@ -13,12 +13,6 @@ namespace TokenDump.Library
 
     internal class Helpers
     {
-        public static bool CompareIgnoreCase(string strA, string strB)
-        {
-            return (string.Compare(strA, strB, StringComparison.OrdinalIgnoreCase) == 0);
-        }
-
-
         public static string ConvertDevicePathToDriveLetter(string devicePath)
         {
             var convertedPath = devicePath;
@@ -561,7 +555,7 @@ namespace TokenDump.Library
                         pUnicodeString,
                         typeof(OBJECT_DIRECTORY_INFORMATION));
 
-                    if (CompareIgnoreCase(info.TypeName.ToString(), "SymbolicLink"))
+                    if (string.Compare(info.TypeName.ToString(), "SymbolicLink", true) == 0)
                         symLinks.Add(string.Format(@"{0}\{1}", rootPath, info.Name.ToString()));
 
                     if (Environment.Is64BitProcess)
@@ -799,7 +793,7 @@ namespace TokenDump.Library
             {
                 foreach (var entry in typeTable)
                 {
-                    if (CompareIgnoreCase(entry.Value, typeName))
+                    if (string.Compare(entry.Value, typeName, true) == 0)
                     {
                         tokenIndex = (int)entry.Key;
                         break;
@@ -854,45 +848,6 @@ namespace TokenDump.Library
                 }
 
                 Marshal.FreeHGlobal(pInfoBuffer);
-            }
-
-            return (ntstatus == Win32Consts.STATUS_SUCCESS);
-        }
-
-
-        public static bool GetSessionBasicInformation(
-            in LUID sessionLuid,
-            out string accountName,
-            out string accountSid,
-            out string authPackage)
-        {
-            NTSTATUS ntstatus = NativeMethods.LsaGetLogonSessionData(
-                in sessionLuid,
-                out IntPtr pInfoBuffer);
-            accountName = null;
-            accountSid = null;
-            authPackage = null;
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                var info = (SECURITY_LOGON_SESSION_DATA)Marshal.PtrToStructure(
-                    pInfoBuffer,
-                    typeof(SECURITY_LOGON_SESSION_DATA));
-
-                if ((info.UserName.Length > 0) && (info.LogonDomain.Length > 0))
-                    accountName = string.Format(@"{0}\{1}", info.LogonDomain.ToString(), info.UserName.ToString());
-                else if (info.UserName.Length > 0)
-                    accountName = info.UserName.ToString();
-                else if (info.LogonDomain.Length > 0)
-                    accountName = info.LogonDomain.ToString();
-
-                if (info.Sid != IntPtr.Zero)
-                    NativeMethods.ConvertSidToStringSid(info.Sid, out accountSid);
-
-                if (info.AuthenticationPackage.Length > 0)
-                    authPackage = info.AuthenticationPackage.ToString();
-
-                NativeMethods.LsaFreeReturnBuffer(pInfoBuffer);
             }
 
             return (ntstatus == Win32Consts.STATUS_SUCCESS);
@@ -1392,7 +1347,7 @@ namespace TokenDump.Library
                 Marshal.FreeHGlobal(pInfoBuffer);
             }
 
-            return true;
+            return (ntstatus == Win32Consts.STATUS_SUCCESS);
         }
 
 
@@ -1800,7 +1755,9 @@ namespace TokenDump.Library
             }
             else
             {
-                ZeroMemory(pInfoBuffer, (int)nInfoLength);
+                for (var oft = 0; oft < (int)nInfoLength; oft++)
+                    Marshal.WriteByte(pInfoBuffer, oft, 0);
+
                 tokenSource = (TOKEN_SOURCE)Marshal.PtrToStructure(
                     pInfoBuffer,
                     typeof(TOKEN_SOURCE));
@@ -1942,7 +1899,7 @@ namespace TokenDump.Library
 
         public static bool IsTokenAppContainer(IntPtr hToken)
         {
-            var isAppContainer = false;
+            var bIsAppContainer = false;
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
             NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
                 hToken,
@@ -1952,15 +1909,15 @@ namespace TokenDump.Library
                 out uint _);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                isAppContainer = (Marshal.ReadInt32(pInfoBuffer) != 0);
+                bIsAppContainer = (Marshal.ReadInt32(pInfoBuffer) != 0);
 
             Marshal.FreeHGlobal(pInfoBuffer);
 
-            return isAppContainer;
+            return bIsAppContainer;
         }
 
 
-        public static bool IsTokenElevated(IntPtr hToken, out bool isElevated)
+        public static bool IsTokenElevated(IntPtr hToken, out bool bIsElevated)
         {
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
             NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
@@ -1971,9 +1928,9 @@ namespace TokenDump.Library
                 out uint _);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                isElevated = (Marshal.ReadInt32(pInfoBuffer) != 0);
+                bIsElevated = (Marshal.ReadInt32(pInfoBuffer) != 0);
             else
-                isElevated = false;
+                bIsElevated = false;
 
             Marshal.FreeHGlobal(pInfoBuffer);
 
@@ -1983,7 +1940,7 @@ namespace TokenDump.Library
 
         public static bool IsTokenRestricted(IntPtr hToken)
         {
-            var isRestricted = false;
+            var bIsRestricted = false;
             IntPtr pInfoBuffer = Marshal.AllocHGlobal(4);
             NTSTATUS ntstatus = NativeMethods.NtQueryInformationToken(
                 hToken,
@@ -1993,18 +1950,11 @@ namespace TokenDump.Library
                 out uint _);
 
             if (ntstatus == Win32Consts.STATUS_SUCCESS)
-                isRestricted = (Marshal.ReadInt32(pInfoBuffer) != 0);
+                bIsRestricted = (Marshal.ReadInt32(pInfoBuffer) != 0);
 
             Marshal.FreeHGlobal(pInfoBuffer);
 
-            return isRestricted;
-        }
-
-
-        public static void ZeroMemory(IntPtr pBuffer, int nRange)
-        {
-            for (var offset = 0; offset < nRange; offset++)
-                Marshal.WriteByte(pBuffer, offset, 0);
+            return bIsRestricted;
         }
     }
 }
