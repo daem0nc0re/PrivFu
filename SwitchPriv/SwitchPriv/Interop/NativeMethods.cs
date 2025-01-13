@@ -94,8 +94,8 @@ namespace SwitchPriv.Interop
             BOOLEAN OpenAsSelf,
             out IntPtr TokenHandle);
 
-        [DllImport("ntdll.dll", SetLastError = true)]
-        public static extern int NtQueryInformationProcess(
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS NtQueryInformationProcess(
             IntPtr ProcessHandle,
             PROCESSINFOCLASS ProcessInformationClass, 
             IntPtr ProcessInformation, 
@@ -135,7 +135,7 @@ namespace SwitchPriv.Interop
         [DllImport("ntdll.dll")]
         public static extern uint RtlNtStatusToDosError(NTSTATUS Status);
 
-        [DllImport("ntdll.dll", SetLastError = true)]
+        [DllImport("ntdll.dll")]
         public static extern void RtlSetLastWin32Error(int dwErrCode);
     }
 }
