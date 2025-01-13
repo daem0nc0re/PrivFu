@@ -29,6 +29,7 @@ namespace SwitchPriv.Library
             return true;
         }
 
+
         public static int GetParentProcessId(IntPtr hProcess)
         {
             NTSTATUS ntstatus;
@@ -463,7 +464,7 @@ namespace SwitchPriv.Library
             outputBuilder.Append("Example :\n\n");
             outputBuilder.Append("    * Down a specific process' integrity level to Low.\n\n");
             outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -s 1\n\n", AppDomain.CurrentDomain.FriendlyName);
-            outputBuilder.Append("Protected and Secure level should not be available, but left for research purpose.\n\n");
+            outputBuilder.Append("Protected level should not be available, but left for research purpose.\n\n");
 
             Console.WriteLine(outputBuilder.ToString());
         }
