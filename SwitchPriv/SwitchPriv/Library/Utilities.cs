@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using SwitchPriv.Interop;
 
@@ -210,7 +211,6 @@ namespace SwitchPriv.Library
                     impoersonateStatus[threadId] = true;
                 }
             }
-
             return bSuccess;
         }
 
@@ -232,7 +232,7 @@ namespace SwitchPriv.Library
                 return false;
             }
 
-            hToken = Helpers.GetProcessToken(nSmssId, TOKEN_TYPE.Impersonation);
+            hToken = Helpers.DuplicateProcessToken(nSmssId, TOKEN_TYPE.Impersonation);
 
             if (hToken != IntPtr.Zero)
             {
@@ -310,75 +310,6 @@ namespace SwitchPriv.Library
             Marshal.FreeHGlobal(pInfoBuffer);
 
             return bAllRemoved;
-        }
-
-
-        public static IntPtr OpenProcessToken(int pid, ACCESS_MASK tokenAccessMask)
-        {
-            int nDosErrorCode;
-            var hToken = IntPtr.Zero;
-            var objectAttrbutes = new OBJECT_ATTRIBUTES
-            {
-                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
-            };
-            var clientId = new CLIENT_ID { UniqueProcess = new IntPtr(pid) };
-            NTSTATUS ntstatus = NativeMethods.NtOpenProcess(
-                out IntPtr hProcess,
-                ACCESS_MASK.PROCESS_QUERY_LIMITED_INFORMATION,
-                in objectAttrbutes,
-                in clientId);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                ntstatus = NativeMethods.NtOpenProcessToken(
-                    hProcess,
-                    tokenAccessMask,
-                    out hToken);
-                NativeMethods.NtClose(hProcess);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    hToken = IntPtr.Zero;
-            }
-
-            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-
-            return hToken;
-        }
-
-
-        public static IntPtr OpenThreadToken(int tid, ACCESS_MASK tokenAccessMask)
-        {
-            int nDosErrorCode;
-            var hToken = IntPtr.Zero;
-            var objectAttrbutes = new OBJECT_ATTRIBUTES
-            {
-                Length = Marshal.SizeOf(typeof(OBJECT_ATTRIBUTES))
-            };
-            var clientId = new CLIENT_ID { UniqueThread = new IntPtr(tid) };
-            NTSTATUS ntstatus = NativeMethods.NtOpenThread(
-                out IntPtr hThread,
-                ACCESS_MASK.THREAD_QUERY_LIMITED_INFORMATION,
-                in objectAttrbutes,
-                in clientId);
-
-            if (ntstatus == Win32Consts.STATUS_SUCCESS)
-            {
-                ntstatus = NativeMethods.NtOpenThreadToken(
-                    hThread,
-                    tokenAccessMask,
-                    BOOLEAN.FALSE,
-                    out hToken);
-                NativeMethods.NtClose(hThread);
-
-                if (ntstatus != Win32Consts.STATUS_SUCCESS)
-                    hToken = IntPtr.Zero;
-            }
-
-            nDosErrorCode = (int)NativeMethods.RtlNtStatusToDosError(ntstatus);
-            NativeMethods.RtlSetLastWin32Error(nDosErrorCode);
-
-            return hToken;
         }
 
 

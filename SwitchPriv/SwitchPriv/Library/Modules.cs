@@ -38,7 +38,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -123,7 +123,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -216,7 +216,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -301,7 +301,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -402,7 +402,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -513,7 +513,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -648,7 +648,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -730,7 +730,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_PRIVILEGES | ACCESS_MASK.TOKEN_QUERY);
 
                 if (hToken == IntPtr.Zero)
                 {
@@ -832,7 +832,7 @@ namespace SwitchPriv.Library
 
                 foreach (var proc in Process.GetProcesses())
                 {
-                    IntPtr hToken = Utilities.OpenProcessToken(proc.Id, ACCESS_MASK.TOKEN_QUERY);
+                    IntPtr hToken = Helpers.GetProcessToken(proc.Id, ACCESS_MASK.TOKEN_QUERY);
 
                     if (hToken == IntPtr.Zero)
                     {
@@ -932,7 +932,7 @@ namespace SwitchPriv.Library
                         break;
                 }
 
-                hToken = Utilities.OpenProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_DEFAULT);
+                hToken = Helpers.GetProcessToken(pid, ACCESS_MASK.TOKEN_ADJUST_DEFAULT);
 
                 if (hToken == IntPtr.Zero)
                 {
