@@ -69,6 +69,7 @@ namespace SeLockMemoryPrivilegePoC
 
         static void Main()
         {
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelHandler);
             Console.WriteLine("[*] If you have SeLockMemoryPrivilege, you can consume physical memory with Lage Pages or AWE.");
             Console.WriteLine("[*] This PoC tries to allocate 1 Large page.");
 
@@ -115,7 +116,10 @@ namespace SeLockMemoryPrivilegePoC
                 Console.ReadLine();
             }
 
-            bSuccess = VirtualFree(LargePagePointer, SIZE_T.Zero, MEMORY_ALLOCATION_FLAGS.MEM_RELEASE);
+            bSuccess = VirtualFree(
+                LargePagePointer,
+                SIZE_T.Zero,
+                MEMORY_ALLOCATION_FLAGS.MEM_RELEASE);
 
             if (!bSuccess)
             {
@@ -125,6 +129,30 @@ namespace SeLockMemoryPrivilegePoC
             else
             {
                 Console.WriteLine("[+] Large pages are released successfully.");
+            }
+        }
+
+
+        private static void CancelHandler(object sender, ConsoleCancelEventArgs e)
+        {
+            Console.WriteLine("[*] Ctrl+C pressed. Performing cleanup operations...");
+
+            if (LargePagePointer != IntPtr.Zero)
+            {
+                bool bSuccess = VirtualFree(
+                    LargePagePointer,
+                    SIZE_T.Zero,
+                    MEMORY_ALLOCATION_FLAGS.MEM_RELEASE);
+
+                if (!bSuccess)
+                {
+                    Console.WriteLine("[-] Failed to release large pages (Error = 0x{0}).",
+                        Marshal.GetLastWin32Error().ToString("X8"));
+                }
+                else
+                {
+                    Console.WriteLine("[+] Large pages are released successfully.");
+                }
             }
         }
     }
