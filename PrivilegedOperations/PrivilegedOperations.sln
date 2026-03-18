@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31829.152
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36811.4 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeDebugPrivilegePoC", "SeDebugPrivilegePoC\SeDebugPrivilegePoC.csproj", "{5745976E-48A7-4F79-9BAA-82D1F43D1261}"
 EndProject
@@ -26,6 +26,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeCreatePagefilePrivilegePoC", "SeCreatePagefilePrivilegePoC\SeCreatePagefilePrivilegePoC.csproj", "{D52AB3F8-15D3-49C5-9EAC-468CDF65FB22}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeTakeOwnershipPrivilegePoC", "SeTakeOwnershipPrivilegePoC\SeTakeOwnershipPrivilegePoC.csproj", "{0A78E156-D03F-4667-B70E-4E9B4AA1D491}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeLockMemoryPrivilegePoC", "SeLockMemoryPrivilegePoC\SeLockMemoryPrivilegePoC.csproj", "{CCD7232C-E075-417F-B7E1-5A1D281A1CA8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -81,6 +83,10 @@ Global
 		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0A78E156-D03F-4667-B70E-4E9B4AA1D491}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCD7232C-E075-417F-B7E1-5A1D281A1CA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCD7232C-E075-417F-B7E1-5A1D281A1CA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCD7232C-E075-417F-B7E1-5A1D281A1CA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCD7232C-E075-417F-B7E1-5A1D281A1CA8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
