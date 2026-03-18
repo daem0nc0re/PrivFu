@@ -71,7 +71,7 @@ namespace SeLockMemoryPrivilegePoC
         {
             Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelHandler);
             Console.WriteLine("[*] If you have SeLockMemoryPrivilege, you can consume physical memory with Lage Pages or AWE.");
-            Console.WriteLine("[*] This PoC tries to allocate 1 Large page.");
+            Console.WriteLine("[*] This PoC tries to allocate 1 Large Page.");
 
             bool bSuccess;
             SIZE_T nLargePageUnit = GetLargePageMinimum();
@@ -104,13 +104,13 @@ namespace SeLockMemoryPrivilegePoC
 
             if (LargePagePointer == IntPtr.Zero)
             {
-                Console.WriteLine("[-] Failed to allocate large pages (Error = 0x{0}).",
+                Console.WriteLine("[-] Failed to allocate Large Pages (Error = 0x{0}).",
                     Marshal.GetLastWin32Error().ToString("X8"));
                 return;
             }
             else
             {
-                Console.WriteLine("[+] Large pages are allocated at 0x{0} successfully.",
+                Console.WriteLine("[+] Large Pages are allocated at 0x{0} successfully.",
                     LargePagePointer.ToString(Environment.Is64BitProcess ? "X16" : "X8"));
                 Console.WriteLine("[DEBUG BREAK]");
                 Console.ReadLine();
@@ -123,12 +123,12 @@ namespace SeLockMemoryPrivilegePoC
 
             if (!bSuccess)
             {
-                Console.WriteLine("[-] Failed to release large pages (Error = 0x{0}).",
+                Console.WriteLine("[-] Failed to release Large Pages (Error = 0x{0}).",
                     Marshal.GetLastWin32Error().ToString("X8"));
             }
             else
             {
-                Console.WriteLine("[+] Large pages are released successfully.");
+                Console.WriteLine("[+] Large Pages are released successfully.");
             }
         }
 
@@ -146,12 +146,12 @@ namespace SeLockMemoryPrivilegePoC
 
                 if (!bSuccess)
                 {
-                    Console.WriteLine("[-] Failed to release large pages (Error = 0x{0}).",
+                    Console.WriteLine("[-] Failed to release Large Pages (Error = 0x{0}).",
                         Marshal.GetLastWin32Error().ToString("X8"));
                 }
                 else
                 {
-                    Console.WriteLine("[+] Large pages are released successfully.");
+                    Console.WriteLine("[+] Large Pages are released successfully.");
                 }
             }
         }
