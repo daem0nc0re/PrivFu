@@ -84,16 +84,12 @@ namespace SeLockMemoryPrivilegePoC
             }
             else
             {
+                var fmt = "[*] Large Page unit size is 0x{0}.";
+
                 if (Environment.Is64BitProcess)
-                {
-                    Console.WriteLine("[*] Large Page unit size is 0x{0}.",
-                        nLargePageUnit.ToUInt64().ToString("X16"));
-                }
+                    Console.WriteLine(fmt, nLargePageUnit.ToUInt64().ToString("X16"));
                 else
-                {
-                    Console.WriteLine("[*] Large Page unit size is 0x{0}.",
-                        nLargePageUnit.ToUInt64().ToString("X8"));
-                }
+                    Console.WriteLine(fmt, nLargePageUnit.ToUInt32().ToString("X8"));
             }
 
             LargePagePointer = VirtualAlloc(
@@ -110,7 +106,7 @@ namespace SeLockMemoryPrivilegePoC
             }
             else
             {
-                Console.WriteLine("[+] Large Pages are allocated at 0x{0} successfully.",
+                Console.WriteLine("[+] Large Pages are allocated at 0x{0}.",
                     LargePagePointer.ToString(Environment.Is64BitProcess ? "X16" : "X8"));
                 Console.WriteLine("[DEBUG BREAK]");
                 Console.ReadLine();
