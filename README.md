@@ -656,6 +656,7 @@ Currently, released PoCs for a part of them.
 | [SeCreatePagefilePrivilegePoC](./PrivilegedOperations/SeCreatePagefilePrivilegePoC) | This PoC tries to set pagefile option to specific values by `SeCreatePagefilePrivilege`. |
 | [SeCreateTokenPrivilegePoC](./PrivilegedOperations/SeCreateTokenPrivilegePoC) | This PoC tries to create a elevated token by `SeCreateTokenPrivilege`. |
 | [SeDebugPrivilegePoC](./PrivilegedOperations/SeDebugPrivilegePoC) | This PoC tries to open a handle to winlogon.exe by `SeDebugPrivilege`. |
+| [SeLockMemoryPrivilegePoC](./PrivilegedOperations/SeLockMemoryPrivilegePoC) | This PoC tries to allocate Large Page memory region by `SeLockMemoryPrivilege`. |
 | [SeRestorePrivilegePoC](./PrivilegedOperations/SeRestorePrivilegePoC) | This PoC tries to write test file in `C:\Windows\System32\` by `SeRestorePrivilege`. |
 | [SeSecurityPrivilegePoC](./PrivilegedOperations/SeSecurityPrivilegePoC) | This PoC tries to read the latest security event by `SeSecurityPrivilege`. |
 | [SeShutdownPrivilegePoC](./PrivilegedOperations/SeShutdownPrivilegePoC) | This PoC tries to cause BSOD by `SeShutdownPrivilege`. |
