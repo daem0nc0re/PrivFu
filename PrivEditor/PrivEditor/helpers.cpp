@@ -46,6 +46,13 @@ std::string ReadAnsiString(ULONG64 Address, LONG Size)
 }
 
 
+BOOL ReadByte(ULONG64 Address, PUCHAR Value)
+{
+    ULONG cb = 0UL;
+    return ReadMemory(Address, Value, 1, &cb);
+}
+
+
 BOOL ReadQword(ULONG64 Address, PULONG64 Value)
 {
     ULONG cb = 0UL;
@@ -88,6 +95,13 @@ std::string ReadUnicodeString(ULONG64 Address, LONG Size)
     }
 
     return result;
+}
+
+
+BOOL WriteByte(ULONG64 Address, UCHAR Value)
+{
+    ULONG cb = 0UL;
+    return WriteMemory(Address, &Value, 1, &cb);
 }
 
 

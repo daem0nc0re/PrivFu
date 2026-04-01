@@ -10,3 +10,4 @@ EXPORTS
 	disableall
 	getpriv
 	getps
+	rmprotection
