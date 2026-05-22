@@ -563,7 +563,7 @@ namespace SwitchPriv.Library
             outputBuilder.Append("    * 6 : PROTECTED_MANDATORY_LEVEL\n\n");
             outputBuilder.Append("Example :\n\n");
             outputBuilder.Append("    * Down a specific process' integrity level to Low.\n\n");
-            outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -s 1\n\n", AppDomain.CurrentDomain.FriendlyName);
+            outputBuilder.AppendFormat("        PS C:\\> .\\{0} -p 4142 -i 1\n\n", AppDomain.CurrentDomain.FriendlyName);
             outputBuilder.Append("Protected level should not be available, but left for research purpose.\n\n");
 
             Console.WriteLine(outputBuilder.ToString());
