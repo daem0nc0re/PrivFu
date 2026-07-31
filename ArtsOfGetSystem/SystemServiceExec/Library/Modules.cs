@@ -140,12 +140,12 @@ namespace SystemServiceExec.Library
             string username,
             string domain,
             string password,
+            string serviceName,
             string command,
             int nDelayMilliseconds)
         {
             bool bSuccess;
             bool bImpersonated = false;
-            var serviceName = "SystemServiceExecSvc";
 
             if (!string.IsNullOrEmpty(username))
             {
@@ -235,6 +235,11 @@ namespace SystemServiceExec.Library
             if (bSuccess)
             {
                 Console.WriteLine("[+] A system service process is created successfully.");
+
+                if (Globals.IsServiceDeleted)
+                    Console.WriteLine("[*] \"{0}\" service is deleted.", serviceName);
+                else
+                    Console.WriteLine("[!] Failed to delete \"{0}\" service.", serviceName);
             }
             else
             {

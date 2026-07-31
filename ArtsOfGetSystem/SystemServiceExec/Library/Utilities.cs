@@ -38,9 +38,10 @@ namespace SystemServiceExec.Library
 
             if (hService != IntPtr.Zero)
             {
+                Globals.IsServiceCreated = true;
                 NativeMethods.StartServiceW(hService, 0, null);
                 Thread.Sleep(nDelayMilliseconds);
-                NativeMethods.DeleteService(hService);
+                Globals.IsServiceDeleted = NativeMethods.DeleteService(hService);
                 NativeMethods.CloseServiceHandle(hService);
                 bSuccess = true;
             }

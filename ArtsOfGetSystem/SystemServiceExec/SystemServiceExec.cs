@@ -1,5 +1,6 @@
 ﻿using System;
 using SystemServiceExec.Handler;
+using SystemServiceExec.Library;
 
 namespace SystemServiceExec
 {
@@ -8,6 +9,7 @@ namespace SystemServiceExec
         static void Main(string[] args)
         {
             var options = new CommandLineParser();
+            Console.CancelKeyPress += new ConsoleCancelEventHandler(CancelHandler);
 
             try
             {
@@ -17,7 +19,7 @@ namespace SystemServiceExec
                 options.AddParameter(false, "u", "username", null, "Specifies a username of Administrators group member (Optional).");
                 options.AddParameter(false, "d", "domain", null, "Specifies a domain name for Administrators group member (Optional).");
                 options.AddParameter(false, "p", "password", null, "Specifies a password for Administrators group member (Optional).");
-                options.AddParameter(false, "w", "wait", "300", "Specifies a wait time for service in milliseconds (Default: 300).");
+                options.AddParameter(false, "w", "wait", "100", "Specifies a wait time for service in milliseconds (Default: 100).");
                 options.Parse(args);
 
                 Execute.Run(options);
@@ -31,6 +33,17 @@ namespace SystemServiceExec
                 options.GetHelp();
                 Console.WriteLine(ex.Message);
             }
+        }
+
+
+        private static void CancelHandler(object sender, ConsoleCancelEventArgs args)
+        {
+            Console.WriteLine("[*] Pressed Ctrl+C, aborting...");
+
+            if (Globals.IsServiceCreated && !Globals.IsServiceDeleted)
+                Console.WriteLine("[!] Failed to delete \"{0}\" service.", Globals.ServiceName);
+
+            Console.WriteLine();
         }
     }
 }

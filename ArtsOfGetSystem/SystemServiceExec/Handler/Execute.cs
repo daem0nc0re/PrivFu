@@ -39,11 +39,11 @@ namespace SystemServiceExec.Handler
                     return;
                 }
 
-
                 Modules.GetSystemServiceProcess(
                     options.GetValue("username"),
                     options.GetValue("domain"),
                     options.GetValue("password"),
+                    Globals.ServiceName,
                     binpath,
                     nDelayMilliseconds);
             }
