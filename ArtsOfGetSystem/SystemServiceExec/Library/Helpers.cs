@@ -391,13 +391,7 @@ namespace SystemServiceExec.Library
 
                 for (var i = 0u; i < nCount; i++)
                 {
-                    var attr = Marshal.ReadInt32(pInfoBuffer, nPrivOffset + nAttrOffset);
-
-                    if (bEnable)
-                        attr |= (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
-                    else
-                        attr &= ~(int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
-
+                    var attr = bEnable ? (int)SE_PRIVILEGE_ATTRIBUTES.Enabled : (int)SE_PRIVILEGE_ATTRIBUTES.Disabled;
                     Marshal.WriteInt32(pInfoBuffer, nPrivOffset + nAttrOffset, attr);
                     nPrivOffset += nUnitSize;
                 }

@@ -320,6 +320,9 @@ namespace SwitchPriv.Library
             if (pid == -1)
             {
                 pid = Helpers.GetParentProcessId(new IntPtr(-1));
+
+                if (pid != -1)
+                    processName = Process.GetProcessById(pid).ProcessName;
             }
             else
             {
