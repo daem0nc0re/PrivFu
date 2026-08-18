@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using TaskScheduler;
 
 namespace SystemTaskExec.Library
@@ -27,6 +28,8 @@ namespace SystemTaskExec.Library
                 definition.RegistrationInfo.Description = taskname;
                 definition.Principal.UserId = "SYSTEM";
                 definition.Principal.RunLevel = _TASK_RUNLEVEL.TASK_RUNLEVEL_HIGHEST;
+                definition.Settings.AllowDemandStart = true;
+                definition.Settings.DisallowStartIfOnBatteries = false;
 
                 action = (IExecAction)definition.Actions.Create(_TASK_ACTION_TYPE.TASK_ACTION_EXEC);
                 action.Path = binpath;
