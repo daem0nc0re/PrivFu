@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.7.11919.86 stable
+VisualStudioVersion = 18.7.11919.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenStealing", "TokenStealing\TokenStealing.csproj", "{4C574B86-DC07-47EA-BB02-FD50AE002910}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfsPotato", "EfsPotato\EfsPotato.csproj", "{2AD3951D-DEA6-4CF7-88BE-4C73344AC9DA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemServiceExec", "SystemServiceExec\SystemServiceExec.csproj", "{9596D8D6-921A-467B-ADF5-783AD3DC570D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SystemTaskExec", "SystemTaskExec\SystemTaskExec.csproj", "{D4BE9162-BC39-4A05-BDFD-185EC01AB46C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{9596D8D6-921A-467B-ADF5-783AD3DC570D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9596D8D6-921A-467B-ADF5-783AD3DC570D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9596D8D6-921A-467B-ADF5-783AD3DC570D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4BE9162-BC39-4A05-BDFD-185EC01AB46C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4BE9162-BC39-4A05-BDFD-185EC01AB46C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4BE9162-BC39-4A05-BDFD-185EC01AB46C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4BE9162-BC39-4A05-BDFD-185EC01AB46C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
