@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using TaskScheduler;
 
 namespace SystemTaskExec.Library
