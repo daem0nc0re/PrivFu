@@ -5,7 +5,7 @@ namespace SystemTaskExec.Handler
 {
     internal class Execute
     {
-        public static void Run(CommandLineParser options)
+        internal static void Run(CommandLineParser options)
         {
             if (options.GetFlag("help"))
             {
