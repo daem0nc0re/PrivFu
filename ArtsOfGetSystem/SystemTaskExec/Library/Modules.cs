@@ -118,7 +118,7 @@ namespace SystemTaskExec.Library
 
                 if (bSuccess)
                 {
-                    Console.WriteLine("[+] A desktop process is created successfully (PID: {0})",
+                    Console.WriteLine("[+] A desktop process is created successfully (PID: {0}).",
                         processInfo.dwProcessId);
                     NativeMethods.NtClose(processInfo.hThread);
                     NativeMethods.NtClose(processInfo.hProcess);
