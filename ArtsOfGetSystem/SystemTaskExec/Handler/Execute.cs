@@ -15,7 +15,7 @@ namespace SystemTaskExec.Handler
 
             Console.WriteLine();
 
-            if (Helpers.IsSystemToken(new IntPtr(-6)))
+            if (Helpers.IsSystemToken(new IntPtr(-4)))
             {
                 Modules.CreateDesktopProcess(options.GetValue("command"));
             }
