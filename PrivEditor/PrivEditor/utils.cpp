@@ -324,7 +324,7 @@ std::map<ULONG_PTR, PROCESS_CONTEXT> ListProcessInformation()
                 context.Privileges = context.Token + g_KernelOffsets.Privileges;
             }
 
-            ::strcpy_s(context.ProcessName, (rsize_t)&len, processName.c_str());
+            ::strcpy_s(context.ProcessName, sizeof(context.ProcessName), processName.c_str());
 
             if (results.find(uniqueProcessId) == results.end())
                 results[uniqueProcessId] = context;

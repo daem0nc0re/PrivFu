@@ -46,6 +46,7 @@ typedef struct _KERNEL_OFFSETS
     ULONG ImageFilePointer;
     ULONG ImageFileName;
     ULONG Token;
+    ULONG Protection;
     // nt!_Token
     ULONG Privileges;
     // nt!_SEP_TOKEN_PRIVILEGES

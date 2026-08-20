@@ -60,6 +60,9 @@ VOID WinDbgExtensionDllInit(
         if (GetFieldOffset("nt!_EPROCESS", "Token", &g_KernelOffsets.Token) != 0UL)
             break;
 
+        if (GetFieldOffset("nt!_EPROCESS", "Protection", &g_KernelOffsets.Protection) != 0UL)
+            break;
+
         if (GetFieldOffset("nt!_TOKEN", "Privileges", &g_KernelOffsets.Privileges) != 0UL)
             break;
 
@@ -95,6 +98,7 @@ VOID WinDbgExtensionDllInit(
         dprintf("    + !disablepriv : Disable privilege(s) of a process.\n");
         dprintf("    + !enableall   : Enable all privileges available to a process.\n");
         dprintf("    + !disableall  : Disable all privileges available to a process.\n");
+        dprintf("    + !rmprotection: Remove Protected Process Light (PPL) from a process.\n");
         dprintf("\n");
         dprintf("[*] To see command help, execute \"!<Command> help\" or \"!<Command> /?\".\n");
     }
@@ -743,6 +747,86 @@ DECLARE_API(rmpriv)
             dprintf("[>] Trying to remove %s.\n", GetPrivilegeName(mask).c_str());
 
         RemovePresent(processList[pid].Privileges, mask);
+
+        dprintf("[*] Done.\n");
+    } while (FALSE);
+
+    dprintf("\n");
+}
+
+
+DECLARE_API(rmprotection)
+{
+    std::map<ULONG_PTR, PROCESS_CONTEXT> processList;
+    std::smatch matches;
+    ULONG_PTR pid;
+    UCHAR protectionLevel = 0;
+    std::string cmdline(args);
+    std::regex re_help(R"(\s*(help|/\?)*\s*)");
+    std::regex re_expected(R"(^\s*(\d+)\s*$)");
+
+    dprintf("\n");
+
+    do
+    {
+        if (!g_IsInitialized)
+        {
+            dprintf("[-] Extension is not initialized.\n");
+            dprintf("[!] This extension supports kernel mode debugger only.\n");
+            break;
+        }
+
+        if (std::regex_match(cmdline, matches, re_help))
+        {
+            dprintf("!rmprotection - Remove Protected Process Light (PPL) from a process.\n");
+            dprintf("\n");
+            dprintf("Usage : !rmprotection <PID>\n");
+            dprintf("\n");
+            dprintf("    PID : Specifies target process ID.\n");
+            break;
+        }
+
+        if (std::regex_match(cmdline, matches, re_expected))
+        {
+            pid = (ULONG_PTR)std::stoull(matches[1].str());
+        }
+        else
+        {
+            dprintf("[!] Invalid arguments. See \"!rmprotection help\" or \"!rmprotection /?\".\n");
+            break;
+        }
+
+        processList = ListProcessInformation();
+
+        if (processList.find(pid) == processList.end())
+        {
+            dprintf("[-] Specified process is not found.\n");
+            break;
+        }
+
+        if (!ReadByte(processList[pid].Eprocess + g_KernelOffsets.Protection, &protectionLevel))
+        {
+            dprintf("[-] Failed to read nt!_EPROCESS.Protection.\n");
+            break;
+        }
+
+        if (protectionLevel == 0)
+        {
+            dprintf("[*] Process is not protected (Protection.Level = 0x00).\n");
+            break;
+        }
+
+        dprintf("[>] Current Protection.Level : 0x%02x (Type: %u, Signer: %u).\n",
+            protectionLevel,
+            protectionLevel & 0x07,
+            (protectionLevel >> 4) & 0x0F);
+        dprintf("[>] Trying to remove protection from PID %llu.\n", (ULONG64)pid);
+
+        if (!WriteByte(processList[pid].Eprocess + g_KernelOffsets.Protection, 0))
+        {
+            dprintf("[-] Failed to write nt!_EPROCESS.Protection.\n");
+            break;
+        }
 
         dprintf("[*] Done.\n");
     } while (FALSE);
