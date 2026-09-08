@@ -1,46 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace NamedPipeImpersonation.Interop
 {
     using SIZE_T = UIntPtr;
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct IO_COUNTERS
-    {
-        public ulong ReadOperationCount;
-        public ulong WriteOperationCount;
-        public ulong OtherOperationCount;
-        public ulong ReadTransferCount;
-        public ulong WriteTransferCount;
-        public ulong OtherTransferCount;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct JOBOBJECT_BASIC_LIMIT_INFORMATION
-    {
-        public LARGE_INTEGER PerProcessUserTimeLimit;
-        public LARGE_INTEGER PerJobUserTimeLimit;
-        public JOB_OBJECT_LIMIT LimitFlags;
-        public SIZE_T MinimumWorkingSetSize;
-        public SIZE_T MaximumWorkingSetSize;
-        public int ActiveProcessLimit;
-        public UIntPtr Affinity;
-        public int PriorityClass;
-        public int SchedulingClass;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct JOBOBJECT_EXTENDED_LIMIT_INFORMATION
-    {
-        public JOBOBJECT_BASIC_LIMIT_INFORMATION BasicLimitInformation;
-        public IO_COUNTERS IoInfo;
-        public SIZE_T ProcessMemoryLimit;
-        public SIZE_T JobMemoryLimit;
-        public SIZE_T PeakProcessMemoryUsed;
-        public SIZE_T PeakJobMemoryUsed;
-    }
 
     [StructLayout(LayoutKind.Explicit)]
     internal struct LARGE_INTEGER
@@ -64,35 +27,6 @@ namespace NamedPipeImpersonation.Interop
                 Low = (int)(value),
                 High = (int)((value >> 32))
             };
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct LSA_STRING
-    {
-        public ushort Length;
-        public ushort MaximumLength;
-        [MarshalAs(UnmanagedType.LPStr)]
-        string Buffer;
-
-        public LSA_STRING(string str)
-        {
-            Length = 0;
-            MaximumLength = 0;
-            Buffer = null;
-            SetString(str);
-        }
-
-        public void SetString(string str)
-        {
-            if (str.Length > (ushort.MaxValue - 1))
-            {
-                throw new ArgumentException("String too long for AnsiString");
-            }
-
-            Length = (ushort)(str.Length);
-            MaximumLength = (ushort)(str.Length + 1);
-            Buffer = str;
         }
     }
 
@@ -122,96 +56,6 @@ namespace NamedPipeImpersonation.Interop
     {
         public LUID Luid;
         public int Attributes;
-    }
-
-    internal class MSV1_0_S4U_LOGON : IDisposable
-    {
-        public IntPtr Buffer { get; } = IntPtr.Zero;
-        public int Length { get; } = 0;
-
-        internal struct MSV1_0_S4U_LOGON_INNER
-        {
-            public MSV1_0_LOGON_SUBMIT_TYPE MessageType;
-            public uint Flags;
-            public UNICODE_STRING UserPrincipalName;
-            public UNICODE_STRING DomainName;
-        }
-
-        public MSV1_0_S4U_LOGON(MSV1_0_LOGON_SUBMIT_TYPE type, uint flags, string upn, string domain)
-        {
-            int innerStructSize = Marshal.SizeOf(typeof(MSV1_0_S4U_LOGON_INNER));
-            var pUpnBuffer = IntPtr.Zero;
-            var pDomainBuffer = IntPtr.Zero;
-            var innerStruct = new MSV1_0_S4U_LOGON_INNER
-            {
-                MessageType = type,
-                Flags = flags
-            };
-            Length = innerStructSize;
-
-            if (string.IsNullOrEmpty(upn))
-            {
-                innerStruct.UserPrincipalName.Length = 0;
-                innerStruct.UserPrincipalName.MaximumLength = 0;
-            }
-            else
-            {
-                innerStruct.UserPrincipalName.Length = (ushort)(upn.Length * 2);
-                innerStruct.UserPrincipalName.MaximumLength = (ushort)((upn.Length * 2) + 2);
-                Length += innerStruct.UserPrincipalName.MaximumLength;
-            }
-
-            if (string.IsNullOrEmpty(domain))
-            {
-                innerStruct.DomainName.Length = 0;
-                innerStruct.DomainName.MaximumLength = 0;
-            }
-            else
-            {
-                innerStruct.DomainName.Length = (ushort)(domain.Length * 2);
-                innerStruct.DomainName.MaximumLength = (ushort)((domain.Length * 2) + 2);
-                Length += innerStruct.DomainName.MaximumLength;
-            }
-
-            Buffer = Marshal.AllocHGlobal(Length);
-
-            for (var offset = 0; offset < Length; offset++)
-                Marshal.WriteByte(Buffer, offset, 0);
-
-            if (!string.IsNullOrEmpty(upn))
-            {
-                if (Environment.Is64BitProcess)
-                    pUpnBuffer = new IntPtr(Buffer.ToInt64() + innerStructSize);
-                else
-                    pUpnBuffer = new IntPtr(Buffer.ToInt32() + innerStructSize);
-
-                innerStruct.UserPrincipalName.SetBuffer(pUpnBuffer);
-            }
-
-            if (!string.IsNullOrEmpty(domain))
-            {
-                if (Environment.Is64BitProcess)
-                    pDomainBuffer = new IntPtr(Buffer.ToInt64() + innerStructSize + innerStruct.UserPrincipalName.MaximumLength);
-                else
-                    pDomainBuffer = new IntPtr(Buffer.ToInt32() + innerStructSize + innerStruct.UserPrincipalName.MaximumLength);
-
-                innerStruct.DomainName.SetBuffer(pDomainBuffer);
-            }
-
-            Marshal.StructureToPtr(innerStruct, Buffer, true);
-
-            if (!string.IsNullOrEmpty(upn))
-                Marshal.Copy(Encoding.Unicode.GetBytes(upn), 0, pUpnBuffer, upn.Length * 2);
-
-            if (!string.IsNullOrEmpty(domain))
-                Marshal.Copy(Encoding.Unicode.GetBytes(domain), 0, pDomainBuffer, domain.Length * 2);
-        }
-
-        public void Dispose()
-        {
-            if (Buffer != IntPtr.Zero)
-                Marshal.FreeHGlobal(Buffer);
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -318,61 +162,11 @@ namespace NamedPipeImpersonation.Interop
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal class TOKEN_GROUPS
-    {
-        public uint GroupCount;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
-        public SID_AND_ATTRIBUTES[] Groups;
-
-        public TOKEN_GROUPS()
-        {
-            GroupCount = 0;
-            Groups = new SID_AND_ATTRIBUTES[1];
-        }
-
-        public TOKEN_GROUPS(uint groupCount)
-        {
-            GroupCount = groupCount;
-            Groups = new SID_AND_ATTRIBUTES[1];
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
     internal class TOKEN_PRIVILEGES
     {
         public int PrivilegeCount;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
         public LUID_AND_ATTRIBUTES[] Privileges;
-
-        public TOKEN_PRIVILEGES()
-        {
-            PrivilegeCount = 0;
-            Privileges = new LUID_AND_ATTRIBUTES[1];
-        }
-
-        public TOKEN_PRIVILEGES(int nPrivilegeCount)
-        {
-            PrivilegeCount = nPrivilegeCount;
-            Privileges = new LUID_AND_ATTRIBUTES[1];
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-    internal struct TOKEN_SOURCE
-    {
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
-        public byte[] SourceName;
-        public LUID SourceIdentifier;
-
-        public TOKEN_SOURCE(string sourceName)
-        {
-            var soureNameBytes = Encoding.ASCII.GetBytes(sourceName);
-            int nSourceNameLength = (soureNameBytes.Length > 8) ? 8 : soureNameBytes.Length;
-            SourceName = new byte[8];
-            SourceIdentifier = new LUID();
-
-            Buffer.BlockCopy(soureNameBytes, 0, SourceName, 0, nSourceNameLength);
-        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -22,7 +22,7 @@ namespace NamedPipeImpersonation.Library
 
             do
             {
-                int error;
+                int nErrorCode;
                 string pipeMessage;
                 var hPrimaryToken = IntPtr.Zero;
                 var startupInfo = new STARTUPINFO
@@ -42,9 +42,9 @@ namespace NamedPipeImpersonation.Library
 
                 if (Globals.ConnectionEvent == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
+                    nErrorCode = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create event object for pipe connection.");
-                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(nErrorCode, false));
                     break;
                 }
 
@@ -52,9 +52,9 @@ namespace NamedPipeImpersonation.Library
 
                 if (Globals.ThreadCompletionEvent == IntPtr.Zero)
                 {
-                    error = Marshal.GetLastWin32Error();
+                    nErrorCode = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to create event object for thread completion.");
-                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(nErrorCode, false));
                     break;
                 }
 
@@ -137,10 +137,10 @@ namespace NamedPipeImpersonation.Library
 
                                 if (!bSuccess)
                                 {
-                                    error = Marshal.GetLastWin32Error();
-                                    Console.WriteLine("[-] Failed to get primary SYSTEM token.");
-                                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(error, false));
                                     hPrimaryToken = IntPtr.Zero;
+                                    nErrorCode = Marshal.GetLastWin32Error();
+                                    Console.WriteLine("[-] Failed to get primary SYSTEM token.");
+                                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(nErrorCode, false));
                                 }
                             }
                             else
@@ -150,9 +150,9 @@ namespace NamedPipeImpersonation.Library
                         }
                         else
                         {
-                            error = Marshal.GetLastWin32Error();
+                            nErrorCode = Marshal.GetLastWin32Error();
                             Console.WriteLine("[-] Failed to named pipe impersonation.");
-                            Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(error, false));
+                            Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(nErrorCode, false));
                         }
                     }
                 }
@@ -178,9 +178,9 @@ namespace NamedPipeImpersonation.Library
 
                 if (!bSuccess)
                 {
-                    error = Marshal.GetLastWin32Error();
+                    nErrorCode = Marshal.GetLastWin32Error();
                     Console.WriteLine("[-] Failed to spawn SYSTEM shell.");
-                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(error, false));
+                    Console.WriteLine("    [*] {0}", Helpers.GetWin32ErrorMessage(nErrorCode, false));
                 }
                 else
                 {
@@ -213,7 +213,7 @@ namespace NamedPipeImpersonation.Library
         {
             NTSTATUS ntstatus;
             bool bSuccess;
-            IntPtr hService = IntPtr.Zero;
+            var hService = IntPtr.Zero;
             var timeout = LARGE_INTEGER.FromInt64(-(Globals.Timeout * 10000));
             var bUseService = (Globals.MethodId == PipeClientMethodType.CmdService) ||
                 (Globals.MethodId == PipeClientMethodType.Dropper);

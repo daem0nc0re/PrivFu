@@ -110,14 +110,19 @@ namespace NamedPipeImpersonation.Library
                             }
                             else
                             {
-                                IntPtr pTokenPrivileges = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)));
-                                var tokenPrivileges = new TOKEN_PRIVILEGES(1);
+                                var tokenPrivileges = new TOKEN_PRIVILEGES
+                                {
+                                    PrivilegeCount = 1,
+                                    Privileges = new LUID_AND_ATTRIBUTES[1]
+                                };
 
                                 if (NativeMethods.LookupPrivilegeValue(
                                     null,
                                     priv,
                                     out tokenPrivileges.Privileges[0].Luid))
                                 {
+                                    var nInfoLength = Marshal.SizeOf(typeof(TOKEN_PRIVILEGES));
+                                    var pTokenPrivileges = Marshal.AllocHGlobal(nInfoLength);
                                     tokenPrivileges.Privileges[0].Attributes = (int)SE_PRIVILEGE_ATTRIBUTES.Enabled;
                                     Marshal.StructureToPtr(tokenPrivileges, pTokenPrivileges, true);
 
@@ -125,13 +130,12 @@ namespace NamedPipeImpersonation.Library
                                         hToken,
                                         false,
                                         pTokenPrivileges,
-                                        Marshal.SizeOf(typeof(TOKEN_PRIVILEGES)),
+                                        nInfoLength,
                                         IntPtr.Zero,
                                         out int _);
-                                    adjustedPrivs[priv] = (adjustedPrivs[priv] && (Marshal.GetLastWin32Error() == 0));
+                                    adjustedPrivs[priv] &= (Marshal.GetLastWin32Error() == 0);
+                                    Marshal.FreeHGlobal(pTokenPrivileges);
                                 }
-
-                                Marshal.FreeHGlobal(pTokenPrivileges);
                             }
 
                             break;
