@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using TaskScheduler;
@@ -8,8 +7,6 @@ using NamedPipeImpersonation.Interop;
 
 namespace NamedPipeImpersonation.Library
 {
-    using NTSTATUS = Int32;
-
     internal class Utilities
     {
         internal static bool CreateSystemExecTask(
