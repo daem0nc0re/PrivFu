@@ -198,7 +198,7 @@ NTSTATUS OnDeviceControl(
 
 		if (NT_SUCCESS(ntstatus))
 		{
-			info = sizeof(IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT);
+			info = sizeof(IOCTL_SET_TOKEN_PRIVILEGES_INPUT);
 			KdPrint((DRIVER_PREFIX "Token privileges are set successfully.\n"));
 		}
 		else
