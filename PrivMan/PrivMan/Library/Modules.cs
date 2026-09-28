@@ -34,10 +34,10 @@ namespace PrivMan.Library
                         UniqueProcess = new IntPtr(pid)
                     };
 
-                    Console.WriteLine("[*] Trying to disable the following privileges for '{0}' (PID: {1}).\n",
+                    Console.WriteLine("[*] Trying to disable the following privileges for '{0}' (PID: {1}).",
                         processName,
                         pid);
-                    Console.WriteLine(TokenPrivileges.GetPrivilegeLuidTable(in names));
+                    Console.WriteLine("\n{0}", TokenPrivileges.GetPrivilegeLuidTable(in names));
                     bSuccess = ops.GetTokenPrivileges(pid, out IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT info);
 
                     if (!bSuccess)
@@ -111,10 +111,10 @@ namespace PrivMan.Library
                         UniqueProcess = new IntPtr(pid)
                     };
 
-                    Console.WriteLine("[*] Trying to enable the following privileges for '{0}' (PID: {1}).\n",
+                    Console.WriteLine("[*] Trying to enable the following privileges for '{0}' (PID: {1}).",
                         processName,
                         pid);
-                    Console.WriteLine(TokenPrivileges.GetPrivilegeLuidTable(in names));
+                    Console.WriteLine("\n{0}", TokenPrivileges.GetPrivilegeLuidTable(in names));
                     bSuccess = ops.GetTokenPrivileges(pid, out IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT info);
 
                     if (!bSuccess)
@@ -188,10 +188,10 @@ namespace PrivMan.Library
                         UniqueProcess = new IntPtr(pid)
                     };
 
-                    Console.WriteLine("[*] Trying to filter the following privileges for '{0}' (PID: {1}).\n",
+                    Console.WriteLine("[*] Trying to filter the following privileges for '{0}' (PID: {1}).",
                         processName,
                         pid);
-                    Console.WriteLine(TokenPrivileges.GetPrivilegeLuidTable(in names));
+                    Console.WriteLine("\n{0}", TokenPrivileges.GetPrivilegeLuidTable(in names));
                     bSuccess = ops.GetTokenPrivileges(pid, out IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT info);
 
                     if (!bSuccess)
@@ -258,7 +258,7 @@ namespace PrivMan.Library
             {
                 using (var ops = new DeviceOperations())
                 {
-                    Console.WriteLine("[*] Trying to get current token privielges status for '{0}' (PID: {1}).\n",
+                    Console.WriteLine("[*] Trying to get current token privielges status for '{0}' (PID: {1}).",
                         processName,
                         pid);
                     bSuccess = ops.GetTokenPrivileges(pid, out IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT info);
@@ -269,7 +269,7 @@ namespace PrivMan.Library
                             Marshal.GetLastWin32Error()));
                     }
 
-                    Console.WriteLine(TokenPrivileges.GetPrivilegeStateTable(in info.Privileges));
+                    Console.WriteLine("\n{0}", TokenPrivileges.GetPrivilegeStateTable(in info.Privileges));
                 }
             }
             catch (Exception ex)
@@ -309,10 +309,10 @@ namespace PrivMan.Library
                         UniqueProcess = new IntPtr(pid)
                     };
 
-                    Console.WriteLine("[*] Trying to remove the following privileges for '{0}' (PID: {1}).\n",
+                    Console.WriteLine("[*] Trying to remove the following privileges for '{0}' (PID: {1}).",
                         processName,
                         pid);
-                    Console.WriteLine(TokenPrivileges.GetPrivilegeLuidTable(in names));
+                    Console.WriteLine("\n{0}", TokenPrivileges.GetPrivilegeLuidTable(in names));
                     bSuccess = ops.GetTokenPrivileges(pid, out IOCTL_GET_TOKEN_PRIVILEGES_OUTPUT info);
 
                     if (!bSuccess)
